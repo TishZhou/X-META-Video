@@ -5,7 +5,7 @@
 - **Selected feature/task:** Feature 1, Main Page Design / `main-page-001`
 - **Acceptance criteria or source:** `feature_tasks/1.json` and `sprint-contract.md`
 - **Session reviewed:** 2026-06-24 implementation update
-- **Changed files:** `.gitignore`, `apps/web/package.json`, `pnpm-lock.yaml`, `apps/web/next-env.d.ts`, `apps/web/src/app/*`, `apps/web/src/components/ui/*`, `feature_list.json`, `feature_tasks/1.json`, `progress.md`, `sprint-contract.md`, `evaluator-rubric.md`, `session-handoff.md`
+- **Changed files:** `.gitignore`, `apps/web/package.json`, `pnpm-lock.yaml`, `apps/web/src/app/*`, `apps/web/src/components/ui/*`, `feature_list.json`, `feature_tasks/1.json`, `progress.md`, `sprint-contract.md`, `evaluator-rubric.md`, `session-handoff.md`
 - **Agent's claimed result:** The app root now renders an X-META Video product entry page instead of a blank or generic starter screen.
 
 ## Defects And Missing Evidence
@@ -22,7 +22,7 @@
 | Correctness | 2 | Root page renders `X-META Video` and describes AI comic drama, MV, and short-form video creation. |
 | Verification | 2 | Unit tests, typecheck, Next build, Playwright desktop/mobile QA, and final startup verification were run. |
 | Scope discipline | 2 | Work stayed frontend-only and did not add backend, auth, persistence, canvas execution, project creation, or generation behavior. |
-| Reliability | 2 | `next build` statically generated `/` and `/icon.svg`; `.next/` is ignored and removable while typecheck remains healthy. |
+| Reliability | 2 | `next build` statically generated `/` and `/icon.svg`; `.next/` and generated `next-env.d.ts` are ignored while verification remains healthy. |
 | Maintainability | 2 | Page copy is centralized in `main-page-content.ts`; shadcn primitives are local source files; render tests guard task copy. |
 | Handoff readiness | 2 | `feature_list.json`, `feature_tasks/1.json`, `progress.md`, `sprint-contract.md`, and `session-handoff.md` identify completed and remaining task state. |
 

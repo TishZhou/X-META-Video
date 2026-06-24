@@ -9,10 +9,10 @@
 ## Changed This Session
 
 - Code or behavior added: `apps/web/src/app/page.tsx` now renders a product-specific X-META Video entry page with AI comic drama, MV, and short-form video creation copy.
-- App Router foundation: added `apps/web/src/app/layout.tsx`, `apps/web/src/app/icon.svg`, and `apps/web/next-env.d.ts`.
+- App Router foundation: added `apps/web/src/app/layout.tsx` and `apps/web/src/app/icon.svg`; generated `apps/web/next-env.d.ts` is ignored because Next 16 rewrites it between dev and build type paths.
 - UI primitives: added local shadcn/ui source components for `button`, `badge`, and `card`; no UI TripleD runtime dependency was added.
 - Verification: added `apps/web/src/app/page.test.tsx` to assert required product copy and reject generic starter/chat content.
-- Build hygiene: added `apps/web/.next/` to `.gitignore` and removed generated `.next/` output from the worktree.
+- Build hygiene: added `apps/web/.next/` and `apps/web/next-env.d.ts` to `.gitignore`; removed generated `.next/` output from the worktree.
 
 ## Broken Or Unverified
 

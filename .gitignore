@@ -25,6 +25,7 @@ build/
 # Frontend build/cache
 apps/web/dist/
 apps/web/.next/
+apps/web/next-env.d.ts
 apps/web/.vite/
 apps/web/.turbo/
 apps/web/coverage/
