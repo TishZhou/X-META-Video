@@ -17,15 +17,18 @@
         "Verify the page does not show unrelated conversation or generic template content."
       ],
       "evidence": [
-        "Implemented `apps/web/src/app/page.tsx` as the app-root X-META Video entry page with product-specific AI comic drama, MV, and short-form video creation copy.",
-        "Added App Router layout, metadata, and icon files under `apps/web/src/app` so the page opens as a real Next.js route instead of a blank shell.",
-        "Added local shadcn/ui source components for `button`, `badge`, and `card`; no UI TripleD runtime dependency was added.",
-        "`corepack pnpm --filter @xmeta/web test` passed with 2 test files and 4 tests.",
+        "Corrected the prior basic shadcn-only treatment by adding `apps/web/src/app/animated-entry-page.tsx`, an animated X-META Video entry page adapted from the UI TripleD Hero Block shadcn/Framer Motion source pattern.",
+        "Kept `apps/web/src/app/page.tsx` as the app-root route and delegated rendering to the local animated entry page while preserving product-specific AI comic drama, MV, and short-form video creation copy.",
+        "Added `framer-motion` because the selected UI TripleD Hero Block pattern uses Framer Motion for reveal, hover, spring, and scroll indicator animation effects.",
+        "Kept UI TripleD as copied/adapted local source guidance rather than adding an opaque UI TripleD runtime dependency; local shadcn/ui components remain the component base.",
+        "Updated render tests to assert `data-uitripled-source=\"hero-block\"` and `data-animation-runtime=\"framer-motion\"` in addition to the required product copy and generic-content rejection.",
+        "`corepack pnpm --filter @xmeta/web test` passed with 2 test files and 5 tests.",
         "`corepack pnpm --filter @xmeta/web typecheck` passed.",
         "`corepack pnpm --filter @xmeta/web build` passed and statically generated `/` and `/icon.svg`.",
-        "Playwright fallback with system Chrome opened `http://localhost:3000` at 1440x900 and 390x844; title was `X-META Video`, required product copy was present, no generic starter/chat content was present, no console errors or page errors were reported, and there was no horizontal overflow.",
+        "Playwright fallback with system Chrome opened `http://localhost:3000` at 1440x900 and 390x844; title was `X-META Video`, required product copy was present, UI TripleD/Framer Motion data markers were present, no generic starter/chat content was present, no console errors or page errors were reported, and there was no horizontal overflow.",
         "Interaction check: `Review production modes` navigated to `#production-modes`; `See canvas direction` navigated to `#canvas-preview`.",
-        "`.\u005cinit.ps1` passed after implementation; Vitest ran 2 files with 4 passing tests."
+        "Animation check: the scroll indicator changed position during a timed browser probe, confirming live Framer Motion animation was active.",
+        "`.\u005cinit.ps1` passed after implementation; Vitest ran 2 files with 5 passing tests."
       ],
       "notes": "Frontend-only page shell; no backend, auth, or persistence required."
     },

@@ -2,17 +2,17 @@
 
 ## Verified Now
 
-- What is currently working: the root Next.js app route renders the X-META Video product entry page for `main-page-001`.
+- What is currently working: the root Next.js app route renders the X-META Video product entry page for `main-page-001` with a UI TripleD Hero Block-inspired shadcn/Framer Motion animated treatment.
 - What verification actually ran: baseline `.\init.ps1`; `corepack pnpm --filter @xmeta/web test`; `corepack pnpm --filter @xmeta/web typecheck`; `corepack pnpm --filter @xmeta/web build`; Playwright fallback with system Chrome against the running dev server; final `.\init.ps1`.
-- Evidence: Vitest passed 2 files with 4 tests; TypeScript passed; Next build statically generated `/` and `/icon.svg`; browser QA passed desktop 1440x900 and mobile 390x844 checks with no console errors, page errors, framework error overlay, or horizontal overflow; final `.\init.ps1` passed with 2 test files and 4 tests.
+- Evidence: Vitest passed 2 files with 5 tests; TypeScript passed; Next build statically generated `/` and `/icon.svg`; browser QA passed desktop 1440x900 and mobile 390x844 checks with UI TripleD/Framer Motion source markers present, no console errors, page errors, framework error overlay, or horizontal overflow; animation movement probe confirmed the scroll indicator moved; final `.\init.ps1` passed with 2 test files and 5 tests.
 
 ## Changed This Session
 
-- Code or behavior added: `apps/web/src/app/page.tsx` now renders a product-specific X-META Video entry page with AI comic drama, MV, and short-form video creation copy.
-- App Router foundation: added `apps/web/src/app/layout.tsx` and `apps/web/src/app/icon.svg`; generated `apps/web/next-env.d.ts` is ignored because Next 16 rewrites it between dev and build type paths.
-- UI primitives: added local shadcn/ui source components for `button`, `badge`, and `card`; no UI TripleD runtime dependency was added.
-- Verification: added `apps/web/src/app/page.test.tsx` to assert required product copy and reject generic starter/chat content.
-- Build hygiene: added `apps/web/.next/` and `apps/web/next-env.d.ts` to `.gitignore`; removed generated `.next/` output from the worktree.
+- Code or behavior added: `apps/web/src/app/page.tsx` now renders `AnimatedEntryPage`, a product-specific X-META Video entry page adapted from the UI TripleD Hero Block shadcn/Framer Motion source pattern.
+- App Router foundation: existing `apps/web/src/app/layout.tsx` and `apps/web/src/app/icon.svg` remain in place; generated `apps/web/next-env.d.ts` is ignored because Next 16 rewrites it between dev and build type paths.
+- UI primitives and animation: local shadcn/ui source components remain the base; `framer-motion` was added for UI TripleD-style reveal, hover, spring, and scroll indicator animation effects.
+- Verification: updated `apps/web/src/app/page.test.tsx` to assert required product copy, reject generic starter/chat content, and verify UI TripleD/Framer Motion source markers.
+- Build hygiene: existing `.gitignore` coverage for `apps/web/.next/` and `apps/web/next-env.d.ts` remains in place.
 
 ## Broken Or Unverified
 

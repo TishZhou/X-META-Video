@@ -7,7 +7,7 @@
 - Standard verification path: `corepack pnpm --filter @xmeta/web test`
 - Current highest-priority unfinished feature: Feature 1, Main Page Design
 - Current blocker: none.
-- Current planning focus: Feature 1 is in progress; `main-page-001` is implemented and verified, with `main-page-002` next.
+- Current planning focus: Feature 1 is in progress; `main-page-001` is implemented and verified with a UI TripleD-inspired animated correction, with `main-page-002` next.
 - Current UI source guidance: use shadcn/ui as the base local component system and UI TripleD shadcn blocks as the preferred external block source.
 
 ## Session Log
@@ -82,4 +82,16 @@
 - Commits: see git history for the final end-of-session commit.
 - Files or artifacts updated: `.gitignore`, `apps/web/package.json`, `pnpm-lock.yaml`, `apps/web/src/app/*`, `apps/web/src/components/ui/*`, `feature_list.json`, `feature_tasks/1.json`, `progress.md`, `sprint-contract.md`, `evaluator-rubric.md`, `session-handoff.md`.
 - Known risk or unresolved issue: Feature 1 overall remains incomplete; create-project choices, recent work, workspace entry, full workflow preview, responsive completion, and accessibility basics remain separate not-started child tasks.
+- Next best step: implement `main-page-002`, adding the create-project entry state without backend persistence.
+
+### Session 007
+
+- Date: 2026-06-24
+- Goal: Correct `main-page-001` so the entry page uses UI TripleD-style animation instead of a basic static shadcn-only treatment.
+- Completed: Added a local `AnimatedEntryPage` adapted from the UI TripleD Hero Block shadcn/Framer Motion source pattern; added `framer-motion`; preserved X-META Video product copy; kept UI TripleD as copied/adapted local source guidance rather than an opaque runtime dependency; added tests for UI TripleD and Framer Motion source markers.
+- Verification run: baseline `.\init.ps1`; UI TripleD source inspection; shadcn docs lookup for button, badge, and card; `corepack pnpm --filter @xmeta/web test`; `corepack pnpm --filter @xmeta/web typecheck`; `corepack pnpm --filter @xmeta/web build`; Playwright fallback with system Chrome at desktop and mobile viewports; animation movement probe; final `git diff --check`; final `.\init.ps1`.
+- Evidence captured: Vitest passed 2 files with 5 tests; TypeScript passed; Next build statically generated `/` and `/icon.svg`; browser QA found title `X-META Video`, required product copy, `data-uitripled-source="hero-block"`, `data-animation-runtime="framer-motion"`, no generic/chat content, no console errors, no page errors, no horizontal overflow, and working anchor navigation to `#production-modes` and `#canvas-preview`; the scroll indicator moved during the timed animation probe.
+- Commits: see git history for the final end-of-session commit.
+- Files or artifacts updated: `apps/web/package.json`, `pnpm-lock.yaml`, `apps/web/src/app/animated-entry-page.tsx`, `apps/web/src/app/main-page-content.ts`, `apps/web/src/app/page.tsx`, `apps/web/src/app/page.test.tsx`, `apps/web/src/components/ui/badge.tsx`, `feature_tasks/1.json`, `progress.md`, `sprint-contract.md`, `evaluator-rubric.md`, `session-handoff.md`.
+- Known risk or unresolved issue: Browser plugin path was unavailable as a callable tool, so rendered QA used Playwright fallback with system Chrome; Feature 1 overall remains incomplete after `main-page-001`.
 - Next best step: implement `main-page-002`, adding the create-project entry state without backend persistence.

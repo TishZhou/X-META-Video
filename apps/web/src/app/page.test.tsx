@@ -21,4 +21,11 @@ describe("HomePage", () => {
     expect(html).not.toContain("chat");
     expect(html).not.toContain("conversation");
   });
+
+  it("uses the UI TripleD-inspired Framer Motion treatment", () => {
+    const html = renderToStaticMarkup(<HomePage />);
+
+    expect(html).toContain('data-uitripled-source="hero-block"');
+    expect(html).toContain('data-animation-runtime="framer-motion"');
+  });
 });

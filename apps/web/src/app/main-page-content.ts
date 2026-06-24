@@ -1,12 +1,4 @@
-import {
-  Clapperboard,
-  Film,
-  Layers3,
-  Music2,
-  PenLine,
-  Sparkles,
-  type LucideIcon,
-} from "lucide-react";
+import { Clapperboard, Film, Music2, type LucideIcon } from "lucide-react";
 
 export type CreationMode = {
   title: string;
@@ -64,4 +56,5 @@ export const mainPageContent = {
   previewTitle: "Canvas-first production",
   previewDescription:
     "The workspace direction is a Figma-like AI workflow canvas where every generation step is represented as a reusable node.",
+  sourcePattern: "UI TripleD Hero Block motion pattern",
 };
