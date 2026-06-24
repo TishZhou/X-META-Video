@@ -24,6 +24,7 @@ build/
 
 # Frontend build/cache
 apps/web/dist/
+apps/web/.next/
 apps/web/.vite/
 apps/web/.turbo/
 apps/web/coverage/
@@ -75,4 +76,3 @@ test-results/
 *.crt
 service-account*.json
 credentials*.json
-

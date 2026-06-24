@@ -17,7 +17,7 @@
     {
       "id": 1,
       "title": "Main Page Design",
-      "status": "not_started",
+      "status": "in_progress",
       "verification": [
         "Read feature_tasks/1.json completely before working on this feature.",
         "Run .\\init.ps1 and record evidence before marking this feature passing."

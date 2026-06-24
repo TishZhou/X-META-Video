@@ -2,21 +2,31 @@
   "parent_feature": {
     "id": 1,
     "title": "Main Page Design",
-    "status": "not_started"
+    "status": "in_progress"
   },
   "features": [
     {
       "id": "main-page-001",
       "title": "Render the product entry page",
       "user_visible_behavior": "A user can open the app and see an X-META Video entry page instead of a blank screen or generic starter content.",
-      "status": "not_started",
+      "status": "passing",
       "verification": [
         "Open the app.",
         "Verify the page shows the X-META Video name.",
         "Verify the page describes AI comic drama, MV, and short-form video creation.",
         "Verify the page does not show unrelated conversation or generic template content."
       ],
-      "evidence": [],
+      "evidence": [
+        "Implemented `apps/web/src/app/page.tsx` as the app-root X-META Video entry page with product-specific AI comic drama, MV, and short-form video creation copy.",
+        "Added App Router layout, metadata, and icon files under `apps/web/src/app` so the page opens as a real Next.js route instead of a blank shell.",
+        "Added local shadcn/ui source components for `button`, `badge`, and `card`; no UI TripleD runtime dependency was added.",
+        "`corepack pnpm --filter @xmeta/web test` passed with 2 test files and 4 tests.",
+        "`corepack pnpm --filter @xmeta/web typecheck` passed.",
+        "`corepack pnpm --filter @xmeta/web build` passed and statically generated `/` and `/icon.svg`.",
+        "Playwright fallback with system Chrome opened `http://localhost:3000` at 1440x900 and 390x844; title was `X-META Video`, required product copy was present, no generic starter/chat content was present, no console errors or page errors were reported, and there was no horizontal overflow.",
+        "Interaction check: `Review production modes` navigated to `#production-modes`; `See canvas direction` navigated to `#canvas-preview`.",
+        "`.\u005cinit.ps1` passed after implementation; Vitest ran 2 files with 4 passing tests."
+      ],
       "notes": "Frontend-only page shell; no backend, auth, or persistence required."
     },
     {

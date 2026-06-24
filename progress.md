@@ -6,8 +6,8 @@
 - Standard startup path: `.\init.ps1`
 - Standard verification path: `corepack pnpm --filter @xmeta/web test`
 - Current highest-priority unfinished feature: Feature 1, Main Page Design
-- Current blocker: none for planning; product implementation has not started
-- Current planning focus: `feature_tasks/1.json` decomposes Main Page Design into minimal UI tasks.
+- Current blocker: none.
+- Current planning focus: Feature 1 is in progress; `main-page-001` is implemented and verified, with `main-page-002` next.
 - Current UI source guidance: use shadcn/ui as the base local component system and UI TripleD shadcn blocks as the preferred external block source.
 
 ## Session Log
@@ -71,3 +71,15 @@
 - Files or artifacts updated: `docs/ARCHITECTURE.md`, `docs/DEPENDENCIES.md`, `progress.md`, `sprint-contract.md`, `session-handoff.md`
 - Known risk or unresolved issue: no UI TripleD components have been copied yet; `framer-motion` should be added only when a selected block requires it.
 - Next best step: when implementing `main-page-001`, choose a UI TripleD shadcn block, copy only the needed source, normalize imports and tokens, then verify locally.
+
+### Session 006
+
+- Date: 2026-06-24
+- Goal: Complete Feature 1 small task 1, `main-page-001`.
+- Completed: Added a real Next App Router root entry page for X-META Video with product-specific AI comic drama, MV, and short-form video creation copy; added local shadcn `button`, `badge`, and `card` source components; added a root layout, metadata, app icon, and focused render tests.
+- Verification run: baseline `.\init.ps1`; shadcn info/docs; `corepack pnpm --filter @xmeta/web test`; `corepack pnpm --filter @xmeta/web typecheck`; `corepack pnpm --filter @xmeta/web build`; Playwright fallback with system Chrome at desktop and mobile viewports; final `.\init.ps1`.
+- Evidence captured: Vitest passed 2 files with 4 tests; TypeScript passed; Next build statically generated `/` and `/icon.svg`; browser QA found title `X-META Video`, required product copy, no generic/chat content, no console errors, no page errors, no horizontal overflow, and working anchor navigation to `#production-modes` and `#canvas-preview`; final `.\init.ps1` passed with 2 test files and 4 tests.
+- Commits: see git history for the final end-of-session commit.
+- Files or artifacts updated: `.gitignore`, `apps/web/package.json`, `pnpm-lock.yaml`, `apps/web/next-env.d.ts`, `apps/web/src/app/*`, `apps/web/src/components/ui/*`, `feature_list.json`, `feature_tasks/1.json`, `progress.md`, `sprint-contract.md`, `evaluator-rubric.md`, `session-handoff.md`.
+- Known risk or unresolved issue: Feature 1 overall remains incomplete; create-project choices, recent work, workspace entry, full workflow preview, responsive completion, and accessibility basics remain separate not-started child tasks.
+- Next best step: implement `main-page-002`, adding the create-project entry state without backend persistence.
