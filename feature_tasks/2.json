@@ -1,0 +1,18 @@
+{
+  "features": [
+    {
+      "id": "chat-001", 
+
+      "title": "Create a new conversation",
+      "user_visible_behavior": "A user can click New Chat and see a fresh empty conversation.",
+      "status": "not_started",
+      "verification": [
+        "Open the app.",
+        "Click New Chat.",
+        "Verify a new conversation appears in the sidebar.",
+        "Verify the main panel shows an empty conversation state."
+      ],
+      "evidence": [],
+      "notes": ""
+    }]
+}

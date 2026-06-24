@@ -1,0 +1,78 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+.yarn/
+.npm/
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.venv/
+venv/
+dist/
+build/
+*.egg-info/
+
+# Environment
+.env
+.env.*
+!.env.example
+!*.env.example
+
+# Frontend build/cache
+apps/web/dist/
+apps/web/.vite/
+apps/web/.turbo/
+apps/web/coverage/
+
+# Backend runtime
+*.sqlite
+*.sqlite3
+*.db
+logs/
+*.log
+celerybeat-schedule
+
+# Generated media and local storage
+storage/
+uploads/
+exports/
+tmp/
+temp/
+*.mp4
+*.mov
+*.webm
+*.mp3
+*.wav
+*.png
+*.jpg
+*.jpeg
+*.webp
+!docs/**/*.png
+!docs/**/*.jpg
+!docs/**/*.jpeg
+!docs/**/*.webp
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Test and reports
+coverage/
+playwright-report/
+test-results/
+
+# Secrets / credentials
+*.pem
+*.key
+*.crt
+service-account*.json
+credentials*.json
+

@@ -1,0 +1,13 @@
+{
+  "parent_feature": {
+    "id": 11,
+    "title": "Export Node",
+    "status": "not_started"
+  },
+  "planning_status": "pending_decomposition",
+  "notes": [
+    "Small features must be added here before implementation starts.",
+    "Keep this file focused on Export Node only."
+  ],
+  "small_features": []
+}

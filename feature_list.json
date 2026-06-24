@@ -1,0 +1,194 @@
+{
+  "project": "X-META Video",
+  "last_updated": "2026-06-24",
+  "rules": {
+    "single_active_feature": true,
+    "passing_requires_evidence": true,
+    "do_not_skip_verification": true,
+    "must_read_task_file": true
+  },
+  "status_legend": {
+    "not_started": "Hasn't been touched.",
+    "in_progress": "The one feature currently being worked on. Only one feature can be in progress at a time.",
+    "blocked": "Can't proceed due to a documented issue.",
+    "passing": "Verification passed and evidence is recorded."
+  },
+  "features": [
+    {
+      "id": 1,
+      "title": "Main Page Design",
+      "status": "not_started",
+      "verification": [
+        "Read feature_tasks/1.json completely before working on this feature.",
+        "Run .\\init.ps1 and record evidence before marking this feature passing."
+      ],
+      "user_visible_behavior": "Users see a polished product entry page with clear paths to create a project, open recent work, and enter the creative workspace.",
+      "task_file": "feature_tasks/1.json"
+    },
+    {
+      "id": 2,
+      "title": "Project Foundation And App Shell",
+      "status": "not_started",
+      "verification": [
+        "Read feature_tasks/2.json completely before working on this feature.",
+        "Run .\\init.ps1 and record evidence before marking this feature passing."
+      ],
+      "user_visible_behavior": "Users can enter a project workspace with a clear app shell and a default development workspace/project context.",
+      "task_file": "feature_tasks/2.json"
+    },
+    {
+      "id": 3,
+      "title": "Workflow Canvas Foundation",
+      "status": "not_started",
+      "verification": [
+        "Read feature_tasks/3.json completely before working on this feature.",
+        "Run .\\init.ps1 and record evidence before marking this feature passing."
+      ],
+      "user_visible_behavior": "Users can work on a Figma-like canvas with nodes, edges, drag, zoom, selection, and restorable layout state.",
+      "task_file": "feature_tasks/3.json"
+    },
+    {
+      "id": 4,
+      "title": "Script Node",
+      "status": "not_started",
+      "verification": [
+        "Read feature_tasks/4.json completely before working on this feature.",
+        "Run .\\init.ps1 and record evidence before marking this feature passing."
+      ],
+      "user_visible_behavior": "Users can enter a creative brief and generate structured plot, character profiles, storyboard draft, dialogue or lyrics, and camera notes through a backend API.",
+      "task_file": "feature_tasks/4.json"
+    },
+    {
+      "id": 5,
+      "title": "Storyboard Node",
+      "status": "not_started",
+      "verification": [
+        "Read feature_tasks/5.json completely before working on this feature.",
+        "Run .\\init.ps1 and record evidence before marking this feature passing."
+      ],
+      "user_visible_behavior": "Users can convert script output into an editable shot list with scene, character, action, dialogue, camera, duration, and prompt fields.",
+      "task_file": "feature_tasks/5.json"
+    },
+    {
+      "id": 6,
+      "title": "Character Image Node",
+      "status": "not_started",
+      "verification": [
+        "Read feature_tasks/6.json completely before working on this feature.",
+        "Run .\\init.ps1 and record evidence before marking this feature passing."
+      ],
+      "user_visible_behavior": "Users can generate character images from character profiles and receive reusable character asset references.",
+      "task_file": "feature_tasks/6.json"
+    },
+    {
+      "id": 7,
+      "title": "Scene Image Node",
+      "status": "not_started",
+      "verification": [
+        "Read feature_tasks/7.json completely before working on this feature.",
+        "Run .\\init.ps1 and record evidence before marking this feature passing."
+      ],
+      "user_visible_behavior": "Users can generate scene or background images from storyboard scene descriptions and receive reusable scene asset references.",
+      "task_file": "feature_tasks/7.json"
+    },
+    {
+      "id": 8,
+      "title": "Image Composition Node",
+      "status": "not_started",
+      "verification": [
+        "Read feature_tasks/8.json completely before working on this feature.",
+        "Run .\\init.ps1 and record evidence before marking this feature passing."
+      ],
+      "user_visible_behavior": "Users can combine character assets, scene assets, and shot data into a composed shot image or keyframe.",
+      "task_file": "feature_tasks/8.json"
+    },
+    {
+      "id": 9,
+      "title": "Audio Node",
+      "status": "not_started",
+      "verification": [
+        "Read feature_tasks/9.json completely before working on this feature.",
+        "Run .\\init.ps1 and record evidence before marking this feature passing."
+      ],
+      "user_visible_behavior": "Users can generate voice, singing, or narration audio from dialogue, lyrics, or narration text.",
+      "task_file": "feature_tasks/9.json"
+    },
+    {
+      "id": 10,
+      "title": "Video Node",
+      "status": "not_started",
+      "verification": [
+        "Read feature_tasks/10.json completely before working on this feature.",
+        "Run .\\init.ps1 and record evidence before marking this feature passing."
+      ],
+      "user_visible_behavior": "Users can generate short video clips from image or keyframe input, optional audio, and duration settings.",
+      "task_file": "feature_tasks/10.json"
+    },
+    {
+      "id": 11,
+      "title": "Export Node",
+      "status": "not_started",
+      "verification": [
+        "Read feature_tasks/11.json completely before working on this feature.",
+        "Run .\\init.ps1 and record evidence before marking this feature passing."
+      ],
+      "user_visible_behavior": "Users can assemble selected clips, audio, and export settings into a final comic drama, MV, or short-form video artifact.",
+      "task_file": "feature_tasks/11.json"
+    },
+    {
+      "id": 12,
+      "title": "Minimal Task Status And Retry",
+      "status": "not_started",
+      "verification": [
+        "Read feature_tasks/12.json completely before working on this feature.",
+        "Run .\\init.ps1 and record evidence before marking this feature passing."
+      ],
+      "user_visible_behavior": "Users can see generation task status, recover from failures, retry failed work, and look up generated results consistently across AI nodes.",
+      "task_file": "feature_tasks/12.json"
+    },
+    {
+      "id": 13,
+      "title": "Asset Library MVP",
+      "status": "not_started",
+      "verification": [
+        "Read feature_tasks/13.json completely before working on this feature.",
+        "Run .\\init.ps1 and record evidence before marking this feature passing."
+      ],
+      "user_visible_behavior": "Users can browse, inspect, select, and reuse generated character, scene, image, audio, video, and export assets.",
+      "task_file": "feature_tasks/13.json"
+    },
+    {
+      "id": 14,
+      "title": "Generation History And Version Timeline",
+      "status": "not_started",
+      "verification": [
+        "Read feature_tasks/14.json completely before working on this feature.",
+        "Run .\\init.ps1 and record evidence before marking this feature passing."
+      ],
+      "user_visible_behavior": "Users can review generation attempts, prompt/model metadata, asset versions, selected outputs, and recoverable timeline events.",
+      "task_file": "feature_tasks/14.json"
+    },
+    {
+      "id": 15,
+      "title": "9-Grid Storyboard Node",
+      "status": "not_started",
+      "verification": [
+        "Read feature_tasks/15.json completely before working on this feature.",
+        "Run .\\init.ps1 and record evidence before marking this feature passing."
+      ],
+      "user_visible_behavior": "Users can generate a 9-grid storyboard from selected shots, compositions, or keyframes.",
+      "task_file": "feature_tasks/15.json"
+    },
+    {
+      "id": 16,
+      "title": "Production Auth And Workspace Management",
+      "status": "not_started",
+      "verification": [
+        "Read feature_tasks/16.json completely before working on this feature.",
+        "Run .\\init.ps1 and record evidence before marking this feature passing."
+      ],
+      "user_visible_behavior": "Users can log in, select a workspace, and access projects, assets, tasks, and history through production account and role boundaries.",
+      "task_file": "feature_tasks/16.json"
+    }
+  ]
+}

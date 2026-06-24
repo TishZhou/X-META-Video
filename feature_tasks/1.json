@@ -1,0 +1,107 @@
+{
+  "parent_feature": {
+    "id": 1,
+    "title": "Main Page Design",
+    "status": "not_started"
+  },
+  "features": [
+    {
+      "id": "main-page-001",
+      "title": "Render the product entry page",
+      "user_visible_behavior": "A user can open the app and see an X-META Video entry page instead of a blank screen or generic starter content.",
+      "status": "not_started",
+      "verification": [
+        "Open the app.",
+        "Verify the page shows the X-META Video name.",
+        "Verify the page describes AI comic drama, MV, and short-form video creation.",
+        "Verify the page does not show unrelated conversation or generic template content."
+      ],
+      "evidence": [],
+      "notes": "Frontend-only page shell; no backend, auth, or persistence required."
+    },
+    {
+      "id": "main-page-002",
+      "title": "Add the create-project entry point",
+      "user_visible_behavior": "A user can click a primary Create Project action and see clear project-start choices for comic drama, MV, or short-form video.",
+      "status": "not_started",
+      "verification": [
+        "Open the main page.",
+        "Click Create Project.",
+        "Verify project-start choices become visible.",
+        "Verify the choices are specific to comic drama, MV, and short-form video."
+      ],
+      "evidence": [],
+      "notes": "This is a UI entry state only; actual project creation belongs to Feature 2."
+    },
+    {
+      "id": "main-page-003",
+      "title": "Add recent-work entry points",
+      "user_visible_behavior": "A user can find the recent work area and understand where existing projects can be reopened.",
+      "status": "not_started",
+      "verification": [
+        "Open the main page.",
+        "Locate the recent work area.",
+        "Verify it shows either project cards or a clear empty state.",
+        "Verify the visible action points toward opening or creating project work, not messaging."
+      ],
+      "evidence": [],
+      "notes": "Use static or local placeholder data only until project persistence exists."
+    },
+    {
+      "id": "main-page-004",
+      "title": "Add the workspace entry path",
+      "user_visible_behavior": "A user can click an Enter Workspace action from the main page and reach a clear creative workspace entry placeholder.",
+      "status": "not_started",
+      "verification": [
+        "Open the main page.",
+        "Click Enter Workspace.",
+        "Verify the app shows a workspace entry placeholder or route target.",
+        "Verify the copy makes it clear the full workspace shell is a later feature."
+      ],
+      "evidence": [],
+      "notes": "Do not implement the full canvas or app shell here; that belongs to Feature 2 and Feature 3."
+    },
+    {
+      "id": "main-page-005",
+      "title": "Show the creation workflow preview",
+      "user_visible_behavior": "A user can scan the main page and understand the planned flow from brief to script, storyboard, assets, audio, video, and export.",
+      "status": "not_started",
+      "verification": [
+        "Open the main page.",
+        "Verify the workflow preview includes script, storyboard, character or scene assets, audio, video, and export.",
+        "Verify the workflow reads as a production pipeline, not a messaging UI.",
+        "Verify each workflow item has concise user-facing copy."
+      ],
+      "evidence": [],
+      "notes": "This is a visual orientation element only; node execution is out of scope."
+    },
+    {
+      "id": "main-page-006",
+      "title": "Make the main page responsive",
+      "user_visible_behavior": "A user can use the main page on desktop and mobile sizes without clipped text, overlapping controls, or hidden primary actions.",
+      "status": "not_started",
+      "verification": [
+        "Open the app at a desktop viewport.",
+        "Verify all main page sections align without overlap.",
+        "Open the app at a mobile viewport.",
+        "Verify primary actions, recent work, and workflow preview remain readable and reachable."
+      ],
+      "evidence": [],
+      "notes": "Responsive behavior is part of the main page design definition of done."
+    },
+    {
+      "id": "main-page-007",
+      "title": "Verify main page accessibility basics",
+      "user_visible_behavior": "A keyboard user can tab through the main page actions in a sensible order and understand each action label.",
+      "status": "not_started",
+      "verification": [
+        "Open the main page.",
+        "Use Tab to move through interactive elements.",
+        "Verify focus order follows the visual layout.",
+        "Verify each button or link has a clear accessible label."
+      ],
+      "evidence": [],
+      "notes": "Keep this limited to the main page; full app accessibility coverage belongs to later feature work."
+    }
+  ]
+}

@@ -1,0 +1,214 @@
+# API Contract -- X-META AI Comic / MV Creation Platform
+
+## Purpose
+This document defines the first backend API contract for the React web client and FastAPI backend. It is intentionally compact so agents can implement routes without inventing new boundaries.
+
+Architecture reference: `docs/ARCHITECTURE.md`.
+
+Global rules:
+- Base path is `/api/v1`.
+- All authenticated requests resolve `user_id`, `org_id`, role, and `request_id` on the server.
+- Frontend may send active organization context, but backend must validate membership.
+- Generation endpoints return `task_id`; they do not return final media.
+- Final media is retrieved through task results, asset versions, or signed object URLs.
+- All project-owned reads and writes must filter by `org_id` and relevant `project_id`.
+- Request and response bodies should use Pydantic schemas and stable enum values.
+
+## Common Shapes
+
+### Error Response
+```json
+{
+  "error": {
+    "code": "permission_denied",
+    "message": "You do not have access to this project.",
+    "request_id": "req_123"
+  }
+}
+```
+
+### Task Response
+```json
+{
+  "task_id": "task_123",
+  "project_id": "project_123",
+  "node_id": "node_script_1",
+  "status": "queued"
+}
+```
+
+### Asset Reference
+```json
+{
+  "asset_id": "asset_123",
+  "asset_version_id": "asset_version_456",
+  "type": "character",
+  "storage_object_id": "storage_789"
+}
+```
+
+## Auth and Accounts
+
+| Method | Path | Purpose | Auth |
+|---|---|---|---|
+| `POST` | `/auth/login` | Login and create session/JWT | public |
+| `POST` | `/auth/refresh` | Refresh session/JWT | session |
+| `POST` | `/auth/logout` | Revoke current session | session |
+| `GET` | `/auth/me` | Current user profile | user |
+| `GET` | `/accounts` | Organizations/workspaces visible to user | user |
+| `POST` | `/accounts/active` | Set or confirm active organization | user |
+
+`GET /accounts` response:
+```json
+{
+  "organizations": [
+    { "org_id": "org_123", "name": "Studio A", "role": "editor" }
+  ]
+}
+```
+
+## Projects
+
+| Method | Path | Purpose | Auth |
+|---|---|---|---|
+| `GET` | `/projects` | List projects in active organization | member |
+| `POST` | `/projects` | Create project and default workflow | editor |
+| `GET` | `/projects/{project_id}` | Get project shell and summary state | member |
+| `PATCH` | `/projects/{project_id}` | Rename/update project metadata | editor |
+| `DELETE` | `/projects/{project_id}` | Soft delete project | admin/editor-owner |
+
+Create project request:
+```json
+{
+  "name": "Spring MV",
+  "type": "mv"
+}
+```
+
+Project responses should include current `version` or `updated_at` for optimistic concurrency.
+
+## Workflow Nodes
+
+Workflow APIs support the canvas-based node editor.
+
+| Method | Path | Purpose | Auth |
+|---|---|---|---|
+| `GET` | `/projects/{project_id}/workflow` | Load node graph and edges | member |
+| `PUT` | `/projects/{project_id}/workflow` | Save graph layout, edges, and node order | editor |
+| `GET` | `/projects/{project_id}/nodes/{node_id}` | Load node input/output state | member |
+| `PATCH` | `/projects/{project_id}/nodes/{node_id}` | Save node input, settings, or selected output | editor |
+| `POST` | `/projects/{project_id}/nodes/{node_id}/run` | Create generation task for one node | editor |
+
+Node types:
+```txt
+script
+storyboard
+character_image
+prop_asset
+scene_image
+image_composition
+audio
+video
+export
+```
+
+Node save request:
+```json
+{
+  "input": {},
+  "settings": {},
+  "selected_asset_version_id": "asset_version_456",
+  "base_version": 7
+}
+```
+
+Node run response is the common Task Response.
+
+## Tasks
+
+| Method | Path | Purpose | Auth |
+|---|---|---|---|
+| `GET` | `/tasks/{task_id}` | Get task state and summary | member |
+| `GET` | `/tasks/{task_id}/events` | Get task event timeline | member |
+| `GET` | `/tasks/{task_id}/result` | Get normalized result references | member |
+| `POST` | `/tasks/{task_id}/retry` | Retry failed task or create rerun task | editor |
+| `POST` | `/tasks/{task_id}/cancel` | Cancel queued/running task if supported | editor |
+
+Task statuses:
+```txt
+queued
+running
+succeeded
+failed
+cancelled
+retrying
+```
+
+Task result response:
+```json
+{
+  "task_id": "task_123",
+  "status": "succeeded",
+  "outputs": [
+    {
+      "asset_id": "asset_123",
+      "asset_version_id": "asset_version_456",
+      "storage_object_id": "storage_789",
+      "media_type": "image/png"
+    }
+  ]
+}
+```
+
+## Assets
+
+| Method | Path | Purpose | Auth |
+|---|---|---|---|
+| `GET` | `/assets` | Search visible asset library | member |
+| `GET` | `/assets/{asset_id}` | Get asset metadata and versions | member |
+| `PATCH` | `/assets/{asset_id}` | Update name, tags, library metadata | editor |
+| `POST` | `/assets/{asset_id}/versions/{version_id}/select` | Mark selected version | editor |
+| `POST` | `/assets/{asset_id}/attach` | Attach asset version to project node | editor |
+| `DELETE` | `/assets/{asset_id}` | Soft delete asset | editor/admin |
+
+Asset query filters:
+```txt
+type=character|scene|prop|audio|video|grid|export
+project_id=...
+q=...
+tag=...
+```
+
+Asset metadata must preserve source prompt/input, provider, model, parameters, generation time, parent task, and project link.
+
+## Storyboards and History
+
+| Method | Path | Purpose | Auth |
+|---|---|---|---|
+| `GET` | `/projects/{project_id}/storyboard` | Load current script/storyboard state | member |
+| `POST` | `/projects/{project_id}/storyboard/versions` | Save explicit storyboard version | editor |
+| `GET` | `/projects/{project_id}/history` | List project history events | member |
+| `GET` | `/projects/{project_id}/generation-attempts` | List immutable model attempts | member |
+
+History is normally written by backend services as side effect of user-visible changes and generation completions. Frontend should not create arbitrary history events directly.
+
+## Exports
+
+| Method | Path | Purpose | Auth |
+|---|---|---|---|
+| `POST` | `/projects/{project_id}/exports` | Create export render task | editor |
+| `GET` | `/projects/{project_id}/exports` | List export artifacts | member |
+| `GET` | `/exports/{export_id}` | Get export metadata and status | member |
+| `GET` | `/exports/{export_id}/download-url` | Get short-lived signed download URL | member |
+
+Export creation returns the common Task Response.
+
+## Status Updates
+
+Preferred realtime path:
+```txt
+GET /api/v1/projects/{project_id}/events
+```
+
+This endpoint may use SSE or WebSocket later. It should publish task status changes, node output readiness, and project version changes. Polling `/tasks/{task_id}` is acceptable for MVP fallback.
+
