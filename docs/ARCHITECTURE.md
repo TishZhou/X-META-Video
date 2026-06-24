@@ -8,9 +8,11 @@ This document is the architecture contract for the repository. Agents should use
 Backend route contracts live in `docs/API.md`. Keep route names, request/response shapes, permissions, and task response details there instead of duplicating them in this file.
 
 Core rules:
-- The web client owns user experience, local interaction state, and status display.
-- The web client never calls model providers directly.
+- The Next.js web app owns user experience, page routing, rendering, local interaction state, and status display.
+- Next.js route handlers may act as a thin BFF/proxy layer for the web app, but they must not become the source of truth for domain state.
+- The web app never calls model providers directly.
 - FastAPI owns authentication, authorization, validation, project state, task creation, and task queries.
+- FastAPI remains the final authority for membership, RBAC, project/task/asset/history mutations, and generation orchestration.
 - AI generation, media processing, and export rendering always run asynchronously.
 - PostgreSQL is the source of truth for accounts, projects, tasks, assets, lineage, and history.
 - Object storage stores binary artifacts; PostgreSQL stores metadata and references.
@@ -19,9 +21,9 @@ Core rules:
 ## Layer Diagram
 ```txt
 +------------------------------------------------------------------+
-|                         Web Client (React)                       |
-|  App -> Auth, AccountSwitcher, ProjectBrowser, WorkflowCanvas,   |
-|         ScriptPanel, AssetLibrary, TaskHistory, Preview, Export  |
+|                  Web App (Next.js App Router + React)            |
+|  Layouts, Server Components, Route Handlers/BFF, Auth UI,        |
+|  AccountSwitcher, ProjectBrowser, WorkflowCanvas, AssetLibrary   |
 +------------------------------------------------------------------+
         | HTTPS JSON API + SSE/WebSocket task status updates
         v
@@ -45,18 +47,24 @@ Core rules:
 ```
 
 ## Application Layers
-### Web Client (`apps/web`)
-React + Vite frontend with Tailwind CSS and shadcn/ui.
+### Web App (`apps/web`)
+Next.js App Router + React frontend with Tailwind CSS, shadcn/ui, and selected UI TripleD shadcn blocks.
 
 Owns:
-- Login, active organization selection, and project navigation.
-- Workflow canvas for script, storyboard, character, scene, audio, video, and export nodes.
+- Page routing, layouts, metadata, loading states, and SSR/static rendering where useful.
+- Thin BFF/proxy route handlers for browser-safe API access to FastAPI.
+- Login UX, active organization selection UX, and project navigation UX.
+- Workflow canvas for script, storyboard, character, scene, audio, video, and export nodes. Canvas-heavy surfaces should be client components and may use dynamic imports.
 - Asset library, task status, version history, preview, export, autosave indicators, and confirmation UI.
+- Design-system composition using local shadcn/ui source components first, with UI TripleD shadcn blocks copied and adapted as local source when they fit the product surface.
 
 Must not:
 - Store provider keys, storage credentials, or final authorization logic.
 - Call Seedream, Seedance, TTS, or any model provider directly.
+- Write project, task, asset, history, or membership state directly to PostgreSQL.
+- Create generation tasks outside the FastAPI task APIs.
 - Treat local state as source of truth after refresh or re-login.
+- Import UI TripleD as an opaque runtime dependency or use its Base UI variants without an explicit architecture update.
 
 ### API Layer (`services/api`)
 Python FastAPI application exposing versioned routes under `/api/v1`.
@@ -128,9 +136,9 @@ Roles: Owner manages organization/users/billing/all projects; Admin manages user
 ## Full Data Flow
 ### Account Routing Flow
 ```txt
-1. User logs in through the web client.
+1. User logs in through the Next.js web app.
 2. API validates identity and creates a session/JWT.
-3. Frontend requests available organizations/workspaces.
+3. Next.js web app requests available organizations/workspaces through FastAPI.
 4. User selects the active organization.
 5. Project, asset, task, and history requests carry or infer org context.
 6. API validates membership and role before returning data.
@@ -139,14 +147,14 @@ Roles: Owner manages organization/users/billing/all projects; Admin manages user
 ### Universal Generation Flow
 ```txt
 1. User edits a workflow node input.
-2. Frontend saves the input version through the API.
+2. Next.js web app saves the input version through the FastAPI API.
 3. User starts generation.
 4. API creates a task and enqueues a Redis job.
 5. Worker loads the exact input version and asset version references.
 6. Worker calls ModelGateway.
 7. Worker uploads artifacts to object storage.
 8. Worker writes generation attempts, asset versions, task events, and history.
-9. Frontend receives status updates and reloads normalized outputs.
+9. Next.js web app receives status updates and reloads normalized outputs.
 ```
 
 ### Product Chain Flow
@@ -203,4 +211,3 @@ Log levels:
 - `INFO`: task creation, task completion, user-visible successful actions.
 - `WARN`: retryable provider errors, missing optional data, slow calls.
 - `ERROR`: failed transactions, permission failures, non-retryable provider errors.
-

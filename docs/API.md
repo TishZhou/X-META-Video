@@ -1,14 +1,14 @@
 # API Contract -- X-META AI Comic / MV Creation Platform
 
 ## Purpose
-This document defines the first backend API contract for the React web client and FastAPI backend. It is intentionally compact so agents can implement routes without inventing new boundaries.
+This document defines the first backend API contract between the Next.js web app/BFF layer and the FastAPI backend. It is intentionally compact so agents can implement routes without inventing new boundaries.
 
 Architecture reference: `docs/ARCHITECTURE.md`.
 
 Global rules:
 - Base path is `/api/v1`.
 - All authenticated requests resolve `user_id`, `org_id`, role, and `request_id` on the server.
-- Frontend may send active organization context, but backend must validate membership.
+- The Next.js web app or browser client may send active organization context, but FastAPI must validate membership.
 - Generation endpoints return `task_id`; they do not return final media.
 - Final media is retrieved through task results, asset versions, or signed object URLs.
 - All project-owned reads and writes must filter by `org_id` and relevant `project_id`.
@@ -211,4 +211,3 @@ GET /api/v1/projects/{project_id}/events
 ```
 
 This endpoint may use SSE or WebSocket later. It should publish task status changes, node output readiness, and project version changes. Polling `/tasks/{task_id}` is acceptable for MVP fallback.
-

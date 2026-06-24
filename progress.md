@@ -8,6 +8,7 @@
 - Current highest-priority unfinished feature: Feature 1, Main Page Design
 - Current blocker: none for planning; product implementation has not started
 - Current planning focus: `feature_tasks/1.json` decomposes Main Page Design into minimal UI tasks.
+- Current UI source guidance: use shadcn/ui as the base local component system and UI TripleD shadcn blocks as the preferred external block source.
 
 ## Session Log
 
@@ -58,3 +59,15 @@
 - Files or artifacts updated: `feature_tasks/1.json`, `progress.md`, `sprint-contract.md`, `evaluator-rubric.md`, `session-handoff.md`
 - Known risk or unresolved issue: product implementation has not started; several child tasks intentionally use UI-only placeholders until later feature work adds project persistence, workspace shell, and canvas behavior.
 - Next best step: implement exactly one child task from `feature_tasks/1.json`, starting with `main-page-001`.
+
+### Session 005
+
+- Date: 2026-06-24
+- Goal: Adopt UI TripleD as the preferred external UI block source.
+- Completed: Updated architecture and dependency guidance to use shadcn/ui as the base local component system and UI TripleD shadcn blocks as copied/adapted local source for polished page sections and components.
+- Verification run: UI boundary search; `git diff --check -- docs\ARCHITECTURE.md docs\DEPENDENCIES.md progress.md sprint-contract.md session-handoff.md`; `.\init.ps1`
+- Evidence captured: UI boundary search found the intended UI TripleD/shadcn/Base UI/framer-motion guidance; `git diff --check` produced no errors; `.\init.ps1` passed with Vitest running 1 test file and 2 tests successfully.
+- Commits: not committed.
+- Files or artifacts updated: `docs/ARCHITECTURE.md`, `docs/DEPENDENCIES.md`, `progress.md`, `sprint-contract.md`, `session-handoff.md`
+- Known risk or unresolved issue: no UI TripleD components have been copied yet; `framer-motion` should be added only when a selected block requires it.
+- Next best step: when implementing `main-page-001`, choose a UI TripleD shadcn block, copy only the needed source, normalize imports and tokens, then verify locally.
