@@ -7,7 +7,7 @@
 - Standard verification path: `corepack pnpm --filter @xmeta/web test`
 - Current highest-priority unfinished feature: Feature 1, Main Page Design
 - Current blocker: none.
-- Current planning focus: Feature 1 is in progress; `main-page-001` is implemented and verified with a UI TripleD-inspired animated correction, with `main-page-002` next.
+- Current planning focus: Feature 1 is in progress; `main-page-001` is implemented and verified with a reusable UI TripleD-inspired animated component foundation, with `main-page-002` next.
 - Current UI source guidance: use shadcn/ui as the base local component system and UI TripleD shadcn blocks as the preferred external block source.
 
 ## Session Log
@@ -95,3 +95,15 @@
 - Files or artifacts updated: `apps/web/package.json`, `pnpm-lock.yaml`, `apps/web/src/app/animated-entry-page.tsx`, `apps/web/src/app/main-page-content.ts`, `apps/web/src/app/page.tsx`, `apps/web/src/app/page.test.tsx`, `apps/web/src/components/ui/badge.tsx`, `feature_tasks/1.json`, `progress.md`, `sprint-contract.md`, `evaluator-rubric.md`, `session-handoff.md`.
 - Known risk or unresolved issue: Browser plugin path was unavailable as a callable tool, so rendered QA used Playwright fallback with system Chrome; Feature 1 overall remains incomplete after `main-page-001`.
 - Next best step: implement `main-page-002`, adding the create-project entry state without backend persistence.
+
+### Session 008
+
+- Date: 2026-06-25
+- Goal: Turn the one-off UI TripleD-style homepage animation into reusable animated UI components and add click-to-expand info cards.
+- Completed: Added `apps/web/src/components/ui/triple-motion.tsx` with animated background, link, button, card, panel, and expandable info card primitives; added shadcn/Radix-style `collapsible.tsx`; added `@radix-ui/react-collapsible`; refactored `AnimatedEntryPage` to use the shared motion components; added expandable production mode details.
+- Verification run: baseline `.\init.ps1`; UI TripleD source inspection from the upstream repository; shadcn docs lookup for button, badge, card, collapsible, hover-card, and popover; `corepack pnpm --filter @xmeta/web test`; `corepack pnpm --filter @xmeta/web typecheck`; `corepack pnpm --filter @xmeta/web build`; Browser plugin QA at 1440x900 and 390x844; `git diff --check`; final `.\init.ps1`.
+- Evidence captured: Vitest passed 2 files with 5 tests; TypeScript passed; Next build statically generated `/` and `/icon.svg`; Browser QA found title `X-META Video`, required product copy, `data-uitripled-motion-system="triple-motion"`, animated background/button/card/panel/expandable-card markers, no generic/chat content, no console errors, no horizontal overflow, and production cards that expand from `aria-expanded=false` to `aria-expanded=true` with visible info text and tags on desktop and mobile.
+- Commits: see git history for the final end-of-session commit.
+- Files or artifacts updated: `apps/web/package.json`, `pnpm-lock.yaml`, `apps/web/src/app/animated-entry-page.tsx`, `apps/web/src/app/main-page-content.ts`, `apps/web/src/app/page.test.tsx`, `apps/web/src/components/ui/collapsible.tsx`, `apps/web/src/components/ui/triple-motion.tsx`, `feature_list.json`, `feature_tasks/1.json`, `progress.md`, `sprint-contract.md`, `evaluator-rubric.md`, `session-handoff.md`.
+- Known risk or unresolved issue: Feature 1 overall remains incomplete after `main-page-001`; `main-page-002` through `main-page-007` are still separate not-started child tasks.
+- Next best step: implement `main-page-002`, adding the create-project entry state using the new `triple-motion` component layer.

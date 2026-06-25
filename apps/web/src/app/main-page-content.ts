@@ -4,11 +4,15 @@ export type CreationMode = {
   title: string;
   description: string;
   icon: LucideIcon;
+  infoTitle: string;
+  infoDescription: string;
+  infoItems: string[];
 };
 
 export type CanvasNode = {
   title: string;
   label: string;
+  detail: string;
 };
 
 export const mainPageContent = {
@@ -25,25 +29,53 @@ export const mainPageContent = {
       description:
         "Plan episodic scenes, characters, dialogue, and storyboard beats from one creative brief.",
       icon: Clapperboard,
+      infoTitle: "Expanded production context",
+      infoDescription:
+        "Designed for serialized story planning where one brief branches into plot arcs, character notes, scene beats, and revision-ready storyboard material.",
+      infoItems: ["Scenes", "Dialogue", "Characters"],
     },
     {
       title: "MV creation",
       description:
         "Shape lyrics, mood boards, vocal direction, shot rhythm, and video-ready sequences.",
       icon: Music2,
+      infoTitle: "Expanded production context",
+      infoDescription:
+        "Keeps music-video planning tied to rhythm, vocal direction, visual references, and shot pacing before audio and video generation begins.",
+      infoItems: ["Lyrics", "Mood", "Rhythm"],
     },
     {
       title: "Short-form video",
       description:
         "Turn campaign or story ideas into fast, reusable visual production pipelines.",
       icon: Film,
+      infoTitle: "Expanded production context",
+      infoDescription:
+        "Supports compact visual pipelines where a campaign or story idea becomes reusable hooks, shots, assets, and export-ready variants.",
+      infoItems: ["Hooks", "Variants", "Exports"],
     },
   ] satisfies CreationMode[],
   canvasNodes: [
-    { title: "Brief", label: "Creative intent" },
-    { title: "Script", label: "Plot and shots" },
-    { title: "Assets", label: "Characters and scenes" },
-    { title: "Output", label: "Audio and video" },
+    {
+      title: "Brief",
+      label: "Creative intent",
+      detail: "Capture tone, audience, IP setting, and output goal.",
+    },
+    {
+      title: "Script",
+      label: "Plot and shots",
+      detail: "Convert intent into scenes, dialogue, and camera notes.",
+    },
+    {
+      title: "Assets",
+      label: "Characters and scenes",
+      detail: "Generate reusable visual ingredients for the workflow.",
+    },
+    {
+      title: "Output",
+      label: "Audio and video",
+      detail: "Track downstream voice, music, video, and export nodes.",
+    },
   ] satisfies CanvasNode[],
   capabilityBadges: [
     "Script",

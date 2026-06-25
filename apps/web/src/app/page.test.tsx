@@ -27,5 +27,10 @@ describe("HomePage", () => {
 
     expect(html).toContain('data-uitripled-source="hero-block"');
     expect(html).toContain('data-animation-runtime="framer-motion"');
+    expect(html).toContain('data-uitripled-motion-system="triple-motion"');
+    expect(html).toContain('data-uitripled-component="animated-background"');
+    expect(html).toContain('data-uitripled-component="motion-button"');
+    expect(html).toContain('data-uitripled-component="expandable-info-card"');
+    expect(html.match(/aria-expanded="false"/g)?.length).toBe(3);
   });
 });
