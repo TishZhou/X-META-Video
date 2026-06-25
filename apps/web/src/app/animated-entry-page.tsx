@@ -1,7 +1,14 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ArrowDown, ArrowRight, MonitorPlay, Sparkles } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowRight,
+  MonitorPlay,
+  Plus,
+  Sparkles,
+} from "lucide-react";
+import * as React from "react";
 
 import { mainPageContent } from "./main-page-content";
 import { Badge } from "@/components/ui/badge";
@@ -26,6 +33,8 @@ import {
 } from "@/components/ui/triple-motion";
 
 export function AnimatedEntryPage() {
+  const [showProjectChoices, setShowProjectChoices] = React.useState(false);
+
   return (
     <TripleMotionRoot sourcePattern={mainPageContent.sourcePattern}>
       <TripleMotionBackground>
@@ -84,18 +93,90 @@ export function AnimatedEntryPage() {
                 className="flex flex-col gap-3 sm:flex-row"
                 variants={tripleRevealVariants}
               >
-                <TripleMotionButton href="#production-modes" size="lg">
+                <TripleMotionButton
+                  aria-controls="project-start-choices"
+                  aria-expanded={showProjectChoices}
+                  onClick={() => setShowProjectChoices((current) => !current)}
+                  size="lg"
+                >
+                  <Plus data-icon="inline-start" aria-hidden="true" />
                   {mainPageContent.primaryAction}
                   <ArrowRight data-icon="inline-end" aria-hidden="true" />
                 </TripleMotionButton>
                 <TripleMotionButton
-                  href="#canvas-preview"
+                  href="#production-modes"
                   size="lg"
                   variant="outline"
                 >
                   {mainPageContent.secondaryAction}
                 </TripleMotionButton>
+                <TripleMotionButton
+                  href="#canvas-preview"
+                  size="lg"
+                  variant="ghost"
+                >
+                  {mainPageContent.tertiaryAction}
+                </TripleMotionButton>
               </TripleReveal>
+
+              {showProjectChoices ? (
+                <TripleReveal
+                  className="max-w-3xl"
+                  id="project-start-choices"
+                  variants={tripleRevealVariants}
+                >
+                  <TripleMotionPanel
+                    cardClassName="border-primary/30"
+                    data-project-start-state="open"
+                  >
+                    <CardHeader>
+                      <CardTitle>{mainPageContent.projectStartTitle}</CardTitle>
+                      <CardDescription>
+                        {mainPageContent.projectStartDescription}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="grid gap-3 md:grid-cols-3">
+                      {mainPageContent.projectStartChoices.map((choice) => {
+                        const Icon = choice.icon;
+
+                        return (
+                          <TripleMotionCard
+                            key={choice.title}
+                            cardClassName="shadow-sm"
+                            data-project-start-choice={choice.title}
+                          >
+                            <CardContent className="flex h-full flex-col gap-4 p-5">
+                              <div className="flex items-start justify-between gap-3">
+                                <span className="flex size-9 shrink-0 items-center justify-center rounded-md border bg-muted">
+                                  <Icon aria-hidden="true" className="size-4" />
+                                </span>
+                                <Badge variant="outline">UI-only</Badge>
+                              </div>
+                              <div className="flex flex-1 flex-col gap-2">
+                                <div className="text-base font-medium">
+                                  {choice.title}
+                                </div>
+                                <p className="text-sm leading-6 text-muted-foreground">
+                                  {choice.description}
+                                </p>
+                              </div>
+                              <div className="rounded-md border bg-muted/45 px-3 py-2 text-xs text-muted-foreground">
+                                {choice.output}
+                              </div>
+                            </CardContent>
+                          </TripleMotionCard>
+                        );
+                      })}
+                    </CardContent>
+                  </TripleMotionPanel>
+                </TripleReveal>
+              ) : (
+                <div
+                  data-project-start-state="closed"
+                  hidden
+                  id="project-start-choices"
+                />
+              )}
 
               <TripleStagger
                 className="grid gap-3 sm:grid-cols-3"

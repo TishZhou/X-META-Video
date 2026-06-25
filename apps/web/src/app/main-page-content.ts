@@ -15,14 +15,48 @@ export type CanvasNode = {
   detail: string;
 };
 
+export type ProjectStartChoice = {
+  title: string;
+  description: string;
+  icon: LucideIcon;
+  output: string;
+};
+
 export const mainPageContent = {
   productName: "X-META Video",
   eyebrow: "Node-based AI production workspace",
   heroTitle: "X-META Video",
   heroDescription:
     "A visual AI creation platform for AI comic drama, MV, and short-form video creation, built around reusable script, asset, audio, video, and export workflows.",
-  primaryAction: "Review production modes",
-  secondaryAction: "See canvas direction",
+  primaryAction: "Create Project",
+  secondaryAction: "Review production modes",
+  tertiaryAction: "See canvas direction",
+  projectStartTitle: "Choose a project starting point",
+  projectStartDescription:
+    "These are frontend-only start choices for planning the first creative direction. Real project creation, persistence, and workspace routing arrive in Feature 2.",
+  projectStartChoices: [
+    {
+      title: "AI comic drama",
+      description:
+        "Start from story arcs, characters, scenes, dialogue, and storyboard planning.",
+      icon: Clapperboard,
+      output: "Script and storyboard direction",
+    },
+    {
+      title: "MV creation",
+      description:
+        "Start from lyrics, mood, vocal direction, shot rhythm, and visual references.",
+      icon: Music2,
+      output: "Music-video production brief",
+    },
+    {
+      title: "Short-form video",
+      description:
+        "Start from hook, audience, campaign angle, shot variants, and export intent.",
+      icon: Film,
+      output: "Reusable short-form pipeline",
+    },
+  ] satisfies ProjectStartChoice[],
   productionModes: [
     {
       title: "AI comic drama",

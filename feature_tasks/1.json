@@ -39,14 +39,25 @@
       "id": "main-page-002",
       "title": "Add the create-project entry point",
       "user_visible_behavior": "A user can click a primary Create Project action and see clear project-start choices for comic drama, MV, or short-form video.",
-      "status": "not_started",
+      "status": "passing",
       "verification": [
         "Open the main page.",
         "Click Create Project.",
         "Verify project-start choices become visible.",
         "Verify the choices are specific to comic drama, MV, and short-form video."
       ],
-      "evidence": [],
+      "evidence": [
+        "Changed the primary homepage action to `Create Project` in `apps/web/src/app/main-page-content.ts`.",
+        "Added frontend-only project-start choice content for `AI comic drama`, `MV creation`, and `Short-form video`, each with product-specific descriptions and expected planning output.",
+        "Updated `apps/web/src/app/animated-entry-page.tsx` so clicking `Create Project` toggles a `project-start-choices` panel with `aria-expanded` state and `data-project-start-choice` markers.",
+        "The create-project panel explicitly states that real project creation, persistence, and workspace routing arrive in Feature 2.",
+        "Reused existing local shadcn/ui and `triple-motion` components; no backend, API, auth, routing, persistence, canvas execution, or AI generation behavior was added.",
+        "Updated `apps/web/src/app/page.test.tsx` to assert the `Create Project` entry point, initial closed state, and generic-content rejection.",
+        "`corepack pnpm --filter @xmeta/web test` passed with 2 test files and 6 tests.",
+        "`corepack pnpm --filter @xmeta/web typecheck` passed.",
+        "`corepack pnpm --filter @xmeta/web build` passed and statically generated `/` and `/icon.svg`.",
+        "Playwright QA against `http://localhost:3000` at 1440x900 and 390x844 confirmed `Create Project` changed from `aria-expanded=false` to `aria-expanded=true`, the three project-start choices became visible, Feature 2 boundary copy was visible, no generic chat/starter content appeared, no console errors or page errors occurred, and no horizontal overflow was detected."
+      ],
       "notes": "This is a UI entry state only; actual project creation belongs to Feature 2."
     },
     {

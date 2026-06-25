@@ -7,7 +7,7 @@
 - Standard verification path: `corepack pnpm --filter @xmeta/web test`
 - Current highest-priority unfinished feature: Feature 1, Main Page Design
 - Current blocker: none.
-- Current planning focus: Feature 1 is in progress; `main-page-001` is implemented and verified with a reusable UI TripleD-inspired animated component foundation, with `main-page-002` next.
+- Current planning focus: Feature 1 is in progress; `main-page-001` and `main-page-002` are implemented and verified, with `main-page-003` next.
 - Current UI source guidance: use shadcn/ui as the base local component system and UI TripleD shadcn blocks as the preferred external block source.
 
 ## Session Log
@@ -107,3 +107,15 @@
 - Files or artifacts updated: `apps/web/package.json`, `pnpm-lock.yaml`, `apps/web/src/app/animated-entry-page.tsx`, `apps/web/src/app/main-page-content.ts`, `apps/web/src/app/page.test.tsx`, `apps/web/src/components/ui/collapsible.tsx`, `apps/web/src/components/ui/triple-motion.tsx`, `feature_list.json`, `feature_tasks/1.json`, `progress.md`, `sprint-contract.md`, `evaluator-rubric.md`, `session-handoff.md`.
 - Known risk or unresolved issue: Feature 1 overall remains incomplete after `main-page-001`; `main-page-002` through `main-page-007` are still separate not-started child tasks.
 - Next best step: implement `main-page-002`, adding the create-project entry state using the new `triple-motion` component layer.
+
+### Session 009
+
+- Date: 2026-06-25
+- Goal: Complete Feature 1 small task 2, `main-page-002`.
+- Completed: Changed the main page primary action to `Create Project`; added a frontend-only create-project entry state that opens three project-start choices for AI comic drama, MV creation, and short-form video; included explicit Feature 2 boundary copy for real project creation, persistence, and workspace routing.
+- Verification run: baseline `.\init.ps1`; shadcn project inspection; `corepack pnpm --filter @xmeta/web test`; `corepack pnpm --filter @xmeta/web typecheck`; `corepack pnpm --filter @xmeta/web build`; Playwright QA at desktop and mobile viewports; `git diff --check`; final `.\init.ps1`.
+- Evidence captured: Vitest passed 2 files with 6 tests; TypeScript passed; Next build statically generated `/` and `/icon.svg`; browser QA found title `X-META Video`, `Create Project` toggling from `aria-expanded=false` to `aria-expanded=true`, visible choices for `AI comic drama`, `MV creation`, and `Short-form video`, visible Feature 2 boundary copy, no generic chat/starter content, no console errors, no page errors, and no horizontal overflow.
+- Commits: see git history for the final end-of-session commit.
+- Files or artifacts updated: `apps/web/src/app/animated-entry-page.tsx`, `apps/web/src/app/main-page-content.ts`, `apps/web/src/app/page.test.tsx`, `feature_tasks/1.json`, `progress.md`, `sprint-contract.md`, `evaluator-rubric.md`, `session-handoff.md`.
+- Known risk or unresolved issue: Feature 1 overall remains incomplete after `main-page-002`; recent work, workspace entry, full workflow preview, responsive completion, and accessibility basics remain separate child tasks.
+- Next best step: implement `main-page-003`, adding recent-work entry points with static or local placeholder data only.

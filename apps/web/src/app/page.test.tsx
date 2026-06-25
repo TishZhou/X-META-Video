@@ -31,6 +31,16 @@ describe("HomePage", () => {
     expect(html).toContain('data-uitripled-component="animated-background"');
     expect(html).toContain('data-uitripled-component="motion-button"');
     expect(html).toContain('data-uitripled-component="expandable-info-card"');
-    expect(html.match(/aria-expanded="false"/g)?.length).toBe(3);
+    expect(html.match(/aria-expanded="false"/g)?.length).toBe(4);
+  });
+
+  it("starts with a closed create-project entry point", () => {
+    const html = renderToStaticMarkup(<HomePage />);
+
+    expect(html).toContain("Create Project");
+    expect(html).toContain('aria-controls="project-start-choices"');
+    expect(html).toContain('aria-expanded="false"');
+    expect(html).toContain('data-project-start-state="closed"');
+    expect(html).not.toContain("Real project creation, persistence");
   });
 });
