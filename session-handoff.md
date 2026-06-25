@@ -2,44 +2,48 @@
 
 ## Verified Now
 
-- What is currently working: the root Next.js app route renders the completed X-META Video main page with UI TripleD-inspired shadcn/Framer Motion styling.
-- Feature status: Feature 1, Main Page Design, is recorded as passing. All child tasks `main-page-001` through `main-page-007` are passing in `feature_tasks/1.json`.
-- Main page capabilities: product entry page, Create Project frontend-only choices, recent-work static entries and empty state, Enter Workspace UI-only placeholder, full creation workflow preview, production mode expandable cards, responsive desktop/mobile layout, and basic keyboard/accessibility labeling.
-- What verification actually ran: baseline `.\init.ps1`; shadcn project inspection and official docs lookup; `corepack pnpm --filter @xmeta/web test`; `corepack pnpm --filter @xmeta/web typecheck`; `corepack pnpm --filter @xmeta/web build`; Playwright QA with system Chrome at 1440x900 and 390x844; keyboard focus order QA; `git diff --check`; final `.\init.ps1`.
-- Evidence: Vitest passed 2 files with 10 tests; TypeScript passed; Next build generated `/`, `/_not-found`, and `/icon.svg`; rendered QA confirmed no console/page errors, no horizontal overflow, no generic starter/chat/messaging/conversation content, all required main page sections visible/reachable, `Create Project` opens 3 choices, `Enter Workspace` navigates to `#workspace-entry`, and production mode expansion works.
+- What is currently working: the root entry page renders X-META Video with a real `Enter Workspace` path to `/workspace`, and Feature 2 static workspace prototype routes are implemented.
+- Feature status: Feature 1, Main Page Design, is passing. Feature 2, Interface Design, is passing. All child tasks `interface-design-001` through `interface-design-008` are recorded as passing in `feature_tasks/2.json`.
+- Feature 2 design artifacts:
+  - `docs/INTERFACE_DESIGN.md`: page-function map, MVP screen inventory, information architecture, entry/exit paths, wireframe descriptions, responsive/accessibility notes, and planned/missing backend boundaries.
+  - `docs/WIREFRAMING_GUIDELINES.md`: reusable app shell, toolbar, node card, inspector, asset card, table/list, status, responsive, accessibility, and node-surface rules.
+- Feature 2 prototype routes:
+  - `/workspace`
+  - `/workspace/canvas`
+  - `/workspace/assets`
+  - `/workspace/tasks`
+  - `/workspace/history`
+  - `/workspace/export`
+  - `/workspace/account`
+- What verification actually ran: baseline `.\init.ps1`; JSON validation for `feature_list.json` and all `feature_tasks/*.json`; `corepack pnpm --filter @xmeta/web test`; `corepack pnpm --filter @xmeta/web typecheck`; `corepack pnpm --filter @xmeta/web build`; rendered Browser QA through in-app Browser against `http://127.0.0.1:3002`.
+- Evidence: Vitest passed 3 files with 16 tests; TypeScript passed; Next build generated `/`, `/_not-found`, `/icon.svg`, `/workspace`, `/workspace/account`, `/workspace/assets`, `/workspace/canvas`, `/workspace/export`, `/workspace/history`, and `/workspace/tasks`; Browser QA confirmed desktop `/workspace`, Export navigation interaction, and mobile `/workspace/canvas` with no console warnings/errors, no framework overlay, and no horizontal overflow.
+- Evaluation: `evaluator-rubric.md` is 12 / 12 with a passing recommendation from the evaluation subagent.
 
 ## Changed This Session
 
-- Inserted Feature 2, Interface Design, between Feature 1 and the prior Project Foundation feature.
-- Shifted the prior Feature 2-16 feature sequence to Feature 3-17 in `feature_list.json`.
-- Replaced stale chat-oriented `feature_tasks/2.json` with detailed Interface Design tasks `interface-design-001` through `interface-design-008`.
-- Created corrected `feature_tasks/3.json` for Project Foundation And App Shell and renumbered the remaining task files through `feature_tasks/17.json`.
-- Updated `apps/web/src/app/main-page-content.ts`, `apps/web/src/app/page.test.tsx`, and Feature 1 evidence where earlier boundary copy referenced the old Feature 2/3 numbering.
-- Initialized `sprint-contract.md` and `evaluator-rubric.md` for Feature 2 Interface Design.
-- Updated Feature 2 scope after user clarification: Interface Design now includes initial web page implementation in `apps/web` after design artifacts are produced.
+- Created repository-backed Feature 2 interface design and wireframing documentation.
+- Added static/local workspace prototype pages and shared workspace data/components under `apps/web/src/app/workspace`.
+- Updated the main page workspace entry and recent-work actions to route to `/workspace`.
+- Added render tests for all workspace prototype routes and updated main page render assertions.
+- Updated Feature 2 evidence in `feature_list.json`, `feature_tasks/2.json`, `sprint-contract.md`, `evaluator-rubric.md`, `progress.md`, and this handoff.
 
-## Previous Feature 1 Implementation Changes
+## Boundaries
 
-- `apps/web/src/app/main-page-content.ts`: added recent-work entries, workspace placeholder copy, expanded workflow preview copy and icons.
-- `apps/web/src/app/animated-entry-page.tsx`: added Enter Workspace action, recent-work section, workspace placeholder region, workflow preview markers, responsive structure, and accessibility labels.
-- `apps/web/src/app/page.test.tsx`: added render assertions for recent work, workspace entry placeholder, workflow pipeline, and accessibility markers.
-- `apps/web/src/components/ui/triple-motion.tsx`: set expandable info card wrapper `tabIndex={-1}` so only the internal button is keyboard focusable.
-- Harness artifacts: updated Feature 1 task status/evidence, feature status, sprint contract, evaluator rubric, progress log, and this handoff.
+- Feature 2 pages are static/local prototypes only.
+- Still not implemented: real project creation, saved project/workspace state, production auth, organization switching, RBAC enforcement, FastAPI route behavior, task queue, workers, model gateway/provider calls, generated asset storage, history persistence, canvas drag/zoom/execution, export rendering, downloads, or delivery links.
+- These missing capabilities are labeled in the UI and docs instead of being implied as active.
 
 ## Broken Or Unverified
 
-- Known defect: none found in Feature 1 final QA.
-- Out of scope by design until future features: real project creation, production workspace state, backend/API behavior, auth, project persistence, canvas execution, AI generation, task queue, and workers. Feature 2 may implement static/local page prototypes for these surfaces, but must label missing capabilities honestly.
-- Tooling note: a second `corepack pnpm --filter @xmeta/web dev` attempt failed because an existing Next dev server was already running on `http://localhost:3000`; QA reused that active server.
-- Browser note: Playwright package was available but its bundled Chromium was not installed, so QA used system Chrome at `C:\Program Files\Google\Chrome\Application\chrome.exe`.
-- Worktree note: `AGENTS.md` had a pre-existing user-owned diff and was not changed by the Feature 1 implementation.
+- Known defect in Feature 2: none found by current tests, build, Browser QA, or evaluation.
+- Worktree note: `AGENTS.md` has a pre-existing user-owned diff and was not reverted or included in Feature 2 scope.
+- Local server note: an old Next dev server process was already associated with port 3000. Rendered QA used a production `next start` server on `http://127.0.0.1:3002`.
 
 ## Next Best Step
 
-- Highest-priority unfinished feature: Feature 2, Interface Design.
-- Start by reading `feature_tasks/2.json`, then implement the Interface Design artifacts for page functions, MVP screen inventory, information architecture, UI sketching, and wireframing guidelines.
-- After the design artifacts, implement static/local initial web pages in `apps/web` for workspace overview, workflow canvas, node configuration, asset library, task status, history, export, and account/workspace management.
-- The previous Feature 2, Project Foundation And App Shell, is now Feature 3 and should not start until Feature 2 has repository-backed handoff artifacts and initial page prototypes.
+- Begin Feature 3, Project Foundation And App Shell.
+- Use `docs/INTERFACE_DESIGN.md`, `docs/WIREFRAMING_GUIDELINES.md`, and the static `/workspace` route set as the source of truth for the initial shell.
+- Keep backend, persistence, auth, task, worker, model, and export behavior scoped to their later feature contracts unless Feature 3 explicitly requires a labeled local placeholder.
 
 ## Commands
 

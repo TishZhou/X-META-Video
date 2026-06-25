@@ -55,21 +55,22 @@ describe("HomePage", () => {
     expect(html).toContain('data-recent-work-entry="Midnight chorus MV"');
     expect(html).toContain("Open project outline");
     expect(html).toContain("Open production plan");
-    expect(html).toContain('href="#workspace-entry"');
+    expect(html).toContain('href="/workspace"');
     expect(html).toContain("No saved cloud projects yet");
   });
 
-  it("renders an enter-workspace path to a clear placeholder", () => {
+  it("renders an enter-workspace path to the static prototype", () => {
     const html = renderToStaticMarkup(<HomePage />);
 
     expect(html).toContain("Enter Workspace");
-    expect(html).toContain('aria-label="Enter the workspace placeholder"');
-    expect(html).toContain('href="#workspace-entry"');
+    expect(html).toContain('aria-label="Open the workspace prototype"');
+    expect(html).toContain('href="/workspace"');
     expect(html).toContain('id="workspace-entry"');
     expect(html).toContain("Workspace entry placeholder");
+    expect(html).toContain("Feature 2 now provides static workspace prototype pages");
     expect(html).toContain("functional workspace shell");
-    expect(html).toContain("Initial interface pages arrive in Feature 2");
-    expect(html).toContain("UI-only entry point");
+    expect(html).toContain("Static prototype available");
+    expect(html).toContain("Open workspace prototype");
   });
 
   it("renders the full production workflow preview", () => {

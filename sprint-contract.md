@@ -59,4 +59,23 @@
 | --- | --- |
 | Scope update | Updated Feature 2 so Interface Design includes both design artifacts and initial web page implementation. |
 | User clarification | User clarified that Feature 2 should include page implementation on the web after design, not only planning artifacts. |
-| Implementation | Pending. This sprint contract defines the expanded Feature 2 scope; it does not complete the Interface Design pages yet. |
+| Baseline | `.\init.ps1` passed on 2026-06-25 before Feature 2 implementation. |
+| Planning subagent | Recommended `docs/INTERFACE_DESIGN.md`, `docs/WIREFRAMING_GUIDELINES.md`, `/workspace` prototype routes, shared workspace prototype components, route render tests, desktop/mobile QA, and explicit non-goal labels for backend, persistence, providers, queue, workers, auth, and export rendering. |
+| Implementation | Completed Feature 2 design artifacts and static/local workspace prototype pages: `docs/INTERFACE_DESIGN.md`, `docs/WIREFRAMING_GUIDELINES.md`, `/workspace`, `/workspace/canvas`, `/workspace/assets`, `/workspace/tasks`, `/workspace/history`, `/workspace/export`, and `/workspace/account`. |
+| Verification | JSON validation passed; `corepack pnpm --filter @xmeta/web test` passed 3 files / 16 tests; `corepack pnpm --filter @xmeta/web typecheck` passed; `corepack pnpm --filter @xmeta/web build` passed and generated all Feature 2 workspace routes; Browser QA passed desktop `/workspace`, Export navigation interaction, and mobile `/workspace/canvas` with no console warnings/errors, no framework overlay, and no horizontal overflow. |
+| Evaluation | Evaluation subagent updated `evaluator-rubric.md` with a 12 / 12 score and passing recommendation. |
+
+## Current Implementation Plan
+
+1. Create repository-backed design artifacts:
+   - `docs/INTERFACE_DESIGN.md` for page functions, screen inventory, information architecture, entry/exit paths, wireframe descriptions, responsive/accessibility notes, and implementation boundaries.
+   - `docs/WIREFRAMING_GUIDELINES.md` for reusable app shell, canvas, node card, inspector, asset card, task status, history, export, and account/workspace patterns.
+2. Implement static/local web prototypes:
+   - Add a real `/workspace` entry from the main page.
+   - Add static routes for workspace overview, workflow canvas, asset library, task status, history, export, and account/workspace management.
+   - Use local content data only; do not call or imply backend, persistence, provider, queue, worker, auth, or export-rendering capabilities.
+3. Add tests:
+   - Extend main-page assertions for the `/workspace` entry point.
+   - Add workspace route static render tests covering product language, route visibility, node surfaces, capability boundary labels, accessibility markers, and no generic chat/starter content.
+4. Evaluate and verify:
+   - Run JSON validation, web tests, typecheck, build, rendered desktop/mobile QA, `git diff --check`, and final `.\init.ps1`.

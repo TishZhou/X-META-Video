@@ -77,10 +77,10 @@ export const mainPageContent = {
   ] satisfies RecentWork[],
   workspaceTitle: "Workspace entry placeholder",
   workspaceDescription:
-    "Enter Workspace lands here for now. Initial interface pages arrive in Feature 2; the functional workspace shell, saved projects, canvas routing, and execution controls are later Feature 3 and Feature 4 work.",
-  workspaceStatus: "UI-only entry point",
+    "Feature 2 now provides static workspace prototype pages. The functional workspace shell, saved projects, canvas execution, and backend state remain later Feature 3 and Feature 4 work.",
+  workspaceStatus: "Static prototype available",
   workspaceActionsNote:
-    "Use this placeholder to confirm the entry path before real project state, backend persistence, and canvas execution exist.",
+    "Open the prototype to review the planned workspace, canvas, assets, tasks, history, export, and account surfaces before real project state exists.",
   projectStartTitle: "Choose a project starting point",
   projectStartDescription:
     "These are frontend-only start choices for planning the first creative direction. Initial interface pages arrive in Feature 2; real project creation and persistence arrive in Feature 3.",

@@ -5,9 +5,9 @@ Record the major decisions and progess every day, do not delete former progress.
 - Repository root: `D:\X-META-Video`
 - Standard startup path: `.\init.ps1`
 - Standard verification path: `corepack pnpm --filter @xmeta/web test`
-- Current highest-priority unfinished feature: Feature 2, Interface Design
-- Current blocker: none for Feature 2 scope; Feature 2 design artifacts and initial web page prototypes are still pending implementation.
-- Current completed feature: Feature 1, Main Page Design, is passing with all child tasks `main-page-001` through `main-page-007` recorded as passing.
+- Current highest-priority unfinished feature: Feature 3, Project Foundation And App Shell
+- Current blocker: none for Feature 3 startup scope; backend and persistence layers remain planned future work.
+- Current completed features: Feature 1, Main Page Design, and Feature 2, Interface Design, are passing. Feature 2 child tasks `interface-design-001` through `interface-design-008` are recorded as passing.
 - Current UI source guidance: use shadcn/ui as the base local component system and UI TripleD shadcn blocks as the preferred external block source.
 
 ## Session Log
@@ -43,3 +43,15 @@ Record the major decisions and progess every day, do not delete former progress.
 - Evidence captured: Feature 2 now explicitly requires initial web pages or sections for workspace overview, workflow canvas, node configuration, asset library, task status, history, export, and account/workspace management using static/local data only.
 - Known risk or unresolved issue: Feature 2 remains `not_started`; no actual Feature 2 design artifacts or web page prototypes have been implemented yet. `AGENTS.md` still has a pre-existing user-owned diff and was not reverted.
 - Next best step: implement Feature 2 in order, starting with repository-backed design artifacts and then static/local initial pages in `apps/web`.
+
+### Session 014
+
+- Date: 2026-06-25
+- Goal: Complete Feature 2, Interface Design, by following the startup workflow, using separate planning/coding/evaluation subagents, implementing repository-backed design artifacts and static web page prototypes, verifying them, and recording evidence.
+- Completed: Created `docs/INTERFACE_DESIGN.md` with page-function map, MVP screen inventory, information architecture, wireframe descriptions, responsive/accessibility notes, and explicit planned/missing backend boundaries; created `docs/WIREFRAMING_GUIDELINES.md` with reusable layout and node-surface rules; added `/workspace` plus `/workspace/canvas`, `/workspace/assets`, `/workspace/tasks`, `/workspace/history`, `/workspace/export`, and `/workspace/account`; updated the main page Enter Workspace and recent-work links to `/workspace`; added workspace route render tests.
+- Verification run: baseline `.\init.ps1`; JSON syntax validation for `feature_list.json` and all `feature_tasks/*.json`; `corepack pnpm --filter @xmeta/web test`; `corepack pnpm --filter @xmeta/web typecheck`; `corepack pnpm --filter @xmeta/web build`; Browser QA through in-app Browser against `http://127.0.0.1:3002` at 1440x900 and 390x844.
+- Evidence captured: Vitest passed 3 files with 16 tests; TypeScript passed; Next build statically generated `/`, `/_not-found`, `/icon.svg`, `/workspace`, `/workspace/account`, `/workspace/assets`, `/workspace/canvas`, `/workspace/export`, `/workspace/history`, and `/workspace/tasks`; Browser QA confirmed desktop `/workspace` page identity, route map, static/local boundary labels, no console warnings/errors, no framework overlay, no horizontal overflow; Browser QA clicked the Export route and confirmed disabled preview-only export copy plus no-renderer boundary; mobile `/workspace/canvas` showed canvas and inspector content with no horizontal overflow or console warnings/errors.
+- Evaluation: planning subagent produced a scoped implementation plan; coding subagent created the initial design docs and first workspace routes before main-thread completion; evaluation subagent updated `evaluator-rubric.md` with 12 / 12 and passing recommendation.
+- Files or artifacts updated: `docs/INTERFACE_DESIGN.md`, `docs/WIREFRAMING_GUIDELINES.md`, `apps/web/src/app/animated-entry-page.tsx`, `apps/web/src/app/main-page-content.ts`, `apps/web/src/app/page.test.tsx`, `apps/web/src/app/workspace/**`, `feature_list.json`, `feature_tasks/2.json`, `progress.md`, `sprint-contract.md`, `evaluator-rubric.md`, `session-handoff.md`.
+- Known risk or unresolved issue: Feature 2 pages are intentionally static/local prototypes. Real project creation, production auth, FastAPI APIs, persistence, task queue, workers, model calls, asset storage, history persistence, canvas execution, and export rendering remain future features. `AGENTS.md` still has a pre-existing user-owned diff and was not reverted.
+- Next best step: begin Feature 3, Project Foundation And App Shell, using the Feature 2 design docs and `/workspace` prototype routes as the handoff basis.

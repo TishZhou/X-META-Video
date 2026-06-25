@@ -28,7 +28,7 @@
     {
       "id": 2,
       "title": "Interface Design",
-      "status": "not_started",
+      "status": "passing",
       "verification": [
         "Read feature_tasks/2.json completely before working on this feature.",
         "Run .\\init.ps1 and record evidence before marking this feature passing."

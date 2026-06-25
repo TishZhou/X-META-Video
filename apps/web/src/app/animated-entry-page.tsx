@@ -109,8 +109,8 @@ export function AnimatedEntryPage() {
                   <ArrowRight data-icon="inline-end" aria-hidden="true" />
                 </TripleMotionButton>
                 <TripleMotionButton
-                  aria-label="Enter the workspace placeholder"
-                  href="#workspace-entry"
+                  aria-label="Open the workspace prototype"
+                  href="/workspace"
                   size="lg"
                   variant="outline"
                 >
@@ -331,7 +331,7 @@ export function AnimatedEntryPage() {
                         <TripleMotionButton
                           aria-label={`${item.action}: ${item.title}`}
                           className="w-full justify-between"
-                          href="#workspace-entry"
+                          href="/workspace"
                           size="sm"
                           variant="outline"
                         >
@@ -385,13 +385,13 @@ export function AnimatedEntryPage() {
                   {mainPageContent.workspaceActionsNote}
                 </p>
                 <TripleMotionButton
-                  aria-label="Create a project direction from the workspace placeholder"
+                  aria-label="Open the workspace prototype from the entry bridge"
                   className="w-full justify-between"
-                  onClick={() => setShowProjectChoices(true)}
+                  href="/workspace"
                   size="lg"
                 >
-                  Create project direction
-                  <Plus data-icon="inline-end" aria-hidden="true" />
+                  Open workspace prototype
+                  <DoorOpen data-icon="inline-end" aria-hidden="true" />
                 </TripleMotionButton>
               </CardContent>
             </TripleMotionPanel>
