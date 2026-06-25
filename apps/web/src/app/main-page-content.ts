@@ -89,6 +89,9 @@ export const mainPageContent = {
       infoItems: ["Hooks", "Variants", "Exports"],
     },
   ] satisfies CreationMode[],
+  productionModesTitle: "Production modes",
+  productionModesDescription:
+    "Each mode keeps its own creative starting point while staying connected to the same node-based production chain.",
   canvasNodes: [
     {
       title: "Brief",

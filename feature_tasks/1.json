@@ -31,7 +31,8 @@
         "Interaction check: the first production mode card changed from `aria-expanded=false` to `aria-expanded=true`, `data-state=open` was present, and the expanded info copy plus `Scenes`, `Dialogue`, and `Characters` tags became visible on desktop and mobile.",
         "Interaction check: `Review production modes` navigated to `#production-modes`; `See canvas direction` navigated to `#canvas-preview`.",
         "Animation check: the scroll indicator changed position during a timed browser probe, confirming live Framer Motion animation was active.",
-        "`.\u005cinit.ps1` passed after implementation; Vitest ran 2 files with 5 passing tests."
+        "`.\u005cinit.ps1` passed after implementation; Vitest ran 2 files with 5 passing tests.",
+        "Reflowed the main page with `ui-ux-pro-max` layout priorities while preserving the existing shadcn/UI TripleD style: left hero + actions, right canvas preview, and a separate production modes band."
       ],
       "notes": "Frontend-only page shell; no backend, auth, or persistence required."
     },
@@ -56,7 +57,8 @@
         "`corepack pnpm --filter @xmeta/web test` passed with 2 test files and 6 tests.",
         "`corepack pnpm --filter @xmeta/web typecheck` passed.",
         "`corepack pnpm --filter @xmeta/web build` passed and statically generated `/` and `/icon.svg`.",
-        "Playwright QA against `http://localhost:3000` at 1440x900 and 390x844 confirmed `Create Project` changed from `aria-expanded=false` to `aria-expanded=true`, the three project-start choices became visible, Feature 2 boundary copy was visible, no generic chat/starter content appeared, no console errors or page errors occurred, and no horizontal overflow was detected."
+        "Playwright QA against `http://localhost:3000` at 1440x900 and 390x844 confirmed `Create Project` changed from `aria-expanded=false` to `aria-expanded=true`, the three project-start choices became visible, Feature 2 boundary copy was visible, no generic chat/starter content appeared, no console errors or page errors occurred, and no horizontal overflow was detected.",
+        "Repositioned the create-project choices into the canvas preview panel during the `ui-ux-pro-max` layout reflow; the primary action remains visible and stable in desktop and mobile open/closed states."
       ],
       "notes": "This is a UI entry state only; actual project creation belongs to Feature 2."
     },

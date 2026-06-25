@@ -7,7 +7,7 @@
 - Standard verification path: `corepack pnpm --filter @xmeta/web test`
 - Current highest-priority unfinished feature: Feature 1, Main Page Design
 - Current blocker: none.
-- Current planning focus: Feature 1 is in progress; `main-page-001` and `main-page-002` are implemented and verified, with `main-page-003` next.
+- Current planning focus: Feature 1 is in progress; `main-page-001` and `main-page-002` are implemented and verified, the main page has been reflowed with `ui-ux-pro-max` layout priorities, and `main-page-003` is next.
 - Current UI source guidance: use shadcn/ui as the base local component system and UI TripleD shadcn blocks as the preferred external block source.
 
 ## Session Log
@@ -118,4 +118,16 @@
 - Commits: see git history for the final end-of-session commit.
 - Files or artifacts updated: `apps/web/src/app/animated-entry-page.tsx`, `apps/web/src/app/main-page-content.ts`, `apps/web/src/app/page.test.tsx`, `feature_tasks/1.json`, `progress.md`, `sprint-contract.md`, `evaluator-rubric.md`, `session-handoff.md`.
 - Known risk or unresolved issue: Feature 1 overall remains incomplete after `main-page-002`; recent work, workspace entry, full workflow preview, responsive completion, and accessibility basics remain separate child tasks.
+- Next best step: implement `main-page-003`, adding recent-work entry points with static or local placeholder data only.
+
+### Session 010
+
+- Date: 2026-06-25
+- Goal: Re-layout the main page using `ui-ux-pro-max` while preserving the existing shadcn/UI TripleD style.
+- Completed: Reflowed the root page into a clearer left hero/action column, right canvas preview/create-project panel, and separate production modes band; kept the existing motion style, shadcn tokens, Create Project behavior, and production mode expandable cards; removed the floating scroll hint after it overlapped the production mode band.
+- Verification run: baseline `.\init.ps1`; shadcn project inspection; `ui-ux-pro-max` skill read from the requested GitHub repository; `corepack pnpm --filter @xmeta/web test`; `corepack pnpm --filter @xmeta/web typecheck`; `corepack pnpm --filter @xmeta/web build`; Playwright QA at 1440x900 and 390x844; `git diff --check`; final `.\init.ps1`.
+- Evidence captured: Vitest passed 2 files with 6 tests; TypeScript passed; Next build statically generated `/` and `/icon.svg`; browser QA found the `pro-reflow` layout marker, visible `Create Project`, stable H1 position between closed/open states, choices for `AI comic drama`, `MV creation`, and `Short-form video`, expandable production mode cards, no generic chat/starter content, no console errors, no page errors, no horizontal overflow, and no lingering floating overlay.
+- Commits: see git history for the final end-of-session commit.
+- Files or artifacts updated: `apps/web/src/app/animated-entry-page.tsx`, `apps/web/src/app/main-page-content.ts`, `apps/web/src/app/page.test.tsx`, `apps/web/src/components/ui/triple-motion.tsx`, `feature_tasks/1.json`, `progress.md`, `sprint-contract.md`, `evaluator-rubric.md`, `session-handoff.md`.
+- Known risk or unresolved issue: Feature 1 overall remains incomplete; recent work, workspace entry, full workflow preview, responsive completion, and accessibility basics remain separate child tasks. The requested external skill could not be installed through the Python helper because this Windows environment only exposes a Python Store placeholder, so the repository was cloned to a temp directory and read directly.
 - Next best step: implement `main-page-003`, adding recent-work entry points with static or local placeholder data only.

@@ -88,7 +88,7 @@ export function TripleMotionBackground({
   return (
     <section
       className={cn(
-        "relative flex min-h-screen w-full items-center justify-center overflow-hidden border-b bg-background",
+        "relative flex min-h-dvh w-full items-center justify-center overflow-hidden border-b bg-background",
         className,
       )}
       data-uitripled-component="animated-background"
@@ -206,7 +206,7 @@ export function TripleMotionButton({
   const shouldReduceMotion = useReducedMotion();
   const classes = cn(
     buttonVariants({ size, variant }),
-    "will-change-transform",
+    "cursor-pointer touch-manipulation will-change-transform",
     className,
   );
   const hover = shouldReduceMotion ? undefined : { y: -2 };
@@ -377,7 +377,7 @@ export function TripleExpandableInfoCard({
               <button
                 aria-controls={contentId}
                 aria-expanded={open}
-                className="flex w-full items-start gap-3 p-6 text-left outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                className="flex w-full cursor-pointer touch-manipulation items-start gap-3 p-6 text-left outline-none focus-visible:ring-1 focus-visible:ring-ring"
                 type="button"
               >
                 <span className="flex size-8 shrink-0 items-center justify-center rounded-md border bg-muted">

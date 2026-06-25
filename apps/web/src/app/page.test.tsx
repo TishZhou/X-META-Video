@@ -25,6 +25,7 @@ describe("HomePage", () => {
   it("uses the UI TripleD-inspired Framer Motion treatment", () => {
     const html = renderToStaticMarkup(<HomePage />);
 
+    expect(html).toContain('data-uiux-pro-max-layout="pro-reflow"');
     expect(html).toContain('data-uitripled-source="hero-block"');
     expect(html).toContain('data-animation-runtime="framer-motion"');
     expect(html).toContain('data-uitripled-motion-system="triple-motion"');
