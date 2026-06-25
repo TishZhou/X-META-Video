@@ -29,7 +29,7 @@ If baseline verification is failing, repair that first before adding new scope. 
 - **Label missing capabilities honestly**: If backend, connector, orchestration, audit, or persistence layers are missing, mark them clearly instead of implying they exist
 - **Maintainess and Concise Code**: When we build, we should make the code clean and reusable, don't write repeated content.
 - **Use harness creator Skill** to update artifacts
-- **Use shadcn Skill** to use shadcn and design UI
+- **Use shadcn Skill** to use shadcn based UI TripleD，Use our designed assets on priority
 
 ## Required Artifacts
 - `docs/ARCHITECTURE.md`: layer boundaries and data flow
