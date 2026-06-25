@@ -2,36 +2,32 @@
 
 ## Verified Now
 
-- What is currently working: the root Next.js app route renders the X-META Video product entry page through reusable local UI TripleD-inspired shadcn/Framer Motion components, with a `ui-ux-pro-max` reflowed layout.
-- Current layout: left hero/action column, right canvas preview panel with the Create Project expanded state, and a separate production modes band below the first viewport.
-- What verification actually ran: baseline `.\init.ps1`; shadcn project inspection; `ui-ux-pro-max` skill read from the requested GitHub repository; `corepack pnpm --filter @xmeta/web test`; `corepack pnpm --filter @xmeta/web typecheck`; `corepack pnpm --filter @xmeta/web build`; Playwright QA against the running dev server; `git diff --check`; final `.\init.ps1`.
-- Evidence: Vitest passed 2 files with 6 tests; TypeScript passed; Next build statically generated `/` and `/icon.svg`; desktop 1440x900 and mobile 390x844 QA confirmed the `pro-reflow` layout marker, visible `Create Project`, stable H1 position between open/closed states, project-start choices for `AI comic drama`, `MV creation`, and `Short-form video`, expandable production cards, no generic chat/starter content, no console errors, no page errors, no horizontal overflow, and no lingering floating overlay.
+- What is currently working: the root Next.js app route renders the completed X-META Video main page with UI TripleD-inspired shadcn/Framer Motion styling.
+- Feature status: Feature 1, Main Page Design, is recorded as passing. All child tasks `main-page-001` through `main-page-007` are passing in `feature_tasks/1.json`.
+- Main page capabilities: product entry page, Create Project frontend-only choices, recent-work static entries and empty state, Enter Workspace UI-only placeholder, full creation workflow preview, production mode expandable cards, responsive desktop/mobile layout, and basic keyboard/accessibility labeling.
+- What verification actually ran: baseline `.\init.ps1`; shadcn project inspection and official docs lookup; `corepack pnpm --filter @xmeta/web test`; `corepack pnpm --filter @xmeta/web typecheck`; `corepack pnpm --filter @xmeta/web build`; Playwright QA with system Chrome at 1440x900 and 390x844; keyboard focus order QA; `git diff --check`; final `.\init.ps1`.
+- Evidence: Vitest passed 2 files with 10 tests; TypeScript passed; Next build generated `/`, `/_not-found`, and `/icon.svg`; rendered QA confirmed no console/page errors, no horizontal overflow, no generic starter/chat/messaging/conversation content, all required main page sections visible/reachable, `Create Project` opens 3 choices, `Enter Workspace` navigates to `#workspace-entry`, and production mode expansion works.
 
 ## Changed This Session
 
-- Layout: `apps/web/src/app/animated-entry-page.tsx` now uses a clearer main-grid rhythm instead of keeping hero actions, create choices, production modes, and canvas preview in one stacked-left composition.
-- Create Project state: project-start choices now render inside the canvas preview panel when open, keeping the left hero/action column stable.
-- Production modes: expandable production mode cards moved into a separate band with heading and concise description.
-- Interaction polish: `apps/web/src/components/ui/triple-motion.tsx` now uses `min-h-dvh`, `cursor-pointer`, and `touch-manipulation` for better mobile/touch behavior.
-- Test coverage: `apps/web/src/app/page.test.tsx` now asserts `data-uiux-pro-max-layout="pro-reflow"`.
-- Harness artifacts: `feature_tasks/1.json`, `progress.md`, `sprint-contract.md`, and `evaluator-rubric.md` record the layout correction and evidence.
+- `apps/web/src/app/main-page-content.ts`: added recent-work entries, workspace placeholder copy, expanded workflow preview copy and icons.
+- `apps/web/src/app/animated-entry-page.tsx`: added Enter Workspace action, recent-work section, workspace placeholder region, workflow preview markers, responsive structure, and accessibility labels.
+- `apps/web/src/app/page.test.tsx`: added render assertions for recent work, workspace entry placeholder, workflow pipeline, and accessibility markers.
+- `apps/web/src/components/ui/triple-motion.tsx`: set expandable info card wrapper `tabIndex={-1}` so only the internal button is keyboard focusable.
+- Harness artifacts: updated Feature 1 task status/evidence, feature status, sprint contract, evaluator rubric, progress log, and this handoff.
 
 ## Broken Or Unverified
 
-- Known defect: none for the reflowed main page.
-- Out of scope by design: real project creation, workspace routing, project persistence, backend/API behavior, auth, canvas execution, AI generation, task queue, and asset library.
-- Tooling note: the requested `ui-ux-pro-max` skill could not be installed via its Python helper because this Windows environment only has a Python Store placeholder. The repository was cloned to a temp directory and read directly.
-- Browser note: Browser/IAB tools were not exposed for this turn, so rendered QA used Playwright fallback.
-- Feature status: Feature 1 remains in progress because only `main-page-001`, `main-page-002`, and this layout correction are complete.
-- Remaining child tasks: `main-page-003` through `main-page-007` are still `not_started`.
-- Commit status: see git history for the final end-of-session commit.
+- Known defect: none found in Feature 1 final QA.
+- Out of scope by design: real project creation, workspace shell, backend/API behavior, auth, project persistence, canvas execution, AI generation, asset library, task queue, and workers.
+- Tooling note: a second `corepack pnpm --filter @xmeta/web dev` attempt failed because an existing Next dev server was already running on `http://localhost:3000`; QA reused that active server.
+- Browser note: Playwright package was available but its bundled Chromium was not installed, so QA used system Chrome at `C:\Program Files\Google\Chrome\Application\chrome.exe`.
+- Worktree note: `AGENTS.md` had a pre-existing user-owned diff and was not changed by the Feature 1 implementation.
 
 ## Next Best Step
 
-- Highest-priority unfinished task: implement `main-page-003` from `feature_tasks/1.json`.
-- Why it is next: users can now start a new project direction, but the main page still needs recent-work entry points for reopening existing work or understanding the empty state.
-- Recommended UI approach: keep it UI-only, use static or local placeholder data only, reuse existing shadcn/ui and `triple-motion` components, and avoid project persistence until Feature 2.
-- What must not change during that step: backend, auth, project persistence, canvas execution, AI generation, asset library, and unrelated feature task files.
+- Highest-priority unfinished feature: Feature 2, Project Foundation And App Shell.
+- Start by reading `feature_tasks/2.json`, updating `sprint-contract.md`, initializing `evaluator-rubric.md`, and keeping backend/persistence boundaries honest unless the Feature 2 task explicitly requires them.
 
 ## Commands
 

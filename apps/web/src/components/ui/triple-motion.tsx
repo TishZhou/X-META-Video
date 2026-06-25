@@ -358,6 +358,7 @@ export function TripleExpandableInfoCard({
         className={className}
         data-state={open ? "open" : "closed"}
         data-uitripled-component="expandable-info-card"
+        tabIndex={-1}
         variants={tripleItemVariants}
         whileHover={shouldReduceMotion ? undefined : { y: -6, scale: 1.02 }}
         whileTap={shouldReduceMotion ? undefined : { scale: 0.99 }}

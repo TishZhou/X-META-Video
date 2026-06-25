@@ -1,4 +1,14 @@
-import { Clapperboard, Film, Music2, type LucideIcon } from "lucide-react";
+import {
+  BookOpenText,
+  Clapperboard,
+  Film,
+  Image,
+  Mic2,
+  Music2,
+  PenLine,
+  Share2,
+  type LucideIcon,
+} from "lucide-react";
 
 export type CreationMode = {
   title: string;
@@ -13,6 +23,7 @@ export type CanvasNode = {
   title: string;
   label: string;
   detail: string;
+  icon: LucideIcon;
 };
 
 export type ProjectStartChoice = {
@@ -22,6 +33,14 @@ export type ProjectStartChoice = {
   output: string;
 };
 
+export type RecentWork = {
+  title: string;
+  format: string;
+  status: string;
+  description: string;
+  action: string;
+};
+
 export const mainPageContent = {
   productName: "X-META Video",
   eyebrow: "Node-based AI production workspace",
@@ -29,8 +48,39 @@ export const mainPageContent = {
   heroDescription:
     "A visual AI creation platform for AI comic drama, MV, and short-form video creation, built around reusable script, asset, audio, video, and export workflows.",
   primaryAction: "Create Project",
+  workspaceAction: "Enter Workspace",
   secondaryAction: "Review production modes",
   tertiaryAction: "See canvas direction",
+  recentWorkTitle: "Recent work",
+  recentWorkDescription:
+    "Static local examples show where existing projects will reopen once project persistence is added.",
+  recentWorkEmptyLabel: "No saved cloud projects yet",
+  recentWorkEmptyDescription:
+    "Create a project direction or enter the workspace placeholder to continue shaping production work. Inbox-style entry points are intentionally not part of this surface.",
+  recentWorkItems: [
+    {
+      title: "Neon alley comic pilot",
+      format: "AI comic drama",
+      status: "Storyboard draft",
+      description:
+        "Open a saved-style entry for scenes, characters, dialogue beats, and nine-grid planning.",
+      action: "Open project outline",
+    },
+    {
+      title: "Midnight chorus MV",
+      format: "MV creation",
+      status: "Audio direction",
+      description:
+        "Return to lyrics, rhythm notes, visual references, and clip sequencing.",
+      action: "Open production plan",
+    },
+  ] satisfies RecentWork[],
+  workspaceTitle: "Workspace entry placeholder",
+  workspaceDescription:
+    "Enter Workspace lands here for now. The full workspace shell, saved projects, canvas routing, and execution controls are later Feature 2 and Feature 3 work.",
+  workspaceStatus: "UI-only entry point",
+  workspaceActionsNote:
+    "Use this placeholder to confirm the entry path before real project state, backend persistence, and canvas execution exist.",
   projectStartTitle: "Choose a project starting point",
   projectStartDescription:
     "These are frontend-only start choices for planning the first creative direction. Real project creation, persistence, and workspace routing arrive in Feature 2.",
@@ -94,24 +144,40 @@ export const mainPageContent = {
     "Each mode keeps its own creative starting point while staying connected to the same node-based production chain.",
   canvasNodes: [
     {
-      title: "Brief",
-      label: "Creative intent",
-      detail: "Capture tone, audience, IP setting, and output goal.",
-    },
-    {
       title: "Script",
-      label: "Plot and shots",
-      detail: "Convert intent into scenes, dialogue, and camera notes.",
+      label: "Plot, dialogue, and camera notes",
+      detail: "Turn the creative brief into scene structure and usable writing material.",
+      icon: PenLine,
     },
     {
-      title: "Assets",
-      label: "Characters and scenes",
-      detail: "Generate reusable visual ingredients for the workflow.",
+      title: "Storyboard",
+      label: "Shot list and production beats",
+      detail: "Map story moments into panels, shot timing, and visual direction.",
+      icon: BookOpenText,
     },
     {
-      title: "Output",
-      label: "Audio and video",
-      detail: "Track downstream voice, music, video, and export nodes.",
+      title: "Character and scene assets",
+      label: "Reusable production library",
+      detail: "Generate characters, locations, props, and scene references for reuse.",
+      icon: Image,
+    },
+    {
+      title: "Audio",
+      label: "Voice, narration, or singing",
+      detail: "Convert dialogue, lyrics, or narration into timed audio direction.",
+      icon: Mic2,
+    },
+    {
+      title: "Video",
+      label: "Clips from images and audio",
+      detail: "Prepare generated keyframes and sound for short video sequences.",
+      icon: Film,
+    },
+    {
+      title: "Export",
+      label: "Final comic drama, MV, or short",
+      detail: "Assemble selected clips, audio, and versions into a deliverable.",
+      icon: Share2,
     },
   ] satisfies CanvasNode[],
   capabilityBadges: [
@@ -122,8 +188,9 @@ export const mainPageContent = {
     "Video",
     "Export",
   ],
-  previewTitle: "Canvas-first production",
+  previewTitle: "Creation workflow preview",
   previewDescription:
-    "The workspace direction is a Figma-like AI workflow canvas where every generation step is represented as a reusable node.",
+    "A production pipeline preview for how future workspace nodes move work from writing to assets, audio, video, and export.",
+  previewMeta: "Static orientation only",
   sourcePattern: "UI TripleD Hero Block motion pattern",
 };

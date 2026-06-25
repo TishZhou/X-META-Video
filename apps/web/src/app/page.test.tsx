@@ -19,6 +19,7 @@ describe("HomePage", () => {
     expect(html).not.toContain("vite");
     expect(html).not.toContain("next.js starter");
     expect(html).not.toContain("chat");
+    expect(html).not.toContain("messaging");
     expect(html).not.toContain("conversation");
   });
 
@@ -43,5 +44,59 @@ describe("HomePage", () => {
     expect(html).toContain('aria-expanded="false"');
     expect(html).toContain('data-project-start-state="closed"');
     expect(html).not.toContain("Real project creation, persistence");
+  });
+
+  it("renders recent-work entry points that lead to project work", () => {
+    const html = renderToStaticMarkup(<HomePage />);
+
+    expect(html).toContain("Recent work");
+    expect(html).toContain('data-recent-work-state="local-examples"');
+    expect(html).toContain('data-recent-work-entry="Neon alley comic pilot"');
+    expect(html).toContain('data-recent-work-entry="Midnight chorus MV"');
+    expect(html).toContain("Open project outline");
+    expect(html).toContain("Open production plan");
+    expect(html).toContain('href="#workspace-entry"');
+    expect(html).toContain("No saved cloud projects yet");
+  });
+
+  it("renders an enter-workspace path to a clear placeholder", () => {
+    const html = renderToStaticMarkup(<HomePage />);
+
+    expect(html).toContain("Enter Workspace");
+    expect(html).toContain('aria-label="Enter the workspace placeholder"');
+    expect(html).toContain('href="#workspace-entry"');
+    expect(html).toContain('id="workspace-entry"');
+    expect(html).toContain("Workspace entry placeholder");
+    expect(html).toContain("full workspace shell");
+    expect(html).toContain("later Feature 2 and Feature 3 work");
+    expect(html).toContain("UI-only entry point");
+  });
+
+  it("renders the full production workflow preview", () => {
+    const html = renderToStaticMarkup(<HomePage />);
+
+    expect(html).toContain("Creation workflow preview");
+    expect(html).toContain('data-workflow-preview="production-pipeline"');
+    expect(html).toContain('data-workflow-step="Script"');
+    expect(html).toContain('data-workflow-step="Storyboard"');
+    expect(html).toContain(
+      'data-workflow-step="Character and scene assets"',
+    );
+    expect(html).toContain('data-workflow-step="Audio"');
+    expect(html).toContain('data-workflow-step="Video"');
+    expect(html).toContain('data-workflow-step="Export"');
+    expect(html).toContain("Static orientation only");
+  });
+
+  it("includes accessibility and responsive section markers", () => {
+    const html = renderToStaticMarkup(<HomePage />);
+
+    expect(html).toContain('role="banner"');
+    expect(html).toContain('role="region"');
+    expect(html).toContain('aria-labelledby="workflow-preview-title"');
+    expect(html).toContain('aria-labelledby="recent-work-title"');
+    expect(html).toContain('aria-labelledby="workspace-entry-title"');
+    expect(html).toContain('aria-label="Create a project direction"');
+    expect(html).toContain('aria-label="See creation workflow preview"');
   });
 });

@@ -1,61 +1,60 @@
-# Sprint Contract - Feature 1 Main Page Pro Layout Reflow
+# Sprint Contract - Feature 1 Main Page Completion
 
 ## Sprint Overview
 
-**Sprint:** Feature-1-layout-pro-reflow
+**Sprint:** Feature-1-main-page-completion
 **Feature:** Feature 1, Main Page Design
-**Small task:** Main page layout correction after `main-page-002`
-**Goal:** Use the `ui-ux-pro-max` design rules to reflow the main page while preserving the existing shadcn/UI TripleD visual style and current frontend-only behavior.
+**Small tasks:** `main-page-003` through `main-page-007`
+**Goal:** Complete the remaining main page entry experience in order: recent work, workspace entry placeholder, full workflow preview, responsive behavior, and accessibility basics.
 
 ## Scope
 
 ### In Scope
 
-- Keep the app root as the X-META Video product entry page.
-- Preserve the existing shadcn/ui + local UI TripleD-inspired `triple-motion` visual language.
-- Improve first-viewport information hierarchy, spacing, line length, touch targets, and desktop/mobile layout balance.
-- Keep the `Create Project` interaction and its three frontend-only project-start choices.
-- Keep production mode expandable cards, but move them into a clearer page rhythm.
-- Use `ui-ux-pro-max` priority checks: accessibility, touch/interaction, responsive layout, style consistency, typography/color, and meaningful motion.
-- Record verification evidence after implementation.
+- Add recent-work entry points using static/local placeholder data only.
+- Add an `Enter Workspace` action that reaches a clear UI-only workspace entry placeholder.
+- Expand the workflow preview so users can scan the planned pipeline from brief to script, storyboard, assets, audio, video, and export.
+- Preserve the current shadcn/ui plus local UI TripleD-inspired `triple-motion` visual system.
+- Improve desktop and mobile layout so primary actions, recent work, and workflow preview stay readable and reachable.
+- Verify keyboard focus order and accessible labels for main page actions.
+- Record evidence in `feature_tasks/1.json`, `feature_list.json`, `progress.md`, `sprint-contract.md`, `evaluator-rubric.md`, and `session-handoff.md`.
 
 ### Out of Scope
 
-- Changing the product brand, color system, component library, or UI TripleD/shadcn style.
-- Creating real projects, routes, workspace records, backend calls, persistence, auth, canvas execution, AI generation, asset library, task queue, or workers.
-- Completing `main-page-003` recent work, `main-page-004` workspace path, or later Feature 1 tasks.
-- Importing UI TripleD as an opaque runtime dependency or switching to UI TripleD Base UI variants.
+- Real project creation, project persistence, auth, account routing, backend APIs, FastAPI changes, queues, workers, AI generation, asset library, task status, or canvas execution.
+- Full workspace shell implementation; that belongs to Feature 2.
+- Full workflow canvas behavior; that belongs to Feature 3.
+- Any unrelated feature task files.
 
 ## Acceptance Criteria
 
-1. Opening the app root still renders an X-META Video entry page.
-2. The page keeps the existing UI TripleD/shadcn motion style and component markers.
-3. The first viewport has clearer layout hierarchy than the previous stacked-left-column treatment.
-4. `Create Project` still reveals project-start choices for AI comic drama, MV creation, and short-form video.
-5. Production mode cards remain reachable and expandable.
-6. Desktop and mobile layouts have no horizontal overflow, clipped text, overlapping controls, or hidden primary actions.
-7. The page does not show unrelated chat, messaging, or generic starter content.
-8. Verification evidence is recorded in `progress.md`, `sprint-contract.md`, `evaluator-rubric.md`, and `session-handoff.md`.
-9. `.\init.ps1` passes after implementation.
+1. `main-page-003`: The main page shows a recent work area with project cards or an empty state, and actions point toward opening or creating project work.
+2. `main-page-004`: `Enter Workspace` leads to a visible workspace entry placeholder that states the full workspace shell is later work.
+3. `main-page-005`: The workflow preview includes script, storyboard, character or scene assets, audio, video, and export with concise user-facing copy.
+4. `main-page-006`: Desktop and mobile layouts have no clipped text, overlapping controls, horizontal overflow, or hidden primary actions.
+5. `main-page-007`: Keyboard tab order is sensible and interactive elements have clear labels or text.
+6. The page remains product-specific to X-META Video and does not show unrelated chat, messaging, or starter-template content.
+7. `.\init.ps1` passes after implementation.
 
 ## Verification Plan
 
-1. Run baseline `.\init.ps1`.
-2. Inspect shadcn project config and existing installed components.
-3. Apply `ui-ux-pro-max` design checks manually because local Python is unavailable for its search CLI.
-4. Run focused render tests for required content, style markers, and layout marker.
-5. Run `corepack pnpm --filter @xmeta/web test`.
-6. Run `corepack pnpm --filter @xmeta/web typecheck`.
-7. Run `corepack pnpm --filter @xmeta/web build`.
-8. Run rendered QA at desktop and mobile viewports, checking page identity, layout, Create Project interaction, production card expansion, console/page errors, and horizontal overflow.
-9. Run `git diff --check`.
-10. Run final `.\init.ps1`.
+1. Baseline already run: `.\init.ps1` passed before implementation.
+2. Run focused render tests with `corepack pnpm --filter @xmeta/web test`.
+3. Run `corepack pnpm --filter @xmeta/web typecheck`.
+4. Run `corepack pnpm --filter @xmeta/web build`.
+5. Run rendered QA at desktop `1440x900` and mobile `390x844`.
+6. During rendered QA verify recent work, workspace entry placeholder, workflow preview content, create-project interaction, production card expansion, no console/page errors, no horizontal overflow, and keyboard tab order.
+7. Run `git diff --check`.
+8. Run final `.\init.ps1`.
 
 ## Sprint Log
 
 | Phase | Outcome |
 | --- | --- |
-| Scope update | Selected Feature 1 main page layout correction; work stays inside the already-active Main Page Design feature and does not advance unrelated feature tasks. |
-| Design rules | Applied `ui-ux-pro-max` priorities manually: accessibility, touch target clarity, responsive breakpoints, consistent style, semantic tokens, one primary CTA, and motion continuity. |
-| Implementation | Reflowed the page into a stable left hero/action column, right canvas preview/create-project panel, and separate production modes band; removed the floating scroll hint that overlapped content. |
-| Verification | Vitest, typecheck, Next build, Playwright desktop/mobile QA, `git diff --check`, and final `.\init.ps1` passed. |
+| Scope update | Selected Feature 1 remaining tasks `main-page-003` through `main-page-007`; work stays in the main page UI and harness artifacts. |
+| Baseline | `.\init.ps1` passed before implementation with Vitest running 2 files and 6 tests. |
+| Planning subagent | Confirmed ordered plan, likely files, verification commands, and risks. |
+| Implementation | Added recent-work local entries, workspace entry placeholder, expanded workflow preview, responsive layout coverage, and keyboard/accessibility fixes for Framer Motion focus behavior. |
+| Evaluation pass 1 | Evaluation subagent accepted UI implementation at 10 / 12 and identified stale status artifacts plus unrelated pre-existing `AGENTS.md` diff. |
+| Artifact update | Updated `feature_list.json`, `feature_tasks/1.json`, `progress.md`, and `session-handoff.md` to record Feature 1 completion evidence. |
+| Verification | Vitest, typecheck, Next build, rendered desktop/mobile QA, keyboard focus QA, `git diff --check`, and final `.\init.ps1` passed. |

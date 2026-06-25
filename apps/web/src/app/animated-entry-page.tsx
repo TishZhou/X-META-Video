@@ -1,7 +1,14 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ArrowRight, MonitorPlay, Plus, Sparkles } from "lucide-react";
+import {
+  ArrowRight,
+  DoorOpen,
+  FolderOpen,
+  MonitorPlay,
+  Plus,
+  Sparkles,
+} from "lucide-react";
 import * as React from "react";
 
 import { mainPageContent } from "./main-page-content";
@@ -91,6 +98,7 @@ export function AnimatedEntryPage() {
                 variants={tripleRevealVariants}
               >
                 <TripleMotionButton
+                  aria-label="Create a project direction"
                   aria-controls="project-start-choices"
                   aria-expanded={showProjectChoices}
                   onClick={() => setShowProjectChoices((current) => !current)}
@@ -101,13 +109,24 @@ export function AnimatedEntryPage() {
                   <ArrowRight data-icon="inline-end" aria-hidden="true" />
                 </TripleMotionButton>
                 <TripleMotionButton
-                  href="#production-modes"
+                  aria-label="Enter the workspace placeholder"
+                  href="#workspace-entry"
                   size="lg"
                   variant="outline"
+                >
+                  <DoorOpen data-icon="inline-start" aria-hidden="true" />
+                  {mainPageContent.workspaceAction}
+                </TripleMotionButton>
+                <TripleMotionButton
+                  aria-label="Review production modes"
+                  href="#production-modes"
+                  size="lg"
+                  variant="secondary"
                 >
                   {mainPageContent.secondaryAction}
                 </TripleMotionButton>
                 <TripleMotionButton
+                  aria-label="See creation workflow preview"
                   href="#canvas-preview"
                   size="lg"
                   variant="ghost"
@@ -119,15 +138,26 @@ export function AnimatedEntryPage() {
 
             <TripleStagger
               className="flex min-w-0 flex-col justify-center"
+              aria-labelledby="workflow-preview-title"
               id="canvas-preview"
+              role="region"
               variants={tripleContainerVariants}
             >
               <TripleMotionPanel cardClassName="h-full">
                 <CardHeader>
-                  <CardTitle>{mainPageContent.previewTitle}</CardTitle>
-                  <CardDescription>
-                    {mainPageContent.previewDescription}
-                  </CardDescription>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="flex min-w-0 flex-col gap-2">
+                      <CardTitle id="workflow-preview-title">
+                        {mainPageContent.previewTitle}
+                      </CardTitle>
+                      <CardDescription>
+                        {mainPageContent.previewDescription}
+                      </CardDescription>
+                    </div>
+                    <Badge className="w-fit" variant="outline">
+                      {mainPageContent.previewMeta}
+                    </Badge>
+                  </div>
                 </CardHeader>
                 <CardContent className="flex flex-col gap-5">
                   {showProjectChoices ? (
@@ -195,27 +225,44 @@ export function AnimatedEntryPage() {
 
                   <TripleStagger
                     className="rounded-lg border bg-background p-4"
+                    data-workflow-preview="production-pipeline"
                     variants={tripleContainerVariants}
                   >
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      {mainPageContent.canvasNodes.map((node) => (
-                        <TripleMotionCard
-                          key={node.title}
-                          cardClassName="shadow-sm"
-                        >
-                          <CardContent className="flex flex-col gap-1 p-4">
-                            <div className="text-sm font-medium">
-                              {node.title}
-                            </div>
-                            <div className="text-xs text-muted-foreground">
-                              {node.label}
-                            </div>
-                            <p className="text-xs leading-5 text-muted-foreground">
-                              {node.detail}
-                            </p>
-                          </CardContent>
-                        </TripleMotionCard>
-                      ))}
+                    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                      {mainPageContent.canvasNodes.map((node, index) => {
+                        const Icon = node.icon;
+
+                        return (
+                          <TripleMotionCard
+                            key={node.title}
+                            cardClassName="shadow-sm"
+                            data-workflow-step={node.title}
+                            interactive={false}
+                          >
+                            <CardContent className="flex h-full flex-col gap-3 p-4">
+                              <div className="flex items-start justify-between gap-3">
+                                <span className="flex size-9 shrink-0 items-center justify-center rounded-md border bg-muted">
+                                  <Icon aria-hidden="true" className="size-4" />
+                                </span>
+                                <Badge variant="secondary">
+                                  {String(index + 1).padStart(2, "0")}
+                                </Badge>
+                              </div>
+                              <div className="flex flex-col gap-1">
+                                <div className="text-sm font-medium">
+                                  {node.title}
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                  {node.label}
+                                </div>
+                              </div>
+                              <p className="text-xs leading-5 text-muted-foreground">
+                                {node.detail}
+                              </p>
+                            </CardContent>
+                          </TripleMotionCard>
+                        );
+                      })}
                     </div>
                   </TripleStagger>
                   <TripleReveal
@@ -232,6 +279,123 @@ export function AnimatedEntryPage() {
               </TripleMotionPanel>
             </TripleStagger>
           </div>
+
+          <TripleStagger
+            aria-labelledby="recent-work-title"
+            className="grid gap-5 pb-10 lg:grid-cols-[minmax(0,1fr)_minmax(320px,0.55fr)] lg:items-stretch"
+            id="recent-work"
+            role="region"
+            variants={tripleContainerVariants}
+          >
+            <TripleMotionPanel cardClassName="h-full">
+              <CardHeader>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="flex min-w-0 flex-col gap-2">
+                    <CardTitle id="recent-work-title">
+                      {mainPageContent.recentWorkTitle}
+                    </CardTitle>
+                    <CardDescription>
+                      {mainPageContent.recentWorkDescription}
+                    </CardDescription>
+                  </div>
+                  <span className="flex size-10 shrink-0 items-center justify-center rounded-md border bg-muted">
+                    <FolderOpen aria-hidden="true" className="size-4" />
+                  </span>
+                </div>
+              </CardHeader>
+              <CardContent className="flex flex-col gap-4">
+                <div
+                  className="grid gap-3 md:grid-cols-2"
+                  data-recent-work-state="local-examples"
+                >
+                  {mainPageContent.recentWorkItems.map((item) => (
+                    <TripleMotionCard
+                      key={item.title}
+                      cardClassName="shadow-sm"
+                      data-recent-work-entry={item.title}
+                      interactive={false}
+                    >
+                      <CardContent className="flex h-full flex-col gap-4 p-4">
+                        <div className="flex flex-wrap gap-2">
+                          <Badge variant="secondary">{item.format}</Badge>
+                          <Badge variant="outline">{item.status}</Badge>
+                        </div>
+                        <div className="flex flex-1 flex-col gap-2">
+                          <div className="text-base font-medium">
+                            {item.title}
+                          </div>
+                          <p className="text-sm leading-6 text-muted-foreground">
+                            {item.description}
+                          </p>
+                        </div>
+                        <TripleMotionButton
+                          aria-label={`${item.action}: ${item.title}`}
+                          className="w-full justify-between"
+                          href="#workspace-entry"
+                          size="sm"
+                          variant="outline"
+                        >
+                          {item.action}
+                          <ArrowRight
+                            data-icon="inline-end"
+                            aria-hidden="true"
+                          />
+                        </TripleMotionButton>
+                      </CardContent>
+                    </TripleMotionCard>
+                  ))}
+                </div>
+                <div
+                  className="rounded-lg border bg-muted/35 p-4"
+                  data-recent-work-empty-state="available"
+                >
+                  <div className="text-sm font-medium">
+                    {mainPageContent.recentWorkEmptyLabel}
+                  </div>
+                  <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                    {mainPageContent.recentWorkEmptyDescription}
+                  </p>
+                </div>
+              </CardContent>
+            </TripleMotionPanel>
+
+            <TripleMotionPanel
+              aria-labelledby="workspace-entry-title"
+              cardClassName="h-full"
+              id="workspace-entry"
+              role="region"
+            >
+              <CardHeader>
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex min-w-0 flex-col gap-2">
+                    <CardTitle id="workspace-entry-title">
+                      {mainPageContent.workspaceTitle}
+                    </CardTitle>
+                    <CardDescription>
+                      {mainPageContent.workspaceDescription}
+                    </CardDescription>
+                  </div>
+                  <Badge className="shrink-0" variant="outline">
+                    {mainPageContent.workspaceStatus}
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="flex flex-col gap-4">
+                <p className="text-sm leading-6 text-muted-foreground">
+                  {mainPageContent.workspaceActionsNote}
+                </p>
+                <TripleMotionButton
+                  aria-label="Create a project direction from the workspace placeholder"
+                  className="w-full justify-between"
+                  onClick={() => setShowProjectChoices(true)}
+                  size="lg"
+                >
+                  Create project direction
+                  <Plus data-icon="inline-end" aria-hidden="true" />
+                </TripleMotionButton>
+              </CardContent>
+            </TripleMotionPanel>
+          </TripleStagger>
 
           <TripleStagger
             className="grid gap-5 pb-10 lg:grid-cols-[minmax(220px,0.42fr)_minmax(0,1fr)] lg:items-start"
