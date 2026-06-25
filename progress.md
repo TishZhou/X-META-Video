@@ -55,3 +55,14 @@ Record the major decisions and progess every day, do not delete former progress.
 - Files or artifacts updated: `docs/INTERFACE_DESIGN.md`, `docs/WIREFRAMING_GUIDELINES.md`, `apps/web/src/app/animated-entry-page.tsx`, `apps/web/src/app/main-page-content.ts`, `apps/web/src/app/page.test.tsx`, `apps/web/src/app/workspace/**`, `feature_list.json`, `feature_tasks/2.json`, `progress.md`, `sprint-contract.md`, `evaluator-rubric.md`, `session-handoff.md`.
 - Known risk or unresolved issue: Feature 2 pages are intentionally static/local prototypes. Real project creation, production auth, FastAPI APIs, persistence, task queue, workers, model calls, asset storage, history persistence, canvas execution, and export rendering remain future features. `AGENTS.md` still has a pre-existing user-owned diff and was not reverted.
 - Next best step: begin Feature 3, Project Foundation And App Shell, using the Feature 2 design docs and `/workspace` prototype routes as the handoff basis.
+
+### Session 015
+
+- Date: 2026-06-25
+- Goal: Use only the UI/UX evaluator workflow to review Feature 2 pages for duplicated information and layout issues, then make a low-risk UI cleanup.
+- Findings: the workspace prototype repeated static/local backend boundary information in the page header, boundary card, and content cards; the canvas selected Script node repeated inputs/output details already shown in the inspector; mobile canvas spent too much first-screen space on prototype framing before production content.
+- Completed: compressed the workspace shell prototype status from three header badges into one `Static prototype` badge; condensed default prototype boundary copy into a compact `Prototype limits` strip; reduced selected-node duplication by sending selected-node inputs, dependencies, output, and task status to the inspector instead of repeating them in the canvas card.
+- Verification run: `corepack pnpm --filter @xmeta/web test`; `corepack pnpm --filter @xmeta/web typecheck`; `corepack pnpm --filter @xmeta/web build`; Browser audit against `http://127.0.0.1:3002` for desktop `/workspace`, desktop `/workspace/canvas`, and mobile `/workspace/canvas`.
+- Evidence captured: tests passed 3 files / 16 tests; typecheck passed; build generated all static routes; Browser audit confirmed no console warnings/errors, no horizontal overflow, header boundary phrase counts reduced, and selected Script card now defers repeated detail to the inspector.
+- Known risk or unresolved issue: larger product-shell restructuring is still better handled by Feature 3. `AGENTS.md` still has a pre-existing user-owned diff and was not reverted.
+- Next best step: continue into Feature 3 with the cleaned static workspace prototype as the shell starting point.

@@ -58,8 +58,8 @@ export function WorkspaceShell({
       className="min-h-screen bg-background text-foreground"
       data-workspace-prototype="static-local"
     >
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-5 py-5 sm:px-8 lg:px-10">
-        <header className="flex flex-col gap-5 border-b pb-5">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-5 px-5 py-5 sm:px-8 lg:px-10">
+        <header className="flex flex-col gap-4 border-b pb-5">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="flex max-w-3xl flex-col gap-3">
               <Link
@@ -80,14 +80,13 @@ export function WorkspaceShell({
                 </p>
               </div>
             </div>
-            <div
-              aria-label="Prototype boundary"
-              className="flex flex-wrap gap-2 lg:max-w-sm lg:justify-end"
+            <Badge
+              aria-label="Prototype boundary: static local interface only"
+              className="w-fit lg:mt-1"
+              variant="secondary"
             >
-              <Badge variant="secondary">Static/local</Badge>
-              <Badge variant="outline">No backend calls</Badge>
-              <Badge variant="outline">No persistence</Badge>
-            </div>
+              Static prototype
+            </Badge>
           </div>
           <nav
             aria-label="Workspace routes"
@@ -139,19 +138,22 @@ export function SectionHeader({ description, id, title }: SectionHeaderProps) {
 
 export function BoundaryNotice({
   items = prototypeBoundaries,
-  title = "Feature 2 prototype boundary",
+  title = "Prototype limits",
 }: BoundaryNoticeProps) {
   return (
     <section
       aria-labelledby="prototype-boundary-title"
-      className="rounded-lg border bg-muted/35 p-4"
+      className="rounded-lg border bg-muted/30 px-4 py-3"
       data-capability-boundary="static-local"
     >
-      <div className="flex flex-col gap-3">
-        <div className="text-sm font-medium" id="prototype-boundary-title">
+      <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:gap-4">
+        <div
+          className="shrink-0 text-sm font-medium"
+          id="prototype-boundary-title"
+        >
           {title}
         </div>
-        <ul className="grid gap-2 text-sm leading-6 text-muted-foreground md:grid-cols-2">
+        <ul className="flex flex-wrap gap-x-4 gap-y-1 text-sm leading-6 text-muted-foreground">
           {items.map((item) => (
             <li className="flex gap-2" key={item}>
               <span aria-hidden="true">-</span>
@@ -218,19 +220,28 @@ export function NodeCard({ node, selected = false }: NodeCardProps) {
         </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
-        <div className="flex flex-col gap-2">
-          <div className="text-sm font-medium">Inputs</div>
-          <div className="flex flex-wrap gap-2">
-            {node.inputs.map((input) => (
-              <Badge key={input} variant="outline">
-                {input}
-              </Badge>
-            ))}
+        {selected ? (
+          <div className="rounded-md border bg-muted/35 px-3 py-2 text-sm leading-6 text-muted-foreground">
+            Inputs, dependencies, output, and task status are shown in the
+            inspector to avoid repeating selected-node detail on the canvas.
           </div>
-        </div>
-        <div className="rounded-md border bg-muted/35 px-3 py-2 text-sm text-muted-foreground">
-          Output: {node.output}
-        </div>
+        ) : (
+          <>
+            <div className="flex flex-col gap-2">
+              <div className="text-sm font-medium">Inputs</div>
+              <div className="flex flex-wrap gap-2">
+                {node.inputs.map((input) => (
+                  <Badge key={input} variant="outline">
+                    {input}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+            <div className="rounded-md border bg-muted/35 px-3 py-2 text-sm text-muted-foreground">
+              Output: {node.output}
+            </div>
+          </>
+        )}
       </CardContent>
     </Card>
   );

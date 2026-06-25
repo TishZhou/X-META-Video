@@ -18,6 +18,7 @@
 - What verification actually ran: baseline `.\init.ps1`; JSON validation for `feature_list.json` and all `feature_tasks/*.json`; `corepack pnpm --filter @xmeta/web test`; `corepack pnpm --filter @xmeta/web typecheck`; `corepack pnpm --filter @xmeta/web build`; rendered Browser QA through in-app Browser against `http://127.0.0.1:3002`.
 - Evidence: Vitest passed 3 files with 16 tests; TypeScript passed; Next build generated `/`, `/_not-found`, `/icon.svg`, `/workspace`, `/workspace/account`, `/workspace/assets`, `/workspace/canvas`, `/workspace/export`, `/workspace/history`, and `/workspace/tasks`; Browser QA confirmed desktop `/workspace`, Export navigation interaction, and mobile `/workspace/canvas` with no console warnings/errors, no framework overlay, and no horizontal overflow.
 - Evaluation: `evaluator-rubric.md` is 12 / 12 with a passing recommendation from the evaluation subagent.
+- UI/UX cleanup after evaluator review: workspace shell now uses one `Static prototype` badge instead of three repeated boundary badges, route boundary copy is compressed into a compact `Prototype limits` strip, and the selected Script node defers repeated inputs/output/task detail to the inspector.
 
 ## Changed This Session
 
@@ -26,6 +27,7 @@
 - Updated the main page workspace entry and recent-work actions to route to `/workspace`.
 - Added render tests for all workspace prototype routes and updated main page render assertions.
 - Updated Feature 2 evidence in `feature_list.json`, `feature_tasks/2.json`, `sprint-contract.md`, `evaluator-rubric.md`, `progress.md`, and this handoff.
+- Refined workspace prototype density after UI/UX evaluator review by reducing repeated prototype/status information and selected-node detail duplication.
 
 ## Boundaries
 

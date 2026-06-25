@@ -127,9 +127,8 @@ export const workspaceRoutes: WorkspaceRoute[] = [
 
 export const prototypeBoundaries = [
   "Static/local page prototype only",
-  "No production auth, RBAC, or organization switching",
-  "No project persistence, autosave, or backend mutations",
-  "No model gateway, provider calls, queue, workers, or export rendering",
+  "No backend calls; No persistence, autosave, or organization switching",
+  "No model gateway, provider queue, workers, or export rendering",
 ];
 
 export const overviewHighlights = [
