@@ -1,13 +1,14 @@
 {
   "parent_feature": {
     "id": 3,
-    "title": "Workflow Canvas Foundation",
+    "title": "Project Foundation And App Shell",
     "status": "not_started"
   },
   "planning_status": "pending_decomposition",
   "notes": [
     "Small features must be added here before implementation starts.",
-    "Keep this file focused on Workflow Canvas Foundation only."
+    "Keep this file focused on Project Foundation And App Shell only.",
+    "Read feature_tasks/2.json and any Interface Design handoff artifacts before implementing this feature."
   ],
   "small_features": []
 }

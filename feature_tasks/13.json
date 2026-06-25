@@ -1,13 +1,13 @@
 {
   "parent_feature": {
     "id": 13,
-    "title": "Asset Library MVP",
+    "title": "Minimal Task Status And Retry",
     "status": "not_started"
   },
   "planning_status": "pending_decomposition",
   "notes": [
     "Small features must be added here before implementation starts.",
-    "Keep this file focused on Asset Library MVP only."
+    "Keep this file focused on Minimal Task Status And Retry only."
   ],
   "small_features": []
 }

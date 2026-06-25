@@ -1,12 +1,12 @@
 # Progress Log
-
+Record the major decisions and progess every day, do not delete former progress.
 ## Current Verified State
 
 - Repository root: `D:\X-META-Video`
 - Standard startup path: `.\init.ps1`
 - Standard verification path: `corepack pnpm --filter @xmeta/web test`
-- Current highest-priority unfinished feature: Feature 2, Project Foundation And App Shell
-- Current blocker: none for Feature 1.
+- Current highest-priority unfinished feature: Feature 2, Interface Design
+- Current blocker: none for Feature 2 insertion; Feature 2 design artifacts are still pending implementation.
 - Current completed feature: Feature 1, Main Page Design, is passing with all child tasks `main-page-001` through `main-page-007` recorded as passing.
 - Current UI source guidance: use shadcn/ui as the base local component system and UI TripleD shadcn blocks as the preferred external block source.
 
@@ -22,4 +22,14 @@
 - Commits: pending in this session until final safe-state commit.
 - Files or artifacts updated: `apps/web/src/app/animated-entry-page.tsx`, `apps/web/src/app/main-page-content.ts`, `apps/web/src/app/page.test.tsx`, `apps/web/src/components/ui/triple-motion.tsx`, `feature_list.json`, `feature_tasks/1.json`, `progress.md`, `sprint-contract.md`, `evaluator-rubric.md`, `session-handoff.md`.
 - Known risk or unresolved issue: `AGENTS.md` has a pre-existing user-owned diff in the worktree and was not reverted or included in Feature 1 scope.
-- Next best step: begin Feature 2, Project Foundation And App Shell, after reading `feature_tasks/2.json` and updating the next sprint contract.
+- Next best step: begin Feature 2, Interface Design, by implementing `interface-design-001` through `interface-design-008` in `feature_tasks/2.json` and producing repository-backed page-function, wireframe, responsive, accessibility, and handoff artifacts.
+
+### Session 012
+
+- Date: 2026-06-25
+- Goal: Insert a new Feature 2, Interface Design, between Feature 1 and the previous Feature 2, and write the new Feature 2 task file in the detailed Feature 1 task format.
+- Completed: Added Feature 2, Interface Design, to `feature_list.json`; shifted the prior Feature 2-16 sequence to Feature 3-17; replaced stale chat-oriented `feature_tasks/2.json`; created a detailed `feature_tasks/2.json` with `interface-design-001` through `interface-design-008`; created corrected `feature_tasks/3.json` for Project Foundation And App Shell; renumbered moved task files through `feature_tasks/17.json`; initialized `sprint-contract.md` and `evaluator-rubric.md` for Feature 2.
+- Verification run: baseline `.\init.ps1` passed before artifact updates.
+- Evidence captured: planning subagent confirmed the safe renumbering strategy and stale `feature_tasks/2.json` mismatch; coding subagent drafted the Interface Design task decomposition; `feature_list.json` now shows Interface Design as Feature 2 and Project Foundation And App Shell as Feature 3.
+- Known risk or unresolved issue: Feature 2 implementation artifacts are not created yet, so Feature 2 remains `not_started`; `AGENTS.md` still has a pre-existing user-owned diff and was not reverted.
+- Next best step: implement Feature 2 design artifacts and record evidence in `feature_tasks/2.json`, `sprint-contract.md`, `evaluator-rubric.md`, `progress.md`, and `session-handoff.md`.

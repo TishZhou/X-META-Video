@@ -1,13 +1,13 @@
 {
   "parent_feature": {
     "id": 14,
-    "title": "Generation History And Version Timeline",
+    "title": "Asset Library MVP",
     "status": "not_started"
   },
   "planning_status": "pending_decomposition",
   "notes": [
     "Small features must be added here before implementation starts.",
-    "Keep this file focused on Generation History And Version Timeline only."
+    "Keep this file focused on Asset Library MVP only."
   ],
   "small_features": []
 }

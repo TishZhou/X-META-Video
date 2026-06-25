@@ -1,18 +1,122 @@
 {
+  "parent_feature": {
+    "id": 2,
+    "title": "Interface Design",
+    "status": "not_started"
+  },
   "features": [
     {
-      "id": "chat-001", 
-
-      "title": "Create a new conversation",
-      "user_visible_behavior": "A user can click New Chat and see a fresh empty conversation.",
+      "id": "interface-design-001",
+      "title": "Define page functions",
+      "user_visible_behavior": "A user, designer, or builder can understand what each major X-META Video page or surface is for before implementation begins.",
       "status": "not_started",
       "verification": [
-        "Open the app.",
-        "Click New Chat.",
-        "Verify a new conversation appears in the sidebar.",
-        "Verify the main panel shows an empty conversation state."
+        "Read the interface design artifact completely.",
+        "Verify each app surface has a clear user goal and primary task.",
+        "Verify surfaces cover entry, project workspace, workflow canvas, node configuration, asset library, task status, generation history, export, auth, and workspace management.",
+        "Verify no page function implies backend, persistence, orchestration, connector, or AI execution behavior that is not implemented yet."
       ],
       "evidence": [],
-      "notes": ""
-    }]
+      "notes": "Keep this as product/interface planning only; implementation belongs to later feature tasks."
+    },
+    {
+      "id": "interface-design-002",
+      "title": "Create the MVP screen inventory",
+      "user_visible_behavior": "A user or builder can see the complete MVP screen list needed for comic drama, MV, and short-form video creation workflows.",
+      "status": "not_started",
+      "verification": [
+        "Review the screen inventory.",
+        "Verify every screen has a title, purpose, primary action, secondary actions, and empty/loading/error state notes.",
+        "Verify screens support comic drama, MV, and short-form video workflows without becoming a chat-first interface.",
+        "Verify screens map back to the product workflow in docs/PRODUCT.md."
+      ],
+      "evidence": [],
+      "notes": "Include MVP screens first and clearly label future surfaces."
+    },
+    {
+      "id": "interface-design-003",
+      "title": "Design the information architecture",
+      "user_visible_behavior": "A user can predict where to find projects, canvas tools, node settings, generated assets, task status, history, and exports.",
+      "status": "not_started",
+      "verification": [
+        "Review the navigation and information architecture model.",
+        "Verify every screen has documented entry points, exit points, and no dead ends.",
+        "Verify primary navigation, workspace navigation, contextual panels, and modal or drawer behavior are documented.",
+        "Verify node configuration, asset reuse, retry, and export paths are easy to trace.",
+        "Verify the information architecture does not conflict with docs/ARCHITECTURE.md layer boundaries."
+      ],
+      "evidence": [],
+      "notes": "The web app owns navigation and local UI state; backend state ownership should remain clearly labeled."
+    },
+    {
+      "id": "interface-design-004",
+      "title": "Sketch core UI layouts",
+      "user_visible_behavior": "A user can see rough layout direction for the app shell, node canvas, node inspector, asset drawer, task status, history, and export surfaces.",
+      "status": "not_started",
+      "verification": [
+        "Review the rough sketches or wireframe descriptions.",
+        "Verify each sketch labels visible regions, primary interactions, and status feedback.",
+        "Verify the canvas remains the central workspace surface for creative production.",
+        "Verify sketches use familiar web app patterns and avoid unrelated chat, generic dashboard, or marketing-page layouts."
+      ],
+      "evidence": [],
+      "notes": "Use shadcn/ui and UI TripleD-inspired visual direction where applicable, but keep sketches implementation-agnostic."
+    },
+    {
+      "id": "interface-design-005",
+      "title": "Write wireframing guidelines",
+      "user_visible_behavior": "A designer or builder can produce consistent wireframes for future node, asset, project-management, and generation-status screens.",
+      "status": "not_started",
+      "verification": [
+        "Review the wireframing guidelines.",
+        "Verify spacing, panel hierarchy, toolbar behavior, node cards, inspector patterns, asset cards, tables, and status regions are defined.",
+        "Verify guidelines cover script, storyboard, character, scene, prop, image composition, audio, video, 9-grid storyboard, and export node surfaces.",
+        "Verify guidelines call out reusable components and layout patterns instead of one-off page designs."
+      ],
+      "evidence": [],
+      "notes": "Keep guidance concise and reusable across future feature files."
+    },
+    {
+      "id": "interface-design-006",
+      "title": "Define responsive states",
+      "user_visible_behavior": "A user can understand how the planned interface works on desktop, tablet, and mobile without losing primary actions or context.",
+      "status": "not_started",
+      "verification": [
+        "Review responsive state definitions.",
+        "Verify desktop, tablet, and mobile layouts are described for the app shell, canvas, inspectors, asset panels, task status, and export flow.",
+        "Verify canvas controls, node settings, asset reuse, and task feedback remain reachable.",
+        "Verify mobile constraints are honest about limited canvas editing and provide a clear review or lightweight-edit path."
+      ],
+      "evidence": [],
+      "notes": "Prefer clear responsive behavior over trying to preserve every desktop panel at small widths."
+    },
+    {
+      "id": "interface-design-007",
+      "title": "Document accessibility requirements",
+      "user_visible_behavior": "A keyboard or assistive-technology user has a planned path through navigation, canvas controls, node settings, generated assets, and task feedback.",
+      "status": "not_started",
+      "verification": [
+        "Review accessibility requirements.",
+        "Verify keyboard order, focus states, labels, landmarks, contrast, and reduced-motion expectations are documented.",
+        "Verify node selection, edge editing, inspector controls, asset selection, and export settings have accessible interaction alternatives.",
+        "Verify async task status is communicated without relying only on color, motion, or spatial position."
+      ],
+      "evidence": [],
+      "notes": "Document design requirements only; implementation and automated accessibility testing belong to build tasks."
+    },
+    {
+      "id": "interface-design-008",
+      "title": "Prepare implementation handoff artifacts",
+      "user_visible_behavior": "A builder can start the next implementation feature with clear design scope, acceptance criteria, page maps, and known non-goals.",
+      "status": "not_started",
+      "verification": [
+        "Review the handoff package.",
+        "Verify it includes page-function map, screen inventory, information architecture notes, sketches or wireframe descriptions, reusable wireframe rules, responsive states, and accessibility notes.",
+        "Verify implementation boundaries and missing backend, connector, orchestration, audit, and persistence capabilities are labeled honestly.",
+        "Verify Feature 3 can reference these artifacts without relying on chat history."
+      ],
+      "evidence": [],
+      "notes": "Handoff should be stored in repository artifacts when the feature is implemented."
+    }
+  ]
 }

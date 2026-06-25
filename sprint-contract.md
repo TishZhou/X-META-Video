@@ -1,60 +1,57 @@
-# Sprint Contract - Feature 1 Main Page Completion
+# Sprint Contract - Feature 2 Interface Design
 
 ## Sprint Overview
 
-**Sprint:** Feature-1-main-page-completion
-**Feature:** Feature 1, Main Page Design
-**Small tasks:** `main-page-003` through `main-page-007`
-**Goal:** Complete the remaining main page entry experience in order: recent work, workspace entry placeholder, full workflow preview, responsive behavior, and accessibility basics.
+**Sprint:** Feature-2-interface-design
+**Feature:** Feature 2, Interface Design
+**Small tasks:** `interface-design-001` through `interface-design-008`
+**Goal:** Define the page functions, screen inventory, information architecture, UI sketching direction, wireframing guidelines, responsive behavior, accessibility requirements, and implementation handoff for the X-META Video product before Feature 3 app-shell implementation starts.
 
 ## Scope
 
 ### In Scope
 
-- Add recent-work entry points using static/local placeholder data only.
-- Add an `Enter Workspace` action that reaches a clear UI-only workspace entry placeholder.
-- Expand the workflow preview so users can scan the planned pipeline from brief to script, storyboard, assets, audio, video, and export.
-- Preserve the current shadcn/ui plus local UI TripleD-inspired `triple-motion` visual system.
-- Improve desktop and mobile layout so primary actions, recent work, and workflow preview stay readable and reachable.
-- Verify keyboard focus order and accessible labels for main page actions.
-- Record evidence in `feature_tasks/1.json`, `feature_list.json`, `progress.md`, `sprint-contract.md`, `evaluator-rubric.md`, and `session-handoff.md`.
+- Map every MVP product function from `docs/PRODUCT.md` into a page, screen, panel, drawer, modal, or canvas region.
+- Define the screen set for main entry, project/workspace shell, workflow canvas, node configuration, asset library, task status/retry, generation history/version timeline, export, auth, and workspace management.
+- Write User Interface Sketching and Wireframing Guidelines using task-to-screen mapping, screen content inventories, information architecture, entry/exit paths, hierarchy, grouping, and no-dead-end review.
+- Plan responsive desktop, tablet, and mobile behavior for the app shell, canvas, inspectors, asset panels, task status, and export flow.
+- Document accessibility expectations for keyboard use, focus states, labels, landmarks, contrast, reduced motion, node selection, edge editing, async status, and export controls.
+- Keep backend, connector, orchestration, persistence, audit, and AI generation capabilities labeled as planned or missing unless already implemented.
+- Record evidence in `feature_tasks/2.json`, `feature_list.json`, `progress.md`, `sprint-contract.md`, `evaluator-rubric.md`, and `session-handoff.md` when the feature is implemented.
 
 ### Out of Scope
 
-- Real project creation, project persistence, auth, account routing, backend APIs, FastAPI changes, queues, workers, AI generation, asset library, task status, or canvas execution.
-- Full workspace shell implementation; that belongs to Feature 2.
-- Full workflow canvas behavior; that belongs to Feature 3.
-- Any unrelated feature task files.
+- Implementing frontend routes, React components, UI TripleD assets, shadcn components, canvas behavior, backend APIs, auth, persistence, queues, workers, model calls, or export rendering.
+- Completing Feature 3 Project Foundation And App Shell.
+- Changing product architecture boundaries in `docs/ARCHITECTURE.md` unless a documented contradiction is found.
+- Marking Feature 2 passing before the design artifacts exist and verification has run.
 
 ## Acceptance Criteria
 
-1. `main-page-003`: The main page shows a recent work area with project cards or an empty state, and actions point toward opening or creating project work.
-2. `main-page-004`: `Enter Workspace` leads to a visible workspace entry placeholder that states the full workspace shell is later work.
-3. `main-page-005`: The workflow preview includes script, storyboard, character or scene assets, audio, video, and export with concise user-facing copy.
-4. `main-page-006`: Desktop and mobile layouts have no clipped text, overlapping controls, horizontal overflow, or hidden primary actions.
-5. `main-page-007`: Keyboard tab order is sensible and interactive elements have clear labels or text.
-6. The page remains product-specific to X-META Video and does not show unrelated chat, messaging, or starter-template content.
-7. `.\init.ps1` passes after implementation.
+1. `interface-design-001`: Page functions are defined for every major X-META Video surface and do not imply unimplemented backend or AI execution behavior.
+2. `interface-design-002`: The MVP screen inventory lists titles, purposes, primary and secondary actions, and empty/loading/error state notes.
+3. `interface-design-003`: Information architecture documents screen relationships, entry points, exit points, navigation regions, contextual panels, and no dead ends.
+4. `interface-design-004`: Core sketches or wireframe descriptions label regions, interactions, and feedback while keeping the canvas as the central creative workspace.
+5. `interface-design-005`: Wireframing guidelines define reusable layout patterns for app shell, toolbar, node cards, inspectors, asset cards, tables, status regions, and all planned node surfaces.
+6. `interface-design-006`: Responsive states describe desktop, tablet, and mobile behavior with honest mobile constraints for canvas editing.
+7. `interface-design-007`: Accessibility requirements cover keyboard order, focus, labels, landmarks, contrast, reduced motion, accessible canvas alternatives, and non-color-only async status.
+8. `interface-design-008`: Handoff artifacts give Feature 3 enough design scope and implementation boundaries without relying on chat history.
+9. `.\init.ps1` passes before any feature status is marked passing.
 
 ## Verification Plan
 
-1. Baseline already run: `.\init.ps1` passed before implementation.
-2. Run focused render tests with `corepack pnpm --filter @xmeta/web test`.
-3. Run `corepack pnpm --filter @xmeta/web typecheck`.
-4. Run `corepack pnpm --filter @xmeta/web build`.
-5. Run rendered QA at desktop `1440x900` and mobile `390x844`.
-6. During rendered QA verify recent work, workspace entry placeholder, workflow preview content, create-project interaction, production card expansion, no console/page errors, no horizontal overflow, and keyboard tab order.
-7. Run `git diff --check`.
-8. Run final `.\init.ps1`.
+1. Baseline already run this session: `.\init.ps1` passed before artifact updates.
+2. Validate JSON syntax for `feature_list.json` and every `feature_tasks/*.json` file.
+3. Verify Feature 2 exists between Feature 1 and the shifted Project Foundation feature.
+4. Verify `feature_tasks/2.json` follows the detailed Feature 1 task-file shape: parent feature, child task IDs, user-visible behavior, status, verification, evidence, and notes.
+5. Verify shifted feature task files `3.json` through `17.json` have matching `parent_feature.id` values.
+6. Run final `.\init.ps1`.
 
 ## Sprint Log
 
 | Phase | Outcome |
 | --- | --- |
-| Scope update | Selected Feature 1 remaining tasks `main-page-003` through `main-page-007`; work stays in the main page UI and harness artifacts. |
-| Baseline | `.\init.ps1` passed before implementation with Vitest running 2 files and 6 tests. |
-| Planning subagent | Confirmed ordered plan, likely files, verification commands, and risks. |
-| Implementation | Added recent-work local entries, workspace entry placeholder, expanded workflow preview, responsive layout coverage, and keyboard/accessibility fixes for Framer Motion focus behavior. |
-| Evaluation pass 1 | Evaluation subagent accepted UI implementation at 10 / 12 and identified stale status artifacts plus unrelated pre-existing `AGENTS.md` diff. |
-| Artifact update | Updated `feature_list.json`, `feature_tasks/1.json`, `progress.md`, and `session-handoff.md` to record Feature 1 completion evidence. |
-| Verification | Vitest, typecheck, Next build, rendered desktop/mobile QA, keyboard focus QA, `git diff --check`, and final `.\init.ps1` passed. |
+| Scope update | Inserted Feature 2, Interface Design, between Feature 1 and the prior Project Foundation feature. |
+| Planning subagent | Recommended shifting old Feature 2-16 to Feature 3-17, replacing stale chat-task content, and keeping Interface Design artifact-only. |
+| Coding subagent | Drafted `interface-design-001` through `interface-design-008` task decomposition for page functions, screen inventory, IA, sketches, wireframing, responsive states, accessibility, and handoff. |
+| Implementation | Pending. This sprint contract defines the next feature plan; it does not complete the Interface Design artifacts. |

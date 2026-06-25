@@ -1,13 +1,13 @@
 {
   "parent_feature": {
     "id": 7,
-    "title": "Scene Image Node",
+    "title": "Character Image Node",
     "status": "not_started"
   },
   "planning_status": "pending_decomposition",
   "notes": [
     "Small features must be added here before implementation starts.",
-    "Keep this file focused on Scene Image Node only."
+    "Keep this file focused on Character Image Node only."
   ],
   "small_features": []
 }

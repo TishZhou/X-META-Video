@@ -1,13 +1,13 @@
 {
   "parent_feature": {
     "id": 6,
-    "title": "Character Image Node",
+    "title": "Storyboard Node",
     "status": "not_started"
   },
   "planning_status": "pending_decomposition",
   "notes": [
     "Small features must be added here before implementation starts.",
-    "Keep this file focused on Character Image Node only."
+    "Keep this file focused on Storyboard Node only."
   ],
   "small_features": []
 }

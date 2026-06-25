@@ -10,6 +10,15 @@
 
 ## Changed This Session
 
+- Inserted Feature 2, Interface Design, between Feature 1 and the prior Project Foundation feature.
+- Shifted the prior Feature 2-16 feature sequence to Feature 3-17 in `feature_list.json`.
+- Replaced stale chat-oriented `feature_tasks/2.json` with detailed Interface Design tasks `interface-design-001` through `interface-design-008`.
+- Created corrected `feature_tasks/3.json` for Project Foundation And App Shell and renumbered the remaining task files through `feature_tasks/17.json`.
+- Updated `apps/web/src/app/main-page-content.ts`, `apps/web/src/app/page.test.tsx`, and Feature 1 evidence where earlier boundary copy referenced the old Feature 2/3 numbering.
+- Initialized `sprint-contract.md` and `evaluator-rubric.md` for Feature 2 Interface Design.
+
+## Previous Feature 1 Implementation Changes
+
 - `apps/web/src/app/main-page-content.ts`: added recent-work entries, workspace placeholder copy, expanded workflow preview copy and icons.
 - `apps/web/src/app/animated-entry-page.tsx`: added Enter Workspace action, recent-work section, workspace placeholder region, workflow preview markers, responsive structure, and accessibility labels.
 - `apps/web/src/app/page.test.tsx`: added render assertions for recent work, workspace entry placeholder, workflow pipeline, and accessibility markers.
@@ -26,8 +35,9 @@
 
 ## Next Best Step
 
-- Highest-priority unfinished feature: Feature 2, Project Foundation And App Shell.
-- Start by reading `feature_tasks/2.json`, updating `sprint-contract.md`, initializing `evaluator-rubric.md`, and keeping backend/persistence boundaries honest unless the Feature 2 task explicitly requires them.
+- Highest-priority unfinished feature: Feature 2, Interface Design.
+- Start by reading `feature_tasks/2.json`, then implement the Interface Design artifacts for page functions, MVP screen inventory, information architecture, UI sketching, wireframing guidelines, responsive states, accessibility requirements, and Feature 3 handoff.
+- The previous Feature 2, Project Foundation And App Shell, is now Feature 3 and should not start until Feature 2 Interface Design has repository-backed handoff artifacts.
 
 ## Commands
 
