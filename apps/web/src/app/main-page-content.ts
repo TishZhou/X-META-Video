@@ -77,13 +77,13 @@ export const mainPageContent = {
   ] satisfies RecentWork[],
   workspaceTitle: "Workspace entry placeholder",
   workspaceDescription:
-    "Enter Workspace lands here for now. The full workspace shell, saved projects, canvas routing, and execution controls are later Feature 3 and Feature 4 work.",
+    "Enter Workspace lands here for now. Initial interface pages arrive in Feature 2; the functional workspace shell, saved projects, canvas routing, and execution controls are later Feature 3 and Feature 4 work.",
   workspaceStatus: "UI-only entry point",
   workspaceActionsNote:
     "Use this placeholder to confirm the entry path before real project state, backend persistence, and canvas execution exist.",
   projectStartTitle: "Choose a project starting point",
   projectStartDescription:
-    "These are frontend-only start choices for planning the first creative direction. Real project creation, persistence, and workspace routing arrive in Feature 3.",
+    "These are frontend-only start choices for planning the first creative direction. Initial interface pages arrive in Feature 2; real project creation and persistence arrive in Feature 3.",
   projectStartChoices: [
     {
       title: "AI comic drama",

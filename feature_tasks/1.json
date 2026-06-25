@@ -51,7 +51,7 @@
         "Changed the primary homepage action to `Create Project` in `apps/web/src/app/main-page-content.ts`.",
         "Added frontend-only project-start choice content for `AI comic drama`, `MV creation`, and `Short-form video`, each with product-specific descriptions and expected planning output.",
         "Updated `apps/web/src/app/animated-entry-page.tsx` so clicking `Create Project` toggles a `project-start-choices` panel with `aria-expanded` state and `data-project-start-choice` markers.",
-        "The create-project panel explicitly states that real project creation, persistence, and workspace routing arrive in the shifted Project Foundation feature, now Feature 3.",
+        "The create-project panel explicitly states that initial interface pages arrive in Feature 2 and real project creation and persistence arrive in the shifted Project Foundation feature, now Feature 3.",
         "Reused existing local shadcn/ui and `triple-motion` components; no backend, API, auth, routing, persistence, canvas execution, or AI generation behavior was added.",
         "Updated `apps/web/src/app/page.test.tsx` to assert the `Create Project` entry point, initial closed state, and generic-content rejection.",
         "`corepack pnpm --filter @xmeta/web test` passed with 2 test files and 6 tests.",
@@ -60,7 +60,7 @@
         "Playwright QA against `http://localhost:3000` at 1440x900 and 390x844 confirmed `Create Project` changed from `aria-expanded=false` to `aria-expanded=true`, the three project-start choices became visible, project-foundation boundary copy was visible, no generic chat/starter content appeared, no console errors or page errors occurred, and no horizontal overflow was detected.",
         "Repositioned the create-project choices into the canvas preview panel during the `ui-ux-pro-max` layout reflow; the primary action remains visible and stable in desktop and mobile open/closed states."
       ],
-      "notes": "This is a UI entry state only; actual project creation belongs to Feature 3 after the Interface Design insertion."
+      "notes": "This is a UI entry state only; initial interface pages now belong to Feature 2 and actual project creation belongs to Feature 3."
     },
     {
       "id": "main-page-003",
@@ -97,12 +97,12 @@
       "evidence": [
         "Added `workspaceAction: \"Enter Workspace\"` and workspace placeholder copy in `apps/web/src/app/main-page-content.ts`.",
         "Added an `Enter Workspace` hero action in `apps/web/src/app/animated-entry-page.tsx` that anchors to `#workspace-entry`.",
-        "Rendered `Workspace entry placeholder` with explicit copy that the full workspace shell, saved projects, canvas routing, and execution controls belong to the shifted Feature 3 and Feature 4 work.",
+        "Rendered `Workspace entry placeholder` with explicit copy that initial interface pages belong to Feature 2 and the functional workspace shell, saved projects, canvas routing, and execution controls belong to the shifted Feature 3 and Feature 4 work.",
         "Added a UI-only `Create project direction` action from the placeholder that opens the existing frontend-only project choice state without creating persistence or backend calls.",
         "Updated `apps/web/src/app/page.test.tsx` to assert the workspace action, `#workspace-entry` target, placeholder copy, and UI-only boundary label.",
         "Rendered QA confirmed `Enter Workspace` navigated to `#workspace-entry` and the placeholder remained visible on desktop and mobile."
       ],
-      "notes": "Do not implement the full app shell or canvas here; those now belong to Feature 3 and Feature 4 after the Interface Design insertion."
+      "notes": "Do not implement the full functional app shell or canvas here; initial interface pages now belong to Feature 2, while functional app-shell and canvas behavior belong to Feature 3 and Feature 4."
     },
     {
       "id": "main-page-005",

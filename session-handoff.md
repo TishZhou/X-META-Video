@@ -16,6 +16,7 @@
 - Created corrected `feature_tasks/3.json` for Project Foundation And App Shell and renumbered the remaining task files through `feature_tasks/17.json`.
 - Updated `apps/web/src/app/main-page-content.ts`, `apps/web/src/app/page.test.tsx`, and Feature 1 evidence where earlier boundary copy referenced the old Feature 2/3 numbering.
 - Initialized `sprint-contract.md` and `evaluator-rubric.md` for Feature 2 Interface Design.
+- Updated Feature 2 scope after user clarification: Interface Design now includes initial web page implementation in `apps/web` after design artifacts are produced.
 
 ## Previous Feature 1 Implementation Changes
 
@@ -28,7 +29,7 @@
 ## Broken Or Unverified
 
 - Known defect: none found in Feature 1 final QA.
-- Out of scope by design: real project creation, workspace shell, backend/API behavior, auth, project persistence, canvas execution, AI generation, asset library, task queue, and workers.
+- Out of scope by design until future features: real project creation, production workspace state, backend/API behavior, auth, project persistence, canvas execution, AI generation, task queue, and workers. Feature 2 may implement static/local page prototypes for these surfaces, but must label missing capabilities honestly.
 - Tooling note: a second `corepack pnpm --filter @xmeta/web dev` attempt failed because an existing Next dev server was already running on `http://localhost:3000`; QA reused that active server.
 - Browser note: Playwright package was available but its bundled Chromium was not installed, so QA used system Chrome at `C:\Program Files\Google\Chrome\Application\chrome.exe`.
 - Worktree note: `AGENTS.md` had a pre-existing user-owned diff and was not changed by the Feature 1 implementation.
@@ -36,8 +37,9 @@
 ## Next Best Step
 
 - Highest-priority unfinished feature: Feature 2, Interface Design.
-- Start by reading `feature_tasks/2.json`, then implement the Interface Design artifacts for page functions, MVP screen inventory, information architecture, UI sketching, wireframing guidelines, responsive states, accessibility requirements, and Feature 3 handoff.
-- The previous Feature 2, Project Foundation And App Shell, is now Feature 3 and should not start until Feature 2 Interface Design has repository-backed handoff artifacts.
+- Start by reading `feature_tasks/2.json`, then implement the Interface Design artifacts for page functions, MVP screen inventory, information architecture, UI sketching, and wireframing guidelines.
+- After the design artifacts, implement static/local initial web pages in `apps/web` for workspace overview, workflow canvas, node configuration, asset library, task status, history, export, and account/workspace management.
+- The previous Feature 2, Project Foundation And App Shell, is now Feature 3 and should not start until Feature 2 has repository-backed handoff artifacts and initial page prototypes.
 
 ## Commands
 

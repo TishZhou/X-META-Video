@@ -67,8 +67,8 @@ describe("HomePage", () => {
     expect(html).toContain('href="#workspace-entry"');
     expect(html).toContain('id="workspace-entry"');
     expect(html).toContain("Workspace entry placeholder");
-    expect(html).toContain("full workspace shell");
-    expect(html).toContain("later Feature 3 and Feature 4 work");
+    expect(html).toContain("functional workspace shell");
+    expect(html).toContain("Initial interface pages arrive in Feature 2");
     expect(html).toContain("UI-only entry point");
   });
 

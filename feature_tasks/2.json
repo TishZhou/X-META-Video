@@ -17,7 +17,7 @@
         "Verify no page function implies backend, persistence, orchestration, connector, or AI execution behavior that is not implemented yet."
       ],
       "evidence": [],
-      "notes": "Keep this as product/interface planning only; implementation belongs to later feature tasks."
+      "notes": "This is the design-definition step for the web page implementation that follows in this same feature."
     },
     {
       "id": "interface-design-002",
@@ -60,7 +60,7 @@
         "Verify sketches use familiar web app patterns and avoid unrelated chat, generic dashboard, or marketing-page layouts."
       ],
       "evidence": [],
-      "notes": "Use shadcn/ui and UI TripleD-inspired visual direction where applicable, but keep sketches implementation-agnostic."
+      "notes": "Use shadcn/ui and UI TripleD-inspired visual direction where applicable, but keep sketches practical enough to implement in the web app."
     },
     {
       "id": "interface-design-005",
@@ -74,49 +74,53 @@
         "Verify guidelines call out reusable components and layout patterns instead of one-off page designs."
       ],
       "evidence": [],
-      "notes": "Keep guidance concise and reusable across future feature files."
+      "notes": "Keep guidance concise and reusable across the initial page implementation and later feature files."
     },
     {
       "id": "interface-design-006",
-      "title": "Define responsive states",
-      "user_visible_behavior": "A user can understand how the planned interface works on desktop, tablet, and mobile without losing primary actions or context.",
+      "title": "Implement initial interface pages in the web app",
+      "user_visible_behavior": "A user can open the web app and navigate from the main page into static initial pages that show the planned workspace, canvas, node inspector, asset library, task status, history, export, and account/workspace surfaces.",
       "status": "not_started",
       "verification": [
-        "Review responsive state definitions.",
-        "Verify desktop, tablet, and mobile layouts are described for the app shell, canvas, inspectors, asset panels, task status, and export flow.",
-        "Verify canvas controls, node settings, asset reuse, and task feedback remain reachable.",
-        "Verify mobile constraints are honest about limited canvas editing and provide a clear review or lightweight-edit path."
+        "Open the app.",
+        "Verify the main page exposes an entry point into the Interface Design page implementation.",
+        "Verify initial web pages or sections exist for workspace overview, workflow canvas, node configuration, asset library, task status, history, export, and account/workspace management.",
+        "Verify implemented pages are static/local prototypes only and do not call backend, persistence, model provider, queue, worker, or export APIs.",
+        "Verify the implemented pages use product-specific X-META Video language and do not show chat, starter-template, or unrelated dashboard content."
       ],
       "evidence": [],
-      "notes": "Prefer clear responsive behavior over trying to preserve every desktop panel at small widths."
+      "notes": "This is the requested initial page implementation. It may use static data and prototype routes/sections, but must not pretend real backend capabilities exist."
     },
     {
       "id": "interface-design-007",
-      "title": "Document accessibility requirements",
-      "user_visible_behavior": "A keyboard or assistive-technology user has a planned path through navigation, canvas controls, node settings, generated assets, and task feedback.",
+      "title": "Implement responsive and accessible prototype states",
+      "user_visible_behavior": "A user can view the initial interface pages on desktop and mobile with readable sections, reachable actions, sensible focus order, and clear status feedback.",
       "status": "not_started",
       "verification": [
-        "Review accessibility requirements.",
-        "Verify keyboard order, focus states, labels, landmarks, contrast, and reduced-motion expectations are documented.",
-        "Verify node selection, edge editing, inspector controls, asset selection, and export settings have accessible interaction alternatives.",
+        "Open the implemented pages at desktop and mobile viewports.",
+        "Verify desktop, tablet, and mobile layouts keep primary navigation, canvas preview, node settings, asset panels, task status, and export actions reachable.",
+        "Verify mobile constraints are honest about limited canvas editing and provide a clear review or lightweight-edit path.",
+        "Verify keyboard order, focus states, labels, landmarks, contrast, and reduced-motion expectations are represented in the prototype.",
         "Verify async task status is communicated without relying only on color, motion, or spatial position."
       ],
       "evidence": [],
-      "notes": "Document design requirements only; implementation and automated accessibility testing belong to build tasks."
+      "notes": "Implementation should prioritize clear responsive behavior over preserving every desktop panel at small widths."
     },
     {
       "id": "interface-design-008",
-      "title": "Prepare implementation handoff artifacts",
-      "user_visible_behavior": "A builder can start the next implementation feature with clear design scope, acceptance criteria, page maps, and known non-goals.",
+      "title": "Verify and hand off the implemented design",
+      "user_visible_behavior": "A builder can continue into Feature 3 with tested initial pages, clear implementation boundaries, and known non-goals.",
       "status": "not_started",
       "verification": [
-        "Review the handoff package.",
-        "Verify it includes page-function map, screen inventory, information architecture notes, sketches or wireframe descriptions, reusable wireframe rules, responsive states, and accessibility notes.",
+        "Run core web tests for the implemented pages.",
+        "Run typecheck and build for the web app.",
+        "Run rendered desktop and mobile QA for the initial pages.",
+        "Verify handoff includes page-function map, screen inventory, information architecture notes, sketches or wireframe descriptions, reusable wireframe rules, responsive states, accessibility notes, and implementation evidence.",
         "Verify implementation boundaries and missing backend, connector, orchestration, audit, and persistence capabilities are labeled honestly.",
-        "Verify Feature 3 can reference these artifacts without relying on chat history."
+        "Verify Feature 3 can reference these artifacts and implemented page prototypes without relying on chat history."
       ],
       "evidence": [],
-      "notes": "Handoff should be stored in repository artifacts when the feature is implemented."
+      "notes": "Do not mark Feature 2 passing until both the design artifacts and initial web page implementation are verified."
     }
   ]
 }

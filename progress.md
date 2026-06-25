@@ -6,7 +6,7 @@ Record the major decisions and progess every day, do not delete former progress.
 - Standard startup path: `.\init.ps1`
 - Standard verification path: `corepack pnpm --filter @xmeta/web test`
 - Current highest-priority unfinished feature: Feature 2, Interface Design
-- Current blocker: none for Feature 2 insertion; Feature 2 design artifacts are still pending implementation.
+- Current blocker: none for Feature 2 scope; Feature 2 design artifacts and initial web page prototypes are still pending implementation.
 - Current completed feature: Feature 1, Main Page Design, is passing with all child tasks `main-page-001` through `main-page-007` recorded as passing.
 - Current UI source guidance: use shadcn/ui as the base local component system and UI TripleD shadcn blocks as the preferred external block source.
 
@@ -32,4 +32,14 @@ Record the major decisions and progess every day, do not delete former progress.
 - Verification run: baseline `.\init.ps1` passed before artifact updates.
 - Evidence captured: planning subagent confirmed the safe renumbering strategy and stale `feature_tasks/2.json` mismatch; coding subagent drafted the Interface Design task decomposition; `feature_list.json` now shows Interface Design as Feature 2 and Project Foundation And App Shell as Feature 3.
 - Known risk or unresolved issue: Feature 2 implementation artifacts are not created yet, so Feature 2 remains `not_started`; `AGENTS.md` still has a pre-existing user-owned diff and was not reverted.
-- Next best step: implement Feature 2 design artifacts and record evidence in `feature_tasks/2.json`, `sprint-contract.md`, `evaluator-rubric.md`, `progress.md`, and `session-handoff.md`.
+- Next best step: implement Feature 2 design artifacts and initial `apps/web` page prototypes, then record evidence in `feature_tasks/2.json`, `sprint-contract.md`, `evaluator-rubric.md`, `progress.md`, and `session-handoff.md`.
+
+### Session 013
+
+- Date: 2026-06-25
+- Goal: Clarify Feature 2 scope so Interface Design includes initial web page implementation after the design work.
+- Completed: Updated `feature_tasks/2.json` so Feature 2 now includes design definition, screen inventory, information architecture, sketches, wireframing guidelines, initial `apps/web` page implementation, responsive/accessibility prototype states, and verification/handoff; updated `feature_list.json`, `sprint-contract.md`, `evaluator-rubric.md`, `session-handoff.md`, and main page boundary copy to match.
+- Verification run: baseline `.\init.ps1` passed before scope updates.
+- Evidence captured: Feature 2 now explicitly requires initial web pages or sections for workspace overview, workflow canvas, node configuration, asset library, task status, history, export, and account/workspace management using static/local data only.
+- Known risk or unresolved issue: Feature 2 remains `not_started`; no actual Feature 2 design artifacts or web page prototypes have been implemented yet. `AGENTS.md` still has a pre-existing user-owned diff and was not reverted.
+- Next best step: implement Feature 2 in order, starting with repository-backed design artifacts and then static/local initial pages in `apps/web`.

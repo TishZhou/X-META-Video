@@ -8,7 +8,8 @@
   "notes": [
     "Small features must be added here before implementation starts.",
     "Keep this file focused on Project Foundation And App Shell only.",
-    "Read feature_tasks/2.json and any Interface Design handoff artifacts before implementing this feature."
+    "Read feature_tasks/2.json, the Interface Design handoff artifacts, and the initial web page prototypes before implementing this feature.",
+    "Feature 3 should turn the static/prototype app-shell pages from Feature 2 into a functional project foundation and workspace context."
   ],
   "small_features": []
 }

@@ -33,7 +33,7 @@
         "Read feature_tasks/2.json completely before working on this feature.",
         "Run .\\init.ps1 and record evidence before marking this feature passing."
       ],
-      "user_visible_behavior": "Users can follow a complete page-function map, screen inventory, information architecture, UI sketching, wireframing, responsive, and accessibility plan before implementation starts.",
+      "user_visible_behavior": "Users can see the planned interface translated into initial web pages: page-function guidance, screen inventory, wireframe direction, static app-shell/page prototypes, responsive behavior, and accessibility basics.",
       "task_file": "feature_tasks/2.json"
     },
     {
