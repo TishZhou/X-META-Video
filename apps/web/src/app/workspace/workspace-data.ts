@@ -27,6 +27,21 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
+export type MotionPatternSelection = {
+  blockName: string;
+  localSource: string;
+  productSurface: string;
+  selectedVariant: string;
+  status: string;
+};
+
+export type ProjectContext = {
+  mode: string;
+  name: string;
+  status: string;
+  workspace: string;
+};
+
 export type WorkspaceRoute = {
   description: string;
   href: string;
@@ -50,6 +65,30 @@ export type AssetItem = {
   title: string;
   type: string;
   version: string;
+};
+
+export type DashboardMetric = {
+  detail: string;
+  label: string;
+  value: string;
+};
+
+export type DashboardProject = {
+  action: string;
+  detail: string;
+  href: string;
+  mode: string;
+  missingCapability: string;
+  motionState: string;
+  selected: boolean;
+  status: string;
+  title: string;
+};
+
+export type DashboardReadinessSignal = {
+  detail: string;
+  label: string;
+  state: string;
 };
 
 export type TaskItem = {
@@ -125,6 +164,37 @@ export const workspaceRoutes: WorkspaceRoute[] = [
   },
 ];
 
+export const defaultProjectContext: ProjectContext = {
+  mode: "AI comic drama",
+  name: "Neon alley comic pilot",
+  status: "Local project context",
+  workspace: "X-META Studio Preview",
+};
+
+export const motionPatternSelections: MotionPatternSelection[] = [
+  {
+    blockName: "UI TripleD animated-navigation app-shell pattern",
+    localSource: "WorkspaceShell",
+    productSurface: "Workspace route shell, active route indicator, and page transition frame",
+    selectedVariant: "Radix shadcn local source",
+    status: "Implemented for motion-shell-002",
+  },
+  {
+    blockName: "UI TripleD dashboard block",
+    localSource: "DashboardMetricTile and readiness rail",
+    productSurface: "Workspace overview metrics, readiness signals, and project orientation",
+    selectedVariant: "Radix shadcn local source",
+    status: "Implemented for motion-shell-003",
+  },
+  {
+    blockName: "UI TripleD project-card block",
+    localSource: "ProjectMotionCard",
+    productSurface: "Recent project cards with hover, focus, selected, and reduced-motion states",
+    selectedVariant: "Radix shadcn local source",
+    status: "Implemented for motion-shell-003",
+  },
+];
+
 export const prototypeBoundaries = [
   "Static/local page prototype only",
   "No backend calls; No persistence, autosave, or organization switching",
@@ -146,6 +216,86 @@ export const overviewHighlights = [
     label: "Backend state",
     value: "Planned",
     detail: "FastAPI remains source of truth in later features",
+  },
+];
+
+export const dashboardMetrics: DashboardMetric[] = [
+  {
+    detail: "Script, storyboard, assets, audio, video, export, and history are visible as local route surfaces.",
+    label: "Workspace surfaces",
+    value: "7",
+  },
+  {
+    detail: "Nine storyboard beats are planned before video and export services are connected.",
+    label: "Storyboard beats",
+    value: "9",
+  },
+  {
+    detail: "Character and scene examples remain local until the Asset Service and storage exist.",
+    label: "Reusable assets",
+    value: "2",
+  },
+  {
+    detail: "Script, scene, composition, and video states model async task language without creating tasks.",
+    label: "Task states",
+    value: "4",
+  },
+];
+
+export const readinessSignals: DashboardReadinessSignal[] = [
+  {
+    detail: "Canvas route and inspector are ready for Feature 4 drag, zoom, and graph persistence.",
+    label: "Canvas baseline",
+    state: "Motion shell ready",
+  },
+  {
+    detail: "FastAPI, queue, workers, object storage, and project persistence are not connected here.",
+    label: "Backend boundary",
+    state: "Planned",
+  },
+  {
+    detail: "Reduced-motion mode keeps text labels and removes transform-heavy feedback.",
+    label: "Motion fallback",
+    state: "Supported",
+  },
+];
+
+export const dashboardProjects: DashboardProject[] = [
+  {
+    action: "Continue canvas",
+    detail: "Noir comic pilot with script, storyboard, character, scene, task, history, and export route context.",
+    href: "/workspace/canvas",
+    missingCapability:
+      "Project persistence requires the backend Project Service, PostgreSQL state, and account-scoped queries.",
+    mode: "AI comic drama",
+    motionState: "hover-focus-selected",
+    selected: true,
+    status: "Active local context",
+    title: "Neon alley comic pilot",
+  },
+  {
+    action: "Review tasks",
+    detail: "Music-video direction for lyrics, rhythm, audio planning, visual references, and clip sequencing.",
+    href: "/workspace/tasks",
+    missingCapability:
+      "Live task creation requires FastAPI task APIs, Redis queue, workers, and status fanout.",
+    mode: "MV creation",
+    motionState: "hover-focus",
+    selected: false,
+    status: "Local sample",
+    title: "Midnight chorus MV",
+  },
+  {
+    action: "Check export",
+    detail: "Short-form production path for hook variants, generated keyframes, audio, and delivery readiness.",
+    href: "/workspace/export",
+    missingCapability:
+      "Export rendering requires selected persisted clip versions, object storage, and an async renderer job.",
+    mode: "Short-form video",
+    motionState: "hover-focus",
+    selected: false,
+    status: "Renderer planned",
+    title: "Vertical teaser pipeline",
   },
 ];
 

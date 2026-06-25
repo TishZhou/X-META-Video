@@ -5,10 +5,11 @@ Record the major decisions and progess every day, do not delete former progress.
 - Repository root: `D:\X-META-Video`
 - Standard startup path: `.\init.ps1`
 - Standard verification path: `corepack pnpm --filter @xmeta/web test`
-- Current highest-priority unfinished feature: Feature 3, Project Foundation And App Shell
-- Current blocker: none for Feature 3 startup scope; backend and persistence layers remain planned future work.
+- Current highest-priority unfinished feature: Feature 3, Project Foundation And Motion App Shell
+- Current blocker: none for Feature 3 task 4 continuation; backend and persistence layers remain planned future work.
 - Current completed features: Feature 1, Main Page Design, and Feature 2, Interface Design, are passing. Feature 2 child tasks `interface-design-001` through `interface-design-008` are recorded as passing.
-- Current UI source guidance: use shadcn/ui as the base local component system and UI TripleD shadcn blocks as the preferred external block source.
+- Current active feature: Feature 3 is `in_progress`; child tasks `motion-shell-001` through `motion-shell-003` are passing, and `motion-shell-004` through `motion-shell-007` remain `not_started`.
+- Current UI source guidance: use shadcn/ui as the base local component system, but do not stop at basic Card/Button/Badge layouts. Feature 3 should adopt real selected UI TripleD shadcn block patterns and Framer Motion page/shell/node transitions as local, reviewed source.
 
 ## Session Log
 
@@ -66,3 +67,24 @@ Record the major decisions and progess every day, do not delete former progress.
 - Evidence captured: tests passed 3 files / 16 tests; typecheck passed; build generated all static routes; Browser audit confirmed no console warnings/errors, no horizontal overflow, header boundary phrase counts reduced, and selected Script card now defers repeated detail to the inspector.
 - Known risk or unresolved issue: larger product-shell restructuring is still better handled by Feature 3. `AGENTS.md` still has a pre-existing user-owned diff and was not reverted.
 - Next best step: continue into Feature 3 with the cleaned static workspace prototype as the shell starting point.
+
+### Session 016
+
+- Date: 2026-06-25
+- Goal: Update product direction after user rejected static preview/model work and requested a complete motion-first UI purpose.
+- Completed: Updated `docs/PRODUCT.md` so the product goal now requires a motion-rich creative workspace, real selected UI TripleD shadcn block adaptations, Framer Motion page transitions, animated canvas/node interactions, animated project and asset cards, and visible generation feedback. Updated architecture and dependency guidance so Framer Motion and selected UI TripleD blocks are part of the frontend target, not optional decoration. Renamed Feature 3 to `Project Foundation And Motion App Shell` and updated its task file so Feature 3 must replace shallow static card layouts with real motion-first app-shell patterns. Added a Feature 3 constraint that unfinished functions should use compact visible labels plus click-to-reveal detail, not long always-visible placeholder descriptions.
+- Verification run: JSON validation for `feature_list.json` and `feature_tasks/3.json`; `corepack pnpm --filter @xmeta/web test`; `corepack pnpm --filter @xmeta/web typecheck`; `corepack pnpm --filter @xmeta/web build`; final `.\init.ps1`; after the unfinished-function disclosure update, `feature_tasks/3.json` JSON validation, web tests, and typecheck passed again.
+- Known risk or unresolved issue: current implemented `/workspace` pages are still Feature 2 static/local prototypes. They should be treated as baseline scaffolding to replace during Feature 3, not as the desired final app-shell style.
+- Next best step: implement Feature 3 by choosing concrete UI TripleD shadcn blocks for entry/workspace/dashboard/workflow/account surfaces and adapting them into local source with reduced-motion, accessibility, and rendered desktop/mobile verification.
+
+### Session 017
+
+- Date: 2026-06-25
+- Goal: Complete Feature 3 task 1-3: `motion-shell-001` selected UI TripleD shadcn pattern mapping, `motion-shell-002` motion-first app shell, and `motion-shell-003` upgraded workspace dashboard/project cards.
+- Completed: Selected task 1-3 UI TripleD shadcn/Radix patterns as animated-navigation/app-shell, dashboard, and project-card; added `apps/web/src/app/workspace/workspace-motion.tsx` as the client-only Framer Motion layer; refactored `workspace-components.tsx` back to server-safe icon-bearing components; upgraded `/workspace` to Motion Workspace dashboard with route/shell transition markers, active route state, default local project context, dashboard metrics, readiness signals, animated project cards, and compact click-to-reveal persistence disclosure.
+- Verification run: baseline `.\init.ps1`; shadcn project inspection and component docs lookup; JSON validation for `feature_list.json` and all `feature_tasks/*.json`; `corepack pnpm --filter @xmeta/web test`; `corepack pnpm --filter @xmeta/web typecheck`; `corepack pnpm --filter @xmeta/web build`; `git diff --check`; Chrome headless/CDP rendered QA against `http://127.0.0.1:3004`.
+- Evidence captured: Vitest passed 3 files / 18 tests; TypeScript passed; Next build statically generated `/`, `/_not-found`, `/icon.svg`, `/workspace`, `/workspace/account`, `/workspace/assets`, `/workspace/canvas`, `/workspace/export`, `/workspace/history`, and `/workspace/tasks`; rendered QA passed desktop `/workspace` at 1440x900, mobile `/workspace` at 390x844, and mobile `/workspace/canvas` at 390x844 with no console warnings/errors and no horizontal overflow.
+- Screenshot evidence: `C:\Users\AI\AppData\Local\Temp\xmeta-feature3-qa\workspace-desktop.png`, `C:\Users\AI\AppData\Local\Temp\xmeta-feature3-qa\workspace-mobile.png`, and `C:\Users\AI\AppData\Local\Temp\xmeta-feature3-qa\canvas-mobile.png`.
+- Subagents: planning subagent produced the task 1-3 implementation plan; coding subagent implemented the first motion shell/dashboard pass and reported the Next client-boundary build issue; main thread split motion wrappers into `workspace-motion.tsx` to fix static prerender; evaluation subagent is reviewing the final task 1-3 result.
+- Known risk or unresolved issue: Feature 3 is not complete; workflow canvas motion upgrade, animated generation feedback states, global unfinished-function disclosure pass, and final Feature 3 handoff remain later child tasks. Real backend, auth, persistence, task queue, model providers, storage, and export rendering are still not implemented.
+- Next best step: implement `motion-shell-004`, upgrading the workflow canvas presentation with animated node/workflow state and inspector transitions while preserving text status labels and keeping full drag/zoom execution in Feature 4.

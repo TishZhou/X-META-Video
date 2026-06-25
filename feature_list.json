@@ -38,13 +38,13 @@
     },
     {
       "id": 3,
-      "title": "Project Foundation And App Shell",
-      "status": "not_started",
+      "title": "Project Foundation And Motion App Shell",
+      "status": "in_progress",
       "verification": [
         "Read feature_tasks/3.json completely before working on this feature.",
         "Run .\\init.ps1 and record evidence before marking this feature passing."
       ],
-      "user_visible_behavior": "Users can enter a project workspace with a clear app shell and a default development workspace/project context.",
+      "user_visible_behavior": "Users can enter a motion-first project workspace with a clear app shell, animated route and panel transitions, selected UI TripleD shadcn block adaptations, and a default development workspace/project context.",
       "task_file": "feature_tasks/3.json"
     },
     {

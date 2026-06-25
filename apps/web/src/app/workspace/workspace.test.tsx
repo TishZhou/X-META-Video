@@ -13,13 +13,24 @@ import WorkspaceTasksPage from "./tasks/page";
 const render = (page: ReactElement) => renderToStaticMarkup(page);
 
 describe("Workspace prototype routes", () => {
-  it("renders a static workspace shell with all planned route links", () => {
+  it("renders a motion workspace shell with all planned route links", () => {
     const html = render(<WorkspaceOverviewPage />);
 
     expect(html).toContain('data-workspace-prototype="static-local"');
+    expect(html).toContain('data-motion-shell="framer-route-transition"');
+    expect(html).toContain('data-animation-runtime="framer-motion"');
+    expect(html).toContain('data-animated-navigation="workspace-route-list"');
+    expect(html).toContain('data-route-transition="/workspace"');
+    expect(html).toContain(
+      'data-reduced-motion-behavior="transform-disabled-labels-preserved"',
+    );
     expect(html).toContain('data-workspace-navigation="route-list"');
-    expect(html).toContain("Workspace overview");
-    expect(html).toContain("Feature 2 interface prototype");
+    expect(html).toContain("Workspace dashboard");
+    expect(html).toContain("Feature 3 motion shell");
+    expect(html).toContain("Motion shell");
+    expect(html).toContain(
+      'data-default-project-context="Neon alley comic pilot"',
+    );
     expect(html).toContain("No backend calls");
     expect(html).toContain("No persistence");
     expect(html).toContain('href="/workspace/canvas"');
@@ -28,6 +39,55 @@ describe("Workspace prototype routes", () => {
     expect(html).toContain('href="/workspace/history"');
     expect(html).toContain('href="/workspace/export"');
     expect(html).toContain('href="/workspace/account"');
+  });
+
+  it("records selected UI TripleD shadcn pattern mappings without Base UI variants", () => {
+    const html = render(<WorkspaceOverviewPage />);
+
+    expect(html).toContain(
+      'data-motion-pattern-map="selected-ui-tripled-shadcn-patterns"',
+    );
+    expect(html).toContain(
+      'data-motion-pattern-selection="UI TripleD animated-navigation app-shell pattern"',
+    );
+    expect(html).toContain(
+      'data-motion-pattern-selection="UI TripleD dashboard block"',
+    );
+    expect(html).toContain(
+      'data-motion-pattern-selection="UI TripleD project-card block"',
+    );
+    expect(html).toContain(
+      "Selected local shadcn source for this task slice: shell",
+    );
+    expect(html).not.toContain(
+      'data-motion-pattern-selection="UI TripleD workflow block"',
+    );
+    expect(html).not.toContain(
+      'data-motion-pattern-selection="UI TripleD AI generation-state block"',
+    );
+    expect(html).toContain("Radix shadcn local source");
+    expect(html).not.toContain("Base UI");
+  });
+
+  it("renders animated dashboard metrics and project card states", () => {
+    const html = render(<WorkspaceOverviewPage />);
+
+    expect(html).toContain('data-dashboard-shell="motion-first-overview"');
+    expect(html).toContain('data-dashboard-metrics="animated-local-metrics"');
+    expect(html).toContain('data-dashboard-metric="Workspace surfaces"');
+    expect(html).toContain('data-dashboard-metric="Storyboard beats"');
+    expect(html).toContain('data-dashboard-readiness="motion-signals"');
+    expect(html).toContain('data-readiness-signal="Motion fallback"');
+    expect(html).toContain(
+      'data-project-card-baseline="animated-local-projects"',
+    );
+    expect(html).toContain('data-project-card="Neon alley comic pilot"');
+    expect(html).toContain('data-project-card="Midnight chorus MV"');
+    expect(html).toContain('data-selected-project="true"');
+    expect(html).toContain('data-motion-state="hover-focus-selected"');
+    expect(html).toContain('data-reduced-motion-card="transform-disabled"');
+    expect(html).toContain("Project persistence missing");
+    expect(html).toContain("Project persistence requires the backend Project Service");
   });
 
   it("renders the workflow canvas and selected node inspector", () => {

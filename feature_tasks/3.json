@@ -1,15 +1,118 @@
 {
   "parent_feature": {
     "id": 3,
-    "title": "Project Foundation And App Shell",
-    "status": "not_started"
+    "title": "Project Foundation And Motion App Shell",
+    "status": "in_progress"
   },
-  "planning_status": "pending_decomposition",
+  "planning_status": "task_1_3_passing",
   "notes": [
     "Small features must be added here before implementation starts.",
     "Keep this file focused on Project Foundation And App Shell only.",
     "Read feature_tasks/2.json, the Interface Design handoff artifacts, and the initial web page prototypes before implementing this feature.",
-    "Feature 3 should turn the static/prototype app-shell pages from Feature 2 into a functional project foundation and workspace context."
+    "Feature 3 should turn the static/prototype app-shell pages from Feature 2 into a functional project foundation and motion-first workspace context.",
+    "Feature 3 must replace shallow static card layouts with selected UI TripleD-style shadcn/Radix + Framer Motion adaptations where they fit: dashboard, project-card, workflow, account-settings, animated navigation, route transitions, and AI loading/progress states.",
+    "Feature 3 must include reduced-motion behavior, keyboard accessibility, text status labels, and verification that motion supports state comprehension instead of hiding functionality.",
+    "For unfinished functions or placeholders, do not write long descriptions directly into the main UI. Use concise labels and click-to-reveal detail such as a modal, drawer, popover, or expandable panel saying the function is not built yet or requires a later feature."
   ],
-  "small_features": []
+  "small_features": [
+    {
+      "id": "motion-shell-001",
+      "title": "Select UI TripleD shadcn components patterns",
+      "status": "passing",
+      "user_visible_behavior": "Users see a coherent motion-first direction based on selected block families instead of generic static cards.",
+      "verification": [
+        "Record the selected UI TripleD shadcn block/components names and where each maps in the product.",
+        "Verify Base UI variants are not selected unless architecture is updated."
+      ],
+      "evidence": [
+        "Selected task 1-3 UI TripleD-style shadcn/Radix + Framer Motion patterns are recorded in sprint-contract.md and apps/web/src/app/workspace/workspace-data.ts as animated-navigation/app-shell, dashboard, and project-card.",
+        "Implemented local source mapping through WorkspaceShell, MotionShellHeader, MotionRouteFrame, MotionNavItem, DashboardMetricTile, ProjectMotionCard, MotionPatternDisclosure, and UnavailableDisclosure.",
+        "Workspace overview renders data-motion-pattern-map=\"selected-ui-tripled-shadcn-patterns\" and only the task 1-3 pattern selections; workflow and AI generation-state adaptations remain later Feature 3 tasks.",
+        "No Base UI variant is selected; tests assert Radix shadcn local source and absence of Base UI."
+      ],
+      "notes": "Task 1-3 selected only animated navigation/app-shell, dashboard, and project-card patterns. Workflow, account-settings, and AI generation-state block adaptations remain not_started in later tasks."
+    },
+    {
+      "id": "motion-shell-002",
+      "title": "Implement motion-first app shell",
+      "status": "passing",
+      "user_visible_behavior": "Users enter a workspace shell with animated navigation, route/shell transitions, default project context, and clear workspace identity.",
+      "verification": [
+        "Run web tests, typecheck, and build.",
+        "Rendered desktop and mobile QA must show route/shell transitions and no horizontal overflow."
+      ],
+      "evidence": [
+        "Updated apps/web/src/app/workspace/workspace-components.tsx and added apps/web/src/app/workspace/workspace-motion.tsx so the shared workspace shell has Framer Motion route/header/nav wrappers while icon-bearing cards remain server-safe for static prerendering.",
+        "Workspace shell renders data-animation-runtime=\"framer-motion\", data-motion-shell=\"framer-route-transition\", data-animated-navigation=\"workspace-route-list\", data-route-transition markers, reduced-motion fallback marker, active route state, and default local project context.",
+        "Backend and persistence boundaries remain visible through Prototype limits and local project context labels; no backend, persistence, model, queue, worker, or export API call was added.",
+        "Rendered QA against http://127.0.0.1:3004 confirmed desktop /workspace, mobile /workspace, and mobile /workspace/canvas had no console warnings/errors and no horizontal overflow."
+      ],
+      "notes": "The motion wrappers are isolated in workspace-motion.tsx to avoid passing Lucide component functions into client components during Next static prerendering."
+    },
+    {
+      "id": "motion-shell-003",
+      "title": "Upgrade workspace dashboard and project cards",
+      "status": "passing",
+      "user_visible_behavior": "Users see animated project, recent work, readiness, and metric surfaces based on richer UI TripleD dashboard/card patterns.",
+      "verification": [
+        "Verify project/dashboard content is X-META-specific and not upstream demo content.",
+        "Verify hover, focus, selected, and reduced-motion behavior."
+      ],
+      "evidence": [
+        "Updated /workspace to render Motion Workspace dashboard with animated dashboard metrics, readiness signals, and project cards for Neon alley comic pilot, Midnight chorus MV, and Vertical teaser pipeline.",
+        "Project cards include selected, hover/focus, motion-state, and reduced-motion markers plus compact click-to-reveal Project persistence missing disclosure.",
+        "Dashboard/project copy is X-META-specific and covers comic drama, MV creation, short-form video, node canvas, assets, task states, history, export, and backend boundaries.",
+        "Workspace route tests now cover the motion shell, selected UI TripleD mappings, animated dashboard metrics, project card states, reduced-motion markers, product-specific copy, and absence of generic chat/starter content."
+      ],
+      "notes": "Dashboard/project cards are local examples only and do not imply saved projects or real task creation."
+    },
+    {
+      "id": "motion-shell-004",
+      "title": "Upgrade workflow canvas presentation",
+      "status": "not_started",
+      "user_visible_behavior": "Users see an animated node workflow surface with selected-node state, dependency direction, inspector transitions, and generation-state placeholders.",
+      "verification": [
+        "Verify canvas/workflow route renders animated node and inspector states.",
+        "Verify text status labels remain present and motion does not replace state text."
+      ],
+      "notes": "This is still not full drag/zoom execution unless Feature 4 scope is explicitly pulled in."
+    },
+    {
+      "id": "motion-shell-005",
+      "title": "Add animated generation feedback states",
+      "status": "not_started",
+      "user_visible_behavior": "Users can distinguish queued, generating, succeeded, failed, and retryable states through motion plus readable labels.",
+      "verification": [
+        "Verify loading/progress/success/failure/retry states exist in task or node surfaces.",
+        "Verify reduced-motion fallback and accessible status copy."
+      ],
+      "notes": "Use AI loading/input/typing patterns where they fit."
+    },
+    {
+      "id": "motion-shell-006",
+      "title": "Constrain unfinished function disclosure",
+      "status": "not_started",
+      "user_visible_behavior": "Users see clean primary screens; unfinished actions reveal short 'not built yet' or 'requires later feature' messages only when clicked.",
+      "verification": [
+        "Verify unfinished functions do not display long always-visible descriptions in the main page layout.",
+        "Verify each unavailable action has an accessible click-to-reveal explanation or clear disabled label.",
+        "Verify the explanation names the missing capability briefly and does not imply it already works."
+      ],
+      "notes": "Use modal, drawer, popover, tooltip, or expandable detail depending on context. Keep visible copy compact."
+    },
+    {
+      "id": "motion-shell-007",
+      "title": "Final verification and handoff",
+      "status": "not_started",
+      "user_visible_behavior": "The motion app shell is verified and documented as the new baseline for later canvas, node, backend, and export features.",
+      "verification": [
+        "Run .\\init.ps1.",
+        "Run corepack pnpm --filter @xmeta/web test.",
+        "Run corepack pnpm --filter @xmeta/web typecheck.",
+        "Run corepack pnpm --filter @xmeta/web build.",
+        "Record rendered desktop/mobile QA evidence."
+      ],
+      "notes": "Do not mark passing without evaluator evidence."
+    }
+  ]
 }
