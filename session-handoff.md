@@ -2,47 +2,43 @@
 
 ## Verified Now
 
-- Current active feature remains Feature 1, Web Design, with `web-design-004` previously passing.
-- Current planning update: Feature 2 `Workflow Canvas Foundation` task plan was rewritten in `feature_tasks/2.json` to match `feature_tasks/1.json` top-level format exactly.
-- `feature_tasks/2.json` now has only these top-level keys: `parent_feature`, `planning_status`, `notes`, and `small_features`.
-- Planning write scope for this session was limited to `feature_tasks/2.json`, `sprint-contract.md`, `evaluator-rubric.md`, `progress.md`, and `session-handoff.md`.
-- `.\init.ps1` passed before artifact work and reported 6 web test files / 18 tests passing.
-- JSON validation passed for `feature_tasks/2.json`; top-level keys resolved to `parent_feature, planning_status, notes, small_features`.
+- Feature 2 `Workflow Canvas Foundation` is implemented and recorded as `passing`.
+- Feature 1 `Web Design` is also recorded as `passing`; no feature is currently active.
+- Current highest-priority unfinished feature is Feature 3, `Script Node`.
+- `AGENTS.md` had pre-existing user edits and was not reverted.
+- Baseline `.\init.ps1` passed before implementation and reported 6 web test files / 18 tests.
+- Post-implementation verification passed: web tests 9 files / 26 tests, typecheck, build, desktop Browser QA, 390x844 mobile Browser QA, JSON validation, `git diff --check`, and final `.\init.ps1`.
 
-## Feature 2 Plan State
+## Feature 2 Implementation State
 
-- Feature 2 remains `Workflow Canvas Foundation`, parent id `2`, status `not_started`.
-- The plan covers a canvas-first workspace route, composed toolbar and node palette, typed React graph state, first-class ports, free compatible connections, selectable edge rendering, reusable node UI design, structured persistence payloads, and final verification.
-- The toolbar should be composed from shadcn primitives because no standalone toolbar item was found.
-- Users should be able to drag placeholder node types onto the canvas: script, storyboard, character image, prop/asset, scene image, image composition, audio, video, and export.
-- Actual node functionality is deferred: no AI execution, provider calls, backend orchestration, generated asset creation, or export rendering belongs in this Feature 2 planning update.
+- `/workspace` renders a canvas-first work surface with toolbar, node palette, graph viewport, inspector tabs, local-only draft status, and honest unavailable backend/AI labels.
+- Users can click or drag placeholder nodes for script, storyboard, character image, prop/asset, scene image, image composition, audio, video, and export.
+- Typed graph state lives under `apps/web/src/lib/workflow-canvas/` with first-class node, port, edge, selection, viewport, draft, and snapshot records.
+- Connections store source/target node and port ids, edge id, data type, status, and label; invalid, duplicate, and self connections are rejected.
+- Edges render from state as selectable SVG objects and can be inspected/deleted separately from nodes.
+- Local save/restore uses structured graph snapshots and avoids DOM HTML persistence.
 
 ## Evidence
 
-- shadcn skill was used for the toolbar/component planning requirement.
-- `corepack pnpm dlx shadcn@latest docs command resizable sidebar toggle-group tooltip tabs menubar context-menu sheet scroll-area separator` returned docs/examples/API links for all requested primitives.
-- `apps/web/components.json` configures `@uitripled`.
-- shadcn toolbar registry search from `apps/web` with `corepack pnpm dlx shadcn@latest search -q toolbar` failed to parse the `@uitripled` catalog because `name` and `homepage` are required, and returned no standalone `toolbar` item.
-- Demo doc analyzed: `D:/kpop/docs/canvas-node-connections.md`.
-- Demo weakness recorded: legacy connection state lives in DOM plus SVG `app.js`, uses `{ fromId, toId }` connections, DOM class ports, imperative SVG redraw, non-selectable edge overlay, and HTML-coupled persistence.
-- Feature 2 improvement recorded: typed React graph state, first-class node/port/edge records, selectable edges, deterministic state tests, and structured persistence payloads.
+- `corepack pnpm --filter @xmeta/web test` passed after evaluator fixes: 9 test files / 26 tests.
+- `corepack pnpm --filter @xmeta/web typecheck` passed.
+- `corepack pnpm --filter @xmeta/web build` passed and included `/workspace`.
+- Desktop Browser QA at `http://localhost:3000/workspace`: correct title, canvas/palette/inspector present, console warn/error logs empty, toolbar Add Script changed node count from 3 to 4, all-node quick-add controls existed, and no horizontal overflow.
+- Mobile Browser QA at 390x844: workspace loaded, palette and inspector present, console warn/error logs empty, stacked layout usable in screenshot, and no horizontal overflow.
+- Final `.\init.ps1` passed after artifact updates and reran web verification: 9 test files / 26 tests.
+- Evaluator fix pass: toolbar Add Script now changes rendered node count from 3 to 4, all-node quick-add buttons exist, mode/help/context/inspector toggles are stateful, mobile canvas has internal scrollability at 390x844 without document overflow, and missing/stale ports reject with a visible reason. Post-fix tests passed 9 files / 26 tests, typecheck passed, build passed, and desktop/mobile Browser QA had empty console warn/error logs.
 
 ## Boundaries
 
-- Do not edit app/source code for this planning-only task.
-- Do not edit `feature_list.json`, docs, or other task files for this planning-only task.
-- Do not restore deleted old Feature 2/3 implementation files.
-- Keep architecture boundaries explicit: Web owns canvas UX/local draft graph state; FastAPI later owns durable workflow/project/task state; web does not call AI providers directly.
+- FastAPI durable workflow persistence remains future backend-owned work.
+- Script, image, audio, video, and export generation remain future features.
+- The web app does not call model providers directly.
+- Do not restore the deleted old Feature 2/3 implementation or the rejected XYFlow draft unless a future task explicitly decides to replace the current typed reducer renderer.
 
-## Verification To Carry Forward
-
-- Future Feature 2 implementation should run `.\init.ps1` first, then focused web tests for workspace route, toolbar composition, graph state, port connection behavior, edge selection, node UI, and save/restore fixtures.
-- Before Feature 2 can be marked passing, run typecheck, build, rendered desktop/mobile QA, JSON validation, and final `.\init.ps1`.
-
-## Commands
+## Next Commands
 
 - Startup: `.\init.ps1`
-- Validate Feature 2 JSON: `Get-Content -Raw feature_tasks/2.json | ConvertFrom-Json | Out-Null`
+- Next feature prep: read `feature_tasks/3.json`
 - Test: `corepack pnpm --filter @xmeta/web test`
 - Typecheck: `corepack pnpm --filter @xmeta/web typecheck`
 - Build: `corepack pnpm --filter @xmeta/web build`

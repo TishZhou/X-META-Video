@@ -1,66 +1,91 @@
-# Sprint Contract - Feature 2 Task Format Alignment
+# Sprint Contract - Feature 2 Workflow Canvas Foundation
 
 ## Sprint Overview
 
-**Sprint:** feature-2-task-format-alignment
-**Role:** Acting subagent for planning artifacts only
-**Status:** passing for planning-artifact scope
-**Goal:** Rewrite `feature_tasks/2.json` so Feature 2 uses the same top-level task-file format as `feature_tasks/1.json` while preserving the requested Workflow Canvas Foundation planning scope.
+**Sprint:** feature-2-workflow-canvas-foundation
+**Feature:** Feature 2, Workflow Canvas Foundation
+**Status:** in progress
+**Goal:** Implement a verified Figma-like workflow canvas foundation where users can add, move, select, connect, delete, save, and restore placeholder AI workflow nodes without implying backend persistence or AI execution exists.
 
 ## Write Scope
 
+- `apps/web/src/app/workspace/**`
+- `apps/web/src/components/xmeta/workflow-canvas/**`
+- `apps/web/src/lib/workflow-canvas/**`
+- `apps/web/src/components/ui/tooltip.tsx`
+- `apps/web/src/components/ui/tabs.tsx`
+- `apps/web/src/components/ui/separator.tsx`
+- Focused tests for the files above
 - `feature_tasks/2.json`
+- `feature_list.json`
 - `sprint-contract.md`
 - `evaluator-rubric.md`
 - `progress.md`
 - `session-handoff.md`
 
+Protected user edit:
+
+- `AGENTS.md` is already modified and must not be reverted.
+
 ## In Scope
 
-- Rewrite `feature_tasks/2.json` with exactly these top-level keys: `parent_feature`, `planning_status`, `notes`, and `small_features`.
-- Plan the Feature 2 canvas foundation around a composed shadcn toolbar, drag-to-canvas placeholder node creation, first-class ports, freely connectable node inputs/outputs, selectable edges, reusable node UI design, and structured persistence payloads.
-- Keep actual AI node functionality, generation execution, provider calls, orchestration, asset generation, and export rendering deferred to later features.
-- Incorporate demo analysis from `D:/kpop/docs/canvas-node-connections.md`: the legacy DOM plus SVG `app.js` model is weak for X-META and should be replaced by typed React graph state, first-class ports, selectable edges, and structured persistence payloads.
-- Record shadcn evidence: docs confirmed `command`, `resizable`, `sidebar`, `toggle-group`, `tooltip`, `tabs`, `menubar`, `context-menu`, `sheet`, `scroll-area`, and `separator`; registry search was blocked by the `@uitripled` catalog parse issue and found no standalone toolbar item, so toolbar should be composed.
-- Update operational artifacts for this planning-only pass.
+- Canvas-first `/workspace` route under the existing app shell.
+- Composed toolbar and node palette using local shadcn-style primitives where available.
+- Drag-to-canvas placeholder node creation for script, storyboard, character image, prop/asset, scene image, image composition, audio, video, and export.
+- Typed React graph state for nodes, ports, edges, selection, viewport, draft status, and structured snapshots.
+- First-class compatible port connections with invalid, self, and duplicate rejection.
+- Selectable nodes and edges with delete behavior and inspector handoff.
+- Reusable compact node UI with icons, status labels, input/output ports, selected states, and disabled deferred execution controls.
+- Local save/restore boundary that round-trips graph payloads without serializing DOM HTML.
+- Honest labels for missing FastAPI durable persistence and missing AI execution.
 
 ## Out of Scope
 
-- App/source code edits.
-- `feature_list.json` edits.
-- Product docs, architecture docs, or other documentation edits.
-- Other `feature_tasks/*.json` edits.
-- Implementing Workflow Canvas Foundation.
-- Committing or pushing.
+- Actual script/image/audio/video/export generation.
+- Provider calls, worker orchestration, storage upload, task queue execution, and generated assets.
+- Production auth/workspace membership enforcement.
+- Durable backend workflow persistence endpoints.
+- Restoring deleted legacy Feature 2/3 code.
 
 ## Acceptance Criteria
 
-1. `feature_tasks/2.json` has exactly the same top-level key pattern as Feature 1: `parent_feature`, `planning_status`, `notes`, and `small_features`.
-2. Feature 2 remains `Workflow Canvas Foundation` with parent feature id `2` and status `not_started`.
-3. The plan includes a composed toolbar using shadcn primitives/registry findings.
-4. The toolbar plan lets users drag different placeholder node types onto the canvas.
-5. The plan includes first-class input/output ports and freely connectable node-port edges.
-6. The plan includes reusable node UI design while deferring actual node functionality to later features.
-7. The plan incorporates the demo doc analysis and explicitly improves on the legacy DOM plus SVG approach.
-8. The five allowed planning artifacts record the update and verification evidence.
-9. JSON validation passes for `feature_tasks/2.json`.
+1. `/workspace` renders a production work surface with toolbar, palette, canvas viewport, inspector, and task/history or persistence status regions.
+2. Users can add every planned placeholder node type from the palette or toolbar.
+3. Users can move, select, and delete nodes; selected state is reflected in inspector copy.
+4. Ports are typed records, and compatible output-to-input connections create first-class edges.
+5. Invalid, self, and duplicate connections are rejected with visible status feedback and no hidden generation.
+6. Edges are selectable, inspectable, and removable independently from nodes.
+7. Save/restore uses structured graph snapshots and local fixture/state only, with FastAPI persistence clearly deferred.
+8. Tests cover graph reducer/store behavior, connection compatibility, snapshot round-trip, and route-visible canvas content.
+9. Verification runs include baseline `.\init.ps1`, focused web tests, typecheck, build, rendered QA, JSON validation, and final `.\init.ps1`.
 
 ## Verification Plan
 
-1. Run `.\init.ps1` before artifact work and record the result.
-2. Run shadcn docs/search commands needed for the toolbar evidence.
-3. Validate `feature_tasks/2.json` with PowerShell JSON parsing.
-4. Review the scoped diff for the five allowed files.
+1. Baseline: `.\init.ps1` before implementation.
+2. Focused tests: `corepack pnpm --filter @xmeta/web test`.
+3. Typecheck: `corepack pnpm --filter @xmeta/web typecheck`.
+4. Build: `corepack pnpm --filter @xmeta/web build`.
+5. Rendered QA: desktop and mobile workspace checks for nonblank canvas, controls, no console errors, and no horizontal overflow.
+6. JSON validation: `Get-Content -Raw feature_list.json | ConvertFrom-Json | Out-Null` and `Get-Content -Raw feature_tasks/2.json | ConvertFrom-Json | Out-Null`.
+7. Final restart path: `.\init.ps1`.
 
 ## Sprint Log
 
 | Phase | Outcome |
 | --- | --- |
-| Baseline | Confirmed working directory `D:\X-META-Video`; read `AGENTS.md`, `docs/PRODUCT.md`, and `docs/ARCHITECTURE.md`. |
+| Baseline | Confirmed working directory `D:\X-META-Video`; read `AGENTS.md`, `docs/PRODUCT.md`, `docs/ARCHITECTURE.md`, `feature_list.json`, `progress.md`, `session-handoff.md`, `sprint-contract.md`, `evaluator-rubric.md`, and `feature_tasks/2.json`. |
 | Startup | Ran `.\init.ps1`; it passed and reported 6 web test files / 18 tests passing. |
-| Context | Read `feature_tasks/1.json`, existing `feature_tasks/2.json`, current sprint/evaluator/progress/handoff artifacts, `package.json`, and `D:/kpop/docs/canvas-node-connections.md`. |
-| shadcn evidence | Used the shadcn skill. `corepack pnpm dlx shadcn@latest docs command resizable sidebar toggle-group tooltip tabs menubar context-menu sheet scroll-area separator` returned docs/examples/API links for all requested primitives. |
-| Registry evidence | `apps/web/components.json` contains `@uitripled`; searching from `apps/web` with `corepack pnpm dlx shadcn@latest search -q toolbar` failed to parse the `@uitripled` catalog because `name` and `homepage` were required, and returned no `toolbar` item. |
-| Task rewrite | Replaced `feature_tasks/2.json` with Feature 1-compatible top-level shape and eight small features covering workspace shell, composed toolbar/palette, typed graph state, ports/connections, selectable edges, node UI, structured persistence payloads, and verification closure. |
-| Artifact updates | Updated this sprint contract, evaluator rubric, progress log, and session handoff for the planning update. |
-| Validation | `Get-Content -Raw feature_tasks/2.json \| ConvertFrom-Json \| Out-Null` passed; top-level keys resolved to `parent_feature, planning_status, notes, small_features`. |
+| Recent commits | Reviewed `git log --oneline -5`: `6e2aa53`, `74abd95`, `22dce0e`, `7cc7489`, and `2088e13`. |
+| Skill setup | Used shadcn and uiux-design-evaluator skills; read required UI planning, UI detail, Laws of UX, and usability references for the workspace implementation. |
+| shadcn setup | `corepack pnpm dlx shadcn@latest docs button badge card dialog tooltip tabs separator` returned component docs/examples/API links. `corepack pnpm dlx shadcn@latest add tooltip tabs separator` failed on pnpm version mismatch; direct `pnpm dlx shadcn@latest add tooltip tabs separator` succeeded and created local component source files. |
+| Subagents | Started separate planning and acting subagents. Acting is allowed to proceed without waiting for evaluation; evaluator feedback will be applied near the end. |
+| Implementation | Added `/workspace`, a composed toolbar, draggable/clickable node palette, typed graph reducer, first-class ports/edges, selected edge inspection/deletion, reusable compact node cards, local snapshots, and explicit deferred backend/AI labels. |
+| Integration | Removed the alternate incompatible XYFlow draft generated during parallel acting and kept one typed reducer plus state-driven SVG edge renderer to avoid conflicting graph models. |
+| Tests | `corepack pnpm --filter @xmeta/web test` passed after evaluator fixes: 9 test files / 26 tests. |
+| Typecheck | `corepack pnpm --filter @xmeta/web typecheck` passed. |
+| Build | `corepack pnpm --filter @xmeta/web build` passed and generated `/workspace`. |
+| Rendered QA | Browser QA passed on desktop and 390x844 mobile: workspace route loaded, canvas/palette/inspector present, console warn/error logs empty, toolbar Add Script changed node count from 3 to 4, all-node quick-add controls existed, mobile canvas had internal scrollability, and no document horizontal overflow. |
+| JSON and whitespace | `feature_list.json` and `feature_tasks/2.json` parsed successfully; `git diff --check` passed with CRLF warnings only. |
+| Final startup | Final `.\init.ps1` passed after artifact updates and reran web verification: 9 test files / 26 tests. |
+| Evaluator fix pass | Fixed evaluator findings: toolbar add now works in Browser QA, all-node quick-add buttons and mode/panel toggles exist, mobile canvas has internal scroll reachability without document overflow, and stale/missing ports are rejected with a visible reason. |
+| Post-fix verification | `corepack pnpm --filter @xmeta/web test` passed 9 files / 26 tests; typecheck passed; build passed; desktop Browser QA verified toolbar add 3 -> 4 nodes; mobile Browser QA verified scrollable canvas with no console warn/error logs. |

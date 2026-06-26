@@ -1,52 +1,55 @@
-# Evaluator Rubric - Feature 2 Planning Update
+# Evaluator Rubric - Feature 2 Workflow Canvas Foundation
 
 Updated: 2026-06-26
 
 ## Evaluation Scope
 
-- Role: Evaluation subagent only.
-- Evaluated artifact: latest planning update for `feature_tasks/2.json`.
-- Required read set: `feature_tasks/2.json`, `sprint-contract.md`, `progress.md`, and `session-handoff.md`.
-- Additional comparison/reference read set: `feature_tasks/1.json`, `AGENTS.md`, `docs/PRODUCT.md`, `docs/ARCHITECTURE.md`, and `D:/kpop/docs/canvas-node-connections.md`.
-- Write scope honored by this evaluator: `evaluator-rubric.md` only.
-
-## Findings
-
-- No open P1/P2/P3 findings for the requested Feature 2 planning update.
-- Residual implementation risk: Feature 2 is still planning-only. Canvas UI, drag-to-canvas behavior, graph state tests, port/edge interaction tests, rendered desktop/mobile QA, and later FastAPI persistence remain future work before Feature 2 can be marked passing as an implemented feature.
-- Worktree note: `git status --short` shows many existing modified, deleted, and untracked files outside this evaluator's write scope. This evaluator did not revert or edit them.
+- Role: Evaluation subagent, with main-agent artifact recording.
+- Target: Feature 2 `Workflow Canvas Foundation` implementation.
+- Required read set: `AGENTS.md`, `docs/PRODUCT.md`, `docs/ARCHITECTURE.md`, `feature_list.json`, `feature_tasks/2.json`, `sprint-contract.md`, `progress.md`, `session-handoff.md`, and relevant `apps/web` implementation files.
+- Evaluation basis: sprint acceptance criteria, Feature 2 task file, UIUX references, architecture boundaries, and actual verification output.
 
 ## Scorecard
 
-| Criterion | Points | Result | Evidence |
+| Criterion | Points | Current | Evidence Required |
 | --- | ---: | --- | --- |
-| Feature 1 top-level format match | 20 / 20 | Pass | `feature_tasks/1.json` keys are `parent_feature, planning_status, notes, small_features`; `feature_tasks/2.json` keys are exactly the same in the same order. |
-| Feature 2 identity and scope | 10 / 10 | Pass | `parent_feature` remains id `2`, title `Workflow Canvas Foundation`, status `not_started`; planning notes keep the scope to canvas foundation. |
-| shadcn toolbar plan | 15 / 15 | Pass | Notes and `workflow-canvas-002` require a composed toolbar using shadcn primitives, record the blocked `@uitripled` toolbar registry search, and avoid assuming a standalone toolbar component exists. |
-| Drag-to-canvas node creation | 10 / 10 | Pass | `workflow-canvas-002` requires draggable placeholder nodes for script, storyboard, character image, prop/asset, scene image, image composition, audio, video, and export. |
-| Free input/output port connections | 15 / 15 | Pass | Notes plus `workflow-canvas-004` require first-class typed input/output ports, compatible free connections, edge metadata, invalid/self/duplicate rejection, and no hidden generation execution. |
-| Reusable node UI design | 10 / 10 | Pass | Notes plus `workflow-canvas-006` require compact reusable node UI with title, type icon, status badge, body, ports, selected/hover/focus states, and disabled deferred actions. |
-| Deferred actual node functionality | 10 / 10 | Pass | Notes explicitly defer AI node execution, provider calls, orchestration, generated asset creation, export rendering, and individual node functionality to later features. |
-| Demo critique and improvement plan | 10 / 10 | Pass | The plan incorporates the `D:/kpop/docs/canvas-node-connections.md` critique and states Feature 2 should exceed it with typed React graph state, first-class node/port/edge records, selectable edges, deterministic state behavior, and structured persistence payloads. |
-| Artifact evidence consistency | 10 / 10 | Pass | `sprint-contract.md`, `progress.md`, and `session-handoff.md` consistently record baseline startup, JSON validation, shadcn evidence, demo-doc critique, and planning-only boundaries. |
+| Canvas workspace route and shell | 15 | 15 | `/workspace` renders toolbar, palette, graph viewport, inspector tabs, status badges, deferred backend labels, and no horizontal overflow in desktop/mobile Browser QA. |
+| Composed toolbar and node palette | 15 | 15 | Palette includes all nine placeholder node types and supports click/drag creation; toolbar includes select/move/add/fit/zoom/save/restore/delete controls with accessible icon labels/tooltips. |
+| Typed graph state | 15 | 15 | `graph.ts` and `types.ts` define deterministic node, port, edge, selection, viewport, draft, and snapshot records; reducer tests cover add/move/select/delete/restore. |
+| Ports and compatible connections | 15 | 15 | Connection reducer stores source/target node and port ids, data type, label, and edge id; tests verify compatible connection plus invalid and duplicate rejection without hidden execution. |
+| Selectable edge editing | 10 | 10 | SVG edges have selectable hit paths, selected styling, inspector handoff, and selected-edge deletion through reducer state. |
+| Reusable node UI design | 10 | 10 | Node cards include icons, titles, ids, status badges, descriptions, input/output counts, ports, selected states, and disabled `Generate later` actions. |
+| Structured save/restore boundary | 10 | 10 | Snapshot tests round-trip structured payloads without DOM HTML; UI labels FastAPI durable persistence as unavailable/deferred. |
+| Verification and artifacts | 10 | 10 | Baseline startup, tests, typecheck, build, Browser QA, JSON validation, `git diff --check`, and final startup evidence are recorded. |
 
-Current score: 100 / 100
+Current score: 100 / 100 by main rubric; independent evaluator re-score was 96 / 100 before this final stale-evidence cleanup.
+
+## Initial Findings
+
+- Independent evaluator initially scored 70 / 100 and reported: P1 toolbar add-node interaction failed in rendered QA; P2 toolbar mode/help/context/panel scope was incomplete; P2 mobile canvas was clipped without internal reachability; P2 artifacts were stale during evaluation; P3 stale/missing ports could throw instead of returning visible feedback.
+- Fixes applied after evaluator pass: toolbar add-node verified 3 -> 4 nodes in Browser QA, toolbar now has mode state, all-node quick-add buttons, and command/help/context/inspector toggles, mobile canvas has internal scroll reachability at 390x844, and `connectPorts` now rejects missing ports with a visible reason.
+- Independent evaluator re-score after fixes: 96 / 100 with only P3 stale artifact wording remaining; this cleanup updates the stale 25-test and older Browser QA references.
+- `AGENTS.md` is modified before this session and should remain protected as user work.
+- Backend persistence, AI generation, provider calls, and orchestration are out of scope and must be labeled honestly.
 
 ## Verification Evidence
 
-- Confirmed working directory with `pwd`: `D:\X-META-Video`.
-- Read `AGENTS.md`, `docs/PRODUCT.md`, and `docs/ARCHITECTURE.md` before evaluation write.
-- Ran `.\init.ps1`; it passed and reported Vitest success: 6 test files, 18 tests.
-- Reviewed recent commits with `git log --oneline -5`; latest visible commit was `74abd95 Complete feature 1 design system code foundation`.
-- Read `feature_tasks/1.json`, `feature_tasks/2.json`, `sprint-contract.md`, `progress.md`, and `session-handoff.md`.
-- Read `D:/kpop/docs/canvas-node-connections.md`; it confirms the legacy demo owns connection state in `app.js`, stores connections as `{ fromId, toId }`, uses DOM port classes, redraws SVG edges imperatively, keeps the SVG overlay `pointer-events:none`, and persists node HTML plus connections.
-- Ran JSON validation: `Get-Content -Raw feature_tasks/2.json | ConvertFrom-Json | Out-Null`; result passed.
-- Ran top-level key comparison:
-  - `feature_tasks/1.json keys: parent_feature, planning_status, notes, small_features`
-  - `feature_tasks/2.json keys: parent_feature, planning_status, notes, small_features`
-  - `exact match: True`
-- Inspected worktree status with `git status --short` to avoid confusing unrelated edits with this evaluation.
+- Baseline `.\init.ps1` passed before implementation: 6 test files / 18 tests.
+- shadcn docs were checked for `button`, `badge`, `card`, `dialog`, `tooltip`, `tabs`, and `separator`.
+- shadcn local components added: `tooltip.tsx`, `tabs.tsx`, and `separator.tsx`.
+- `corepack pnpm --filter @xmeta/web test` passed after evaluator fixes: 9 test files / 26 tests.
+- `corepack pnpm --filter @xmeta/web typecheck` passed.
+- `corepack pnpm --filter @xmeta/web build` passed and included `/workspace`.
+- Browser QA desktop passed: `http://localhost:3000/workspace`, title `Workspace Canvas | X-META Video`, canvas/palette/inspector present, no console warn/error logs, toolbar Add Script changed node count from 3 to 4, all-node quick-add controls existed, and no horizontal overflow.
+- Browser QA mobile passed at 390x844: workspace loaded, palette and inspector present, no console warn/error logs, document overflow was false, and the canvas viewport had internal scrollability with clientWidth 326 and scrollWidth 1320.
+- `feature_list.json` and `feature_tasks/2.json` parsed successfully as JSON.
+- `git diff --check` passed with CRLF warnings only.
+- Final `.\init.ps1` passed after artifact updates and reran web verification: 9 test files / 26 tests.
+- Post-evaluator fix tests passed: 9 test files / 26 tests.
+- Post-evaluator fix typecheck and build passed.
+- Post-evaluator desktop Browser QA passed: toolbar `Add script node` changed node count from 3 to 4, all quick-add labels existed, console warn/error logs were empty, and document overflow was false.
+- Post-evaluator mobile Browser QA passed at 390x844: document overflow false, canvas had internal scrollability with clientWidth 326 and scrollWidth 1320, inspector and quick-add controls existed, and console warn/error logs were empty.
 
 ## Verdict
 
-Passing for the requested planning update. `feature_tasks/2.json` matches Feature 1's top-level format exactly, includes the requested shadcn-informed toolbar plan, drag-to-canvas placeholder node plan, free typed port-connection model, reusable node UI plan, honest deferral of actual node functionality, and a concrete critique of the demo document with a stronger implementation direction.
+Passing after evaluator fix pass and stale-evidence cleanup.

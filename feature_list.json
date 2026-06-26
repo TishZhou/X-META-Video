@@ -17,7 +17,7 @@
                      {
                          "id":  1,
                          "title":  "Web Design",
-                         "status":  "in_progress",
+                         "status":  "passing",
                          "verification":  [
                                               "Read feature_tasks/1.json completely before working on this feature.",
                                               "Run .\\init.ps1 and record evidence before marking this feature passing."
@@ -52,11 +52,25 @@
                      {
                          "id":  2,
                          "title":  "Workflow Canvas Foundation",
-                         "status":  "not_started",
+                         "status":  "passing",
                          "verification":  [
                                               "Read feature_tasks/2.json completely before working on this feature.",
                                               "Run .\\init.ps1 and record evidence before marking this feature passing."
                                           ],
+                         "current_task":  "workflow-canvas-008",
+                         "current_task_status":  "passing",
+                         "current_task_evidence":  [
+                                                       "apps/web/src/app/workspace/page.tsx implements the /workspace route for the Workflow Canvas Foundation.",
+                                                       "apps/web/src/components/xmeta/workflow-canvas/workflow-canvas-workspace.tsx implements the canvas work surface with toolbar, draggable/clickable node palette, state-driven SVG edges, selectable graph items, inspector tabs, local-only status, and deferred backend/AI labels.",
+                                                       "apps/web/src/lib/workflow-canvas/graph.ts and apps/web/src/lib/workflow-canvas/types.ts define typed graph records for nodes, ports, edges, selection, viewport, draft status, and structured snapshots.",
+                                                       "apps/web/src/lib/workflow-canvas/graph.test.ts verifies deterministic add, move, select, delete, compatible connection, invalid/duplicate rejection, and snapshot round-trip behavior without DOM HTML persistence.",
+                                                       "apps/web/src/components/ui/tooltip.tsx, tabs.tsx, and separator.tsx were added through the shadcn CLI using direct pnpm after corepack pnpm dlx hit a pnpm version mismatch.",
+                                                       "corepack pnpm --filter @xmeta/web test passed after evaluator fixes: 9 test files / 26 tests.",
+                                                       "corepack pnpm --filter @xmeta/web typecheck passed.",
+                                                       "corepack pnpm --filter @xmeta/web build passed and includes the /workspace route.",
+                                                       "Browser QA on http://localhost:3000/workspace desktop passed: route title correct, canvas/palette/inspector present, console warn/error logs empty, toolbar Add Script changed rendered nodes from 3 to 4, all-node quick-add controls existed, and no horizontal overflow.",
+                                                       "Browser QA on 390x844 mobile passed: workspace loaded, palette and inspector present, console warn/error logs empty, document overflow was false, and the canvas viewport had internal scrollability with clientWidth 326 and scrollWidth 1320."
+                                                   ],
                          "user_visible_behavior":  "Users can work on a Figma-like canvas with nodes, edges, drag, zoom, selection, and restorable layout state.",
                          "task_file":  "feature_tasks/2.json"
                      },

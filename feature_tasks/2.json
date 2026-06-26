@@ -2,8 +2,9 @@
   "parent_feature": {
     "id": 2,
     "title": "Workflow Canvas Foundation",
-    "status": "not_started"
+    "status": "passing"
   },
+  "planning_status": "workflow_canvas_foundation_passing",
   "notes": [
     "Feature 2 task format was rewritten to match feature_tasks/1.json top-level shape exactly: parent_feature, planning_status, notes, small_features.",
     "Workflow Canvas Foundation is the Figma-like canvas foundation only. Actual AI node execution, provider calls, orchestration, generated asset creation, export rendering, and individual node functionality remain later feature scopes.",
@@ -14,104 +15,105 @@
     "Feature 2 should improve on the demo by implementing typed React graph state, first-class node/port/edge records, selectable edges, deterministic reducer or store behavior, and structured persistence payloads that can later be saved through FastAPI.",
     "shadcn evidence: corepack pnpm dlx shadcn@latest docs confirmed docs/examples/API links for command, resizable, sidebar, toggle-group, tooltip, tabs, menubar, context-menu, sheet, scroll-area, and separator.",
     "Registry evidence: apps/web/components.json configures @uitripled, but shadcn registry search for toolbar from apps/web was blocked by @uitripled catalog parse errors requiring name and homepage; the same search found no standalone toolbar item, so the canvas toolbar should be composed from available primitives.",
-    "Architecture boundary remains: Web owns canvas UX and local draft graph state; FastAPI later owns durable workflow/project/task state; web must not call AI providers directly."
+    "Architecture boundary remains: Web owns canvas UX and local draft graph state; FastAPI later owns durable workflow/project/task state; web must not call AI providers directly.",
+    "Feature 2 implementation completed on 2026-06-26 with a canvas-first /workspace route, typed graph reducer, first-class ports and edges, local structured snapshots, reusable placeholder node UI, stateful toolbar controls, mobile canvas scroll reachability, stale-port rejection, and honest deferred backend/AI execution labels."
   ],
   "small_features": [
     {
       "id": "workflow-canvas-001",
       "title": "Canvas Workspace Route And Shell",
-      "status": "not_started",
+      "status": "passing",
       "user_visible_behavior": "Users can enter a canvas-first workspace with a toolbar, node palette, central graph surface, and inspector/task side panels.",
       "verification": [
         "Implement a canvas workspace route that reuses the existing app shell and opens on the production work surface rather than a marketing page.",
         "Verify the shell includes regions for composed toolbar, draggable node palette, canvas viewport, inspector, task/history signals, and honest unavailable-backend states.",
         "Verify desktop and mobile responsive behavior has no horizontal overflow, text overlap, or hidden core controls."
       ],
-      "notes": "Use shadcn Sidebar, Resizable, ScrollArea, Separator, Sheet, and Tabs patterns where they fit the workspace/panel layout. Do not restore deleted old Feature 2 workspace code."
+      "notes": "Implemented in apps/web/src/app/workspace/page.tsx and apps/web/src/components/xmeta/workflow-canvas/workflow-canvas-workspace.tsx. The route reuses the global AppShell and renders toolbar, palette, canvas viewport, inspector tabs, local-only draft status, and deferred backend/AI labels."
     },
     {
       "id": "workflow-canvas-002",
       "title": "Composable Canvas Toolbar And Node Palette",
-      "status": "not_started",
+      "status": "passing",
       "user_visible_behavior": "Users can drag different node types from a toolbar or palette onto the canvas and use visible canvas controls.",
       "verification": [
         "Plan and implement the toolbar as a composed control surface using shadcn primitives instead of a standalone toolbar component.",
         "Verify users can drag placeholder nodes for script, storyboard, character image, prop/asset, scene image, image composition, audio, video, and export onto the canvas.",
         "Verify command, mode, zoom, fit, help, context, and panel toggles are keyboard-accessible and expose tooltips."
       ],
-      "notes": "Use Command for quick actions, ToggleGroup for canvas modes, Tooltip for icon explanations, Menubar/ContextMenu for command groups, Separator for grouping, and ScrollArea when the node palette overflows. Registry search found no standalone toolbar item and @uitripled catalog search was blocked, so compose the toolbar."
+      "notes": "Implemented with local shadcn-style Button, Tooltip, Separator, Tabs, and Badge primitives. Users can click or drag placeholder node types from the palette; toolbar controls expose select, move, all-node quick add, fit, zoom, save, restore, delete, command, help, context, and inspector toggles."
     },
     {
       "id": "workflow-canvas-003",
       "title": "Typed React Graph State",
-      "status": "not_started",
+      "status": "passing",
       "user_visible_behavior": "Users can add, move, select, and delete canvas nodes while the graph remains stable and predictable.",
       "verification": [
         "Define typed React graph records for nodes, ports, edges, selection, viewport, draft status, and persistence snapshots.",
         "Verify graph state supports add node, move node, select node, delete selection, pan, zoom, fit view, and restore from a structured payload.",
         "Verify state behavior is deterministic through reducer, store, or hook tests."
       ],
-      "notes": "Do not use the demo app's DOM-owned node HTML persistence pattern. Keep graph data separate from presentation so FastAPI persistence can own durable state later."
+      "notes": "Implemented in apps/web/src/lib/workflow-canvas/graph.ts and apps/web/src/lib/workflow-canvas/types.ts. Tests cover deterministic add, move, select, delete, connect, save, and restore behavior without DOM-owned node HTML."
     },
     {
       "id": "workflow-canvas-004",
       "title": "First-Class Ports And Free Connections",
-      "status": "not_started",
+      "status": "passing",
       "user_visible_behavior": "Users can connect node input and output ports freely and see valid edge feedback on the canvas.",
       "verification": [
         "Implement first-class input and output port records with ids, labels, data types, direction, compatibility metadata, and parent node references.",
         "Verify users can start a connection from an output port, preview the edge, drop on a compatible input port, and reject invalid/self/duplicate connections with clear feedback.",
         "Verify connections do not auto-run node functionality or hidden generation tasks."
       ],
-      "notes": "Improve on the demo doc's { fromId, toId } connection model by storing sourcePortId, targetPortId, sourceNodeId, targetNodeId, edge id, edge status, and optional label/type metadata."
+      "notes": "Implemented as typed port and edge records with sourceNodeId, sourcePortId, targetNodeId, targetPortId, dataType, status, and label. Invalid, self, and duplicate connections are rejected by reducer logic and never start generation."
     },
     {
       "id": "workflow-canvas-005",
       "title": "Selectable Edge Rendering And Graph Editing",
-      "status": "not_started",
+      "status": "passing",
       "user_visible_behavior": "Users can select, inspect, and delete connections just like nodes.",
       "verification": [
         "Render edges as selectable graph objects with hover, selected, invalid, and disabled visual states.",
         "Verify selecting an edge updates inspector state and keyboard delete removes the selected edge without disturbing unrelated nodes.",
         "Verify moved or resized nodes keep edge endpoints aligned without imperative DOM-owned redraw state."
       ],
-      "notes": "The demo SVG overlay uses pointer-events none and redraws all edges from DOM positions. Feature 2 should make edges interactive and state-driven while preserving smooth visual feedback."
+      "notes": "Implemented state-driven SVG edge rendering with selectable hit paths, selected styling, inspector handoff, and selected-edge deletion through reducer state."
     },
     {
       "id": "workflow-canvas-006",
       "title": "Reusable Node UI Design",
-      "status": "not_started",
+      "status": "passing",
       "user_visible_behavior": "Users can recognize node purpose, status, inputs, outputs, and deferred actions from a consistent node card design.",
       "verification": [
         "Create reusable node UI patterns for all placeholder node types with header, icon, title, status badge, compact content, ports, selected/hover/focus states, and disabled action affordances.",
         "Verify node UI is readable at common zoom levels and does not resize unpredictably when selected, hovered, or connected.",
         "Verify actual script, image, audio, video, and export functionality is clearly deferred to later feature files."
       ],
-      "notes": "Use existing shadcn/Button/Badge/Card-like conventions where appropriate, but avoid nested card-heavy canvas nodes. Node cards should be compact production controls, not marketing cards."
+      "notes": "Implemented compact node cards with icon, title, id, status badge, description, stable port affordances, input/output counts, selected state, and disabled Generate later controls."
     },
     {
       "id": "workflow-canvas-007",
       "title": "Structured Persistence Payloads And Save Restore Boundary",
-      "status": "not_started",
+      "status": "passing",
       "user_visible_behavior": "Users can save and restore the canvas graph shape when backend persistence becomes available, with clear local draft and error states before then.",
       "verification": [
         "Define structured graph snapshot payloads for nodes, ports, edges, viewport, selection, version, and project/workflow identifiers.",
         "Verify local save/restore fixtures can round-trip the graph without serializing DOM HTML.",
         "Verify the web layer labels missing FastAPI durable persistence honestly and never calls AI providers directly."
       ],
-      "notes": "This task prepares the Web-to-FastAPI boundary but can use local fixtures until backend endpoints are implemented. Durable project/workflow/task persistence remains backend-owned."
+      "notes": "Implemented structured WorkflowSnapshot payloads and local save/restore reducer behavior. The UI labels FastAPI durable persistence as unavailable and does not call model providers."
     },
     {
       "id": "workflow-canvas-008",
       "title": "Verification And Artifact Closure",
-      "status": "not_started",
+      "status": "passing",
       "user_visible_behavior": "Users get a verified canvas foundation plan and implementation state before later AI node features begin.",
       "verification": [
         "Run .\\init.ps1 before implementation work and record baseline evidence.",
         "Run focused web tests for workspace route, toolbar composition, graph state, port connection behavior, edge selection, node UI, and save/restore fixtures.",
         "Run typecheck, build, rendered desktop/mobile QA, JSON validation, and final .\\init.ps1 before marking Feature 2 passing."
       ],
-      "notes": "Final closure must update feature_list.json, feature_tasks/2.json, sprint-contract.md, evaluator-rubric.md, progress.md, and session-handoff.md with exact evidence. This planning-only update does not edit feature_list.json by request."
+      "notes": "Verification evidence: baseline .\\init.ps1 passed; post-evaluator corepack pnpm --filter @xmeta/web test passed with 9 files / 26 tests; typecheck passed; build passed with /workspace; Browser QA passed on desktop and 390x844 mobile with no console warnings/errors, toolbar Add Script adding a node, and mobile internal canvas scrollability."
     }
   ]
 }

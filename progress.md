@@ -7,17 +7,32 @@ Record major decisions and progress each session. Keep the current verified stat
 - Repository root: `D:\X-META-Video`
 - Standard startup path: `.\init.ps1`
 - Standard web verification path: `corepack pnpm --filter @xmeta/web test`
-- Current highest-priority unfinished feature: Feature 1, Web Design
-- Current active feature: Feature 1 is `in_progress`.
+- Current highest-priority unfinished feature: Feature 3, Script Node
+- Current active feature: none; Feature 2 is now `passing`.
 - Current reset status: Feature 2 and Feature 3 have been removed from the active plan, their task files have been deleted, old web implementation files have been cleared while preserving minimal app structure, and the remaining feature plan has now been renumbered so old Features 4-17 are new Features 2-15.
-- Current feature numbering: Feature 1 remains Web Design and `web-design-004` passing; Feature 2 is now Workflow Canvas Foundation with detailed task plan at `feature_tasks/2.json`; old Features 5-17 shifted to new Features 3-15.
+- Current feature numbering: Feature 1 remains Web Design and is now recorded as `passing`; Feature 2 is Workflow Canvas Foundation and is now `passing`; old Features 5-17 shifted to new Features 3-15.
 - Current web baseline: `/` renders the `web-design-004` app foundation with a global `AppShell`, global top bar, TriplD wave hero, feature preview, creation entry cards, and shared 88rem desktop page containers.
 - Current component guidance: `web-design-001` installed the user-provided TriplD shadcn component set as local source. See the concise usage map in `docs/TRIPLED_COMPONENT_GUIDE.md`.
 - Current design-system foundation: `web-design-002` defines shared style, layout, motion, responsive, accessibility, and product state language directly in frontend code under `apps/web/src/lib/design-system.ts`, `apps/web/src/components/xmeta/design-primitives.tsx`, `apps/web/src/index.css`, and `apps/web/tailwind.config.ts`.
 - Current app foundation: `web-design-004` implements the global shell, shared page containers, and wider desktop layout rhythm while preserving the root TriplD landing composition.
-- Current blocker: none for continuing Feature 1 planning and implementation.
+- Current blocker: none for starting Feature 3 after reading `feature_tasks/3.json` and rerunning the standard startup path.
 
 ## Session Log
+
+### Session 025
+
+- Date: 2026-06-26
+- Goal: Complete Feature 2, Workflow Canvas Foundation, with planning/acting/evaluation workstreams and final artifact closure.
+- Completed: Implemented `/workspace` as a canvas-first production work surface with composed toolbar, node palette, central graph viewport, state-driven SVG edges, inspector tabs, local-only draft state, and honest deferred FastAPI/AI execution labels.
+- Graph foundation: Added typed workflow canvas records and reducer behavior under `apps/web/src/lib/workflow-canvas/graph.ts` and `types.ts` for nodes, ports, edges, selection, viewport, draft status, structured snapshots, compatible connections, invalid/self/duplicate rejection, selected deletion, save, and restore.
+- UI foundation: Added `apps/web/src/components/xmeta/workflow-canvas/workflow-canvas-workspace.tsx`, workspace route/tests, and shadcn local `tooltip`, `tabs`, and `separator` components.
+- Navigation: Added a top-bar Workspace link to `/workspace`.
+- Verification run: Baseline `.\init.ps1` passed before implementation and reported 6 files / 18 tests. After evaluator fixes, `corepack pnpm --filter @xmeta/web test` passed 9 files / 26 tests; `corepack pnpm --filter @xmeta/web typecheck` passed; `corepack pnpm --filter @xmeta/web build` passed with `/workspace`; Browser QA passed on desktop and 390x844 mobile with no console warn/error logs, toolbar Add Script adding a node, mobile internal canvas scrollability, and no document horizontal overflow; final `.\init.ps1` passed after artifact updates and reran 9 files / 26 tests.
+- Browser QA interaction: Desktop toolbar Add Script changed rendered workflow nodes from 3 to 4 and showed the expected local draft notice.
+- Evaluator loop: Independent evaluator initially scored 70/100 and flagged toolbar add, toolbar scope, mobile canvas reachability, artifact freshness, and stale-port rejection. Acting/main fix pass resolved those items: toolbar Add Script changed nodes 3 -> 4 in Browser QA; all-node quick-add, mode state, and panel toggles were added; mobile canvas gained internal scroll reachability; and missing ports now reject with visible feedback. Post-fix tests passed 9 files / 26 tests, typecheck passed, build passed, and desktop/mobile Browser QA passed with no console warn/error logs.
+- Integration note: The acting workstream briefly produced an alternate XYFlow-oriented draft with incompatible graph types; the final integrated implementation keeps one typed reducer and state-driven SVG edge renderer to avoid conflicting canvas models.
+- Known risk or unresolved issue: Durable FastAPI persistence, provider calls, task queue orchestration, generated assets, and export rendering are explicitly deferred to later features.
+- Next best step: Start Feature 3, Script Node, only after reading `feature_tasks/3.json`, rerunning `.\init.ps1`, and updating a new sprint contract/rubric.
 
 ### Session 024
 

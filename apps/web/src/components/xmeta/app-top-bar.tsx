@@ -35,6 +35,9 @@ export function AppTopBar() {
             <a href="/#creation-entries">Studio</a>
           </Button>
           <Button asChild variant="ghost" size="sm">
+            <Link href="/workspace">Workspace</Link>
+          </Button>
+          <Button asChild variant="ghost" size="sm">
             <Link href="/tripled-test">TriplD</Link>
           </Button>
         </nav>
