@@ -8,8 +8,9 @@ describe("WorkspacePage", () => {
     const html = renderToStaticMarkup(<WorkspacePage />);
 
     expect(metadata.title).toBe("Workspace Canvas | X-META Video");
-    expect(html).toContain("Comic drama and MV workflow canvas");
-    expect(html).toContain("Node palette");
+    expect(html).toContain("Untitled project");
+    expect(html).toContain("Canvas 1");
     expect(html).toContain("Save local snapshot");
+    expect(html).not.toContain("Node palette");
   });
 });

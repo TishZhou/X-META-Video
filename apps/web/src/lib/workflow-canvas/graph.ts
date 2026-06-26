@@ -167,7 +167,7 @@ export type WorkflowGraphAction =
   | { type: "select"; selection: WorkflowSelection }
   | { type: "deleteSelection" }
   | { type: "connect"; sourcePortId: string; targetPortId: string }
-  | { type: "setViewport"; viewport: WorkflowViewport }
+  | { type: "setViewport"; viewport: WorkflowViewport; markDirty?: boolean }
   | { type: "fitView" }
   | { type: "saveSnapshot" }
   | { type: "restoreSnapshot"; snapshot?: WorkflowSnapshot }
@@ -219,9 +219,9 @@ export function createWorkflowSnapshot(
 }
 
 export function createInitialWorkflowGraphState(): WorkflowGraphState {
-  const script = createWorkflowNode("script", { x: 72, y: 96 }, 1);
-  const storyboard = createWorkflowNode("storyboard", { x: 392, y: 92 }, 2);
-  const composition = createWorkflowNode("composition", { x: 712, y: 128 }, 3);
+  const script = createWorkflowNode("script", { x: 620, y: 390 }, 1);
+  const storyboard = createWorkflowNode("storyboard", { x: 1000, y: 410 }, 2);
+  const composition = createWorkflowNode("composition", { x: 1370, y: 560 }, 3);
   const initialNodes = [script, storyboard, composition];
   const scriptOut = findPort(initialNodes, `${script.id}:script-out`);
   const storyboardIn = findPort(initialNodes, `${storyboard.id}:script-in`);
@@ -354,7 +354,7 @@ export function workflowGraphReducer(
       return {
         ...state,
         viewport: action.viewport,
-        draftStatus: "dirty",
+        draftStatus: action.markDirty === false ? state.draftStatus : "dirty",
       };
 
     case "fitView":

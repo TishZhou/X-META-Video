@@ -7,7 +7,10 @@ import { cn } from "@/lib/utils";
 
 export function AppTopBar() {
   return (
-    <header className="sticky top-0 z-40 border-b border-border/40 bg-background/80 backdrop-blur-xl">
+    <header
+      className="sticky top-0 z-40 border-b border-border/40 bg-background/80 backdrop-blur-xl"
+      data-xmeta-top-bar="true"
+    >
       <div
         className={cn(
           xmetaLayoutClassNames.appChrome,

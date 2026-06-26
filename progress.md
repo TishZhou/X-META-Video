@@ -15,9 +15,23 @@ Record major decisions and progress each session. Keep the current verified stat
 - Current component guidance: `web-design-001` installed the user-provided TriplD shadcn component set as local source. See the concise usage map in `docs/TRIPLED_COMPONENT_GUIDE.md`.
 - Current design-system foundation: `web-design-002` defines shared style, layout, motion, responsive, accessibility, and product state language directly in frontend code under `apps/web/src/lib/design-system.ts`, `apps/web/src/components/xmeta/design-primitives.tsx`, `apps/web/src/index.css`, and `apps/web/tailwind.config.ts`.
 - Current app foundation: `web-design-004` implements the global shell, shared page containers, and wider desktop layout rhythm while preserving the root TriplD landing composition.
+- Current workspace canvas revision: Feature 2 `/workspace` now uses a canvas-first dark dotted work surface with a floating project bar, a single bottom `Add node` entry, and no duplicated left node palette or right monitoring/Inspector panel.
 - Current blocker: none for starting Feature 3 after reading `feature_tasks/3.json` and rerunning the standard startup path.
 
 ## Session Log
+
+### Session 026
+
+- Date: 2026-06-26
+- Goal: Revise Feature 2 workspace visual layout to match the user's Figma-like reference: canvas as the main theme, no duplicated node-add controls, and no right monitoring panel.
+- Completed: Hid the global app top bar on `/workspace`; replaced the prior left palette/right inspector composition with a full-screen dark dotted canvas, floating project/status controls, and one bottom dock with a single `Add node` menu entry.
+- Interaction update: The bottom `Add node` menu now exposes accessible `Add <node> node` menu items for all placeholder node types, then closes after adding the selected placeholder.
+- Verification run: `corepack pnpm --filter @xmeta/web test` passed 9 files / 26 tests; `corepack pnpm --filter @xmeta/web typecheck` passed; `corepack pnpm --filter @xmeta/web build` passed.
+- Rendered QA: Browser QA on `http://localhost:3000/workspace` passed for desktop route identity, nonblank canvas, hidden global top bar, floating workspace top bar, bottom toolbar, no `Node palette` text, no `Inspector` text, no `Quick add` text, empty console warn/error logs, and no document overflow.
+- Final startup: `.\init.ps1` passed after artifact updates and reran web tests: 9 test files / 26 tests.
+- User note: Mobile UI is not part of this revision's acceptance target.
+- Known risk or unresolved issue: FastAPI durable persistence, AI execution, provider calls, task orchestration, generated assets, and export rendering remain deferred to later features.
+- Next best step: Start Feature 3, Script Node, after reading `feature_tasks/3.json` and rerunning `.\init.ps1`.
 
 ### Session 025
 

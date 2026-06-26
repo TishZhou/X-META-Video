@@ -7,26 +7,22 @@ describe("WorkflowCanvasWorkspace", () => {
   it("renders the workspace route regions and honest deferred states", () => {
     const html = renderToStaticMarkup(<WorkflowCanvasWorkspace />);
 
-    expect(html).toContain("Workflow Canvas Foundation");
-    expect(html).toContain("Node palette");
+    expect(html).toContain("Untitled project");
+    expect(html).toContain("Canvas 1");
     expect(html).toContain('data-workflow-canvas="viewport"');
-    expect(html).toContain("Inspector");
-    expect(html).toContain("Backend persistence unavailable");
-    expect(html).toContain("AI execution deferred");
+    expect(html).toContain('data-workspace-bottom-toolbar="true"');
+    expect(html).not.toContain("Node palette");
+    expect(html).not.toContain("Inspector");
   });
 
-  it("renders all planned placeholder node types in the palette", () => {
+  it("keeps node creation behind one bottom add entry", () => {
     const html = renderToStaticMarkup(<WorkflowCanvasWorkspace />);
 
-    expect(html).toContain("Script");
-    expect(html).toContain("Storyboard");
-    expect(html).toContain("Character Image");
-    expect(html).toContain("Prop / Asset");
-    expect(html).toContain("Scene Image");
-    expect(html).toContain("Image Composition");
-    expect(html).toContain("Audio");
-    expect(html).toContain("Video");
-    expect(html).toContain("Export");
+    expect(html).toContain('aria-label="Add node"');
+    expect(html).toContain('data-workspace-bottom-toolbar="true"');
+    expect(html).not.toContain('data-workspace-add-menu="true"');
+    expect(html).not.toContain("Node palette");
+    expect(html).not.toContain("Quick add");
   });
 
   it("renders initial typed graph nodes and selectable connection labels", () => {
@@ -36,6 +32,6 @@ describe("WorkflowCanvasWorkspace", () => {
     expect(html).toContain('data-workflow-node="storyboard"');
     expect(html).toContain('data-workflow-node="composition"');
     expect(html).toContain("Workflow connections");
-    expect(html).toContain("Generate later");
+    expect(html).toContain("《我在盛唐写天下》");
   });
 });

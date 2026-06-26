@@ -16,32 +16,33 @@
     "shadcn evidence: corepack pnpm dlx shadcn@latest docs confirmed docs/examples/API links for command, resizable, sidebar, toggle-group, tooltip, tabs, menubar, context-menu, sheet, scroll-area, and separator.",
     "Registry evidence: apps/web/components.json configures @uitripled, but shadcn registry search for toolbar from apps/web was blocked by @uitripled catalog parse errors requiring name and homepage; the same search found no standalone toolbar item, so the canvas toolbar should be composed from available primitives.",
     "Architecture boundary remains: Web owns canvas UX and local draft graph state; FastAPI later owns durable workflow/project/task state; web must not call AI providers directly.",
-    "Feature 2 implementation completed on 2026-06-26 with a canvas-first /workspace route, typed graph reducer, first-class ports and edges, local structured snapshots, reusable placeholder node UI, stateful toolbar controls, mobile canvas scroll reachability, stale-port rejection, and honest deferred backend/AI execution labels."
+    "Feature 2 implementation completed on 2026-06-26 with a canvas-first /workspace route, typed graph reducer, first-class ports and edges, local structured snapshots, reusable placeholder node UI, stateful bottom toolbar controls, stale-port rejection, and honest deferred backend/AI execution labels.",
+    "User-requested visual revision changed /workspace to match the reference direction: the dark dotted canvas is the main theme, node creation lives behind one bottom Add node entry, the left node palette was removed to avoid duplicate add controls, and the right monitoring/Inspector panel was removed."
   ],
   "small_features": [
     {
       "id": "workflow-canvas-001",
       "title": "Canvas Workspace Route And Shell",
       "status": "passing",
-      "user_visible_behavior": "Users can enter a canvas-first workspace with a toolbar, node palette, central graph surface, and inspector/task side panels.",
+      "user_visible_behavior": "Users can enter a canvas-first workspace with floating project controls, a bottom toolbar, and the central graph surface as the dominant UI.",
       "verification": [
         "Implement a canvas workspace route that reuses the existing app shell and opens on the production work surface rather than a marketing page.",
-        "Verify the shell includes regions for composed toolbar, draggable node palette, canvas viewport, inspector, task/history signals, and honest unavailable-backend states.",
-        "Verify desktop and mobile responsive behavior has no horizontal overflow, text overlap, or hidden core controls."
+        "Verify the shell includes regions for composed toolbar, canvas viewport, task/history signals, and honest unavailable-backend states.",
+        "Verify desktop behavior has no document overflow, text overlap, duplicated add controls, or right-side monitoring panel."
       ],
-      "notes": "Implemented in apps/web/src/app/workspace/page.tsx and apps/web/src/components/xmeta/workflow-canvas/workflow-canvas-workspace.tsx. The route reuses the global AppShell and renders toolbar, palette, canvas viewport, inspector tabs, local-only draft status, and deferred backend/AI labels."
+      "notes": "Implemented in apps/web/src/app/workspace/page.tsx and apps/web/src/components/xmeta/workflow-canvas/workflow-canvas-workspace.tsx. The route hides the global top bar on /workspace and renders a dark dotted canvas, floating workspace top bar, bottom toolbar, local-only draft status, and deferred backend/AI labels."
     },
     {
       "id": "workflow-canvas-002",
-      "title": "Composable Canvas Toolbar And Node Palette",
+      "title": "Composable Canvas Toolbar And Node Add Entry",
       "status": "passing",
-      "user_visible_behavior": "Users can drag different node types from a toolbar or palette onto the canvas and use visible canvas controls.",
+      "user_visible_behavior": "Users can add different node types from one bottom toolbar entry and use visible canvas controls.",
       "verification": [
         "Plan and implement the toolbar as a composed control surface using shadcn primitives instead of a standalone toolbar component.",
-        "Verify users can drag placeholder nodes for script, storyboard, character image, prop/asset, scene image, image composition, audio, video, and export onto the canvas.",
+        "Verify users can add placeholder nodes for script, storyboard, character image, prop/asset, scene image, image composition, audio, video, and export from the bottom Add node menu.",
         "Verify command, mode, zoom, fit, help, context, and panel toggles are keyboard-accessible and expose tooltips."
       ],
-      "notes": "Implemented with local shadcn-style Button, Tooltip, Separator, Tabs, and Badge primitives. Users can click or drag placeholder node types from the palette; toolbar controls expose select, move, all-node quick add, fit, zoom, save, restore, delete, command, help, context, and inspector toggles."
+      "notes": "Implemented with local shadcn-style Button, Tooltip, Separator, Tabs, and Badge primitives. Users add placeholder node types from the single bottom Add node menu; toolbar controls expose select, move, fit, zoom, save, restore, delete, and help without duplicating a left node palette."
     },
     {
       "id": "workflow-canvas-003",
@@ -77,7 +78,7 @@
         "Verify selecting an edge updates inspector state and keyboard delete removes the selected edge without disturbing unrelated nodes.",
         "Verify moved or resized nodes keep edge endpoints aligned without imperative DOM-owned redraw state."
       ],
-      "notes": "Implemented state-driven SVG edge rendering with selectable hit paths, selected styling, inspector handoff, and selected-edge deletion through reducer state."
+      "notes": "Implemented state-driven SVG edge rendering with selectable hit paths, selected styling, compact in-canvas status handoff, and selected-edge deletion through reducer state."
     },
     {
       "id": "workflow-canvas-006",
@@ -111,9 +112,9 @@
       "verification": [
         "Run .\\init.ps1 before implementation work and record baseline evidence.",
         "Run focused web tests for workspace route, toolbar composition, graph state, port connection behavior, edge selection, node UI, and save/restore fixtures.",
-        "Run typecheck, build, rendered desktop/mobile QA, JSON validation, and final .\\init.ps1 before marking Feature 2 passing."
+        "Run typecheck, build, rendered desktop QA, JSON validation, and final .\\init.ps1 before marking Feature 2 passing."
       ],
-      "notes": "Verification evidence: baseline .\\init.ps1 passed; post-evaluator corepack pnpm --filter @xmeta/web test passed with 9 files / 26 tests; typecheck passed; build passed with /workspace; Browser QA passed on desktop and 390x844 mobile with no console warnings/errors, toolbar Add Script adding a node, and mobile internal canvas scrollability."
+      "notes": "Verification evidence: baseline .\\init.ps1 passed; post-revision corepack pnpm --filter @xmeta/web test passed with 9 files / 26 tests; typecheck passed; build passed with /workspace; desktop Browser QA passed with hidden global top bar, bottom toolbar, no duplicated Node palette, no Inspector/right monitoring panel, no console warnings/errors, and no document overflow; final .\\init.ps1 passed after artifact updates and reran 9 test files / 26 tests."
     }
   ]
 }

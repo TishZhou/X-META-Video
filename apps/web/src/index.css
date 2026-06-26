@@ -217,6 +217,11 @@
   .xmeta-control-size {
     @apply min-h-11 min-w-11;
   }
+
+  .xmeta-app-frame:has([data-workspace-canvas-page="true"])
+    [data-xmeta-top-bar="true"] {
+    display: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

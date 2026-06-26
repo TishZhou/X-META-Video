@@ -4,8 +4,8 @@
 
 **Sprint:** feature-2-workflow-canvas-foundation
 **Feature:** Feature 2, Workflow Canvas Foundation
-**Status:** in progress
-**Goal:** Implement a verified Figma-like workflow canvas foundation where users can add, move, select, connect, delete, save, and restore placeholder AI workflow nodes without implying backend persistence or AI execution exists.
+**Status:** passing
+**Goal:** Implement a verified Figma-like workflow canvas foundation where the canvas is the primary work surface, users can add/move/select/connect/delete/save/restore placeholder AI workflow nodes from a single bottom add entry, and the UI does not imply backend persistence or AI execution exists.
 
 ## Write Scope
 
@@ -29,12 +29,12 @@ Protected user edit:
 
 ## In Scope
 
-- Canvas-first `/workspace` route under the existing app shell.
-- Composed toolbar and node palette using local shadcn-style primitives where available.
+- Canvas-first `/workspace` route with the global top bar hidden and a floating canvas project bar.
+- Composed bottom dock using local shadcn-style primitives where available.
 - Drag-to-canvas placeholder node creation for script, storyboard, character image, prop/asset, scene image, image composition, audio, video, and export.
 - Typed React graph state for nodes, ports, edges, selection, viewport, draft status, and structured snapshots.
 - First-class compatible port connections with invalid, self, and duplicate rejection.
-- Selectable nodes and edges with delete behavior and inspector handoff.
+- Selectable nodes and edges with delete behavior and compact in-canvas status feedback.
 - Reusable compact node UI with icons, status labels, input/output ports, selected states, and disabled deferred execution controls.
 - Local save/restore boundary that round-trips graph payloads without serializing DOM HTML.
 - Honest labels for missing FastAPI durable persistence and missing AI execution.
@@ -49,9 +49,9 @@ Protected user edit:
 
 ## Acceptance Criteria
 
-1. `/workspace` renders a production work surface with toolbar, palette, canvas viewport, inspector, and task/history or persistence status regions.
-2. Users can add every planned placeholder node type from the palette or toolbar.
-3. Users can move, select, and delete nodes; selected state is reflected in inspector copy.
+1. `/workspace` renders a production work surface with a dark dotted canvas, floating project bar, bottom toolbar, graph viewport, and persistence status signals.
+2. Users can add every planned placeholder node type from one bottom `Add node` entry; duplicate left-palette or toolbar node lists are not present by default.
+3. Users can move, select, and delete nodes; selected state is reflected in compact in-canvas status copy.
 4. Ports are typed records, and compatible output-to-input connections create first-class edges.
 5. Invalid, self, and duplicate connections are rejected with visible status feedback and no hidden generation.
 6. Edges are selectable, inspectable, and removable independently from nodes.
@@ -65,7 +65,7 @@ Protected user edit:
 2. Focused tests: `corepack pnpm --filter @xmeta/web test`.
 3. Typecheck: `corepack pnpm --filter @xmeta/web typecheck`.
 4. Build: `corepack pnpm --filter @xmeta/web build`.
-5. Rendered QA: desktop and mobile workspace checks for nonblank canvas, controls, no console errors, and no horizontal overflow.
+5. Rendered QA: desktop workspace checks for nonblank canvas, controls, no console errors, no duplicate node-add surfaces, and no right monitoring/inspector panel.
 6. JSON validation: `Get-Content -Raw feature_list.json | ConvertFrom-Json | Out-Null` and `Get-Content -Raw feature_tasks/2.json | ConvertFrom-Json | Out-Null`.
 7. Final restart path: `.\init.ps1`.
 
@@ -89,3 +89,6 @@ Protected user edit:
 | Final startup | Final `.\init.ps1` passed after artifact updates and reran web verification: 9 test files / 26 tests. |
 | Evaluator fix pass | Fixed evaluator findings: toolbar add now works in Browser QA, all-node quick-add buttons and mode/panel toggles exist, mobile canvas has internal scroll reachability without document overflow, and stale/missing ports are rejected with a visible reason. |
 | Post-fix verification | `corepack pnpm --filter @xmeta/web test` passed 9 files / 26 tests; typecheck passed; build passed; desktop Browser QA verified toolbar add 3 -> 4 nodes; mobile Browser QA verified scrollable canvas with no console warn/error logs. |
+| User visual revision | Updated `/workspace` to match the reference direction: dark Figma-like canvas as the main surface, floating top project/status controls, one bottom add entry, no left node palette, and no right monitoring/Inspector panel. |
+| Revision verification | `corepack pnpm --filter @xmeta/web test` passed 9 files / 26 tests; typecheck passed; build passed; desktop Browser QA on `http://localhost:3000/workspace` showed nonblank canvas, hidden global top bar, bottom toolbar, no node palette text, no Inspector text, empty console warn/error logs, and no document overflow. |
+| Final restart | `.\init.ps1` passed after artifact updates and reran web verification: 9 test files / 26 tests. |
