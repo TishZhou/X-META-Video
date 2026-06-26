@@ -1,57 +1,69 @@
-# Evaluator Rubric - Feature 3 Project Foundation And Motion App Shell
+# Evaluator Rubric - Feature 1 Web Design web-design-002
+
+Updated: 2026-06-26
 
 ## Review Scope
 
-- **Selected feature/task:** Feature 3, Project Foundation And Motion App Shell
-- **Current task slice:** `motion-shell-001`, `motion-shell-002`, and `motion-shell-003`
-- **Acceptance sources:** `docs/PRODUCT.md`, `docs/ARCHITECTURE.md`, `docs/DEPENDENCIES.md`, `docs/INTERFACE_DESIGN.md`, `feature_tasks/3.json`, and `sprint-contract.md`
-- **Current status:** Task 1-3 passing; Feature 3 remains in progress because `motion-shell-004` through `motion-shell-007` are not started.
-- **Evaluator result:** Passing for `motion-shell-001` through `motion-shell-003` only.
+- **Evaluator role:** Evaluation subagent only.
+- **Write scope:** `evaluator-rubric.md`.
+- **Selected feature:** Feature 1, Web Design.
+- **Current task slice:** `web-design-002`, Define interface design system.
+- **User request evaluated:** Complete Feature 1 task 2 with style and layout coherence defined directly in code, not product/design docs.
+- **Acceptance sources reviewed:** `AGENTS.md`, `docs/PRODUCT.md`, `docs/ARCHITECTURE.md`, `feature_tasks/1.json`, `feature_list.json`, `progress.md`, and `sprint-contract.md`.
+- **Code files inspected:** `apps/web/src/lib/design-system.ts`, `apps/web/src/components/xmeta/design-primitives.tsx`, `apps/web/src/index.css`, `apps/web/tailwind.config.ts`, `apps/web/src/app/page.tsx`, `apps/web/src/app/page.test.tsx`, and `apps/web/src/lib/design-system.test.ts`.
+- **Current status:** `web-design-002` passes as a code-defined design-system foundation. Feature 1 remains in progress.
 
-## Required Evidence Before Passing
+## Findings
 
-- Baseline `.\init.ps1` evidence.
-- Selected UI TripleD shadcn block list and product mapping.
-- Local adapted source for selected blocks/components.
-- Tests covering route rendering, motion-state markers, reduced-motion behavior where practical, and product-specific copy.
-- `corepack pnpm --filter @xmeta/web test`.
-- `corepack pnpm --filter @xmeta/web typecheck`.
-- `corepack pnpm --filter @xmeta/web build`.
-- Rendered desktop QA.
-- Rendered mobile QA.
-- Console/page-error check.
-- No horizontal overflow check.
-- Final `.\init.ps1`.
-- Evidence that unfinished functions use compact labels plus click-to-reveal detail instead of long always-visible placeholder descriptions.
+- No P1, P2, or P3 issues found for the revised `web-design-002` requirement.
+- The style/layout contract is implemented in shared web app code, not product/design docs. Evidence: `apps/web/src/lib/design-system.ts` defines surfaces, density, layout, motion, tones, typography, responsive rules, accessibility rules, and state language; `apps/web/src/index.css` and `apps/web/tailwind.config.ts` expose the required semantic tokens.
+- The implementation supports UI Tip 67 and Standardization: spacing, surfaces, tones, responsive behavior, and state badges are centralized instead of being recreated page by page.
+- The implementation supports Visibility, von Restorff Effect, and the product HITL boundary: state definitions include readable labels/descriptions, data attributes, tone/readiness mapping, and explicit unavailable/backend-blocked language instead of implying production execution exists.
+- The implementation supports Fitts's Law and accessibility basics: shared target sizing uses `min-h-11 min-w-11`, focus rings are defined, state color is paired with visible text, and reduced-motion behavior is defined in CSS.
 
 ## Scorecard
 
-| Category | Score | Passing expectation |
-| --- | ---: | --- |
-| Product direction | 2 / 2 | Implementation clearly moves beyond static mockups toward a motion-first creative workspace. |
-| UI TripleD adoption | 1 / 2 | Local UI TripleD-style shadcn/Radix + Framer Motion patterns are mapped and implemented, but upstream block provenance is not yet recorded. |
-| Motion quality | 2 / 2 | Shell, route, navigation, dashboard, route-card, and project-card surfaces use purposeful motion markers and reduced-motion fallbacks. |
-| Accessibility | 2 / 2 | Reduced-motion behavior, keyboard access, focus states, semantic labels, and text status labels remain intact. |
-| Product fit | 2 / 2 | Demo component content is replaced with X-META Video project, canvas, asset, task, history, export, and account data. |
-| Placeholder discipline | 2 / 2 | Unfinished functions are honest but compact, with click-to-reveal explanations instead of page-cluttering long descriptions. |
-| Verification | 2 / 2 | Required commands and rendered QA pass with evidence. |
+| Category | Score | Passing expectation | Evidence |
+| --- | ---: | --- | --- |
+| Code-defined design system | 2 / 2 | Typography, color, spacing, density, layout, motion, responsive, and accessibility rules are reusable code exports. | `apps/web/src/lib/design-system.ts:1`, `apps/web/src/lib/design-system.ts:313`. |
+| Product state language | 2 / 2 | Project, node, asset, generation, history, and export state domains are typed and reusable. | `apps/web/src/lib/design-system.ts:102`, `apps/web/src/lib/design-system.ts:285`, `apps/web/src/lib/design-system.ts:289`. |
+| Shared primitives | 2 / 2 | Surfaces, badges, panels, and token lists consume shared definitions rather than page-local copies. | `apps/web/src/components/xmeta/design-primitives.tsx:25`, `apps/web/src/components/xmeta/design-primitives.tsx:58`, `apps/web/src/components/xmeta/design-primitives.tsx:93`, `apps/web/src/components/xmeta/design-primitives.tsx:114`. |
+| CSS/Tailwind runtime tokens | 2 / 2 | Semantic X-META surfaces, tones, shadows, motion timings, and reduced-motion behavior are available to the app. | `apps/web/src/index.css:27`, `apps/web/src/index.css:74`, `apps/web/src/index.css:114`, `apps/web/src/index.css:134`, `apps/web/tailwind.config.ts:44`. |
+| Page integration and tests | 2 / 2 | Reset preview page uses shared definitions and tests prove required domains and unavailable-language behavior. | `apps/web/src/app/page.tsx:20`, `apps/web/src/app/page.tsx:34`, `apps/web/src/app/page.tsx:99`, `apps/web/src/app/page.tsx:121`, `apps/web/src/app/page.test.tsx:7`, `apps/web/src/lib/design-system.test.ts:11`. |
 
-## Review Notes
+## Current Verification Evidence
 
-- Current Feature 2 pages are intentionally static/local prototypes. They may be used as structural scaffolding, but they should not be accepted as the Feature 3 visual or interaction target.
-- Basic shadcn primitives remain acceptable as underlying primitives, but Feature 3 should not look like only Card/Button/Badge composition.
-- Motion must clarify state and preserve task speed. Decorative motion alone does not satisfy this rubric.
-- Missing backend or unfinished feature messaging should be visible enough to prevent false claims, but not so verbose that every page becomes documentation.
-- Baseline `.\init.ps1` passed on 2026-06-25 before this task 1-3 implementation slice; Vitest passed 3 files / 16 tests.
-- This session must not score `motion-shell-004` through `motion-shell-007` as passing unless those tasks are explicitly implemented and verified later.
-- Planning subagent recommended Radix/shadcn UI TripleD-style patterns only and no Base UI variants.
-- Coding subagent implemented the first pass and identified a Next static prerender failure caused by passing Lucide component functions through a broad client boundary. Main thread resolved it by isolating Framer Motion wrappers in `apps/web/src/app/workspace/workspace-motion.tsx` while keeping icon-bearing workspace components server-safe.
-- Evaluation subagent scored task 1-3 as 13 / 14 and found no blocking issues. P3 follow-up: avoid overclaiming copied upstream UI TripleD blocks unless upstream block provenance is recorded; artifacts were revised to say local UI TripleD-style shadcn/Radix + Framer Motion adaptations.
-- Verification evidence: JSON validation passed; `corepack pnpm --filter @xmeta/web test` passed 3 files / 18 tests; `corepack pnpm --filter @xmeta/web typecheck` passed; `corepack pnpm --filter @xmeta/web build` passed; `git diff --check` passed; Chrome headless/CDP rendered QA passed desktop `/workspace`, mobile `/workspace`, and mobile `/workspace/canvas` with no console warnings/errors and no horizontal overflow.
-- Screenshot evidence: `C:\Users\AI\AppData\Local\Temp\xmeta-feature3-qa\workspace-desktop.png`, `C:\Users\AI\AppData\Local\Temp\xmeta-feature3-qa\workspace-mobile.png`, and `C:\Users\AI\AppData\Local\Temp\xmeta-feature3-qa\canvas-mobile.png`.
+- `pwd` confirmed the working directory as `D:\X-META-Video`.
+- Main-thread evidence reviewed: initial `.\init.ps1` passed; `corepack pnpm --filter @xmeta/web test` passed 3 files / 11 tests; typecheck passed; build passed; `git diff --check` passed with line-ending warnings only; Browser QA on `http://localhost:3001` passed desktop/mobile with no console errors, no horizontal overflow, and the `Review states` anchor changed the URL to `#state-language`.
+- Evaluator rerun: `corepack pnpm --filter @xmeta/web test` passed 3 files / 11 tests.
+- Evaluator rerun: `corepack pnpm --filter @xmeta/web typecheck` passed.
+- Evaluator rerun: `corepack pnpm --filter @xmeta/web build` passed and generated static routes `/`, `/_not-found`, and `/icon.svg`.
+- Evaluator rerun: `git diff --check` exited 0 with LF-to-CRLF warnings only.
+- `git log --oneline -5` was reviewed. Latest visible commit remains `22dce0e Complete feature 3 motion shell tasks`; current Feature 1 work is still in the working tree.
+
+## Caveats
+
+- I did not rerun `.\init.ps1` in this evaluator pass because the user provided fresh main-thread evidence that it passed, and this role was limited to evaluation plus rubric update.
+- Product/design docs have existing uncommitted changes from prior Feature 1 reset/component-selection work. A focused scan found no `web-design-002` style-system contract living in those docs; the implementable tokens and state language for this task are in code.
+- The root page is still a design-system foundation preview, not the final workspace, canvas, asset, task, history, export, or account implementation. This is consistent with the `web-design-002` sprint scope.
+- Production backend, persistence, generation, storage, history, and export remain future feature scope. The current code labels unavailable/backend-blocked states honestly.
+- End-of-session commit/push hygiene remains outside this evaluator write scope. The acting/main thread should commit when the working tree is in a safe state.
+
+## What Works
+
+- The implementation creates a reusable code contract before detailed page work begins, which matches the Feature 1 sequence and avoids restoring deleted Feature 2/3 prototypes.
+- State language is product-specific to X-META's canvas, generated assets, async tasks, history, and export readiness rather than a generic marketing-page theme.
+- The reset page consumes the shared definitions and exposes a reachable state-language section, giving future page tasks a concrete implementation reference.
+- Tests cover both the design-system definitions and the page's use of the required state domains.
+
+## Required Fixes
+
+- Required fixes for `web-design-002`: none.
+- Future task guardrail: keep detailed workspace/canvas/page layouts in code and task artifacts; do not move the style/layout source of truth into product/design docs.
+- Future task guardrail: when page implementation tasks begin, rerun rendered desktop/mobile QA for each route, including focus states, long labels, empty/loading/error states, and horizontal overflow.
 
 ## Verdict
 
-**Total:** 13 / 14
+**Total:** 10 / 10.
 
-**Evaluator verdict:** Passing for `motion-shell-001` through `motion-shell-003` only. Feature 3 remains `in_progress`; `motion-shell-004` through `motion-shell-007` remain `not_started`.
+**Evaluator verdict:** Passing for `web-design-002`. The implementation satisfies the sprint contract and user request: style, layout, motion, responsive, accessibility, and product state-language coherence are defined in shared web app code; the reset page consumes those definitions; focused tests, typecheck, build, and diff checks pass; and no code-level fixes are required before continuing to `web-design-003`.

@@ -1,171 +1,173 @@
 {
   "parent_feature": {
     "id": 1,
-    "title": "Main Page Design",
-    "status": "passing"
+    "title": "Web Design",
+    "status": "in_progress"
   },
-  "features": [
+  "planning_status": "web_design_002_passing",
+  "notes": [
+    "Feature 2 and Feature 3 have been removed from the active feature plan.",
+    "The web app has been reset to a minimal runnable structure so the component library and pages can be rebuilt deliberately.",
+    "Do not reuse the deleted Feature 2/3 workspace implementation or copied UI TripleD task-1-3 implementation as the new baseline.",
+    "Feature 1 now owns web design from foundational component selection through interface design, wireframing, and page-by-page detailed implementation.",
+    "Each page implementation task must include responsive, accessibility, and product-specific verification before being marked passing.",
+    "web-design-001 installed the user-provided TriplD shadcn component set as local source and simplified docs/TRIPLED_COMPONENT_GUIDE.md to one usage sentence per component.",
+    "web-design-002 defines style, layout coherence, motion, responsive behavior, accessibility, and product state language in shared web app code instead of adding product/design documentation."
+  ],
+  "small_features": [
     {
-      "id": "main-page-001",
-      "title": "Render the product entry page",
-      "user_visible_behavior": "A user can open the app and see an X-META Video entry page instead of a blank screen or generic starter content.",
+      "id": "web-design-001",
+      "title": "Select foundational component approach",
       "status": "passing",
+      "user_visible_behavior": "Users eventually see a consistent X-META web interface built from a deliberate component system instead of accumulated prototype fragments.",
       "verification": [
-        "Open the app.",
-        "Verify the page shows the X-META Video name.",
-        "Verify the page describes AI comic drama, MV, and short-form video creation.",
-        "Verify the page does not show unrelated conversation or generic template content."
+        "Record the chosen component source strategy, including whether components are built in-house, copied from an approved library, or wrapped from a dependency.",
+        "Record required primitives such as button, input, label, select, tabs, dialog, card, table/list, navigation, toolbar, canvas controls, inspector panels, status badges, progress states, and empty states.",
+        "Verify selected components match the product needs for a dense creative production tool, not a marketing-only site."
       ],
+      "notes": "Baseline installed: TriplD shadcn components live under apps/web/src/components/uitripled, with required base shadcn source under apps/web/src/components/ui.",
+      "component_doc": "docs/TRIPLED_COMPONENT_GUIDE.md",
       "evidence": [
-        "Corrected the prior basic shadcn-only treatment by adding `apps/web/src/app/animated-entry-page.tsx`, an animated X-META Video entry page adapted from the UI TripleD Hero Block shadcn/Framer Motion source pattern.",
-        "Refactored the one-off animation treatment into `apps/web/src/components/ui/triple-motion.tsx`, a reusable local UI TripleD-inspired component layer for animated background, links, buttons, cards, panels, and expandable info cards.",
-        "Added local shadcn/Radix-style `apps/web/src/components/ui/collapsible.tsx` plus `@radix-ui/react-collapsible` so production mode cards have real click-to-expand open/closed state.",
-        "Kept `apps/web/src/app/page.tsx` as the app-root route and delegated rendering to the local animated entry page while preserving product-specific AI comic drama, MV, and short-form video creation copy.",
-        "Added `framer-motion` because the selected UI TripleD Hero Block pattern uses Framer Motion for reveal, hover, spring, and scroll indicator animation effects.",
-        "Kept UI TripleD as copied/adapted local source guidance rather than adding an opaque UI TripleD runtime dependency; local shadcn/ui components remain the component base.",
-        "Updated render tests to assert `data-uitripled-source=\"hero-block\"`, `data-animation-runtime=\"framer-motion\"`, `data-uitripled-motion-system=\"triple-motion\"`, animated component markers, and three initially collapsed production cards in addition to the required product copy and generic-content rejection.",
-        "`corepack pnpm --filter @xmeta/web test` passed with 2 test files and 5 tests.",
-        "`corepack pnpm --filter @xmeta/web typecheck` passed.",
-        "`corepack pnpm --filter @xmeta/web build` passed and statically generated `/` and `/icon.svg`.",
-        "Browser plugin QA opened `http://localhost:3000` at 1440x900 and 390x844; title was `X-META Video`, required product copy was present, UI TripleD/Framer Motion/triple-motion component markers were present, no generic starter/chat content was present, no console errors or page errors were reported, and there was no horizontal overflow.",
-        "Interaction check: the first production mode card changed from `aria-expanded=false` to `aria-expanded=true`, `data-state=open` was present, and the expanded info copy plus `Scenes`, `Dialogue`, and `Characters` tags became visible on desktop and mobile.",
-        "Interaction check: `Review production modes` navigated to `#production-modes`; `See canvas direction` navigated to `#canvas-preview`.",
-        "Animation check: the scroll indicator changed position during a timed browser probe, confirming live Framer Motion animation was active.",
-        "`.\u005cinit.ps1` passed after implementation; Vitest ran 2 files with 5 passing tests.",
-        "Reflowed the main page with `ui-ux-pro-max` layout priorities while preserving the existing shadcn/UI TripleD style: left hero + actions, right canvas preview, and a separate production modes band."
-      ],
-      "notes": "Frontend-only page shell; no backend, auth, or persistence required."
+        "Standard startup path .\\init.ps1 passed before documentation work.",
+        "corepack pnpm dlx shadcn@latest add installed the TriplD component set into apps/web/src/components/uitripled.",
+        "The short registry names image-slider-card, cards-slider, dynamic-tag-cloud, and preview-details-card returned 404 and were installed through their current -shadcnui registry IDs.",
+        "The shadcn CLI also installed required base source components: avatar, badge, button, card, and dialog.",
+        "docs/TRIPLED_COMPONENT_GUIDE.md now keeps one concise usage sentence per requested component.",
+        "corepack pnpm --filter @xmeta/web test and typecheck passed after installation."
+      ]
     },
     {
-      "id": "main-page-002",
-      "title": "Add the create-project entry point",
-      "user_visible_behavior": "A user can click a primary Create Project action and see clear project-start choices for comic drama, MV, or short-form video.",
+      "id": "web-design-002",
+      "title": "Define interface design system",
       "status": "passing",
+      "user_visible_behavior": "Users eventually experience coherent layouts, typography, spacing, color, motion, and state language across the whole product.",
       "verification": [
-        "Open the main page.",
-        "Click Create Project.",
-        "Verify project-start choices become visible.",
-        "Verify the choices are specific to comic drama, MV, and short-form video."
+        "Define typography, color, spacing, density, motion rules, responsive breakpoints, and accessibility requirements in shared web app code.",
+        "Define how project state, node state, asset state, generation state, history state, and export readiness appear in the UI through typed state-language definitions.",
+        "Verify the code-defined design direction supports X-META Video workflows: AI comic drama, MV creation, short-form video, node canvas, generated assets, and export.",
+        "Verify no product/design documentation was updated with style or layout guidance for this task."
       ],
+      "notes": "Implemented in apps/web/src/lib/design-system.ts, apps/web/src/components/xmeta/design-primitives.tsx, apps/web/src/index.css, apps/web/tailwind.config.ts, and the reset page preview. This replaces the deleted Feature 2 interface-design handoff without adding style/layout guidance to docs.",
       "evidence": [
-        "Changed the primary homepage action to `Create Project` in `apps/web/src/app/main-page-content.ts`.",
-        "Added frontend-only project-start choice content for `AI comic drama`, `MV creation`, and `Short-form video`, each with product-specific descriptions and expected planning output.",
-        "Updated `apps/web/src/app/animated-entry-page.tsx` so clicking `Create Project` toggles a `project-start-choices` panel with `aria-expanded` state and `data-project-start-choice` markers.",
-        "The create-project panel explicitly states that initial interface pages arrive in Feature 2 and real project creation and persistence arrive in the shifted Project Foundation feature, now Feature 3.",
-        "Reused existing local shadcn/ui and `triple-motion` components; no backend, API, auth, routing, persistence, canvas execution, or AI generation behavior was added.",
-        "Updated `apps/web/src/app/page.test.tsx` to assert the `Create Project` entry point, initial closed state, and generic-content rejection.",
-        "`corepack pnpm --filter @xmeta/web test` passed with 2 test files and 6 tests.",
-        "`corepack pnpm --filter @xmeta/web typecheck` passed.",
-        "`corepack pnpm --filter @xmeta/web build` passed and statically generated `/` and `/icon.svg`.",
-        "Playwright QA against `http://localhost:3000` at 1440x900 and 390x844 confirmed `Create Project` changed from `aria-expanded=false` to `aria-expanded=true`, the three project-start choices became visible, project-foundation boundary copy was visible, no generic chat/starter content appeared, no console errors or page errors occurred, and no horizontal overflow was detected.",
-        "Repositioned the create-project choices into the canvas preview panel during the `ui-ux-pro-max` layout reflow; the primary action remains visible and stable in desktop and mobile open/closed states."
-      ],
-      "notes": "This is a UI entry state only; initial interface pages now belong to Feature 2 and actual project creation belongs to Feature 3."
+        ".\\init.ps1 passed before task work and confirmed baseline web tests passed.",
+        "corepack pnpm --filter @xmeta/web test passed after implementation: 3 test files / 11 tests.",
+        "corepack pnpm --filter @xmeta/web typecheck passed.",
+        "corepack pnpm --filter @xmeta/web build passed.",
+        "git diff --check passed with line-ending warnings only.",
+        "Browser QA on http://localhost:3001 passed for desktop and mobile: page rendered, state anchor interaction worked, console errors were empty, and no horizontal overflow was detected.",
+        "Final .\\init.ps1 passed after artifact updates and reran web tests: 3 test files / 11 tests."
+      ]
     },
     {
-      "id": "main-page-003",
-      "title": "Add recent-work entry points",
-      "user_visible_behavior": "A user can find the recent work area and understand where existing projects can be reopened.",
-      "status": "passing",
+      "id": "web-design-003",
+      "title": "Produce wireframing rules and screen inventory",
+      "status": "not_started",
+      "user_visible_behavior": "Users eventually get pages that match a clear screen map instead of isolated screens built ad hoc.",
       "verification": [
-        "Open the main page.",
-        "Locate the recent work area.",
-        "Verify it shows either project cards or a clear empty state.",
-        "Verify the visible action points toward opening or creating project work, not messaging."
+        "Record the screen inventory and route map for the web app.",
+        "Define wireframe-level layout rules for app shell, workspace dashboard, canvas, node inspector, asset library, task status, history, export, account/workspace management, and any onboarding or entry pages.",
+        "Verify each screen has clear entry paths, exit paths, primary actions, secondary actions, empty states, loading states, error states, and disabled/unavailable behavior."
       ],
-      "evidence": [
-        "Added static local recent-work entries in `apps/web/src/app/main-page-content.ts` for `Neon alley comic pilot` and `Midnight chorus MV`.",
-        "Rendered a `Recent work` section in `apps/web/src/app/animated-entry-page.tsx` with project-style cards, `Open project outline`, `Open production plan`, and a clear `No saved cloud projects yet` empty-state note.",
-        "Recent-work actions point to the workspace entry placeholder instead of chat or messaging behavior.",
-        "Updated `apps/web/src/app/page.test.tsx` to assert recent-work markers, example project entries, actions, and empty-state copy.",
-        "`corepack pnpm --filter @xmeta/web test` passed with 2 files and 10 tests.",
-        "Rendered QA at 1440x900 and 390x844 confirmed the recent-work section and actions were visible/reachable with no horizontal overflow or console/page errors."
-      ],
-      "notes": "Use static or local placeholder data only until project persistence exists."
+      "notes": "Wireframes can be documented as text and structured layout guidance before visual implementation."
     },
     {
-      "id": "main-page-004",
-      "title": "Add the workspace entry path",
-      "user_visible_behavior": "A user can click an Enter Workspace action from the main page and reach a clear creative workspace entry placeholder.",
-      "status": "passing",
+      "id": "web-design-004",
+      "title": "Implement app foundation and shared layout",
+      "status": "not_started",
+      "user_visible_behavior": "Users can open the app and see the first rebuilt shell/page foundation without old prototype content.",
       "verification": [
-        "Open the main page.",
-        "Click Enter Workspace.",
-        "Verify the app shows a workspace entry placeholder or route target.",
-        "Verify the copy makes it clear the full workspace shell is a later feature."
+        "Implement the root app layout, global CSS baseline, app shell structure, navigation frame, and shared page containers.",
+        "Verify no deleted prototype copy, Feature 2 static workspace copy, or Feature 3 UI TripleD redo copy remains visible.",
+        "Run web tests, typecheck, build, and rendered desktop/mobile checks."
       ],
-      "evidence": [
-        "Added `workspaceAction: \"Enter Workspace\"` and workspace placeholder copy in `apps/web/src/app/main-page-content.ts`.",
-        "Added an `Enter Workspace` hero action in `apps/web/src/app/animated-entry-page.tsx` that anchors to `#workspace-entry`.",
-        "Rendered `Workspace entry placeholder` with explicit copy that initial interface pages belong to Feature 2 and the functional workspace shell, saved projects, canvas routing, and execution controls belong to the shifted Feature 3 and Feature 4 work.",
-        "Added a UI-only `Create project direction` action from the placeholder that opens the existing frontend-only project choice state without creating persistence or backend calls.",
-        "Updated `apps/web/src/app/page.test.tsx` to assert the workspace action, `#workspace-entry` target, placeholder copy, and UI-only boundary label.",
-        "Rendered QA confirmed `Enter Workspace` navigated to `#workspace-entry` and the placeholder remained visible on desktop and mobile."
-      ],
-      "notes": "Do not implement the full functional app shell or canvas here; initial interface pages now belong to Feature 2, while functional app-shell and canvas behavior belong to Feature 3 and Feature 4."
+      "notes": "This task starts real implementation after design foundations are selected."
     },
     {
-      "id": "main-page-005",
-      "title": "Show the creation workflow preview",
-      "user_visible_behavior": "A user can scan the main page and understand the planned flow from brief to script, storyboard, assets, audio, video, and export.",
-      "status": "passing",
+      "id": "web-design-005",
+      "title": "Implement entry and project-start pages",
+      "status": "not_started",
+      "user_visible_behavior": "Users can understand the product, start a project direction, and enter the production workspace from a focused entry experience.",
       "verification": [
-        "Open the main page.",
-        "Verify the workflow preview includes script, storyboard, character or scene assets, audio, video, and export.",
-        "Verify the workflow reads as a production pipeline, not a messaging UI.",
-        "Verify each workflow item has concise user-facing copy."
+        "Implement the entry page and project-start flow according to the interface design and wireframes.",
+        "Verify project-start choices cover AI comic drama, MV creation, and short-form video without implying backend persistence exists.",
+        "Verify responsive layout, keyboard access, focus visibility, and no horizontal overflow."
       ],
-      "evidence": [
-        "Expanded `canvasNodes` in `apps/web/src/app/main-page-content.ts` into six workflow steps: Script, Storyboard, Character and scene assets, Audio, Video, and Export.",
-        "Added workflow icons, labels, and concise user-facing detail copy while keeping the preview marked as `Static orientation only`.",
-        "Updated the `Creation workflow preview` panel in `apps/web/src/app/animated-entry-page.tsx` to render the full production pipeline with `data-workflow-preview=\"production-pipeline\"` and `data-workflow-step` markers.",
-        "Updated `apps/web/src/app/page.test.tsx` to assert every required workflow step and the static-orientation boundary.",
-        "`corepack pnpm --filter @xmeta/web build` passed and statically generated `/`, `/_not-found`, and `/icon.svg`.",
-        "Rendered QA confirmed all workflow steps were present and the page did not read as a messaging UI."
-      ],
-      "notes": "This is a visual orientation element only; node execution is out of scope."
+      "notes": "This replaces the deleted old main page implementation."
     },
     {
-      "id": "main-page-006",
-      "title": "Make the main page responsive",
-      "user_visible_behavior": "A user can use the main page on desktop and mobile sizes without clipped text, overlapping controls, or hidden primary actions.",
-      "status": "passing",
+      "id": "web-design-006",
+      "title": "Implement workspace dashboard page",
+      "status": "not_started",
+      "user_visible_behavior": "Users can inspect the active project/workspace context, recent work, readiness, and primary production routes.",
       "verification": [
-        "Open the app at a desktop viewport.",
-        "Verify all main page sections align without overlap.",
-        "Open the app at a mobile viewport.",
-        "Verify primary actions, recent work, and workflow preview remain readable and reachable."
+        "Implement the workspace dashboard as its own detailed page task.",
+        "Verify dashboard sections use real component-library primitives selected in web-design-001.",
+        "Verify all backend, persistence, and unavailable capabilities are labeled honestly."
       ],
-      "evidence": [
-        "Adjusted the main page layout to include recent work and workspace placeholder sections without hiding the first-viewport primary actions.",
-        "Used responsive grids and full-width mobile action buttons so primary actions, recent work, workspace entry, workflow preview, and production modes remain readable and reachable.",
-        "Rendered QA at desktop 1440x900 and mobile 390x844 found no horizontal overflow: document/body scroll width matched client width in both viewports.",
-        "Rendered QA confirmed `Create Project`, `Enter Workspace`, `Review production modes`, and `See canvas direction` were in the initial viewport on desktop and mobile.",
-        "Rendered QA found no console errors, no page errors, and no missing required section text on either viewport.",
-        "`git diff --check` passed with only LF-to-CRLF working-copy warnings."
-      ],
-      "notes": "Responsive behavior is part of the main page design definition of done."
+      "notes": "Do not resurrect the deleted Feature 2/3 dashboard implementation."
     },
     {
-      "id": "main-page-007",
-      "title": "Verify main page accessibility basics",
-      "user_visible_behavior": "A keyboard user can tab through the main page actions in a sensible order and understand each action label.",
-      "status": "passing",
+      "id": "web-design-007",
+      "title": "Implement workflow canvas and node inspector page",
+      "status": "not_started",
+      "user_visible_behavior": "Users can see the planned script-to-export node workflow, selected node inspector, and production controls.",
       "verification": [
-        "Open the main page.",
-        "Use Tab to move through interactive elements.",
-        "Verify focus order follows the visual layout.",
-        "Verify each button or link has a clear accessible label."
+        "Implement the canvas and inspector page as a detailed page task.",
+        "Verify node states, selected state, dependency direction, inspector fields, and unavailable execution controls are readable.",
+        "Verify responsive fallback behavior for small screens."
       ],
-      "evidence": [
-        "Added clear accessible labels for `Create Project`, `Enter Workspace`, `Review production modes`, `See canvas direction`, recent-work actions, and the workspace placeholder create action.",
-        "Added `role=\"region\"` with `aria-labelledby` on workflow preview, recent work, and workspace entry sections.",
-        "Set non-interactive workflow and recent-work cards to `interactive={false}` so Framer Motion does not add them to the Tab order.",
-        "Updated `apps/web/src/components/ui/triple-motion.tsx` so the animated production mode `article` wrapper has `tabIndex={-1}`, leaving the internal expand/collapse button as the keyboard target.",
-        "Keyboard QA at 1440x900 and 390x844 confirmed focus order starts with home, hero actions, recent-work actions, workspace placeholder action, then production mode buttons.",
-        "Updated `apps/web/src/app/page.test.tsx` to assert accessibility and responsive section markers."
+      "notes": "Full drag/zoom/execution can remain later feature scope unless explicitly pulled into Web Design."
+    },
+    {
+      "id": "web-design-008",
+      "title": "Implement asset library page",
+      "status": "not_started",
+      "user_visible_behavior": "Users can browse planned character, scene, prop, audio, video, and export asset surfaces.",
+      "verification": [
+        "Implement asset library list/grid/detail states.",
+        "Verify empty, loading, selected, disabled, and unavailable states.",
+        "Verify generated media metadata can be represented without needing backend storage yet."
       ],
-      "notes": "Keep this limited to the main page; full app accessibility coverage belongs to later feature work."
+      "notes": "This is page implementation design, not production storage."
+    },
+    {
+      "id": "web-design-009",
+      "title": "Implement task status and history pages",
+      "status": "not_started",
+      "user_visible_behavior": "Users can review planned generation status, retry language, and version timeline behavior.",
+      "verification": [
+        "Implement task status and generation history pages as detailed page tasks.",
+        "Verify queued, running, succeeded, failed, retryable, and blocked states have readable labels.",
+        "Verify retry and history copy does not imply actual backend mutation."
+      ],
+      "notes": "Can be split into separate tasks later if implementation is large."
+    },
+    {
+      "id": "web-design-010",
+      "title": "Implement export and account pages",
+      "status": "not_started",
+      "user_visible_behavior": "Users can inspect export readiness and account/workspace management boundaries.",
+      "verification": [
+        "Implement export readiness and account/workspace management pages as detailed page tasks.",
+        "Verify export gates, disabled render actions, roles, workspace membership, and auth boundaries are clear.",
+        "Verify responsive and accessibility behavior."
+      ],
+      "notes": "Production auth, billing, membership mutation, and export rendering remain later features unless explicitly moved here."
+    },
+    {
+      "id": "web-design-011",
+      "title": "Final web design verification and handoff",
+      "status": "not_started",
+      "user_visible_behavior": "The rebuilt web design baseline is verified and ready for later functional feature work.",
+      "verification": [
+        "Run .\\init.ps1.",
+        "Run corepack pnpm --filter @xmeta/web test.",
+        "Run corepack pnpm --filter @xmeta/web typecheck.",
+        "Run corepack pnpm --filter @xmeta/web build.",
+        "Run rendered desktop and mobile QA for every implemented page.",
+        "Record final evidence in feature_tasks/1.json, sprint-contract.md, evaluator-rubric.md, progress.md, and session-handoff.md."
+      ],
+      "notes": "Do not mark passing until all implemented pages have verification evidence."
     }
   ]
 }

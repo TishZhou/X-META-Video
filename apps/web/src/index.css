@@ -4,48 +4,98 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
+    --background: 220 33% 98%;
+    --foreground: 222 28% 12%;
     --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
+    --card-foreground: 222 28% 12%;
     --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
-    --primary: 240 5.9% 10%;
+    --popover-foreground: 222 28% 12%;
+    --primary: 184 71% 36%;
     --primary-foreground: 0 0% 98%;
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --accent: 240 4.8% 95.9%;
-    --accent-foreground: 240 5.9% 10%;
-    --destructive: 0 84.2% 60.2%;
+    --secondary: 220 30% 94%;
+    --secondary-foreground: 222 28% 12%;
+    --muted: 220 30% 94%;
+    --muted-foreground: 219 12% 42%;
+    --accent: 190 64% 93%;
+    --accent-foreground: 190 78% 22%;
+    --destructive: 346 72% 45%;
     --destructive-foreground: 0 0% 98%;
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 240 10% 3.9%;
+    --border: 218 22% 86%;
+    --input: 218 22% 86%;
+    --ring: 184 71% 36%;
     --radius: 0.5rem;
+    --xmeta-panel: 0 0% 100%;
+    --xmeta-raised: 220 27% 99%;
+    --xmeta-inset: 220 30% 96%;
+    --xmeta-canvas: 218 29% 94%;
+    --xmeta-border: 218 22% 86%;
+    --xmeta-grid: 218 22% 82%;
+    --xmeta-muted: 219 12% 42%;
+    --xmeta-info: 213 85% 36%;
+    --xmeta-info-bg: 213 78% 95%;
+    --xmeta-info-border: 213 65% 75%;
+    --xmeta-progress: 187 80% 32%;
+    --xmeta-progress-bg: 185 76% 94%;
+    --xmeta-progress-border: 185 62% 72%;
+    --xmeta-success: 158 64% 32%;
+    --xmeta-success-bg: 154 58% 94%;
+    --xmeta-success-border: 154 44% 72%;
+    --xmeta-warning: 38 92% 38%;
+    --xmeta-warning-bg: 42 92% 93%;
+    --xmeta-warning-border: 38 78% 70%;
+    --xmeta-danger: 346 72% 45%;
+    --xmeta-danger-bg: 350 82% 96%;
+    --xmeta-danger-border: 348 70% 76%;
+    --xmeta-selected: 292 57% 42%;
+    --xmeta-selected-bg: 292 72% 96%;
+    --xmeta-selected-border: 292 52% 76%;
   }
 
   .dark {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 240 5.9% 10%;
-    --secondary: 240 3.7% 15.9%;
+    --background: 230 18% 8%;
+    --foreground: 210 24% 94%;
+    --card: 226 20% 12%;
+    --card-foreground: 210 24% 94%;
+    --popover: 226 20% 12%;
+    --popover-foreground: 210 24% 94%;
+    --primary: 184 90% 58%;
+    --primary-foreground: 226 36% 8%;
+    --secondary: 225 18% 18%;
     --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-    --accent: 240 3.7% 15.9%;
+    --muted: 225 18% 18%;
+    --muted-foreground: 218 12% 68%;
+    --accent: 188 42% 18%;
     --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
+    --destructive: 348 72% 57%;
     --destructive-foreground: 0 0% 98%;
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 240 4.9% 83.9%;
+    --border: 222 18% 24%;
+    --input: 222 18% 24%;
+    --ring: 184 90% 58%;
+    --xmeta-panel: 226 20% 12%;
+    --xmeta-raised: 226 20% 16%;
+    --xmeta-inset: 226 22% 10%;
+    --xmeta-canvas: 228 24% 9%;
+    --xmeta-border: 222 18% 24%;
+    --xmeta-grid: 222 18% 20%;
+    --xmeta-muted: 218 12% 68%;
+    --xmeta-info: 204 96% 72%;
+    --xmeta-info-bg: 213 54% 16%;
+    --xmeta-info-border: 213 54% 31%;
+    --xmeta-progress: 184 90% 58%;
+    --xmeta-progress-bg: 184 54% 15%;
+    --xmeta-progress-border: 184 54% 31%;
+    --xmeta-success: 153 72% 56%;
+    --xmeta-success-bg: 153 44% 14%;
+    --xmeta-success-border: 153 44% 29%;
+    --xmeta-warning: 42 92% 62%;
+    --xmeta-warning-bg: 38 58% 16%;
+    --xmeta-warning-border: 38 58% 32%;
+    --xmeta-danger: 348 86% 68%;
+    --xmeta-danger-bg: 348 48% 17%;
+    --xmeta-danger-border: 348 48% 34%;
+    --xmeta-selected: 292 86% 74%;
+    --xmeta-selected-bg: 292 42% 17%;
+    --xmeta-selected-border: 292 42% 35%;
   }
 
   * {
@@ -53,7 +103,41 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings:
+      "rlig" 1,
+      "calt" 1;
   }
 }
 
+@layer components {
+  .xmeta-app-frame {
+    background-color: hsl(var(--background));
+    background-image:
+      linear-gradient(
+        hsl(var(--xmeta-grid) / 0.18) 1px,
+        transparent 1px
+      ),
+      linear-gradient(
+        90deg,
+        hsl(var(--xmeta-grid) / 0.14) 1px,
+        transparent 1px
+      );
+    background-size: 32px 32px;
+  }
+
+  .xmeta-control-size {
+    @apply min-h-11 min-w-11;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}

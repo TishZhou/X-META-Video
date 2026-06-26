@@ -3,101 +3,58 @@ import { describe, expect, it } from "vitest";
 
 import HomePage from "./page";
 
-describe("HomePage", () => {
-  it("renders the X-META Video product entry page", () => {
+describe("HomePage reset skeleton", () => {
+  it("renders the code-defined workspace foundation", () => {
     const html = renderToStaticMarkup(<HomePage />);
 
     expect(html).toContain("X-META Video");
-    expect(html).toContain("AI comic drama");
-    expect(html).toContain("MV");
-    expect(html).toContain("short-form video creation");
+    expect(html).toContain("Production workspace foundation");
+    expect(html).toContain('data-web-reset="true"');
+    expect(html).toContain('data-web-design-system="code-defined"');
+    expect(html).toContain('data-web-design-sequence="feature-1"');
+    expect(html).toContain('href="#state-language"');
   });
 
-  it("does not render generic starter or messaging content", () => {
+  it("shows the new Feature 1 design sequence", () => {
+    const html = renderToStaticMarkup(<HomePage />);
+
+    expect(html).toContain("Foundational component selection");
+    expect(html).toContain("Interface design system");
+    expect(html).toContain("Wireframing and screen inventory");
+    expect(html).toContain("Page-by-page detailed implementation");
+  });
+
+  it("renders shared production state language for every required domain", () => {
+    const html = renderToStaticMarkup(<HomePage />);
+
+    expect(html).toContain('data-xmeta-state-domain="project"');
+    expect(html).toContain('data-xmeta-state-domain="node"');
+    expect(html).toContain('data-xmeta-state-domain="asset"');
+    expect(html).toContain('data-xmeta-state-domain="generation"');
+    expect(html).toContain('data-xmeta-state-domain="history"');
+    expect(html).toContain('data-xmeta-state-domain="export"');
+    expect(html).toContain("Node selected");
+    expect(html).toContain("Generation blocked");
+    expect(html).toContain("Export ready");
+  });
+
+  it("uses shared layout and feedback primitives", () => {
+    const html = renderToStaticMarkup(<HomePage />);
+
+    expect(html).toContain('data-xmeta-foundation="states"');
+    expect(html).toContain('data-xmeta-foundation="rules"');
+    expect(html).toContain('data-xmeta-token-list="Responsive shell"');
+    expect(html).toContain('data-xmeta-token-list="Accessible feedback"');
+    expect(html).toContain("Missing backend, persistence");
+  });
+
+  it("does not render removed Feature 2 or Feature 3 prototype content", () => {
     const html = renderToStaticMarkup(<HomePage />).toLowerCase();
 
-    expect(html).not.toContain("vite");
-    expect(html).not.toContain("next.js starter");
-    expect(html).not.toContain("chat");
-    expect(html).not.toContain("messaging");
-    expect(html).not.toContain("conversation");
-  });
-
-  it("uses the UI TripleD-inspired Framer Motion treatment", () => {
-    const html = renderToStaticMarkup(<HomePage />);
-
-    expect(html).toContain('data-uiux-pro-max-layout="pro-reflow"');
-    expect(html).toContain('data-uitripled-source="hero-block"');
-    expect(html).toContain('data-animation-runtime="framer-motion"');
-    expect(html).toContain('data-uitripled-motion-system="triple-motion"');
-    expect(html).toContain('data-uitripled-component="animated-background"');
-    expect(html).toContain('data-uitripled-component="motion-button"');
-    expect(html).toContain('data-uitripled-component="expandable-info-card"');
-    expect(html.match(/aria-expanded="false"/g)?.length).toBe(4);
-  });
-
-  it("starts with a closed create-project entry point", () => {
-    const html = renderToStaticMarkup(<HomePage />);
-
-    expect(html).toContain("Create Project");
-    expect(html).toContain('aria-controls="project-start-choices"');
-    expect(html).toContain('aria-expanded="false"');
-    expect(html).toContain('data-project-start-state="closed"');
-    expect(html).not.toContain("Real project creation, persistence");
-  });
-
-  it("renders recent-work entry points that lead to project work", () => {
-    const html = renderToStaticMarkup(<HomePage />);
-
-    expect(html).toContain("Recent work");
-    expect(html).toContain('data-recent-work-state="local-examples"');
-    expect(html).toContain('data-recent-work-entry="Neon alley comic pilot"');
-    expect(html).toContain('data-recent-work-entry="Midnight chorus MV"');
-    expect(html).toContain("Open project outline");
-    expect(html).toContain("Open production plan");
-    expect(html).toContain('href="/workspace"');
-    expect(html).toContain("No saved cloud projects yet");
-  });
-
-  it("renders an enter-workspace path to the static prototype", () => {
-    const html = renderToStaticMarkup(<HomePage />);
-
-    expect(html).toContain("Enter Workspace");
-    expect(html).toContain('aria-label="Open the workspace prototype"');
-    expect(html).toContain('href="/workspace"');
-    expect(html).toContain('id="workspace-entry"');
-    expect(html).toContain("Workspace entry placeholder");
-    expect(html).toContain("Feature 2 now provides static workspace prototype pages");
-    expect(html).toContain("functional workspace shell");
-    expect(html).toContain("Static prototype available");
-    expect(html).toContain("Open workspace prototype");
-  });
-
-  it("renders the full production workflow preview", () => {
-    const html = renderToStaticMarkup(<HomePage />);
-
-    expect(html).toContain("Creation workflow preview");
-    expect(html).toContain('data-workflow-preview="production-pipeline"');
-    expect(html).toContain('data-workflow-step="Script"');
-    expect(html).toContain('data-workflow-step="Storyboard"');
-    expect(html).toContain(
-      'data-workflow-step="Character and scene assets"',
-    );
-    expect(html).toContain('data-workflow-step="Audio"');
-    expect(html).toContain('data-workflow-step="Video"');
-    expect(html).toContain('data-workflow-step="Export"');
-    expect(html).toContain("Static orientation only");
-  });
-
-  it("includes accessibility and responsive section markers", () => {
-    const html = renderToStaticMarkup(<HomePage />);
-
-    expect(html).toContain('role="banner"');
-    expect(html).toContain('role="region"');
-    expect(html).toContain('aria-labelledby="workflow-preview-title"');
-    expect(html).toContain('aria-labelledby="recent-work-title"');
-    expect(html).toContain('aria-labelledby="workspace-entry-title"');
-    expect(html).toContain('aria-label="Create a project direction"');
-    expect(html).toContain('aria-label="See creation workflow preview"');
+    expect(html).not.toContain("workspace dashboard");
+    expect(html).not.toContain("stock portfolio dashboard");
+    expect(html).not.toContain("ui tripled copied shadcn");
+    expect(html).not.toContain("motion workspace");
+    expect(html).not.toContain("static workspace prototype");
   });
 });
