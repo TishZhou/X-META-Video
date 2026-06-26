@@ -3,58 +3,51 @@ import { describe, expect, it } from "vitest";
 
 import HomePage from "./page";
 
-describe("HomePage reset skeleton", () => {
-  it("renders the code-defined workspace foundation", () => {
+describe("HomePage", () => {
+  it("renders the landing prototype hero and launch anchor", () => {
     const html = renderToStaticMarkup(<HomePage />);
 
     expect(html).toContain("X-META Video");
-    expect(html).toContain("Production workspace foundation");
-    expect(html).toContain('data-web-reset="true"');
-    expect(html).toContain('data-web-design-system="code-defined"');
-    expect(html).toContain('data-web-design-sequence="feature-1"');
-    expect(html).toContain('href="#state-language"');
+    expect(html).toContain("AI comic drama and MV");
+    expect(html).toContain("creation workspace");
+    expect(html).toContain('href="#creation-entries"');
+    expect(html).toContain("Launch Studio");
+    expect(html).toContain("Creative paths");
+    expect(html).toContain('aria-label="Hero feature tag cloud"');
+    expect(html).not.toContain("Prototype boundary");
+    expect(html).not.toContain("Prototype entry surface");
+    expect(html).not.toContain("Feature 2");
+    expect(html).not.toContain("Feature 3");
+    expect(html).not.toContain("UI TripleD redo");
+    expect(html).not.toContain("static workspace");
   });
 
-  it("shows the new Feature 1 design sequence", () => {
+  it("renders exactly three feature slider entries", () => {
     const html = renderToStaticMarkup(<HomePage />);
 
-    expect(html).toContain("Foundational component selection");
-    expect(html).toContain("Interface design system");
-    expect(html).toContain("Wireframing and screen inventory");
-    expect(html).toContain("Page-by-page detailed implementation");
+    expect(html).toContain("Fast");
+    expect(html).toContain("Assets Library");
+    expect(html).toContain("Block-Based Pipeline");
+    expect(html.match(/role="tab"/g)).toHaveLength(3);
+    expect(html).toContain('<span class="sr-only">Assets Library</span>');
   });
 
-  it("renders shared production state language for every required domain", () => {
+  it("renders the two creation entry cards with revealed-detail content in markup", () => {
     const html = renderToStaticMarkup(<HomePage />);
 
-    expect(html).toContain('data-xmeta-state-domain="project"');
-    expect(html).toContain('data-xmeta-state-domain="node"');
-    expect(html).toContain('data-xmeta-state-domain="asset"');
-    expect(html).toContain('data-xmeta-state-domain="generation"');
-    expect(html).toContain('data-xmeta-state-domain="history"');
-    expect(html).toContain('data-xmeta-state-domain="export"');
-    expect(html).toContain("Node selected");
-    expect(html).toContain("Generation blocked");
-    expect(html).toContain("Export ready");
+    expect(html).toContain("Comic Drama Creation");
+    expect(html).toContain("MV Creation");
+    expect(html).toContain("Start Comic Drama");
+    expect(html).toContain("Start MV");
+    expect(html).toContain("do not create, store, or export media");
   });
 
-  it("uses shared layout and feedback primitives", () => {
+  it("does not render the TriplD test gallery on the root route", () => {
     const html = renderToStaticMarkup(<HomePage />);
 
-    expect(html).toContain('data-xmeta-foundation="states"');
-    expect(html).toContain('data-xmeta-foundation="rules"');
-    expect(html).toContain('data-xmeta-token-list="Responsive shell"');
-    expect(html).toContain('data-xmeta-token-list="Accessible feedback"');
-    expect(html).toContain("Missing backend, persistence");
-  });
-
-  it("does not render removed Feature 2 or Feature 3 prototype content", () => {
-    const html = renderToStaticMarkup(<HomePage />).toLowerCase();
-
-    expect(html).not.toContain("workspace dashboard");
-    expect(html).not.toContain("stock portfolio dashboard");
-    expect(html).not.toContain("ui tripled copied shadcn");
-    expect(html).not.toContain("motion workspace");
-    expect(html).not.toContain("static workspace prototype");
+    expect(html).toContain('href="/tripled-test"');
+    expect(html).toContain("Open TriplD gallery");
+    expect(html).not.toContain('data-tripled-gallery="all-components"');
+    expect(html).not.toContain("Imported component samples");
   });
 });

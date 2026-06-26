@@ -1,150 +1,91 @@
 # Wireframing Guidelines
 
-Use these guidelines for X-META Video screen and node wireframes. They are reusable rules for static prototypes now and API-backed implementation later.
+These guidelines apply to the Feature 1 Web Design rebuild. They are planning rules for screens before high-fidelity implementation.
+
+The previous Feature 2 and Feature 3 wireframes are retired. Future page work should start from this document plus `feature_tasks/1.json`.
 
 ## Global Principles
 
-- Keep the canvas as the primary workspace for creative production.
-- Use app surfaces, not chat surfaces: navigation, canvas, inspector, assets, tasks, history, and export are the core regions.
-- Put planned or missing backend capability labels next to the affected control or status.
-- Prefer shadcn/ui primitives already present in the app: Button, Badge, Card, and Collapsible.
-- Use lucide icons consistently. Pair icons with text when the action or state is not obvious.
-- Keep repeated content in shared data so node names, status labels, and route labels remain consistent.
-- Use concise operational copy. Do not explain the UI when labels and hierarchy can make the function clear.
+- Map each primary user task to a screen or page section.
+- Give every screen a single dominant job.
+- Define entry paths, exit paths, completion paths, and recovery paths.
+- Put the most important content and controls in the early scan path.
+- Group related controls with proximity and consistent visual treatment.
+- Split overloaded screens instead of cramming unrelated functions into one page.
+- Prefer familiar web app patterns for navigation, forms, tables, tabs, dialogs, drawers, filters, and status displays.
+- Avoid long explanatory placeholder copy in primary layouts. Use compact labels with short detail in a dialog, drawer, popover, or expandable region when needed.
 
 ## App Shell
 
-- Header: product name, active project/workspace label, and a visible prototype boundary badge.
-- Primary navigation: overview, canvas, assets, tasks, history, export, account. Labels should match route names.
-- Main region: one route goal per screen. Avoid combining canvas editing, task recovery, and account management into one overloaded screen.
-- Boundary region: every prototype route needs a short static/local note that identifies missing production services.
-- Exit paths: every route links back to overview and at least one next useful production surface.
+- Persistent regions: product/workspace identity, primary navigation, current project context, page status, and user/account access.
+- Primary routes: entry, project start, workspace dashboard, canvas, assets, tasks, history, export, and account/workspace management.
+- Shell navigation should never strand users; every route links back to dashboard or another next useful route.
+- Route-level unavailable states should be compact and visible near the page title.
 
-## Toolbar
+## Page Wireframe Requirements
 
-- Group controls by task: navigation, canvas view, node actions, generation actions, and export actions.
-- Use text buttons for commands that change production state. Icon-only buttons are reserved for familiar view tools after tooltips exist.
-- Primary action appears once per screen. Secondary actions use quieter button variants.
-- Disabled or preview-only controls must name why they are unavailable.
-- Future async actions should show queued/running/succeeded/failed feedback within 400 ms using text status.
+Each page task must define:
 
-## Node Cards
+- Primary user goal.
+- Primary action.
+- Secondary actions.
+- Input controls.
+- Output/status elements.
+- Navigation elements.
+- Empty state.
+- Loading state.
+- Error state.
+- Disabled/unavailable state.
+- Desktop layout.
+- Mobile layout.
+- Accessibility expectations.
 
-- Card header: node type, status, and short output label.
-- Body: one sentence for what the node produces and one compact list of required inputs.
-- Footer or trailing row: next surface, task state, and missing capability label when applicable.
-- Keep card radius at the shared shadcn radius. Do not nest cards inside node cards.
-- Use consistent node ordering: Script -> Storyboard -> Character/Scene/Prop -> Image Composition -> Audio -> Video -> 9-grid Storyboard -> Export.
+## Canvas And Node Surfaces
+
+- Keep the canvas as the main creative workspace.
+- Represent the default production order clearly: Script, Storyboard, Character, Scene, Prop, Image Composition, Audio, Video, 9-Grid Storyboard, Export.
+- A selected node must reveal inspector details without duplicating all details inside the canvas card.
+- Node states need text labels for waiting, ready, generating, succeeded, failed, blocked, and missing input.
+- Full drag/zoom/execution behavior belongs to later functional features unless a Web Design task explicitly pulls it into scope.
 
 ## Inspector
 
-- Use the inspector for selected-node details, not global project settings.
-- Sections: purpose, inputs, outputs, dependencies, task status, version expectations, and planned API ownership.
-- Validation errors should appear next to the affected input section.
-- Retry and regenerate controls belong near task status and must preserve upstream output language.
-- On mobile, the inspector stacks below the selected node summary.
+- Inspector sections: purpose, inputs, outputs, dependencies, generation status, version history, and unavailable production behavior.
+- Validation and failure messages belong near the affected input or status row.
+- Retry and regenerate controls should explain what retry creates and what upstream outputs remain safe.
+- On mobile, stack the inspector below the selected node summary.
 
-## Asset Cards
+## Lists, Tables, And Cards
 
-- Show asset type, title, source node, version, status, and planned reuse path.
-- Include prompt/model/parameters/source-rights metadata slots even when values are static examples.
-- Keep image or media preview areas stable with aspect ratio constraints once real media exists.
-- Empty state should direct users back to the node that can create the first asset.
-- Error state should preserve filters and say which asset class failed to load.
+- Use compact lists for recent work and small task sets.
+- Use tables only when comparison is important and headers remain readable.
+- Convert small tables to stacked cards on mobile.
+- Left-align text and right-align counts, durations, and other numeric values.
+- Asset cards need stable preview dimensions for future generated media.
+- Empty states should guide users to the next useful action.
 
-## Tables And Lists
+## Forms And Controls
 
-- Use lists or cards for small MVP datasets. Reserve wide tables for later large asset/task/history views.
-- Text aligns left. Numbers, durations, and counts align right when in table form.
-- On mobile, convert tables into stacked cards with the value more prominent than the label.
-- Sort task lists by urgency first, then recency. Sort history by newest event first unless comparing versions.
-- Every row needs a clear destination or recovery action.
+- Prefer one-column forms for readability.
+- Use visible labels and field boundaries.
+- Use segmented controls or tabs for a small number of mutually exclusive choices.
+- Use checkboxes for independent multiple selections.
+- Pair icon buttons with labels or tooltips where meaning is not universal.
+- Use visible focus states and touch-friendly target sizes.
 
-## Status Regions
+## Responsive Rules
 
-- Status cannot rely on color alone. Always include text such as Static, Planned, Queued, Running, Succeeded, Failed, Missing backend, or Preview only.
-- Put route-level boundary notes near the page title.
-- Put node/task-level errors next to the affected node or task.
-- Use `aria-live="polite"` for future live task status regions.
-- Failed generation copy should say what failed, what remains safe, and what retry will create.
+- Desktop: allow dense work surfaces such as canvas plus inspector, dashboard plus side panel, or table plus detail panel.
+- Tablet: stack secondary panels below the primary work region.
+- Mobile: prioritize review and lightweight action; convert canvas/table regions into readable sequences.
+- Long labels must wrap without creating horizontal overflow.
+- Primary actions should remain visible near the top of each screen.
 
-## Node Surface Guidelines
+## Accessibility Rules
 
-### Script Node
-
-- Inputs: creative brief, IP setting, style, theme, duration, target format.
-- Outputs: plot summary, character profiles, dialogue or lyrics, camera notes, storyboard seed.
-- Primary control: generate script plan. Feature 2 labels this as planned only.
-- Status states: missing brief, ready to generate, generating, generated, failed with retry.
-
-### Storyboard Node
-
-- Inputs: script output, shot count, rhythm, panel format, camera intent.
-- Outputs: editable shot list, scene beats, panel notes, timing.
-- Primary control: build storyboard from selected script version.
-- Status states: waiting for script, draft ready, needs review, failed conversion.
-
-### Character Node
-
-- Inputs: profile, appearance, outfit, accessories, consistency reference.
-- Outputs: character image, full-body view, reusable character asset.
-- Primary control: generate character asset.
-- Status states: missing profile, ready, generated, consistency risk, failed.
-
-### Scene Node
-
-- Inputs: scene description, mood, lighting, visual style, aspect ratio.
-- Outputs: background image and reusable scene asset.
-- Primary control: generate scene image.
-- Status states: waiting for storyboard scene, ready, generated, failed.
-
-### Prop Node
-
-- Inputs: prop description, style, material, scale, usage shot.
-- Outputs: isolated prop asset and source metadata.
-- Primary control: generate prop asset.
-- Status states: optional, ready, generated, failed.
-
-### Image Composition Node
-
-- Inputs: character asset version, scene asset version, prop asset version, shot direction.
-- Outputs: composed keyframe or character-in-scene image.
-- Primary control: compose shot image.
-- Status states: missing asset references, ready, composed, failed.
-
-### Audio Node
-
-- Inputs: dialogue, lyrics, narrator role, voice style, timing notes.
-- Outputs: voice, singing, narration, or timing reference.
-- Primary control: generate audio.
-- Status states: missing text, ready, generated, failed provider call.
-
-### Video Node
-
-- Inputs: keyframes, image grid, audio, duration, motion notes.
-- Outputs: short video clip and clip metadata.
-- Primary control: generate clip.
-- Status states: waiting for composition/audio, ready, rendering, generated, failed.
-
-### 9-Grid Storyboard Node
-
-- Inputs: selected shots, composed keyframes, panel order, caption rules.
-- Outputs: nine-panel storyboard image or review board.
-- Primary control: build 9-grid storyboard.
-- Status states: missing nine panels, ready, generated, failed.
-
-### Export Node
-
-- Inputs: selected clips, audio track, storyboard or timeline order, format, rights checks.
-- Outputs: final comic drama, MV, or short-form video artifact.
-- Primary control: start export render.
-- Status states: missing clips, ready, rendering, exported, renderer failed.
-
-## Responsive And Accessibility Rules
-
-- Desktop wireframes may show canvas and inspector side by side.
-- Tablet wireframes should keep route navigation visible and stack support panels below core content.
-- Mobile wireframes should present canvas as a readable node sequence with inspector details below.
-- Maintain visible focus rings, descriptive link text, and clear headings.
-- Avoid hidden requirements in tooltips. Put important constraints near the related control or status region.
-- Use moderate density for operational screens: compact enough for scanning, spacious enough for touch targets.
+- Use one clear page heading per route.
+- Navigation labels must match destinations.
+- Status and errors must be text, not color alone.
+- Important requirements must be visible near controls, not hidden only in tooltips.
+- Future live generation status should use polite announcements.
+- Disabled controls must state why the action is unavailable.

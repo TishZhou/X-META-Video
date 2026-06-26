@@ -14,12 +14,13 @@ Before writing code:
 6. **Read `feature_list.json`** to see current feature state
 7. **Read `progress.md`** to see verified status, blockers, and next step
 8. **update `sprint-contract.md`** update scope, criteria and verication plan based on desired feature plan
-9. **Review recent commits** with `git log --oneline -5` and make sure everything was commited with short description and pushed
+9. **Initialize `evaluator-rubric.md`**  score.
+10. **Review recent commits** with `git log --oneline -5` and make sure everything was commited with short description and pushed
 
 If baseline verification is failing, repair that first before adding new scope. If docs and code diverge, treat docs as target behavior and current code as implementation reality.
 
 ## Working Rules
-
+- **Use 3 Subagents**: to do planning, acting and evaluation seperately and do not invade each others' work. I f the work is planning, then don't use the first agent. Evaluation should based on rubric and sprint contract. After evaluation recorded in artifacts, actting agent should fix the problem following the solution suggestion by evaluator untill get a higher score in rubric.
 - **One feature at a time**: Pick exactly one unfinished feature from `feature_list.json` 
 - **Verification required**: Don't claim done without running verification commands
 - **Stay in scope**: Don't modify files unrelated to the current feature
@@ -28,8 +29,8 @@ If baseline verification is failing, repair that first before adding new scope. 
 - **Keep HITL boundaries**: No hidden auto-execution for discounts, campaigns, approvals, or other consequential actions
 - **Label missing capabilities honestly**: If backend, connector, orchestration, audit, or persistence layers are missing, mark them clearly instead of implying they exist
 - **Maintainess and Concise Code**: When we build, we should make the code clean and reusable, don't write repeated content.
-- **Use harness creator Skill** to update artifacts
-- **Use shadcn Skill** to use shadcn based UI TripleD，Use our designed assets on priority
+- **Use shadcn skill and uiux-pro max skill** to use tripld UI components in our repo, if we need to use components like toolbar that we don't have in our tripld UI component, then use shadcn interactive components. make it interactive as much as possible.
+
 
 ## Required Artifacts
 - `docs/ARCHITECTURE.md`: layer boundaries and data flow
@@ -47,7 +48,7 @@ A feature is done only when ALL of the following are true:
 
 - [ ] Target behavior is implemented
 - [ ] Required verification actually ran 
-- [ ] Evidence/Status recorded in `feature_list.json`, `sprint-contract.md`, `evaluator-rubric.md`
+- [ ] Evidence/Status recorded in `feature_list.json`, `sprint-contract.md`, `evaluator-rubric.md` by evlauator.
 - [ ] Repository remains restartable from standard startup path
 
 ## End of Session

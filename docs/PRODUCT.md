@@ -6,6 +6,8 @@
 - Turn AI generation into modular, reusable production workflows.
 - Connect the full pipeline: text → image → audio → video.
 - Store generated assets for reuse across projects.
+- Deliver a polished creative workspace, not a static mockup. The production UI component approach is selected in Feature 1 Web Design before detailed page implementation starts.
+- Treat deleted static pages and deleted copied-component experiments as historical scaffolding only. New app-shell work should rebuild the interface deliberately from the selected component system.
 
 ## Core Workflow
 
@@ -20,6 +22,8 @@
 ## Main UI: Canvas Workflow
 
 The main interface is not a homepage. It is an infinite visual canvas where each AI capability is a connectable node.
+
+The canvas experience should clearly communicate entry, hover, selection, connection, generation, retry, success, and failure states. Route changes, panels, drawers, project cards, asset cards, task rows, and export readiness states should use purposeful feedback that clarifies hierarchy and state without hiding functionality.
 
 ```txt
 [Script] → [Storyboard] → [Character Image]
@@ -95,6 +99,8 @@ Each asset stores its source prompt, model, parameters, version, generation time
 ## MVP Scope
 
 - Canvas-based node editor.
+- Web design foundation covering component selection, interface design, wireframing, shared app shell, and page-by-page implementation.
+- Clear route and shell state for entry, workspace, canvas, assets, tasks, history, export, and account surfaces.
 - Script-to-storyboard generation.
 - Character, prop, and scene image generation.
 - Character and scene asset libraries.
@@ -106,6 +112,8 @@ Each asset stores its source prompt, model, parameters, version, generation time
 ## Constraints
 
 - AI generation must run asynchronously.
+- Motion and visual feedback must support usability. They should communicate state changes, selection, hierarchy, loading, progress, and recovery; they must respect reduced-motion preferences and must not replace text status labels.
+- Feature 1 must select the component approach before detailed page implementation. Do not restore deleted prototype components as the new baseline without an explicit task decision.
 - External model quality and speed affect output.
 - Character consistency is a key quality risk.
 - Existing 9-grid capability should be reused first.

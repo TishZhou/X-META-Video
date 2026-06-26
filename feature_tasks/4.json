@@ -1,13 +1,15 @@
-{
-  "parent_feature": {
-    "id": 4,
-    "title": "Workflow Canvas Foundation",
-    "status": "not_started"
-  },
-  "planning_status": "pending_decomposition",
-  "notes": [
-    "Small features must be added here before implementation starts.",
-    "Keep this file focused on Workflow Canvas Foundation only."
-  ],
-  "small_features": []
+﻿{
+    "parent_feature":  {
+                           "id":  4,
+                           "title":  "Storyboard Node",
+                           "status":  "not_started"
+                       },
+    "planning_status":  "pending_decomposition",
+    "notes":  [
+                  "Small features must be added here before implementation starts.",
+                  "Keep this file focused on Storyboard Node only."
+              ],
+    "small_features":  [
+
+                       ]
 }

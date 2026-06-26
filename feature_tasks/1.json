@@ -4,7 +4,7 @@
     "title": "Web Design",
     "status": "in_progress"
   },
-  "planning_status": "web_design_002_passing",
+  "planning_status": "web_design_004_in_progress",
   "notes": [
     "Feature 2 and Feature 3 have been removed from the active feature plan.",
     "The web app has been reset to a minimal runnable structure so the component library and pages can be rebuilt deliberately.",
@@ -60,27 +60,62 @@
     },
     {
       "id": "web-design-003",
-      "title": "Produce wireframing rules and screen inventory",
-      "status": "not_started",
-      "user_visible_behavior": "Users eventually get pages that match a clear screen map instead of isolated screens built ad hoc.",
+      "title": "produce the landing page prototype",
+      "status": "passing",
+      "user_visible_behavior": "Users eventually get an interactive and light color landing page prototype that introduces the product, explains the production directions, and provides a clear entry path to start a project.",
       "verification": [
-        "Record the screen inventory and route map for the web app.",
-        "Define wireframe-level layout rules for app shell, workspace dashboard, canvas, node inspector, asset library, task status, history, export, account/workspace management, and any onboarding or entry pages.",
-        "Verify each screen has clear entry paths, exit paths, primary actions, secondary actions, empty states, loading states, error states, and disabled/unavailable behavior."
+        "Implement the root landing prototype with a reusable top bar, TriplD wave hero, smooth Launch Studio scroll behavior, feature slider, and creation entry cards.",
+        "Verify the feature slider contains exactly three reachable slides for Fast, Assets Library, and Block-Based Pipeline.",
+        "Verify the two preview details cards cover Comic Drama Creation and MV Creation, and reveal description plus entry button on hover and keyboard focus.",
+        "Run the user-requested light verification: web tests, typecheck, and rendered desktop/mobile browser checks."
       ],
-      "notes": "Wireframes can be documented as text and structured layout guidance before visual implementation."
+      "notes": "Completed as a light English landing page prototype using TriplD UI-first composition. Full final verification remains deferred by user request.",
+      "evidence": [
+        "Initial .\\init.ps1 passed before task work and confirmed the baseline web tests passed.",
+        "Planner subagent scoped the task around hero, Launch Studio anchor scroll, three-slide feature preview, two preview details entry cards, honest prototype copy, and light verification.",
+        "Acting subagent implemented the landing prototype in apps/web/src/app/page.tsx and made the TriplD ImageSliderCard and PreviewDetailsCard reusable for X-META content.",
+        "User revision replaced the custom hero composition with the TriplD GlowyWavesHero, parameterized it for X-META content, removed visible Prototype boundary copy, made the background canvas pointer-events-none, and ensured first-frame hero content is visible.",
+        "Second user revision added reusable AppTopBar to the app layout, changed root copy to English-only, softened section transitions with one continuous page background, removed visible three-label feature controls, made Launch Studio use smooth scroll, and replaced entry buttons with TriplD NativeStartNow.",
+        "Third user revision replaced the static hero Fast, Assets Library, and Block-Based Pipeline pills with the TriplD DynamicTagCloud component, and DynamicTagCloud now uses stable offsets for SSR-safe rendering.",
+        "Evaluator subagent using uiux-design-evaluator recorded an initial 92/100 with one P3 finding: dot-only slider navigation reduced direct-slide discoverability.",
+        "Acting subagent resolved the initial P3 by improving slider discoverability; the latest user revision intentionally hides the visible three-label row and keeps compact accessible controls.",
+        "corepack pnpm --filter @xmeta/web test passed after the latest revision: 5 test files / 15 tests.",
+        "corepack pnpm --filter @xmeta/web typecheck passed after the latest revision.",
+        "Post-DynamicTagCloud revision verification passed: corepack pnpm --filter @xmeta/web test and typecheck.",
+        "Browser QA on http://localhost:3000 desktop passed: title X-META Video, TriplD wave hero canvas rendered, first-frame hero title opacity was 1, no Prototype boundary copy appeared, no console warn/error logs, no framework overlay, no horizontal overflow, Launch Studio set #creation-entries, and slider navigation reached Assets Library then Block-Based Pipeline.",
+        "Browser QA at 390x844 mobile passed: no horizontal overflow, no console warn/error logs, focus on the first entry card revealed its description and Start Comic Drama button.",
+        "Post-revision mobile Browser QA confirmed compact feature slider controls with scrollWidth=clientWidth=375.",
+        "Latest Browser QA confirmed desktop and 390x844 mobile root copy is English-only, top bar is present, feature controls are compact dots instead of visible labels, Start Comic Drama and Start MV use TriplD NativeStartNow, no horizontal overflow occurs, and console warn/error logs are empty.",
+        "Evaluator subagent updated evaluator-rubric.md to 100/100 with no open P1/P2/P3 findings for the latest requested light verification scope and reran .\\init.ps1 successfully."
+      ]
     },
     {
       "id": "web-design-004",
       "title": "Implement app foundation and shared layout",
-      "status": "not_started",
+      "status": "passing",
       "user_visible_behavior": "Users can open the app and see the first rebuilt shell/page foundation without old prototype content.",
       "verification": [
         "Implement the root app layout, global CSS baseline, app shell structure, navigation frame, and shared page containers.",
         "Verify no deleted prototype copy, Feature 2 static workspace copy, or Feature 3 UI TripleD redo copy remains visible.",
-        "Run web tests, typecheck, build, and rendered desktop/mobile checks."
+        "Run web tests, typecheck, build, and rendered desktop checks."
       ],
-      "notes": "This task starts real implementation after design foundations are selected."
+      "notes": "Completed on 2026-06-26. Scope was global app shell, shared page containers, desktop width rhythm, and TriplD fidelity; mobile-specific redesign was out of scope for this request.",
+      "evidence": [
+        ".\\init.ps1 passed before task work and confirmed baseline web tests passed: 5 test files / 15 tests.",
+        "sprint-contract.md and evaluator-rubric.md were initialized for web-design-004 before code edits.",
+        "Planner subagent scoped page4 around global shell, shared page container, desktop width, and TriplD fidelity, and recommended a wider 88rem/1408px app container instead of continuing the narrow max-w-6xl landing rhythm.",
+        "Acting subagent added apps/web/src/components/xmeta/app-shell.tsx with AppShell, PageContainer, and PageSection primitives, mounted AppShell from apps/web/src/app/layout.tsx, aligned AppTopBar and page sections to xmetaLayoutClassNames, and kept the root page's visible TriplD hero, slider, preview-card, and animated-entry patterns.",
+        "apps/web/src/lib/design-system.ts now exposes a global app shell frame and wide shared page/container tokens using max-w-[88rem]; root page sections use PageSection while readable text remains constrained.",
+        "Root page tests now guard against visible deleted prototype copy, Feature 2 static workspace copy, Feature 3 UI TripleD redo copy, and imported TriplD gallery content on the root route.",
+        "corepack pnpm --filter @xmeta/web test passed after implementation: 6 test files / 18 tests.",
+        "corepack pnpm --filter @xmeta/web typecheck passed.",
+        "corepack pnpm --filter @xmeta/web build passed with routes /, /_not-found, /icon.svg, and /tripled-test.",
+        "git diff --check passed after trailing whitespace cleanup; only LF/CRLF warnings were emitted.",
+        "Final .\\init.ps1 passed after updates and reran web tests: 6 test files / 18 tests.",
+        "Browser QA on http://localhost:3000 passed: title X-META Video, content nonblank, top bar present, hero canvas present, no framework overlay, no console warn/error logs, no old prototype copy, Launch Studio uniquely found and clicked to #creation-entries, and no horizontal overflow.",
+        "Wide desktop Browser QA at 1600x900 passed: app shell present, top bar present, page section inner width 1408px, top bar inner width 1408px, viewport/client width equaled scrollWidth, logs empty, and old prototype copy absent.",
+        "Evaluator subagent updated evaluator-rubric.md to 100/100 with no open P1/P2/P3 findings and recorded that the widened 88rem desktop layout is not too narrow for this scope."
+      ]
     },
     {
       "id": "web-design-005",
@@ -92,7 +127,7 @@
         "Verify project-start choices cover AI comic drama, MV creation, and short-form video without implying backend persistence exists.",
         "Verify responsive layout, keyboard access, focus visibility, and no horizontal overflow."
       ],
-      "notes": "This replaces the deleted old main page implementation."
+      "notes": ""
     },
     {
       "id": "web-design-006",

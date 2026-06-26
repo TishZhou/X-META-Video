@@ -48,7 +48,7 @@ Core rules:
 
 ## Application Layers
 ### Web App (`apps/web`)
-Next.js App Router + React frontend with Tailwind CSS, shadcn/ui, and selected UI TripleD shadcn blocks.
+Next.js App Router + React frontend with Tailwind CSS. The detailed component approach is selected by Feature 1 Web Design before page implementation proceeds.
 
 Owns:
 - Page routing, layouts, metadata, loading states, and SSR/static rendering where useful.
@@ -56,7 +56,8 @@ Owns:
 - Login UX, active organization selection UX, and project navigation UX.
 - Workflow canvas for script, storyboard, character, scene, audio, video, and export nodes. Canvas-heavy surfaces should be client components and may use dynamic imports.
 - Asset library, task status, version history, preview, export, autosave indicators, and confirmation UI.
-- Design-system composition using local shadcn/ui source components first, with UI TripleD shadcn blocks copied and adapted as local source when they fit the product surface.
+- App experience state display: route state, shell state, canvas interactions, node/card states, task progress, generation loading states, and reduced-motion fallbacks where motion is used.
+- Design-system composition from the component approach selected in Feature 1. Components may be in-house source, approved copied source, or wrapped dependencies only after the task records that decision.
 
 Must not:
 - Store provider keys, storage credentials, or final authorization logic.
@@ -64,7 +65,7 @@ Must not:
 - Write project, task, asset, history, or membership state directly to PostgreSQL.
 - Create generation tasks outside the FastAPI task APIs.
 - Treat local state as source of truth after refresh or re-login.
-- Import UI TripleD as an opaque runtime dependency or use its Base UI variants without an explicit architecture update.
+- Restore deleted prototype components or copied-component experiments as the new baseline without an explicit Feature 1 component-selection decision.
 
 ### API Layer (`services/api`)
 Python FastAPI application exposing versioned routes under `/api/v1`.

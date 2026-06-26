@@ -9,13 +9,64 @@ Record major decisions and progress each session. Keep the current verified stat
 - Standard web verification path: `corepack pnpm --filter @xmeta/web test`
 - Current highest-priority unfinished feature: Feature 1, Web Design
 - Current active feature: Feature 1 is `in_progress`.
-- Current reset status: Feature 2 and Feature 3 have been removed from the active plan, their task files have been deleted, and old web implementation files have been cleared while preserving minimal app structure.
-- Current web baseline: `/` renders a minimal Web Design reset page. Detailed component-library and page implementation work has not started.
+- Current reset status: Feature 2 and Feature 3 have been removed from the active plan, their task files have been deleted, old web implementation files have been cleared while preserving minimal app structure, and the remaining feature plan has now been renumbered so old Features 4-17 are new Features 2-15.
+- Current feature numbering: Feature 1 remains Web Design and `web-design-004` passing; Feature 2 is now Workflow Canvas Foundation with detailed task plan at `feature_tasks/2.json`; old Features 5-17 shifted to new Features 3-15.
+- Current web baseline: `/` renders the `web-design-004` app foundation with a global `AppShell`, global top bar, TriplD wave hero, feature preview, creation entry cards, and shared 88rem desktop page containers.
 - Current component guidance: `web-design-001` installed the user-provided TriplD shadcn component set as local source. See the concise usage map in `docs/TRIPLED_COMPONENT_GUIDE.md`.
 - Current design-system foundation: `web-design-002` defines shared style, layout, motion, responsive, accessibility, and product state language directly in frontend code under `apps/web/src/lib/design-system.ts`, `apps/web/src/components/xmeta/design-primitives.tsx`, `apps/web/src/index.css`, and `apps/web/tailwind.config.ts`.
+- Current app foundation: `web-design-004` implements the global shell, shared page containers, and wider desktop layout rhythm while preserving the root TriplD landing composition.
 - Current blocker: none for continuing Feature 1 planning and implementation.
 
 ## Session Log
+
+### Session 024
+
+- Date: 2026-06-26
+- Goal: Acting subagent planning-only update for Feature 2 task-file format and Workflow Canvas Foundation scope.
+- Write scope honored: edited only `feature_tasks/2.json`, `sprint-contract.md`, `evaluator-rubric.md`, `progress.md`, and `session-handoff.md`.
+- Completed: Rewrote `feature_tasks/2.json` to match `feature_tasks/1.json` top-level format exactly: `parent_feature`, `planning_status`, `notes`, and `small_features`.
+- Feature 2 plan update: Workflow Canvas Foundation now plans a composed shadcn toolbar/palette for dragging placeholder nodes onto the canvas; first-class typed input/output ports; freely connectable compatible node-port edges; selectable edges; reusable node UI design; typed React graph state; and structured persistence payloads.
+- Deferred honestly: actual script/image/audio/video/export node functionality, AI provider calls, backend orchestration, generated assets, and export rendering remain later feature scopes.
+- Demo analysis incorporated: `D:/kpop/docs/canvas-node-connections.md` describes a weak legacy DOM plus SVG `app.js` ownership model where connections are `{ fromId, toId }`, ports are DOM classes, edges are imperatively redrawn, and persistence stores node HTML; Feature 2 now plans typed React graph state, first-class ports, selectable edges, and structured persistence payloads instead.
+- shadcn evidence: `corepack pnpm dlx shadcn@latest docs command resizable sidebar toggle-group tooltip tabs menubar context-menu sheet scroll-area separator` returned docs/examples/API links for all requested primitives. Toolbar registry search from `apps/web` was blocked by the `@uitripled` catalog parse issue requiring `name` and `homepage`, and found no standalone toolbar item, so the toolbar should be composed.
+- Startup verification: `.\init.ps1` passed before artifact work and reran web tests successfully: 6 test files / 18 tests.
+- JSON validation: `Get-Content -Raw feature_tasks/2.json | ConvertFrom-Json | Out-Null` passed; top-level keys resolved to `parent_feature, planning_status, notes, small_features`.
+- Known risk or unresolved issue: This session is planning-only. Implementation still needs canvas UI, drag/connect interactions, tests, rendered QA, and eventual FastAPI persistence.
+- Next best step: start Feature 2 only after reading the rewritten task file completely and rerunning the standard startup path.
+
+### Session 023
+
+- Date: 2026-06-26
+- Goal: Acting subagent planning-artifact update to close the feature-numbering gap left by deleted Features 2 and 3.
+- Completed: Preserved Feature 1 Web Design as `id: 1`, `in_progress`, `current_task: web-design-004`, and `current_task_status: passing`; renumbered old Features 4-17 to new Features 2-15; renamed task files to `feature_tasks/2.json` through `feature_tasks/15.json`; updated feature verification strings and task file paths; updated task file `parent_feature.id/title/status` metadata; wrote detailed `feature_tasks/2.json` for Workflow Canvas Foundation.
+- Feature 2 plan scope: The new Workflow Canvas Foundation plan covers canvas workspace UX, local graph state, FastAPI durable workflow/project/task state, web/API save-restore boundaries, connected entry/workspace/assets/tasks/history/export/account navigation, task/history signals, and final verification closure.
+- Architecture boundary recorded: Web owns canvas UX and local draft state; FastAPI owns durable workflow, project, and task state; web must not call AI providers directly.
+- Files intentionally not edited: app/source code and product/architecture docs.
+- Verification run: `Get-ChildItem feature_tasks -File | Sort-Object {[int]($_.BaseName)} | Select-Object -ExpandProperty Name` returned `1.json` through `15.json`; PowerShell JSON parse validation passed for `feature_list.json` and every `feature_tasks/*.json`; feature/task consistency check passed for Feature 1 preservation, contiguous IDs 1-15, task paths, parent metadata, and Feature 2 decomposition.
+- Known risk or unresolved issue: This session is planning-only. Workflow Canvas Foundation implementation, backend persistence, orchestration, provider execution, auth, export rendering, and generated asset storage remain future work.
+- Next best step: Continue Feature 1 if the web design task remains active, or start Feature 2 only after reading `feature_tasks/2.json` completely and running the standard startup path.
+
+### Session 022
+
+- Date: 2026-06-26
+- Goal: Complete Feature 1 task `web-design-004` as the app foundation and shared layout pass, faithful to TriplD, with global setup confirmed and desktop width reviewed.
+- Completed: Added reusable `AppShell`, `PageContainer`, and `PageSection` primitives; mounted `AppShell` from `apps/web/src/app/layout.tsx`; kept `AppTopBar` global; aligned app chrome and root page sections to shared `xmetaLayoutClassNames`; widened default page/chrome/section containers to `max-w-[88rem]`; kept readable text blocks constrained; preserved root TriplD `GlowyWavesHero`, DynamicTagCloud hero tags, `ImageSliderCard`, `PreviewDetailsCard`, and animated entry actions; added tests for shell/container behavior and absence of deleted prototype/Feature 2/Feature 3 copy.
+- Verification run: Initial `.\init.ps1` passed before task work; `corepack pnpm --filter @xmeta/web test` passed 6 files / 18 tests; `corepack pnpm --filter @xmeta/web typecheck` passed; `corepack pnpm --filter @xmeta/web build` passed; `git diff --check` passed after trailing whitespace cleanup with LF/CRLF warnings only; final `.\init.ps1` passed and reran 6 files / 18 tests.
+- Rendered QA: Browser QA on `http://localhost:3000` passed for desktop root page identity, nonblank content, global top bar, TriplD hero canvas, no framework overlay, no console warn/error logs, no old prototype copy, `Launch Studio` interaction to `#creation-entries`, and no horizontal overflow. Wide desktop QA at 1600x900 measured top bar and page section inner width at 1408px from the shared `max-w-[88rem]` container with viewport/client width equal to scrollWidth.
+- Evaluation: Evaluation subagent using `uiux-design-evaluator` recorded 100/100 with no open P1/P2/P3 findings and concluded the widened 88rem desktop layout is not too narrow for this scope.
+- Known risk or unresolved issue: Mobile-specific redesign was intentionally out of scope for this request. Production backend, project creation, persistence, generation, asset storage, orchestration, history, and export remain future feature scope.
+- Next best step: start `web-design-005` for the entry and project-start pages, reusing `AppShell`/`PageSection` and the TriplD component baseline.
+
+### Session 021
+
+- Date: 2026-06-26
+- Goal: Complete Feature 1 task `web-design-003` as a light landing page prototype without running the full final verification sweep yet.
+- Completed: Replaced the minimal root entry with a light landing prototype; revised the hero to use TriplD `GlowyWavesHero`; replaced the hero's static feature pills with TriplD `DynamicTagCloud`; added reusable `AppTopBar` to the app layout; changed visible root copy to English; softened section transitions with one continuous page background; kept `Launch Studio` smoothly scrolling to creation entries; reused the TriplD image slider card for `Fast`, `Assets Library`, and `Block-Based Pipeline`; removed visible three-label slider controls; reused the TriplD preview details card for `Comic Drama Creation` and `MV Creation`; made hover/focus reveal each entry description and animated TriplD start button; removed visible `Prototype boundary` copy while keeping concise unavailable-backend boundaries.
+- Revision loop: Evaluation subagent using `uiux-design-evaluator` first scored 92/100 and flagged one P3 for dot-only slider navigation; after user revisions and implementation fixes, evaluator recorded 100/100 with no open P1/P2/P3 findings.
+- Verification run: Initial `.\init.ps1` passed before task work; `corepack pnpm --filter @xmeta/web test` passed 5 files / 15 tests; `corepack pnpm --filter @xmeta/web typecheck` passed; Browser QA on `http://localhost:3000` passed desktop and 390x844 mobile for page identity, reusable top bar, English-only root copy, TriplD wave hero canvas, visible first-frame hero content, no overlay, no console warn/error logs, no horizontal overflow, smooth `Launch Studio` scroll target, slider navigation with compact controls, and entry-card focus reveal with animated start buttons; evaluator reran `.\init.ps1` successfully after the latest revision; post-DynamicTagCloud change tests and typecheck passed again.
+- Deferred by user request: production build, `git diff --check`, full final QA sweep, commit, and push.
+- Known risk or unresolved issue: The landing page is still an entry surface only. Production backend, project creation, persistence, generation, asset storage, orchestration, history, and export remain future feature scope.
+- Next best step: start `web-design-004` for app foundation and shared layout, or run the deferred full verification/commit sweep if the user wants the session closed formally.
 
 ### Session 020
 

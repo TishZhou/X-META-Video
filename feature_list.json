@@ -1,4 +1,4 @@
-{
+﻿{
     "project":  "X-META Video",
     "last_updated":  "2026-06-26",
     "rules":  {
@@ -22,172 +22,186 @@
                                               "Read feature_tasks/1.json completely before working on this feature.",
                                               "Run .\\init.ps1 and record evidence before marking this feature passing."
                                           ],
-                         "current_task":  "web-design-002",
+                         "current_task":  "web-design-004",
                          "current_task_status":  "passing",
                          "current_task_evidence":  [
-                                                       "apps/web/src/lib/design-system.ts defines code-level typography, surface, density, layout, motion, responsive, accessibility, and state-language contracts.",
-                                                       "apps/web/src/components/xmeta/design-primitives.tsx provides reusable surface, state badge, state panel, and token-list primitives using the shared design definitions.",
-                                                       "apps/web/src/index.css and apps/web/tailwind.config.ts expose X-META semantic colors, surfaces, shadows, motion timings, and reduced-motion behavior to the app.",
-                                                       "apps/web/src/app/page.tsx uses the shared code definitions in the reset foundation preview instead of hard-coded page-local style decisions.",
-                                                       "corepack pnpm --filter @xmeta/web test, typecheck, and build passed; Browser QA passed on desktop and mobile with no console errors or horizontal overflow.",
-                                                       "Final .\\init.ps1 passed after artifact updates and reran web tests: 3 test files / 11 tests."
+                                                       "apps/web/src/app/page.tsx implements the light English landing prototype with TriplD GlowyWavesHero, DynamicTagCloud hero tags, smooth Launch Studio scroll, feature preview slider, and two creation entry cards.",
+                                                       "apps/web/src/components/xmeta/app-top-bar.tsx provides the reusable top bar mounted from apps/web/src/app/layout.tsx.",
+                                                       "apps/web/src/components/uitripled/image-slider-card-shadcnui.tsx exposes reusable slide data and compact accessible controls for Fast, Assets Library, and Block-Based Pipeline.",
+                                                       "apps/web/src/components/uitripled/preview-details-card-shadcnui.tsx supports reusable hover/focus details and animated start buttons for Comic Drama Creation and MV Creation.",
+                                                       "apps/web/src/components/uitripled/preview-details-card-shadcnui.tsx now uses TriplD NativeStartNow for animated entry buttons.",
+                                                       "corepack pnpm --filter @xmeta/web test passed: 5 test files / 15 tests.",
+                                                       "corepack pnpm --filter @xmeta/web typecheck passed.",
+                                                       "Hero Fast, Assets Library, and Block-Based Pipeline tags now render through TriplD DynamicTagCloud instead of static hero pills; DynamicTagCloud uses stable offsets for SSR-safe rendering.",
+                                                       "Browser QA passed on desktop and 390x844 mobile: reusable top bar, English-only root copy, TriplD wave hero canvas, visible first-frame hero content, no Prototype boundary copy, smooth Launch Studio scroll target, compact slider controls, entry-card focus reveal, console health, and no horizontal overflow.",
+                                                       "Evaluator subagent using uiux-design-evaluator recorded 100/100 with no open P1/P2/P3 findings for the requested light verification scope after the TriplD wave hero revision.",
+                                                       "web-design-004 started on 2026-06-26 to complete the app foundation, global shell/container setup, and wider desktop layout pass while preserving TriplD visible components.",
+                                                       "web-design-004 added reusable AppShell, PageContainer, and PageSection primitives; mounted the shell globally from apps/web/src/app/layout.tsx; aligned AppTopBar and root sections to the shared max-w-[88rem] desktop container; and kept the root page faithful to the existing TriplD hero, slider, preview-card, and animated-entry patterns.",
+                                                       "corepack pnpm --filter @xmeta/web test passed: 6 test files / 18 tests.",
+                                                       "corepack pnpm --filter @xmeta/web typecheck passed.",
+                                                       "corepack pnpm --filter @xmeta/web build passed with routes /, /_not-found, /icon.svg, and /tripled-test.",
+                                                       "git diff --check passed after trailing whitespace cleanup; output had only LF/CRLF warnings.",
+                                                       "Final .\\init.ps1 passed and reran web tests: 6 test files / 18 tests.",
+                                                       "Browser QA on http://localhost:3000 passed for desktop root rendering, global top bar, TriplD hero canvas, nonblank content, no framework overlay, no console warn/error logs, no old prototype copy, Launch Studio scrolling to #creation-entries, and no horizontal overflow.",
+                                                       "Wide desktop Browser QA at 1600x900 measured a 1408px top bar/page-section inner width from the shared max-w-[88rem] container, with viewport/client width equal to scrollWidth.",
+                                                       "Evaluator subagent using uiux-design-evaluator recorded 100/100 with no open P1/P2/P3 findings and concluded the widened 88rem desktop layout is not too narrow for this scope."
                                                    ],
-                         "user_visible_behavior":  "Users get a rebuilt web design foundation: selected base components, interface design, wireframing direction, and page-by-page implementation plans before detailed page implementation starts.",
+                         "user_visible_behavior":  "Users get a light landing page prototype with a hero, three-slide feature preview, and clear creation entries for comic drama and MV workflows.",
                          "task_file":  "feature_tasks/1.json"
                      },
                      {
-                         "id":  4,
+                         "id":  2,
                          "title":  "Workflow Canvas Foundation",
+                         "status":  "not_started",
+                         "verification":  [
+                                              "Read feature_tasks/2.json completely before working on this feature.",
+                                              "Run .\\init.ps1 and record evidence before marking this feature passing."
+                                          ],
+                         "user_visible_behavior":  "Users can work on a Figma-like canvas with nodes, edges, drag, zoom, selection, and restorable layout state.",
+                         "task_file":  "feature_tasks/2.json"
+                     },
+                     {
+                         "id":  3,
+                         "title":  "Script Node",
+                         "status":  "not_started",
+                         "verification":  [
+                                              "Read feature_tasks/3.json completely before working on this feature.",
+                                              "Run .\\init.ps1 and record evidence before marking this feature passing."
+                                          ],
+                         "user_visible_behavior":  "Users can enter a creative brief and generate structured plot, character profiles, storyboard draft, dialogue or lyrics, and camera notes through a backend API.",
+                         "task_file":  "feature_tasks/3.json"
+                     },
+                     {
+                         "id":  4,
+                         "title":  "Storyboard Node",
                          "status":  "not_started",
                          "verification":  [
                                               "Read feature_tasks/4.json completely before working on this feature.",
                                               "Run .\\init.ps1 and record evidence before marking this feature passing."
                                           ],
-                         "user_visible_behavior":  "Users can work on a Figma-like canvas with nodes, edges, drag, zoom, selection, and restorable layout state.",
+                         "user_visible_behavior":  "Users can convert script output into an editable shot list with scene, character, action, dialogue, camera, duration, and prompt fields.",
                          "task_file":  "feature_tasks/4.json"
                      },
                      {
                          "id":  5,
-                         "title":  "Script Node",
+                         "title":  "Character Image Node",
                          "status":  "not_started",
                          "verification":  [
                                               "Read feature_tasks/5.json completely before working on this feature.",
                                               "Run .\\init.ps1 and record evidence before marking this feature passing."
                                           ],
-                         "user_visible_behavior":  "Users can enter a creative brief and generate structured plot, character profiles, storyboard draft, dialogue or lyrics, and camera notes through a backend API.",
+                         "user_visible_behavior":  "Users can generate character images from character profiles and receive reusable character asset references.",
                          "task_file":  "feature_tasks/5.json"
                      },
                      {
                          "id":  6,
-                         "title":  "Storyboard Node",
+                         "title":  "Scene Image Node",
                          "status":  "not_started",
                          "verification":  [
                                               "Read feature_tasks/6.json completely before working on this feature.",
                                               "Run .\\init.ps1 and record evidence before marking this feature passing."
                                           ],
-                         "user_visible_behavior":  "Users can convert script output into an editable shot list with scene, character, action, dialogue, camera, duration, and prompt fields.",
+                         "user_visible_behavior":  "Users can generate scene or background images from storyboard scene descriptions and receive reusable scene asset references.",
                          "task_file":  "feature_tasks/6.json"
                      },
                      {
                          "id":  7,
-                         "title":  "Character Image Node",
+                         "title":  "Image Composition Node",
                          "status":  "not_started",
                          "verification":  [
                                               "Read feature_tasks/7.json completely before working on this feature.",
                                               "Run .\\init.ps1 and record evidence before marking this feature passing."
                                           ],
-                         "user_visible_behavior":  "Users can generate character images from character profiles and receive reusable character asset references.",
+                         "user_visible_behavior":  "Users can combine character assets, scene assets, and shot data into a composed shot image or keyframe.",
                          "task_file":  "feature_tasks/7.json"
                      },
                      {
                          "id":  8,
-                         "title":  "Scene Image Node",
+                         "title":  "Audio Node",
                          "status":  "not_started",
                          "verification":  [
                                               "Read feature_tasks/8.json completely before working on this feature.",
                                               "Run .\\init.ps1 and record evidence before marking this feature passing."
                                           ],
-                         "user_visible_behavior":  "Users can generate scene or background images from storyboard scene descriptions and receive reusable scene asset references.",
+                         "user_visible_behavior":  "Users can generate voice, singing, or narration audio from dialogue, lyrics, or narration text.",
                          "task_file":  "feature_tasks/8.json"
                      },
                      {
                          "id":  9,
-                         "title":  "Image Composition Node",
+                         "title":  "Video Node",
                          "status":  "not_started",
                          "verification":  [
                                               "Read feature_tasks/9.json completely before working on this feature.",
                                               "Run .\\init.ps1 and record evidence before marking this feature passing."
                                           ],
-                         "user_visible_behavior":  "Users can combine character assets, scene assets, and shot data into a composed shot image or keyframe.",
+                         "user_visible_behavior":  "Users can generate short video clips from image or keyframe input, optional audio, and duration settings.",
                          "task_file":  "feature_tasks/9.json"
                      },
                      {
                          "id":  10,
-                         "title":  "Audio Node",
+                         "title":  "Export Node",
                          "status":  "not_started",
                          "verification":  [
                                               "Read feature_tasks/10.json completely before working on this feature.",
                                               "Run .\\init.ps1 and record evidence before marking this feature passing."
                                           ],
-                         "user_visible_behavior":  "Users can generate voice, singing, or narration audio from dialogue, lyrics, or narration text.",
+                         "user_visible_behavior":  "Users can assemble selected clips, audio, and export settings into a final comic drama, MV, or short-form video artifact.",
                          "task_file":  "feature_tasks/10.json"
                      },
                      {
                          "id":  11,
-                         "title":  "Video Node",
+                         "title":  "Minimal Task Status And Retry",
                          "status":  "not_started",
                          "verification":  [
                                               "Read feature_tasks/11.json completely before working on this feature.",
                                               "Run .\\init.ps1 and record evidence before marking this feature passing."
                                           ],
-                         "user_visible_behavior":  "Users can generate short video clips from image or keyframe input, optional audio, and duration settings.",
+                         "user_visible_behavior":  "Users can see generation task status, recover from failures, retry failed work, and look up generated results consistently across AI nodes.",
                          "task_file":  "feature_tasks/11.json"
                      },
                      {
                          "id":  12,
-                         "title":  "Export Node",
+                         "title":  "Asset Library MVP",
                          "status":  "not_started",
                          "verification":  [
                                               "Read feature_tasks/12.json completely before working on this feature.",
                                               "Run .\\init.ps1 and record evidence before marking this feature passing."
                                           ],
-                         "user_visible_behavior":  "Users can assemble selected clips, audio, and export settings into a final comic drama, MV, or short-form video artifact.",
+                         "user_visible_behavior":  "Users can browse, inspect, select, and reuse generated character, scene, image, audio, video, and export assets.",
                          "task_file":  "feature_tasks/12.json"
                      },
                      {
                          "id":  13,
-                         "title":  "Minimal Task Status And Retry",
+                         "title":  "Generation History And Version Timeline",
                          "status":  "not_started",
                          "verification":  [
                                               "Read feature_tasks/13.json completely before working on this feature.",
                                               "Run .\\init.ps1 and record evidence before marking this feature passing."
                                           ],
-                         "user_visible_behavior":  "Users can see generation task status, recover from failures, retry failed work, and look up generated results consistently across AI nodes.",
+                         "user_visible_behavior":  "Users can review generation attempts, prompt/model metadata, asset versions, selected outputs, and recoverable timeline events.",
                          "task_file":  "feature_tasks/13.json"
                      },
                      {
                          "id":  14,
-                         "title":  "Asset Library MVP",
+                         "title":  "9-Grid Storyboard Node",
                          "status":  "not_started",
                          "verification":  [
                                               "Read feature_tasks/14.json completely before working on this feature.",
                                               "Run .\\init.ps1 and record evidence before marking this feature passing."
                                           ],
-                         "user_visible_behavior":  "Users can browse, inspect, select, and reuse generated character, scene, image, audio, video, and export assets.",
+                         "user_visible_behavior":  "Users can generate a 9-grid storyboard from selected shots, compositions, or keyframes.",
                          "task_file":  "feature_tasks/14.json"
                      },
                      {
                          "id":  15,
-                         "title":  "Generation History And Version Timeline",
+                         "title":  "Production Auth And Workspace Management",
                          "status":  "not_started",
                          "verification":  [
                                               "Read feature_tasks/15.json completely before working on this feature.",
                                               "Run .\\init.ps1 and record evidence before marking this feature passing."
                                           ],
-                         "user_visible_behavior":  "Users can review generation attempts, prompt/model metadata, asset versions, selected outputs, and recoverable timeline events.",
-                         "task_file":  "feature_tasks/15.json"
-                     },
-                     {
-                         "id":  16,
-                         "title":  "9-Grid Storyboard Node",
-                         "status":  "not_started",
-                         "verification":  [
-                                              "Read feature_tasks/16.json completely before working on this feature.",
-                                              "Run .\\init.ps1 and record evidence before marking this feature passing."
-                                          ],
-                         "user_visible_behavior":  "Users can generate a 9-grid storyboard from selected shots, compositions, or keyframes.",
-                         "task_file":  "feature_tasks/16.json"
-                     },
-                     {
-                         "id":  17,
-                         "title":  "Production Auth And Workspace Management",
-                         "status":  "not_started",
-                         "verification":  [
-                                              "Read feature_tasks/17.json completely before working on this feature.",
-                                              "Run .\\init.ps1 and record evidence before marking this feature passing."
-                                          ],
                          "user_visible_behavior":  "Users can log in, select a workspace, and access projects, assets, tasks, and history through production account and role boundaries.",
-                         "task_file":  "feature_tasks/17.json"
+                         "task_file":  "feature_tasks/15.json"
                      }
                  ]
 }

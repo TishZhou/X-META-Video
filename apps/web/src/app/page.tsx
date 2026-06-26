@@ -1,153 +1,149 @@
-import {
-  XMetaStateBadge,
-  XMetaStatePanel,
-  XMetaSurface,
-  XMetaTokenList,
-} from "@/components/xmeta/design-primitives";
-import {
-  xmetaDesignSystem,
-  xmetaLayoutClassNames,
-  xmetaSurfaceClassNames,
-} from "@/lib/design-system";
-import { cn } from "@/lib/utils";
+import { Library } from "lucide-react";
 
-const resetSteps = [
-  "Foundational component selection",
-  "Interface design system",
-  "Wireframing and screen inventory",
-  "Page-by-page detailed implementation",
+import { GlowyWavesHero } from "@/components/uitripled/glowy-waves-hero-shadcnui";
+import {
+  ImageSliderCard,
+  type ImageSliderCardSlide,
+} from "@/components/uitripled/image-slider-card-shadcnui";
+import { PreviewDetailsCard } from "@/components/uitripled/preview-details-card-shadcnui";
+import { PageSection } from "@/components/xmeta/app-shell";
+
+const featureSlides: ImageSliderCardSlide[] = [
+  {
+    id: "quick-start",
+    image:
+      "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=900&q=80",
+    imageAlt: "A bright creative production desk with video editing screens.",
+    title: "Fast",
+    description:
+      "Start from a brief and shape a storyboard direction before any generation runs.",
+  },
+  {
+    id: "assets-library",
+    image:
+      "https://images.unsplash.com/photo-1558655146-9f40138edfeb?w=900&q=80",
+    imageAlt: "A tidy grid of visual assets on a designer workspace.",
+    title: "Assets Library",
+    description:
+      "Organize planned characters, scenes, audio, and clips as reusable production assets.",
+  },
+  {
+    id: "modular-pipeline",
+    image:
+      "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=900&q=80",
+    imageAlt:
+      "Connected workflow notes and media previews for a modular pipeline.",
+    title: "Block-Based Pipeline",
+    description:
+      "Connect script, image, audio, video, and export steps as visible workflow blocks.",
+  },
 ];
+
+const entryCards = [
+  {
+    eyebrow: "Narrative workflow",
+    title: "Comic Drama Creation",
+    summary: "Story-driven canvas entry",
+    description:
+      "Plan a comic drama path from premise, characters, scenes, and storyboard beats into a visible node workflow.",
+    ctaLabel: "Start Comic Drama",
+    icon: "panels" as const,
+  },
+  {
+    eyebrow: "Music video workflow",
+    title: "MV Creation",
+    summary: "Rhythm-driven canvas entry",
+    description:
+      "Outline an MV path around lyrics, visual rhythm, reusable assets, audio direction, and clip sequencing.",
+    ctaLabel: "Start MV",
+    icon: "film" as const,
+  },
+];
+
+const heroStats = [
+  { label: "Creative paths", value: "2" },
+  { label: "Feature slides", value: "3" },
+  { label: "Canvas model", value: "Nodes" },
+] as const;
 
 export default function HomePage() {
   return (
-    <main
-      className={cn("dark min-h-screen", "xmeta-app-frame", xmetaSurfaceClassNames.app)}
-      data-web-design-system="code-defined"
-      data-web-reset="true"
-    >
-      <section
-        aria-labelledby="workspace-foundation-title"
-        className={xmetaLayoutClassNames.page}
-      >
-        <div className="flex flex-col gap-4">
-          <div className={xmetaLayoutClassNames.toolbar}>
-            <XMetaStateBadge domain="project" showDomain state="draft" />
-            <XMetaStateBadge domain="generation" showDomain state="blocked" />
-            <XMetaStateBadge domain="export" showDomain state="notReady" />
-            <a
-              className={cn(
-                "xmeta-control-size inline-flex items-center justify-center rounded-md border border-xmeta-border bg-xmeta-inset px-3 text-sm font-medium text-foreground",
-                "hover:bg-xmeta-raised",
-                xmetaDesignSystem.motion.classNames.focus,
-                xmetaDesignSystem.motion.classNames.interactive,
-              )}
-              href="#state-language"
-            >
-              Review states
-            </a>
-          </div>
+    <div className="scroll-smooth bg-[radial-gradient(circle_at_50%_0%,hsl(var(--muted-hsl))_0%,hsl(var(--background-hsl))_34%,hsl(var(--background-hsl))_100%)]">
+      <GlowyWavesHero
+        eyebrow="X-META Video"
+        title="AI comic drama and MV"
+        titleHighlight="creation workspace"
+        description="Build creative production flows on a canvas by arranging script, storyboard, asset, audio, video, and export nodes before connected backend services are added."
+        primaryAction={{ href: "#creation-entries", label: "Launch Studio" }}
+        secondaryAction={{
+          href: "/tripled-test",
+          label: "Open TriplD gallery",
+        }}
+        highlightPills={["Fast", "Assets Library", "Block-Based Pipeline"]}
+        stats={heroStats}
+        className="min-h-[88vh] bg-transparent"
+      />
 
-          <div className="flex max-w-3xl flex-col gap-3">
-            <p className={xmetaDesignSystem.typography.scale.detail}>
-              X-META Video
-            </p>
-            <h1
-              className={xmetaDesignSystem.typography.scale.display}
-              id="workspace-foundation-title"
-            >
-              Production workspace foundation
-            </h1>
-            <p className="text-base leading-7 text-xmeta-muted">
-              Code-defined interface rules now cover the canvas workflow,
-              generated asset surfaces, task feedback, history states, and
-              export readiness without restoring the removed prototypes.
-            </p>
-          </div>
-        </div>
-
-        <div className={xmetaLayoutClassNames.appGrid}>
-          <XMetaSurface
-            aria-label="New Feature 1 design sequence"
-            data-web-design-sequence="feature-1"
-            surface="raised"
-          >
-            <div className="flex flex-col gap-2">
-              <h2 className={xmetaDesignSystem.typography.scale.title}>
-                Feature 1 sequence
-              </h2>
-              <p className="text-sm leading-6 text-xmeta-muted">
-                The working baseline stays product-specific while page tasks
-                can reuse one shared density, surface, and state model.
-              </p>
+      <PageSection className="bg-transparent">
+        <div className="grid w-full gap-10 lg:grid-cols-[22rem_minmax(0,1fr)]">
+          <div className="flex flex-col gap-4">
+            <div className="flex size-10 items-center justify-center rounded-md bg-background text-primary shadow-sm">
+              <Library aria-hidden="true" />
             </div>
-            <div className={xmetaLayoutClassNames.denseGrid}>
-              {resetSteps.map((step, index) => (
-                <article
-                  className="flex min-h-28 flex-col justify-between rounded-md border border-xmeta-border bg-xmeta-inset p-3"
-                  data-web-design-step={step}
-                  key={step}
-                >
-                  <div className="text-xs font-medium text-xmeta-muted">
-                    Step {index + 1}
-                  </div>
-                  <div className="text-sm font-semibold leading-5">{step}</div>
-                </article>
-              ))}
-            </div>
-          </XMetaSurface>
-
-          <XMetaSurface
-            as="aside"
-            data-xmeta-foundation="states"
-            id="state-language"
-          >
-            <div className="flex flex-col gap-2">
-              <h2 className={xmetaDesignSystem.typography.scale.title}>
-                Production states
-              </h2>
-              <p className="text-sm leading-6 text-xmeta-muted">
-                Missing backend, persistence, and render execution remain
-                visibly unavailable in the shared state model.
-              </p>
-            </div>
-            <div className="grid gap-3">
-              <XMetaStatePanel domain="node" limit={4} />
-              <XMetaStatePanel domain="generation" limit={4} />
-              <XMetaStatePanel domain="export" />
-            </div>
-          </XMetaSurface>
-        </div>
-
-        <XMetaSurface data-xmeta-foundation="rules" surface="canvas">
-          <div className={xmetaLayoutClassNames.denseGrid}>
-            <XMetaTokenList
-              items={xmetaDesignSystem.responsive.rules}
-              title="Responsive shell"
-            />
-            <XMetaTokenList
-              items={xmetaDesignSystem.accessibility.rules}
-              title="Accessible feedback"
-            />
             <div className="flex flex-col gap-3">
-              <h2 className={xmetaDesignSystem.typography.scale.section}>
-                State domains
+              <p className="text-sm font-medium uppercase tracking-normal text-muted-foreground">
+                Feature preview
+              </p>
+              <h2 className="text-3xl font-semibold tracking-tight">
+                Three practical entry promises
               </h2>
-              <div className="flex flex-wrap gap-2">
-                <XMetaStateBadge domain="project" showDomain state="scoped" />
-                <XMetaStateBadge domain="node" showDomain state="selected" />
-                <XMetaStateBadge domain="asset" showDomain state="available" />
-                <XMetaStateBadge
-                  domain="generation"
-                  showDomain
-                  state="running"
-                />
-                <XMetaStateBadge domain="history" showDomain state="current" />
-                <XMetaStateBadge domain="export" showDomain state="ready" />
-              </div>
+              <p className="text-base leading-7 text-muted-foreground">
+                The slider frames the production model without claiming live AI
+                tasks, saved projects, or media generation are available.
+              </p>
             </div>
           </div>
-        </XMetaSurface>
-      </section>
-    </main>
+
+          <ImageSliderCard slides={featureSlides} showSlideLabels={false} />
+        </div>
+      </PageSection>
+
+      <PageSection
+        id="creation-entries"
+        aria-labelledby="creation-entries-title"
+        className="scroll-mt-20"
+      >
+        <div className="flex max-w-3xl flex-col gap-3">
+          <p className="text-sm font-medium uppercase tracking-normal text-muted-foreground">
+            Studio entries
+          </p>
+          <h2
+            id="creation-entries-title"
+            className="text-3xl font-semibold tracking-tight"
+          >
+            Choose a creation direction
+          </h2>
+          <p className="text-base leading-7 text-muted-foreground">
+            These cards route into planned workflows; they do not create, store,
+            or export media.
+          </p>
+        </div>
+
+        <div className="grid gap-5 md:grid-cols-2">
+          {entryCards.map((entry) => (
+            <PreviewDetailsCard
+              key={entry.title}
+              eyebrow={entry.eyebrow}
+              title={entry.title}
+              summary={entry.summary}
+              description={entry.description}
+              ctaLabel={entry.ctaLabel}
+              href="#creation-entries"
+              icon={entry.icon}
+            />
+          ))}
+        </div>
+      </PageSection>
+    </div>
   );
 }

@@ -12,7 +12,10 @@ describe("xmetaDesignSystem", () => {
   it("defines reusable visual foundations for the web app", () => {
     expect(xmetaDesignSystem.typography.scale.display).toContain("tracking-normal");
     expect(xmetaDesignSystem.color.surfaces.panel).toContain("bg-xmeta-panel");
-    expect(xmetaDesignSystem.spacing.layout.page).toContain("max-w-6xl");
+    expect(xmetaDesignSystem.spacing.layout.page).toContain("max-w-[88rem]");
+    expect(xmetaDesignSystem.spacing.layout.appShell).toContain(
+      "xmeta-app-frame",
+    );
     expect(xmetaDesignSystem.motion.classNames.interactive).toContain(
       "motion-safe:transition",
     );

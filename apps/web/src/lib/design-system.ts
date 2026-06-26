@@ -17,11 +17,23 @@ export const xmetaDensityClassNames = {
 } as const;
 
 export const xmetaLayoutClassNames = {
-  page: "mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8",
+  page: "mx-auto flex w-full max-w-[88rem] flex-col gap-8 px-4 py-8 sm:px-6 lg:px-8 xl:px-10",
+  appShell: "xmeta-app-frame min-h-screen bg-background text-foreground",
+  appMain: "min-h-[calc(100vh-3.5rem)]",
+  appChrome: "mx-auto w-full max-w-[88rem]",
+  pageWide:
+    "mx-auto flex w-full max-w-[88rem] flex-col gap-8 px-4 py-8 sm:px-6 lg:px-8 xl:px-10",
+  pageReadable:
+    "mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8 sm:px-6 lg:px-8",
+  pageReadableWide:
+    "mx-auto flex w-full max-w-4xl flex-col gap-6 px-4 py-8 sm:px-6 lg:px-8",
+  pageSection:
+    "mx-auto flex w-full max-w-[88rem] flex-col gap-8 px-4 py-12 sm:px-6 lg:px-8 lg:py-16 xl:px-10",
   appGrid: "grid gap-4 lg:grid-cols-[minmax(0,1.15fr)_minmax(18rem,0.85fr)]",
   denseGrid: "grid gap-3 sm:grid-cols-2 xl:grid-cols-3",
   toolbar: "flex flex-wrap items-center gap-2",
   readable: "max-w-3xl",
+  readableWide: "max-w-4xl",
 } as const;
 
 export const xmetaMotionClassNames = {
@@ -330,7 +342,7 @@ export const xmetaDesignSystem = {
     surfaces: xmetaSurfaceClassNames,
     tones: xmetaToneClasses,
     rule:
-      "Use neutral production surfaces with cyan action, amber warning, rose danger, emerald success, and fuchsia selected accents.",
+      "Use the installed TriplD shadcn neutral token set for global surfaces, actions, borders, and feedback states.",
   },
   spacing: {
     density: xmetaDensityClassNames,
