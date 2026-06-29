@@ -10,6 +10,7 @@ import {
   HelpCircle,
   Image,
   Layers3,
+  Loader2,
   Mic2,
   Plus,
   Save,
@@ -22,6 +23,14 @@ import {
   Wand2,
   Search,
 } from "lucide-react";
+import {
+  DEFAULT_SCRIPT_NODE_INPUT,
+  SCRIPT_CONTENT_TYPES,
+  type ScriptContentType,
+  type ScriptNodeInput,
+  type ScriptNodeOutput,
+  type ScriptTaskStatusResponse,
+} from "@xmeta/shared-contracts";
 import {
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
@@ -36,6 +45,8 @@ import { ReactFlowProvider } from "@xyflow/react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Tooltip,
   TooltipContent,
@@ -59,6 +70,7 @@ import type {
   WorkflowPort,
   WorkflowSelection,
 } from "@/lib/workflow-canvas/types";
+import { runScriptGeneration } from "@/lib/script-node/api";
 import { cn } from "@/lib/utils";
 
 const NODE_WIDTH = 288;
@@ -118,6 +130,32 @@ type ConnectionDragState = {
   pointer: WorkflowPoint;
 } | null;
 
+type ScriptGenerationRunner = typeof runScriptGeneration;
+
+const defaultScriptInput: ScriptNodeInput = {
+  ...DEFAULT_SCRIPT_NODE_INPUT,
+  creative_brief:
+    "A time-travel strategist wakes inside a palace court and must turn one rumor into a survival plan before sunrise.",
+  theme: "identity, ambition, and trust",
+  world_setting: "Tang-inspired palace court with comic tension",
+  constraints: ["3 main characters", "60-90 second pacing", "no explicit violence"],
+  references: ["fast hook", "palace intrigue", "clear cliffhanger"],
+};
+
+const contentTypeLabels = {
+  comic_drama: "Comic drama",
+  mv: "MV",
+  short_video: "Short video",
+} satisfies Record<ScriptContentType, string>;
+
+const emptyScriptTask: ScriptTaskStatusResponse = {
+  task_id: "not_started",
+  project_id: "local-project",
+  node_id: "script-1",
+  status: "queued",
+  error: null,
+};
+
 export function calculateInitialCanvasViewport(
   viewportWidth: number,
   viewportHeight: number,
@@ -148,7 +186,11 @@ export function calculateInitialCanvasViewport(
   return { x, y, zoom };
 }
 
-export function WorkflowCanvasWorkspace() {
+export function WorkflowCanvasWorkspace({
+  scriptGenerationRunner = runScriptGeneration,
+}: {
+  scriptGenerationRunner?: ScriptGenerationRunner;
+} = {}) {
   const [state, dispatch] = useReducer(
     workflowGraphReducer,
     undefined,
@@ -159,6 +201,12 @@ export function WorkflowCanvasWorkspace() {
   const [dragState, setDragState] = useState<DragState>(null);
   const [panState, setPanState] = useState<PanState>(null);
   const [connectionDrag, setConnectionDrag] = useState<ConnectionDragState>(null);
+  const [scriptInput, setScriptInput] = useState<ScriptNodeInput>(defaultScriptInput);
+  const [scriptOutput, setScriptOutput] = useState<ScriptNodeOutput | null>(null);
+  const [scriptTask, setScriptTask] =
+    useState<ScriptTaskStatusResponse>(emptyScriptTask);
+  const [scriptError, setScriptError] = useState<string | null>(null);
+  const [scriptBusy, setScriptBusy] = useState(false);
   const canvasRef = useRef<HTMLDivElement>(null);
   const selectedNode =
     state.selection.kind === "node"
@@ -166,6 +214,7 @@ export function WorkflowCanvasWorkspace() {
       : null;
   const selectedEdge =
     state.selection.kind === "edge" ? findEdge(state.edges, state.selection.id) : null;
+  const selectedScriptNode = selectedNode?.type === "script" ? selectedNode : null;
   const pendingPort = useMemo(() => {
     if (!connectionDrag) {
       return null;
@@ -365,6 +414,98 @@ export function WorkflowCanvasWorkspace() {
     });
   }
 
+  function updateScriptInput<Field extends keyof ScriptNodeInput>(
+    field: Field,
+    value: ScriptNodeInput[Field],
+  ) {
+    setScriptInput((current) => ({ ...current, [field]: value }));
+  }
+
+  function updateScriptListInput(
+    field: "constraints" | "references",
+    value: string,
+  ) {
+    updateScriptInput(
+      field,
+      value
+        .split("\n")
+        .map((item) => item.trim())
+        .filter(Boolean),
+    );
+  }
+
+  async function generateScriptNode() {
+    if (!selectedScriptNode) {
+      setScriptError("Select a Script node before running generation.");
+      return;
+    }
+
+    if (!scriptInput.creative_brief.trim()) {
+      setScriptError("Creative brief is required before generation.");
+      dispatch({
+        type: "setNodeStatus",
+        nodeId: selectedScriptNode.id,
+        status: "blocked",
+        notice: "Script generation blocked: creative brief is required.",
+      });
+      return;
+    }
+
+    setScriptBusy(true);
+    setScriptError(null);
+    setScriptTask({
+      task_id: "pending",
+      project_id: state.projectId,
+      node_id: selectedScriptNode.id,
+      status: "running",
+      error: null,
+    });
+    dispatch({
+      type: "setNodeStatus",
+      nodeId: selectedScriptNode.id,
+      status: "running",
+      notice: "Script generation task started through FastAPI.",
+    });
+
+    try {
+      const result = await scriptGenerationRunner({
+        projectId: state.projectId,
+        nodeId: selectedScriptNode.id,
+        input: scriptInput,
+        settings: { provider: "mock" },
+      });
+
+      setScriptTask(result.task);
+      setScriptOutput(result.output);
+      dispatch({
+        type: "setNodeStatus",
+        nodeId: selectedScriptNode.id,
+        status: "ready",
+        notice: "Script output is ready. Downstream media nodes remain deferred.",
+      });
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Script generation failed.";
+
+      setScriptTask({
+        task_id: "failed",
+        project_id: state.projectId,
+        node_id: selectedScriptNode.id,
+        status: "failed",
+        error: message,
+      });
+      setScriptError(message);
+      dispatch({
+        type: "setNodeStatus",
+        nodeId: selectedScriptNode.id,
+        status: "blocked",
+        notice: message,
+      });
+    } finally {
+      setScriptBusy(false);
+    }
+  }
+
   return (
     <TooltipProvider>
       <ReactFlowProvider>
@@ -436,6 +577,7 @@ export function WorkflowCanvasWorkspace() {
                 <WorkflowNodeCard
                   key={node.id}
                   node={node}
+                  scriptOutput={node.type === "script" ? scriptOutput : null}
                   selected={
                     state.selection.kind === "node" && state.selection.id === node.id
                   }
@@ -454,6 +596,19 @@ export function WorkflowCanvasWorkspace() {
             notice={state.notice}
             zoom={state.viewport.zoom}
           />
+
+          {selectedScriptNode ? (
+            <ScriptNodeEditor
+              busy={scriptBusy}
+              error={scriptError}
+              input={scriptInput}
+              output={scriptOutput}
+              task={scriptTask}
+              onGenerate={generateScriptNode}
+              onListInputChange={updateScriptListInput}
+              onInputChange={updateScriptInput}
+            />
+          ) : null}
 
           <CanvasDock
             selection={state.selection}
@@ -767,8 +922,339 @@ function CanvasStatusBar({ edge, node, notice, zoom }: CanvasStatusBarProps) {
   );
 }
 
+type ScriptNodeEditorProps = {
+  busy: boolean;
+  error: string | null;
+  input: ScriptNodeInput;
+  output: ScriptNodeOutput | null;
+  task: ScriptTaskStatusResponse;
+  onGenerate: () => void;
+  onInputChange: <Field extends keyof ScriptNodeInput>(
+    field: Field,
+    value: ScriptNodeInput[Field],
+  ) => void;
+  onListInputChange: (field: "constraints" | "references", value: string) => void;
+};
+
+function ScriptNodeEditor({
+  busy,
+  error,
+  input,
+  output,
+  task,
+  onGenerate,
+  onInputChange,
+  onListInputChange,
+}: ScriptNodeEditorProps) {
+  const briefReady = input.creative_brief.trim().length > 0;
+
+  return (
+    <aside
+      className="absolute right-5 top-20 z-40 flex max-h-[calc(100vh-8rem)] w-[32rem] max-w-[calc(100vw-2.5rem)] flex-col gap-3 overflow-hidden rounded-lg border border-white/10 bg-neutral-950/95 p-4 text-neutral-100 shadow-2xl backdrop-blur"
+      data-script-node-editor="true"
+      aria-label="Script node editor"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-sm font-semibold">Script Node</p>
+          <p className="text-xs text-neutral-400">
+            Input/output API flow. Prompt wording stays backend-owned.
+          </p>
+        </div>
+        <Badge className="border-white/10 bg-white/5 text-neutral-200">
+          {task.status}
+        </Badge>
+      </div>
+
+      <div className="grid min-h-0 flex-1 grid-cols-[1fr_1.1fr] gap-3 overflow-hidden">
+        <div className="flex min-h-0 flex-col gap-3 overflow-y-auto pr-1">
+          <ScriptField label="Creative brief" required>
+            <Textarea
+              aria-label="Creative brief"
+              className="min-h-28 border-white/10 bg-white/[0.03] text-neutral-100 placeholder:text-neutral-500"
+              value={input.creative_brief}
+              onChange={(event) =>
+                onInputChange("creative_brief", event.currentTarget.value)
+              }
+            />
+          </ScriptField>
+
+          <ScriptField label="Content type">
+            <div className="flex flex-wrap gap-1.5">
+              {SCRIPT_CONTENT_TYPES.map((contentType) => (
+                <Button
+                  key={contentType}
+                  type="button"
+                  size="sm"
+                  variant={input.content_type === contentType ? "default" : "outline"}
+                  className={cn(
+                    "h-8 border-white/10",
+                    input.content_type !== contentType &&
+                      "bg-transparent text-neutral-200 hover:bg-white/10 hover:text-white",
+                  )}
+                  onClick={() => onInputChange("content_type", contentType)}
+                >
+                  {contentTypeLabels[contentType]}
+                </Button>
+              ))}
+            </div>
+          </ScriptField>
+
+          <div className="grid grid-cols-2 gap-2">
+            <CompactTextField
+              label="Style"
+              value={input.style}
+              onChange={(value) => onInputChange("style", value)}
+            />
+            <CompactTextField
+              label="Theme"
+              value={input.theme}
+              onChange={(value) => onInputChange("theme", value)}
+            />
+          </div>
+
+          <CompactTextField
+            label="World setting"
+            value={input.world_setting}
+            onChange={(value) => onInputChange("world_setting", value)}
+          />
+
+          <div className="grid grid-cols-2 gap-2">
+            <ScriptField label="Duration">
+              <input
+                aria-label="Duration seconds"
+                className="h-9 w-full rounded-md border border-white/10 bg-white/[0.03] px-3 text-sm text-neutral-100 outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+                min={15}
+                max={7200}
+                type="number"
+                value={input.duration_seconds}
+                onChange={(event) =>
+                  onInputChange(
+                    "duration_seconds",
+                    Math.max(1, Number(event.currentTarget.value) || 1),
+                  )
+                }
+              />
+            </ScriptField>
+            <CompactTextField
+              label="Language"
+              value={input.language}
+              onChange={(value) => onInputChange("language", value)}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <CompactTextField
+              label="Platform"
+              value={input.target_platform}
+              onChange={(value) => onInputChange("target_platform", value)}
+            />
+            <CompactTextField
+              label="Audience"
+              value={input.audience}
+              onChange={(value) => onInputChange("audience", value)}
+            />
+          </div>
+
+          <ScriptField label="Constraints">
+            <Textarea
+              aria-label="Constraints"
+              className="min-h-20 border-white/10 bg-white/[0.03] text-neutral-100"
+              value={input.constraints.join("\n")}
+              onChange={(event) =>
+                onListInputChange("constraints", event.currentTarget.value)
+              }
+            />
+          </ScriptField>
+
+          <ScriptField label="References">
+            <Textarea
+              aria-label="References"
+              className="min-h-20 border-white/10 bg-white/[0.03] text-neutral-100"
+              value={input.references.join("\n")}
+              onChange={(event) =>
+                onListInputChange("references", event.currentTarget.value)
+              }
+            />
+          </ScriptField>
+
+          {error ? (
+            <p className="rounded-md border border-red-400/30 bg-red-500/10 px-3 py-2 text-xs text-red-100">
+              {error}
+            </p>
+          ) : null}
+
+          <Button
+            type="button"
+            className="w-full"
+            disabled={busy || !briefReady}
+            onClick={onGenerate}
+          >
+            {busy ? <Loader2 aria-hidden="true" data-icon="inline-start" /> : null}
+            Generate structured script
+          </Button>
+        </div>
+
+        <ScriptOutputTabs output={output} task={task} />
+      </div>
+    </aside>
+  );
+}
+
+type ScriptFieldProps = {
+  label: string;
+  required?: boolean;
+  children: ReactNode;
+};
+
+function ScriptField({ label, required, children }: ScriptFieldProps) {
+  return (
+    <label className="flex flex-col gap-1.5 text-xs font-medium text-neutral-300">
+      <span>
+        {label}
+        {required ? <span className="text-neutral-500"> required</span> : null}
+      </span>
+      {children}
+    </label>
+  );
+}
+
+type CompactTextFieldProps = {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+};
+
+function CompactTextField({ label, value, onChange }: CompactTextFieldProps) {
+  return (
+    <ScriptField label={label}>
+      <input
+        aria-label={label}
+        className="h-9 w-full rounded-md border border-white/10 bg-white/[0.03] px-3 text-sm text-neutral-100 outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+        value={value}
+        onChange={(event) => onChange(event.currentTarget.value)}
+      />
+    </ScriptField>
+  );
+}
+
+type ScriptOutputTabsProps = {
+  output: ScriptNodeOutput | null;
+  task: ScriptTaskStatusResponse;
+};
+
+export function ScriptOutputTabs({ output, task }: ScriptOutputTabsProps) {
+  if (!output) {
+    return (
+      <div
+        className="flex min-h-0 flex-col justify-between rounded-lg border border-white/10 bg-white/[0.03] p-4"
+        data-script-node-empty-output="true"
+      >
+        <div className="flex flex-col gap-2">
+          <p className="text-sm font-semibold">Structured output</p>
+          <p className="text-xs leading-5 text-neutral-400">
+            Run generation to receive plot, character, shot, dialogue, camera, and
+            production fields as JSON-backed sections.
+          </p>
+        </div>
+        <div className="rounded-md border border-white/10 bg-neutral-950/70 p-3 text-xs text-neutral-400">
+          Task: {task.task_id} / {task.status}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <Tabs defaultValue="overview" className="flex min-h-0 flex-col overflow-hidden">
+      <TabsList className="grid h-auto grid-cols-5 bg-white/[0.06] text-neutral-300">
+        <TabsTrigger value="overview">Overview</TabsTrigger>
+        <TabsTrigger value="characters">Characters</TabsTrigger>
+        <TabsTrigger value="shots">Shots</TabsTrigger>
+        <TabsTrigger value="lines">Lines</TabsTrigger>
+        <TabsTrigger value="camera">Camera</TabsTrigger>
+      </TabsList>
+
+      <div className="min-h-0 flex-1 overflow-y-auto rounded-b-lg border border-t-0 border-white/10 bg-white/[0.03] p-3">
+        <TabsContent forceMount value="overview" className="m-0 flex flex-col gap-3">
+          <OutputSection title={output.title}>
+            <p>{output.logline}</p>
+            <p>{output.plot_summary}</p>
+            <Checklist items={output.story_beats.map((beat) => `${beat.beat}: ${beat.summary}`)} />
+          </OutputSection>
+        </TabsContent>
+        <TabsContent forceMount value="characters" className="m-0 flex flex-col gap-3">
+          {output.characters.map((character) => (
+            <OutputSection key={character.name} title={character.name}>
+              <p>{character.role}</p>
+              <p>{character.personality}</p>
+              <p>{character.visual_prompt}</p>
+            </OutputSection>
+          ))}
+        </TabsContent>
+        <TabsContent forceMount value="shots" className="m-0 flex flex-col gap-3">
+          {output.shot_plan.map((shot) => (
+            <OutputSection key={shot.shot_number} title={`Shot ${shot.shot_number}: ${shot.scene}`}>
+              <p>{shot.action}</p>
+              <p>{shot.dialogue}</p>
+              <p>{shot.camera}</p>
+              <p>{shot.image_prompt}</p>
+            </OutputSection>
+          ))}
+        </TabsContent>
+        <TabsContent forceMount value="lines" className="m-0 flex flex-col gap-3">
+          {output.dialogue_or_lyrics.map((line) => (
+            <OutputSection key={`${line.speaker}-${line.text}`} title={line.speaker}>
+              <p>{line.text}</p>
+              <p>{line.delivery}</p>
+            </OutputSection>
+          ))}
+        </TabsContent>
+        <TabsContent forceMount value="camera" className="m-0 flex flex-col gap-3">
+          <OutputSection title="Camera notes">
+            <Checklist items={output.camera_notes} />
+          </OutputSection>
+          <OutputSection title="Scene prompts">
+            <Checklist items={output.scene_prompts} />
+          </OutputSection>
+          <OutputSection title="Audio notes">
+            <Checklist items={output.audio_notes} />
+          </OutputSection>
+          <OutputSection title="Production checklist">
+            <Checklist items={output.production_checklist} />
+          </OutputSection>
+        </TabsContent>
+      </div>
+    </Tabs>
+  );
+}
+
+type OutputSectionProps = {
+  title: string;
+  children: ReactNode;
+};
+
+function OutputSection({ title, children }: OutputSectionProps) {
+  return (
+    <section className="flex flex-col gap-2 rounded-md border border-white/10 bg-neutral-950/70 p-3 text-xs leading-5 text-neutral-300">
+      <h3 className="text-sm font-semibold text-neutral-100">{title}</h3>
+      {children}
+    </section>
+  );
+}
+
+function Checklist({ items }: { items: string[] }) {
+  return (
+    <ul className="flex flex-col gap-1">
+      {items.map((item) => (
+        <li key={item}>- {item}</li>
+      ))}
+    </ul>
+  );
+}
+
 type WorkflowNodeCardProps = {
   node: WorkflowNode;
+  scriptOutput: ScriptNodeOutput | null;
   selected: boolean;
   pendingPort: WorkflowPort | null;
   onDragStart: (
@@ -784,6 +1270,7 @@ type WorkflowNodeCardProps = {
 
 function WorkflowNodeCard({
   node,
+  scriptOutput,
   selected,
   pendingPort,
   onDragStart,
@@ -834,10 +1321,19 @@ function WorkflowNodeCard({
       <div className="px-4 pb-4">
         {node.type === "script" ? (
           <div className="max-h-28 overflow-hidden rounded-md border border-white/10 bg-[#111]/80 p-3 text-xs leading-5 text-neutral-200">
-            <p className="font-semibold">《我在盛唐写天下》</p>
-            <p>Type: historical / time-travel / comic drama</p>
-            <p>Duration: 60-90 seconds</p>
-            <p>Beat: cold open / palace conflict / reveal hook</p>
+            <p className="font-semibold">
+              {scriptOutput?.title ?? "Script Node API Ready"}
+            </p>
+            <p>
+              {scriptOutput
+                ? scriptOutput.logline
+                : "Input brief -> structured plot, characters, shots, dialogue, and camera notes."}
+            </p>
+            <p>
+              {scriptOutput
+                ? `${scriptOutput.shot_plan.length} shots / ${scriptOutput.characters.length} characters`
+                : "Provider: FastAPI mock by default"}
+            </p>
           </div>
         ) : node.type === "storyboard" ? (
           <div className="rounded-md border border-white/10 bg-white/[0.03] p-3">

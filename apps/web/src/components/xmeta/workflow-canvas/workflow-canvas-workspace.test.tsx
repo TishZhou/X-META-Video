@@ -1,10 +1,15 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
+import type {
+  ScriptNodeOutput,
+  ScriptTaskStatusResponse,
+} from "@xmeta/shared-contracts";
 
 import { workflowNodeTemplates } from "@/lib/workflow-canvas/graph";
 
 import {
   formatTemplateIoLabel,
+  ScriptOutputTabs,
   WorkflowCanvasWorkspace,
 } from "./workflow-canvas-workspace";
 
@@ -63,13 +68,85 @@ describe("WorkflowCanvasWorkspace", () => {
     );
   });
 
-  it("renders initial typed graph nodes and selectable connection labels", () => {
+  it("renders initial typed graph nodes and the selected Script node editor", () => {
     const html = renderToStaticMarkup(<WorkflowCanvasWorkspace />);
 
     expect(html).toContain('data-workflow-node="script"');
     expect(html).toContain('data-workflow-node="storyboard"');
     expect(html).toContain('data-workflow-node="composition"');
     expect(html).toContain("Workflow connections");
-    expect(html).toContain("《我在盛唐写天下》");
+    expect(html).toContain("Script Node API Ready");
+    expect(html).toContain('data-script-node-editor="true"');
+    expect(html).toContain("Creative brief");
+    expect(html).toContain("Content type");
+    expect(html).toContain("Comic drama");
+    expect(html).toContain("Generate structured script");
+    expect(html).toContain("Structured output");
+  });
+
+  it("renders structured Script output tabs", () => {
+    const task: ScriptTaskStatusResponse = {
+      task_id: "task-1",
+      project_id: "local-project",
+      node_id: "script-1",
+      status: "succeeded",
+      error: null,
+    };
+    const output: ScriptNodeOutput = {
+      title: "Mock Script Title",
+      logline: "A compact logline.",
+      plot_summary: "A structured plot summary.",
+      characters: [
+        {
+          name: "Lead",
+          role: "protagonist",
+          personality: "Decisive",
+          visual_prompt: "Strong silhouette",
+          dialogue_style: "Short confident lines",
+        },
+      ],
+      story_beats: [
+        {
+          beat: "Opening hook",
+          purpose: "Establish conflict",
+          summary: "A visible conflict starts the piece.",
+        },
+      ],
+      shot_plan: [
+        {
+          shot_number: 1,
+          scene: "Opening",
+          action: "Reveal the lead.",
+          characters: ["Lead"],
+          dialogue: "Lead: Go.",
+          camera: "Push in.",
+          duration_seconds: 8,
+          image_prompt: "Opening frame",
+        },
+      ],
+      dialogue_or_lyrics: [
+        {
+          speaker: "Lead",
+          text: "Go.",
+          delivery: "Controlled",
+        },
+      ],
+      camera_notes: ["Push in on the turn."],
+      scene_prompts: ["Scene prompt"],
+      audio_notes: ["Audio note"],
+      production_checklist: ["Review shots"],
+      missing_inputs: [],
+    };
+    const html = renderToStaticMarkup(
+      <ScriptOutputTabs output={output} task={task} />,
+    );
+
+    expect(html).toContain("Overview");
+    expect(html).toContain("Characters");
+    expect(html).toContain("Shots");
+    expect(html).toContain("Camera");
+    expect(html).toContain("Mock Script Title");
+    expect(html).toContain("Lead");
+    expect(html).toContain("Opening frame");
   });
 });

@@ -23,7 +23,7 @@ export type WorkflowDataType =
 
 export type WorkflowPortDirection = "input" | "output";
 
-export type WorkflowNodeStatus = "placeholder" | "ready" | "blocked";
+export type WorkflowNodeStatus = "placeholder" | "running" | "ready" | "blocked";
 
 export type WorkflowPoint = {
   x: number;
@@ -100,4 +100,3 @@ export type WorkflowGraphState = WorkflowSnapshot & {
 export type ConnectionResult =
   | { ok: true; edge: WorkflowEdge }
   | { ok: false; reason: string };
-

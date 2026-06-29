@@ -4,6 +4,7 @@ import type {
   WorkflowEdge,
   WorkflowGraphState,
   WorkflowNode,
+  WorkflowNodeStatus,
   WorkflowNodeType,
   WorkflowPoint,
   WorkflowPort,
@@ -171,7 +172,8 @@ export type WorkflowGraphAction =
   | { type: "fitView" }
   | { type: "saveSnapshot" }
   | { type: "restoreSnapshot"; snapshot?: WorkflowSnapshot }
-  | { type: "setNotice"; notice: string };
+  | { type: "setNotice"; notice: string }
+  | { type: "setNodeStatus"; nodeId: string; status: WorkflowNodeStatus; notice?: string };
 
 export function createWorkflowNode(
   nodeType: WorkflowNodeType,
@@ -398,6 +400,15 @@ export function workflowGraphReducer(
       return {
         ...state,
         notice: action.notice,
+      };
+
+    case "setNodeStatus":
+      return {
+        ...state,
+        nodes: state.nodes.map((node) =>
+          node.id === action.nodeId ? { ...node, status: action.status } : node,
+        ),
+        notice: action.notice ?? state.notice,
       };
   }
 }

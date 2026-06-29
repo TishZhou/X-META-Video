@@ -124,6 +124,96 @@ Node save request:
 
 Node run response is the common Task Response.
 
+### Script Node Input
+For `node_type=script`, `input` uses this shape:
+
+```json
+{
+  "creative_brief": "A palace time-travel comedy about a strategist hiding a secret.",
+  "content_type": "comic_drama",
+  "style": "cinematic comic drama",
+  "theme": "identity and ambition",
+  "world_setting": "Tang-inspired palace court",
+  "duration_seconds": 90,
+  "language": "Chinese",
+  "target_platform": "short_video",
+  "audience": "general audience",
+  "constraints": ["3 main characters", "no explicit violence"],
+  "references": ["fast hook", "palace intrigue"]
+}
+```
+
+`content_type` values:
+```txt
+comic_drama
+mv
+short_video
+```
+
+### Script Node Output
+Script generation task results return structured JSON under `output`, not assistant prose:
+
+```json
+{
+  "title": "Hidden Moon Court",
+  "logline": "A displaced strategist must survive one night in court by turning gossip into leverage.",
+  "plot_summary": "string",
+  "characters": [
+    {
+      "name": "string",
+      "role": "string",
+      "personality": "string",
+      "visual_prompt": "string",
+      "dialogue_style": "string"
+    }
+  ],
+  "story_beats": [
+    {
+      "beat": "Opening hook",
+      "purpose": "Establish conflict",
+      "summary": "string"
+    }
+  ],
+  "shot_plan": [
+    {
+      "shot_number": 1,
+      "scene": "string",
+      "action": "string",
+      "characters": ["string"],
+      "dialogue": "string",
+      "camera": "string",
+      "duration_seconds": 6,
+      "image_prompt": "string"
+    }
+  ],
+  "dialogue_or_lyrics": [
+    {
+      "speaker": "string",
+      "text": "string",
+      "delivery": "string"
+    }
+  ],
+  "camera_notes": ["string"],
+  "scene_prompts": ["string"],
+  "audio_notes": ["string"],
+  "production_checklist": ["string"],
+  "missing_inputs": []
+}
+```
+
+Script provider configuration is server-only:
+
+```txt
+SCRIPT_MODEL_PROVIDER=mock
+SCRIPT_MODEL_BASE_URL=
+SCRIPT_MODEL_API_KEY=
+SCRIPT_MODEL_NAME=
+SCRIPT_MODEL_TIMEOUT_SECONDS=60
+SCRIPT_MODEL_MAX_RETRIES=1
+```
+
+`mock` is the default development provider. Non-mock OpenAI-compatible provider selection must fail clearly when base URL, API key, or model are missing.
+
 ## Tasks
 
 | Method | Path | Purpose | Auth |

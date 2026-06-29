@@ -1,15 +1,79 @@
-﻿{
-    "parent_feature":  {
-                           "id":  3,
-                           "title":  "Script Node",
-                           "status":  "not_started"
-                       },
-    "planning_status":  "pending_decomposition",
-    "notes":  [
-                  "Small features must be added here before implementation starts.",
-                  "Keep this file focused on Script Node only."
-              ],
-    "small_features":  [
-
-                       ]
+{
+  "parent_feature": {
+    "id": 3,
+    "title": "Script Node",
+    "status": "passing"
+  },
+  "planning_status": "script_node_io_contract_passing",
+  "notes": [
+    "Feature 3 implements the Script Node input/output interaction and API contract only.",
+    "Prompt wording is intentionally centralized and adjustable later without changing route or UI contracts.",
+    "Real provider credentials are supplied through environment variables; mock provider remains the default verification path.",
+    "Storyboards as a separate editable node remain Feature 4."
+  ],
+  "small_features": [
+    {
+      "id": "script-node-001",
+      "title": "Define shared Script Node contracts",
+      "status": "passing",
+      "user_visible_behavior": "The Script Node has stable typed input, output, task, and status shapes used by frontend and backend-facing code.",
+      "acceptance_criteria": [
+        "Script input includes creative brief, content type, style, theme, world setting, duration, language, target platform, audience, constraints, and references.",
+        "Script output includes title, logline, plot summary, characters, story beats, shot plan, dialogue or lyrics, camera notes, scene prompts, audio notes, production checklist, and missing inputs.",
+        "Task status values remain compatible with the repository API contract."
+      ],
+      "verification": [
+        "Run frontend typecheck.",
+        "Run shared/web tests that consume Script Node contracts."
+      ]
+    },
+    {
+      "id": "script-node-002",
+      "title": "Implement FastAPI Script Node API and mock provider",
+      "status": "passing",
+      "user_visible_behavior": "The Script Node can save input, create a generation task, and retrieve structured output through backend API routes.",
+      "acceptance_criteria": [
+        "PATCH /api/v1/projects/{project_id}/nodes/{node_id} saves Script Node input and settings.",
+        "POST /api/v1/projects/{project_id}/nodes/{node_id}/run returns a task response and produces validated structured output through the mock provider.",
+        "GET /api/v1/tasks/{task_id} and GET /api/v1/tasks/{task_id}/result return task status and normalized Script Node output.",
+        "Non-mock provider configuration fails clearly when required env values are missing."
+      ],
+      "verification": [
+        "Run backend pytest for validation, save, run, result, mock output, and missing provider config."
+      ]
+    },
+    {
+      "id": "script-node-003",
+      "title": "Implement workspace Script Node editor",
+      "status": "passing",
+      "user_visible_behavior": "Selecting the Script node opens an editor where users can enter requirements, run generation, and review structured results.",
+      "acceptance_criteria": [
+        "The editor is reachable from the selected Script node in /workspace.",
+        "The editor includes required brief input plus production settings for content type, style, theme, duration, language, platform, audience, constraints, and references.",
+        "Run action saves input, starts generation through the Script Node API client, shows task state, and renders output tabs.",
+        "The Script node status changes to ready only after validated output exists.",
+        "Image, audio, video, persistence, and production auth gaps remain honestly labeled."
+      ],
+      "verification": [
+        "Run focused workspace tests.",
+        "Run desktop Browser QA for input to generated output flow."
+      ]
+    },
+    {
+      "id": "script-node-004",
+      "title": "Record Feature 3 evidence and closure",
+      "status": "passing",
+      "user_visible_behavior": "Feature status, sprint evidence, evaluator score, and progress logs show exactly what passed and what remains deferred.",
+      "acceptance_criteria": [
+        "feature_list.json records Feature 3 passing only after implementation and verification evidence exist.",
+        "sprint-contract.md records scope, criteria, commands, and outcomes.",
+        "evaluator-rubric.md records an evaluation score and revision evidence.",
+        "progress.md and session-handoff.md are updated for the next session."
+      ],
+      "verification": [
+        "Run JSON validation for feature_list.json and feature_tasks/3.json.",
+        "Run final .\\init.ps1."
+      ]
+    }
+  ]
 }

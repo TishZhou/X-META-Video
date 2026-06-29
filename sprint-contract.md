@@ -1,22 +1,24 @@
-# Sprint Contract - Feature 2 Workflow Canvas Foundation
+# Sprint Contract - Feature 3 Script Node
 
 ## Sprint Overview
 
-**Sprint:** feature-2-workflow-canvas-foundation
-**Feature:** Feature 2, Workflow Canvas Foundation
+**Sprint:** feature-3-script-node-io-contract
+**Feature:** Feature 3, Script Node
 **Status:** passing
-**Goal:** Implement a verified Figma-like workflow canvas foundation where the canvas is the primary work surface, users can add/move/select/connect/delete/save/restore placeholder AI workflow nodes from a single bottom add entry, and the UI does not imply backend persistence or AI execution exists.
+**Goal:** Implement a verified Script Node input/output workflow where users can enter production requirements, run generation through backend API contracts, and review structured script outputs while prompt wording remains centrally adjustable.
 
 ## Write Scope
 
-- `apps/web/src/app/workspace/**`
+- `packages/shared-contracts/**`
+- `services/api/**`
 - `apps/web/src/components/xmeta/workflow-canvas/**`
 - `apps/web/src/lib/workflow-canvas/**`
-- `apps/web/src/components/ui/tooltip.tsx`
-- `apps/web/src/components/ui/tabs.tsx`
-- `apps/web/src/components/ui/separator.tsx`
-- Focused tests for the files above
-- `feature_tasks/2.json`
+- `apps/web/src/lib/script-node/**`
+- `apps/web/package.json`
+- Root and web environment examples
+- `docs/API.md`
+- Focused tests for changed backend/frontend/shared behavior
+- `feature_tasks/3.json`
 - `feature_list.json`
 - `sprint-contract.md`
 - `evaluator-rubric.md`
@@ -29,73 +31,61 @@ Protected user edit:
 
 ## In Scope
 
-- Canvas-first `/workspace` route with the global top bar hidden and a floating canvas project bar.
-- Composed bottom dock using local shadcn-style primitives where available.
-- Drag-to-canvas placeholder node creation for script, storyboard, character image, prop/asset, scene image, image composition, audio, video, and export.
-- Typed React graph state for nodes, ports, edges, selection, viewport, draft status, and structured snapshots.
-- First-class compatible port connections with invalid, self, and duplicate rejection.
-- Selectable nodes and edges with delete behavior and compact in-canvas status feedback.
-- Reusable compact node UI with icons, status labels, input/output ports, selected states, and disabled deferred execution controls.
-- Local save/restore boundary that round-trips graph payloads without serializing DOM HTML.
-- Honest labels for missing FastAPI durable persistence and missing AI execution.
+- Stable Script Node input, output, and task contracts.
+- FastAPI routes for saving Script Node input, creating a generation task, reading task status, and reading structured results.
+- Server-owned prompt builder and provider adapter boundary.
+- Mock script provider as the default end-to-end verification path.
+- OpenAI-compatible provider settings read from server-only environment variables.
+- `/workspace` Script Node editor for desktop input, run state, and structured output tabs.
+- Honest labels for mock provider, dev in-memory backend state, deferred production auth, and deferred downstream media generation.
 
 ## Out of Scope
 
-- Actual script/image/audio/video/export generation.
-- Provider calls, worker orchestration, storage upload, task queue execution, and generated assets.
-- Production auth/workspace membership enforcement.
-- Durable backend workflow persistence endpoints.
-- Restoring deleted legacy Feature 2/3 code.
+- Final prompt quality tuning.
+- Production auth and multi-user workspace management.
+- Durable PostgreSQL task/workflow persistence beyond the minimal API scaffold.
+- Worker queue execution, object storage writes, generated media assets, and history timeline persistence.
+- Separate editable Storyboard Node implementation.
+- Image, audio, video, export, or asset library generation.
 
 ## Acceptance Criteria
 
-1. `/workspace` renders a production work surface with a dark dotted canvas, floating project bar, bottom toolbar, graph viewport, and persistence status signals.
-2. Users can add every planned placeholder node type from one bottom `Add node` entry; duplicate left-palette or toolbar node lists are not present by default.
-3. Users can move, select, and delete nodes; selected state is reflected in compact in-canvas status copy.
-4. Ports are typed records, and compatible output-to-input connections create first-class edges.
-5. Invalid, self, and duplicate connections are rejected with visible status feedback and no hidden generation.
-6. Edges are selectable, inspectable, and removable independently from nodes.
-7. Save/restore uses structured graph snapshots and local fixture/state only, with FastAPI persistence clearly deferred.
-8. Tests cover graph reducer/store behavior, connection compatibility, snapshot round-trip, and route-visible canvas content.
-9. Verification runs include baseline `.\init.ps1`, focused web tests, typecheck, build, rendered QA, JSON validation, and final `.\init.ps1`.
+1. Script input and output contracts exist in shared TypeScript and FastAPI/Pydantic equivalents.
+2. Root environment example exposes `SCRIPT_MODEL_PROVIDER`, `SCRIPT_MODEL_BASE_URL`, `SCRIPT_MODEL_API_KEY`, `SCRIPT_MODEL_NAME`, `SCRIPT_MODEL_TIMEOUT_SECONDS`, and `SCRIPT_MODEL_MAX_RETRIES`.
+3. `PATCH /api/v1/projects/{project_id}/nodes/{node_id}` validates and saves Script Node input/settings.
+4. `POST /api/v1/projects/{project_id}/nodes/{node_id}/run` returns a task response and generates schema-valid mock output.
+5. `GET /api/v1/tasks/{task_id}` and `GET /api/v1/tasks/{task_id}/result` return task status and normalized Script Node output.
+6. Non-mock provider selection fails clearly when required provider env values are missing.
+7. Selecting the Script node in `/workspace` opens an editor with brief/settings inputs and a run action.
+8. Successful generation renders Overview, Characters, Shots, Dialogue/Lyrics, and Camera/Production tabs.
+9. The Script node status changes to `ready` only after validated output exists.
+10. Verification evidence is recorded in `feature_list.json`, `sprint-contract.md`, `evaluator-rubric.md`, `progress.md`, and `session-handoff.md`.
 
 ## Verification Plan
 
 1. Baseline: `.\init.ps1` before implementation.
-2. Focused tests: `corepack pnpm --filter @xmeta/web test`.
-3. Typecheck: `corepack pnpm --filter @xmeta/web typecheck`.
-4. Build: `corepack pnpm --filter @xmeta/web build`.
-5. Rendered QA: desktop workspace checks for nonblank canvas, controls, no console errors, no duplicate node-add surfaces, and no right monitoring/inspector panel.
-6. JSON validation: `Get-Content -Raw feature_list.json | ConvertFrom-Json | Out-Null` and `Get-Content -Raw feature_tasks/2.json | ConvertFrom-Json | Out-Null`.
-7. Final restart path: `.\init.ps1`.
+2. Backend tests: run pytest under `services/api`.
+3. Frontend tests: `corepack pnpm --filter @xmeta/web test`.
+4. Typecheck: `corepack pnpm --filter @xmeta/web typecheck`.
+5. Build: `corepack pnpm --filter @xmeta/web build`.
+6. Browser QA: desktop `/workspace` Script Node input-to-output flow with FastAPI mock provider running.
+7. JSON validation: parse `feature_list.json` and `feature_tasks/3.json`.
+8. Whitespace check: `git diff --check`.
+9. Final restart path: `.\init.ps1`.
 
 ## Sprint Log
 
 | Phase | Outcome |
 | --- | --- |
-| Baseline | Confirmed working directory `D:\X-META-Video`; read `AGENTS.md`, `docs/PRODUCT.md`, `docs/ARCHITECTURE.md`, `feature_list.json`, `progress.md`, `session-handoff.md`, `sprint-contract.md`, `evaluator-rubric.md`, and `feature_tasks/2.json`. |
-| Startup | Ran `.\init.ps1`; it passed and reported 6 web test files / 18 tests passing. |
-| Recent commits | Reviewed `git log --oneline -5`: `6e2aa53`, `74abd95`, `22dce0e`, `7cc7489`, and `2088e13`. |
-| Skill setup | Used shadcn and uiux-design-evaluator skills; read required UI planning, UI detail, Laws of UX, and usability references for the workspace implementation. |
-| shadcn setup | `corepack pnpm dlx shadcn@latest docs button badge card dialog tooltip tabs separator` returned component docs/examples/API links. `corepack pnpm dlx shadcn@latest add tooltip tabs separator` failed on pnpm version mismatch; direct `pnpm dlx shadcn@latest add tooltip tabs separator` succeeded and created local component source files. |
-| Subagents | Started separate planning and acting subagents. Acting is allowed to proceed without waiting for evaluation; evaluator feedback will be applied near the end. |
-| Implementation | Added `/workspace`, a composed toolbar, draggable/clickable node palette, typed graph reducer, first-class ports/edges, selected edge inspection/deletion, reusable compact node cards, local snapshots, and explicit deferred backend/AI labels. |
-| Integration | Removed the alternate incompatible XYFlow draft generated during parallel acting and kept one typed reducer plus state-driven SVG edge renderer to avoid conflicting graph models. |
-| Tests | `corepack pnpm --filter @xmeta/web test` passed after evaluator fixes: 9 test files / 26 tests. |
-| Typecheck | `corepack pnpm --filter @xmeta/web typecheck` passed. |
-| Build | `corepack pnpm --filter @xmeta/web build` passed and generated `/workspace`. |
-| Rendered QA | Browser QA passed on desktop and 390x844 mobile: workspace route loaded, canvas/palette/inspector present, console warn/error logs empty, toolbar Add Script changed node count from 3 to 4, all-node quick-add controls existed, mobile canvas had internal scrollability, and no document horizontal overflow. |
-| JSON and whitespace | `feature_list.json` and `feature_tasks/2.json` parsed successfully; `git diff --check` passed with CRLF warnings only. |
-| Final startup | Final `.\init.ps1` passed after artifact updates and reran web verification: 9 test files / 26 tests. |
-| Evaluator fix pass | Fixed evaluator findings: toolbar add now works in Browser QA, all-node quick-add buttons and mode/panel toggles exist, mobile canvas has internal scroll reachability without document overflow, and stale/missing ports are rejected with a visible reason. |
-| Post-fix verification | `corepack pnpm --filter @xmeta/web test` passed 9 files / 26 tests; typecheck passed; build passed; desktop Browser QA verified toolbar add 3 -> 4 nodes; mobile Browser QA verified scrollable canvas with no console warn/error logs. |
-| User visual revision | Updated `/workspace` to match the reference direction: dark Figma-like canvas as the main surface, floating top project/status controls, one bottom add entry, no left node palette, and no right monitoring/Inspector panel. |
-| Revision verification | `corepack pnpm --filter @xmeta/web test` passed 9 files / 26 tests; typecheck passed; build passed; desktop Browser QA on `http://localhost:3000/workspace` showed nonblank canvas, hidden global top bar, bottom toolbar, no node palette text, no Inspector text, empty console warn/error logs, and no document overflow. |
-| Final restart | `.\init.ps1` passed after artifact updates and reran web verification: 9 test files / 26 tests. |
-| 2026-06-29 tailoring request | User asked to open the site, keep the browser open, and tailor Feature 2 results. Main agent used two subagents: acting for bounded canvas implementation and evaluator for rubric-based QA. |
-| 2026-06-29 tailoring implementation | Moved the default Script, Storyboard, and Composition graph into a desktop-safe frame; replaced fixed responsive viewport offsets with calculated initial/Fit view framing; added a persistent `Local only / FastAPI deferred / AI disabled` boundary label; and adjusted new node placement so `Add Audio node` lands below the default graph without overlapping it. |
-| 2026-06-29 tailoring verification | Focused workflow canvas tests passed 2 files / 8 tests; full web tests passed 9 files / 27 tests; typecheck passed; build passed; fresh Browser QA on `http://localhost:3000/workspace` showed three default nodes fully visible, one bottom Add node entry, no Node palette/Quick add/Inspector text, no document overflow, Add Audio changed node count 3 -> 4, the add menu closed, the Audio node did not overlap the default graph, and no warn/error logs occurred during the QA window. JSON validation passed, `git diff --check` passed with line-ending warnings only, and final `.\init.ps1` passed with 9 files / 27 tests. |
-| 2026-06-29 browser-comment implementation | Addressed four in-browser comments: removed Select/Move/Fit view toolbar buttons; made blank-canvas pointer drag pan the viewport; replaced Zoom in/Zoom out with one `Canvas zoom` control that opens a hover/focus/click slider; simplified Add node to a compact node-name list; and changed port connection from click-two-ports to drag-line from output port to input port with compatible input highlighting. |
-| 2026-06-29 browser-comment verification | Baseline `.\init.ps1` passed before changes. Focused workflow canvas tests passed 2 files / 8 tests; full web tests passed 9 files / 27 tests; typecheck passed; build passed. Browser interaction QA verified Add node list-only menu, blank canvas panning, and drag connection increasing edge count 2 -> 3 before in-app Browser drag automation timed out on zoom. Final short Browser health check after the zoom implementation verified `Canvas zoom` and slider DOM exist, removed toolbar labels are absent, page identity is correct, no framework overlay appears, and no warn/error logs occurred during the check. JSON validation passed, `git diff --check` passed with line-ending warnings only, and final `.\init.ps1` passed with 9 files / 27 tests. |
-| 2026-06-29 follow-up browser-comment implementation | Reworked `Canvas zoom` into a toolbar-inline native range control so the percentage bar is visible beside the zoom button after click/hover/focus; kept 50%-140% free selection with 1% steps; changed Add node list labels from bare node names to explicit `Input ... -> Output ...` flow labels, including `Audio: Input Dialogue -> Output Audio` and `Video: Input Image + Audio -> Output Video`. |
-| 2026-06-29 follow-up browser-comment verification | Baseline `.\init.ps1` passed before changes. Focused workspace tests passed 1 file / 4 tests; typecheck passed; full web tests passed 9 files / 28 tests; build passed; JSON validation passed; `git diff --check` passed with line-ending warnings only; final `.\init.ps1` passed with 9 files / 28 tests. Browser QA on `http://localhost:3000/workspace` verified the zoom slider is a visible toolbar-inline `input[type=range]` with min 50, max 140, step 1; interaction changed the canvas stage to `scale(0.56)` and showed a 56% zoom state; Add node menu included explicit Audio and Video input/output labels and no bare `Audio` item. The only console warning observed was a Next.js Fast Refresh full-reload warning from local source edits. |
+| Baseline | Confirmed working directory `D:\X-META-Video`; read `AGENTS.md`, `docs/PRODUCT.md`, `docs/ARCHITECTURE.md`, `feature_list.json`, `progress.md`, `feature_tasks/3.json`, `sprint-contract.md`, and `evaluator-rubric.md`. |
+| Startup | `.\init.ps1` passed before implementation and reported 9 web test files / 28 tests. |
+| Recent commits | Reviewed `git log --oneline -5`: `5a8bb3a`, `f4931d0`, `c817efc`, `2a23d74`, and `f01d7b6`. |
+| Skill setup | Used shadcn, uiux-design-evaluator, and React best-practices guidance for the frontend implementation. |
+| Subagents | Spawned backend worker subagent for the `services/api/**` implementation slice with a disjoint write set. |
+| Contracts | Added shared TypeScript Script Node input, settings, output, task, and default input contracts in `packages/shared-contracts/src/index.ts`; documented Script Node request/output and `SCRIPT_MODEL_*` provider env values in `docs/API.md` and `.env.example`. |
+| Backend implementation | Added FastAPI Script Node PATCH/run/task/result routes, Pydantic schemas, in-memory dev node/task/result store, centralized prompt builder, deterministic mock provider, OpenAI-compatible provider config validation, CORS for frontend origins, and backend tests. |
+| Frontend implementation | Added `/workspace` selected Script node editor with brief/settings inputs, FastAPI save/run/status/result client, task state display, structured output tabs, and ready/blocked/running node status updates. |
+| Backend verification | Bundled Python setup installed `services/api[dev]`; `python -m pytest services/api/tests` passed 5 tests with one upstream Starlette TestClient deprecation warning; `python -m ruff check services/api` passed. |
+| Frontend verification | Focused workspace tests passed 2 files / 10 tests; full web tests passed 9 files / 29 tests; `corepack pnpm --filter @xmeta/web typecheck` passed; `corepack pnpm --filter @xmeta/web build` passed and included `/workspace`. |
+| Browser QA | Production Browser QA on `http://127.0.0.1:3000/workspace` passed: Script editor visible, edited brief/settings, `Generate structured script` called FastAPI endpoints with 200/202/200/200, Script node became `ready`, Overview/Characters/Shots/Camera tabs and Lead output rendered, no console errors, no failed requests, no horizontal overflow, and no misleading video generation claim. |
+| Final closure | `feature_list.json` and `feature_tasks/3.json` parsed successfully; `git diff --check` passed with line-ending warnings only; final `.\init.ps1` passed and reran web tests: 9 files / 29 tests. |
