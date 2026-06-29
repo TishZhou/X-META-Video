@@ -21,6 +21,7 @@ import {
   Video,
   Wand2,
   Search,
+  X,
 } from "lucide-react";
 import {
   DEFAULT_SCRIPT_NODE_INPUT,
@@ -74,6 +75,10 @@ const NODE_WIDTH = 288;
 const NODE_HEIGHT = 178;
 const SCRIPT_INLINE_EDITOR_WIDTH = 820;
 const SCRIPT_INLINE_EDITOR_GAP = 72;
+const SCRIPT_RESPONSE_PANEL_HEIGHT = 288;
+const IMAGE_EDITOR_MIN_WIDTH = 360;
+const IMAGE_EDITOR_MIN_HEIGHT = 360;
+const IMAGE_EDITOR_VIEWPORT_PADDING = 16;
 const PORT_TOP = 76;
 const PORT_GAP = 30;
 const CANVAS_WIDTH = 2200;
@@ -146,6 +151,25 @@ const emptyScriptTask: ScriptTaskStatusResponse = {
 };
 
 type ScriptOutputFocus = "storyboard" | "characters" | "scene";
+type ScriptModelSelection = "mock" | "configured";
+type ImageEditorFrame = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+type ImageEditorInteraction = {
+  mode: "drag" | "resize";
+  startClient: WorkflowPoint;
+  startFrame: ImageEditorFrame;
+} | null;
+
+const defaultImageEditorFrame: ImageEditorFrame = {
+  x: 880,
+  y: 88,
+  width: 430,
+  height: 520,
+};
 
 const scriptOutputViews = [
   {
@@ -165,10 +189,129 @@ const scriptOutputViews = [
   label: string;
 }>;
 
+const scriptModelOptions = [
+  {
+    id: "mock",
+    label: "Mock storyboard model",
+    settings: { provider: "mock", model: "storyboard-browser-polish" },
+  },
+  {
+    id: "configured",
+    label: "Configured model",
+    settings: {},
+  },
+] as const satisfies Array<{
+  id: ScriptModelSelection;
+  label: string;
+  settings: { provider?: string; model?: string };
+}>;
+
 function findScriptOutputView(id: ScriptOutputFocus) {
   return (
     scriptOutputViews.find((view) => view.id === id) ?? scriptOutputViews[0]
   );
+}
+
+function findScriptModelOption(id: ScriptModelSelection) {
+  return (
+    scriptModelOptions.find((model) => model.id === id) ?? scriptModelOptions[0]
+  );
+}
+
+export function calculateDraggedNodePosition(
+  point: WorkflowPoint,
+  offset: WorkflowPoint,
+) {
+  return {
+    x: point.x - offset.x,
+    y: Math.max(16, point.y - offset.y),
+  };
+}
+
+export function getInlineEditorCompensationScale(zoom: number) {
+  if (zoom <= 0) {
+    return 1;
+  }
+
+  return Number((1 / zoom).toFixed(3));
+}
+
+export function isFloatingImageEditorNodeType(type: WorkflowNodeType) {
+  return type === "character" || type === "scene" || type === "composition";
+}
+
+export function clampImageEditorFrame(
+  frame: ImageEditorFrame,
+  viewport: { width: number; height: number },
+) {
+  const width = Math.min(
+    Math.max(frame.width, IMAGE_EDITOR_MIN_WIDTH),
+    Math.max(
+      IMAGE_EDITOR_MIN_WIDTH,
+      viewport.width - IMAGE_EDITOR_VIEWPORT_PADDING * 2,
+    ),
+  );
+  const height = Math.min(
+    Math.max(frame.height, IMAGE_EDITOR_MIN_HEIGHT),
+    Math.max(
+      IMAGE_EDITOR_MIN_HEIGHT,
+      viewport.height - IMAGE_EDITOR_VIEWPORT_PADDING * 2,
+    ),
+  );
+  const maxX = Math.max(
+    IMAGE_EDITOR_VIEWPORT_PADDING,
+    viewport.width - width - IMAGE_EDITOR_VIEWPORT_PADDING,
+  );
+  const maxY = Math.max(
+    IMAGE_EDITOR_VIEWPORT_PADDING,
+    viewport.height - height - IMAGE_EDITOR_VIEWPORT_PADDING,
+  );
+
+  return {
+    x: Math.min(Math.max(frame.x, IMAGE_EDITOR_VIEWPORT_PADDING), maxX),
+    y: Math.min(Math.max(frame.y, IMAGE_EDITOR_VIEWPORT_PADDING), maxY),
+    width,
+    height,
+  };
+}
+
+export function formatScriptNodePreview(
+  input: ScriptNodeInput | null,
+  output: ScriptNodeOutput | null,
+) {
+  if (output) {
+    const shotCount = output.storyboard_direction.shots.length;
+
+    return {
+      heading: "Confirmed Script",
+      body: `${output.title}: ${output.world_overview} ${shotCount} storyboard shots ready.`,
+    };
+  }
+
+  return {
+    heading: "World view",
+    body: input?.world_description.trim() || "No world prompt yet.",
+  };
+}
+
+export function getScriptResponseStatusLabel(
+  task: ScriptTaskStatusResponse,
+  output: ScriptNodeOutput | null,
+  error?: string | null,
+) {
+  if (error || task.status === "failed") {
+    return "Error";
+  }
+
+  if (task.status === "running" || task.status === "retrying") {
+    return "Generating";
+  }
+
+  if (output || task.status === "succeeded") {
+    return "Ready";
+  }
+
+  return "Waiting";
 }
 
 export function calculateInitialCanvasViewport(
@@ -227,8 +370,16 @@ export function WorkflowCanvasWorkspace({
   const [scriptError, setScriptError] = useState<string | null>(null);
   const [scriptBusy, setScriptBusy] = useState(false);
   const [scriptHistoryOpen, setScriptHistoryOpen] = useState(false);
-  const [scriptOutputFocus, setScriptOutputFocus] =
-    useState<ScriptOutputFocus>("storyboard");
+  const [scriptOutputFocus] = useState<ScriptOutputFocus>("storyboard");
+  const [scriptModel, setScriptModel] = useState<ScriptModelSelection>("mock");
+  const [imageEditorOpen, setImageEditorOpen] = useState(false);
+  const [imageEditorFrame, setImageEditorFrame] = useState<ImageEditorFrame>(
+    defaultImageEditorFrame,
+  );
+  const [imagePrompt, setImagePrompt] = useState(
+    "A cinematic desert jeep frame with two summer MV leads and neon reflections.",
+  );
+  const [imageResponseOpen, setImageResponseOpen] = useState(false);
   const canvasRef = useRef<HTMLDivElement>(null);
   const selectedNode =
     state.selection.kind === "node"
@@ -240,6 +391,10 @@ export function WorkflowCanvasWorkspace({
       : null;
   const selectedScriptNode =
     selectedNode?.type === "script" ? selectedNode : null;
+  const selectedImageEditorNode =
+    selectedNode && isFloatingImageEditorNodeType(selectedNode.type)
+      ? selectedNode
+      : null;
   const pendingPort = useMemo(() => {
     if (!connectionDrag) {
       return null;
@@ -315,10 +470,7 @@ export function WorkflowCanvasWorkspace({
       dispatch({
         type: "moveNode",
         nodeId: dragState.nodeId,
-        position: {
-          x: Math.max(16, point.x - dragState.offset.x),
-          y: Math.max(16, point.y - dragState.offset.y),
-        },
+        position: calculateDraggedNodePosition(point, dragState.offset),
       });
       return;
     }
@@ -412,6 +564,9 @@ export function WorkflowCanvasWorkspace({
       },
     });
     dispatch({ type: "select", selection: { kind: "node", id: node.id } });
+    if (isFloatingImageEditorNodeType(node.type)) {
+      setImageEditorOpen(true);
+    }
   }
 
   function startPortConnection(
@@ -493,7 +648,7 @@ export function WorkflowCanvasWorkspace({
         projectId: state.projectId,
         nodeId: selectedScriptNode.id,
         input: scriptInput,
-        settings: { provider: "mock" },
+        settings: findScriptModelOption(scriptModel).settings,
       });
 
       setScriptTask(result.task);
@@ -603,6 +758,7 @@ export function WorkflowCanvasWorkspace({
                   key={node.id}
                   node={node}
                   scriptInput={node.type === "script" ? scriptInput : null}
+                  scriptOutput={node.type === "script" ? scriptOutput : null}
                   selected={
                     state.selection.kind === "node" &&
                     state.selection.id === node.id
@@ -611,6 +767,12 @@ export function WorkflowCanvasWorkspace({
                   onDragStart={startNodeDrag}
                   onSelect={(selection) => {
                     dispatch({ type: "select", selection });
+                    if (
+                      selection.kind === "node" &&
+                      isFloatingImageEditorNodeType(node.type)
+                    ) {
+                      setImageEditorOpen(true);
+                    }
                   }}
                   onPortConnectionStart={startPortConnection}
                 />
@@ -624,18 +786,33 @@ export function WorkflowCanvasWorkspace({
                   node={selectedScriptNode}
                   output={scriptOutput}
                   outputFocus={scriptOutputFocus}
+                  model={scriptModel}
                   task={scriptTask}
+                  viewportZoom={state.viewport.zoom}
                   onGenerate={() => {
                     setScriptHistoryOpen(true);
                     void generateScriptNode();
                   }}
                   onHistoryOpenChange={setScriptHistoryOpen}
                   onInputChange={updateScriptInput}
-                  onOutputFocusChange={setScriptOutputFocus}
+                  onModelChange={setScriptModel}
                 />
               ) : null}
             </div>
           </div>
+
+          {selectedImageEditorNode && imageEditorOpen ? (
+            <ImageNodeFloatingEditor
+              frame={imageEditorFrame}
+              node={selectedImageEditorNode}
+              prompt={imagePrompt}
+              responseOpen={imageResponseOpen}
+              onClose={() => setImageEditorOpen(false)}
+              onFrameChange={setImageEditorFrame}
+              onPromptChange={setImagePrompt}
+              onResponseOpenChange={setImageResponseOpen}
+            />
+          ) : null}
 
           <CanvasStatusBar
             edge={selectedEdge}
@@ -972,17 +1149,19 @@ type ScriptNodeInlineEditorProps = {
   error: string | null;
   historyOpen: boolean;
   input: ScriptNodeInput;
+  model: ScriptModelSelection;
   node: WorkflowNode;
   output: ScriptNodeOutput | null;
   outputFocus: ScriptOutputFocus;
   task: ScriptTaskStatusResponse;
+  viewportZoom: number;
   onGenerate: () => void;
   onHistoryOpenChange: (open: boolean) => void;
   onInputChange: <Field extends keyof ScriptNodeInput>(
     field: Field,
     value: ScriptNodeInput[Field],
   ) => void;
-  onOutputFocusChange: (focus: ScriptOutputFocus) => void;
+  onModelChange: (model: ScriptModelSelection) => void;
 };
 
 function ScriptNodeInlineEditor({
@@ -990,21 +1169,19 @@ function ScriptNodeInlineEditor({
   error,
   historyOpen,
   input,
+  model,
   node,
   output,
   outputFocus,
   task,
+  viewportZoom,
   onGenerate,
   onHistoryOpenChange,
   onInputChange,
-  onOutputFocusChange,
+  onModelChange,
 }: ScriptNodeInlineEditorProps) {
   const promptReady = input.world_description.trim().length > 0;
-  const selectedOutputView = findScriptOutputView(outputFocus);
-  const left = Math.max(
-    16,
-    node.position.x - (SCRIPT_INLINE_EDITOR_WIDTH - NODE_WIDTH) / 2,
-  );
+  const left = node.position.x - (SCRIPT_INLINE_EDITOR_WIDTH - NODE_WIDTH) / 2;
   const top = node.position.y + NODE_HEIGHT + SCRIPT_INLINE_EDITOR_GAP;
 
   function handleAiRevise() {
@@ -1022,6 +1199,8 @@ function ScriptNodeInlineEditor({
         left,
         top,
         width: SCRIPT_INLINE_EDITOR_WIDTH,
+        transform: `scale(${getInlineEditorCompensationScale(viewportZoom)})`,
+        transformOrigin: "top center",
       }}
       data-script-node-inline-editor="true"
       aria-label="Script node inline editor"
@@ -1030,17 +1209,13 @@ function ScriptNodeInlineEditor({
       {historyOpen ? (
         <div className="mb-3" data-script-node-history="true">
           <ScriptOutputTabs
+            error={error}
             output={output}
             selectedOutput={outputFocus}
             task={task}
+            onHide={() => onHistoryOpenChange(false)}
           />
         </div>
-      ) : null}
-
-      {error ? (
-        <p className="mb-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
-          {error}
-        </p>
       ) : null}
 
       <section
@@ -1064,23 +1239,23 @@ function ScriptNodeInlineEditor({
 
         <div className="mt-3 flex items-center justify-between gap-3 border-t border-neutral-200 pt-3">
           <div className="flex items-center gap-2">
-            <label htmlFor="script-output-target" className="sr-only">
-              Script output target
+            <label htmlFor="script-model-select" className="sr-only">
+              Script model
             </label>
             <select
-              id="script-output-target"
-              aria-label="Script output target"
+              id="script-model-select"
+              aria-label="Script model"
               className="h-9 rounded-lg border border-neutral-200 bg-white px-3 text-xs font-medium text-neutral-700 shadow-sm"
-              data-script-output-select="true"
+              data-script-model-select="true"
               disabled={busy}
-              value={outputFocus}
+              value={model}
               onChange={(event) =>
-                onOutputFocusChange(event.target.value as ScriptOutputFocus)
+                onModelChange(event.target.value as ScriptModelSelection)
               }
             >
-              {scriptOutputViews.map((view) => (
-                <option key={view.id} value={view.id}>
-                  {view.label}
+              {scriptModelOptions.map((modelOption) => (
+                <option key={modelOption.id} value={modelOption.id}>
+                  {modelOption.label}
                 </option>
               ))}
             </select>
@@ -1097,9 +1272,6 @@ function ScriptNodeInlineEditor({
           </div>
 
           <div className="flex items-center gap-2">
-            <Badge className="border-neutral-200 bg-neutral-50 text-neutral-600">
-              {selectedOutputView.label}
-            </Badge>
             <Button
               aria-label="Generate Script node"
               className="h-9 rounded-lg px-4 text-xs"
@@ -1117,89 +1289,356 @@ function ScriptNodeInlineEditor({
   );
 }
 
+type ImageNodeFloatingEditorProps = {
+  frame: ImageEditorFrame;
+  node: WorkflowNode;
+  prompt: string;
+  responseOpen: boolean;
+  onClose: () => void;
+  onFrameChange: (frame: ImageEditorFrame) => void;
+  onPromptChange: (prompt: string) => void;
+  onResponseOpenChange: (open: boolean) => void;
+};
+
+export function ImageNodeFloatingEditor({
+  frame,
+  node,
+  prompt,
+  responseOpen,
+  onClose,
+  onFrameChange,
+  onPromptChange,
+  onResponseOpenChange,
+}: ImageNodeFloatingEditorProps) {
+  const [interaction, setInteraction] = useState<ImageEditorInteraction>(null);
+  const promptReady = prompt.trim().length > 0;
+
+  useEffect(() => {
+    if (!interaction) {
+      return;
+    }
+
+    const activeInteraction = interaction;
+
+    function handlePointerMove(event: PointerEvent) {
+      const deltaX = event.clientX - activeInteraction.startClient.x;
+      const deltaY = event.clientY - activeInteraction.startClient.y;
+      const nextFrame =
+        activeInteraction.mode === "drag"
+          ? {
+              ...activeInteraction.startFrame,
+              x: activeInteraction.startFrame.x + deltaX,
+              y: activeInteraction.startFrame.y + deltaY,
+            }
+          : {
+              ...activeInteraction.startFrame,
+              width: activeInteraction.startFrame.width + deltaX,
+              height: activeInteraction.startFrame.height + deltaY,
+            };
+
+      onFrameChange(
+        clampImageEditorFrame(nextFrame, {
+          width: window.innerWidth,
+          height: window.innerHeight,
+        }),
+      );
+    }
+
+    function handlePointerUp() {
+      setInteraction(null);
+    }
+
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", handlePointerUp);
+
+    return () => {
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", handlePointerUp);
+    };
+  }, [interaction, onFrameChange]);
+
+  function startInteraction(
+    event: ReactPointerEvent<HTMLElement>,
+    mode: NonNullable<ImageEditorInteraction>["mode"],
+  ) {
+    if (event.button !== 0) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    setInteraction({
+      mode,
+      startClient: { x: event.clientX, y: event.clientY },
+      startFrame: frame,
+    });
+  }
+
+  function showResponse() {
+    onResponseOpenChange(true);
+  }
+
+  return (
+    <aside
+      aria-label="Image node editor"
+      className="absolute z-50 flex flex-col overflow-hidden rounded-xl border border-neutral-200 bg-white/95 text-neutral-950 shadow-[0_24px_70px_rgba(15,23,42,0.18)] backdrop-blur"
+      data-image-node-editor="true"
+      onPointerDown={(event) => event.stopPropagation()}
+      style={{
+        left: frame.x,
+        top: frame.y,
+        width: frame.width,
+        height: frame.height,
+      }}
+    >
+      <div
+        className="flex cursor-grab items-start justify-between gap-3 border-b border-neutral-200 px-4 py-3 active:cursor-grabbing"
+        data-image-node-drag-handle="true"
+        onPointerDown={(event) => startInteraction(event, "drag")}
+      >
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold">{node.title}</p>
+          <p className="truncate text-xs text-neutral-500">
+            Image popup comparison
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Badge className="border-neutral-200 bg-neutral-50 text-neutral-600">
+            {node.status}
+          </Badge>
+          <Button
+            aria-label="Close Image node editor"
+            className="size-8 rounded-lg"
+            onClick={onClose}
+            type="button"
+            variant="ghost"
+          >
+            <X aria-hidden="true" className="size-4" />
+          </Button>
+        </div>
+      </div>
+
+      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden p-4">
+        {responseOpen ? (
+          <section
+            className="min-h-0 flex-1 overflow-y-auto rounded-xl border border-neutral-200 bg-neutral-50 p-4"
+            data-image-node-response="true"
+          >
+            <AssistantResponseBubble title="Image Agent">
+              <AIResponseTyping
+                showCursor={false}
+                speed={12}
+                text={`Image prompt draft for ${node.title}: ${promptReady ? prompt.trim() : "No prompt yet."} Image generation is still deferred.`}
+                thinkingState="typing"
+              />
+            </AssistantResponseBubble>
+          </section>
+        ) : (
+          <section className="flex min-h-0 flex-1 items-center justify-center rounded-xl border border-dashed border-neutral-200 bg-neutral-50 px-6 text-center text-xs leading-5 text-neutral-500">
+            Select AI modify or Generate to show the image-node response here.
+          </section>
+        )}
+
+        <section className="shrink-0 rounded-xl border border-neutral-200 bg-white p-3">
+          <label htmlFor="image-node-prompt" className="sr-only">
+            Image prompt
+          </label>
+          <Textarea
+            id="image-node-prompt"
+            aria-label="Image prompt"
+            className="min-h-20 resize-none border-0 bg-transparent px-0 text-sm shadow-none placeholder:text-neutral-400 focus-visible:ring-0"
+            onChange={(event) => onPromptChange(event.target.value)}
+            placeholder="Describe the image frame, location, character pose, wardrobe, lighting, and mood..."
+            value={prompt}
+          />
+
+          <div className="mt-3 flex items-center justify-between gap-3 border-t border-neutral-200 pt-3">
+            <div className="flex items-center gap-2">
+              <label htmlFor="image-model-select" className="sr-only">
+                Image model
+              </label>
+              <select
+                id="image-model-select"
+                aria-label="Image model"
+                className="h-9 rounded-lg border border-neutral-200 bg-white px-3 text-xs font-medium text-neutral-700 shadow-sm"
+                data-image-model-select="true"
+                defaultValue="mock"
+              >
+                <option value="mock">Mock image model</option>
+                <option value="configured">Configured model</option>
+              </select>
+              <Button
+                className="h-9 rounded-lg px-3 text-xs"
+                data-image-ai-revise="true"
+                disabled={!promptReady}
+                onClick={showResponse}
+                type="button"
+                variant="outline"
+              >
+                {"AI\u4fee\u6539"}
+              </Button>
+            </div>
+
+            <Button
+              aria-label="Generate Image node"
+              className="h-9 rounded-lg px-4 text-xs"
+              disabled={!promptReady}
+              onClick={showResponse}
+              type="button"
+            >
+              Generate
+              <Sparkles aria-hidden="true" className="size-4" />
+            </Button>
+          </div>
+        </section>
+      </div>
+
+      <button
+        aria-label="Resize Image node editor"
+        className="absolute bottom-1 right-1 size-5 cursor-nwse-resize rounded-sm border-b-2 border-r-2 border-neutral-300"
+        data-image-node-resize-handle="true"
+        onPointerDown={(event) => startInteraction(event, "resize")}
+        type="button"
+      />
+    </aside>
+  );
+}
+
 type ScriptOutputTabsProps = {
+  error?: string | null;
   output: ScriptNodeOutput | null;
   selectedOutput: ScriptOutputFocus;
   task: ScriptTaskStatusResponse;
+  onHide?: () => void;
 };
 
 export function ScriptOutputTabs({
+  error,
   output,
   selectedOutput,
   task,
+  onHide,
 }: ScriptOutputTabsProps) {
   const selectedView = findScriptOutputView(selectedOutput);
+  const statusLabel = getScriptResponseStatusLabel(task, output, error);
+  const statusDetail = error ?? task.error ?? null;
 
   return (
     <section
-      className="flex flex-col gap-3"
+      className="flex flex-col overflow-hidden rounded-xl border border-neutral-200 bg-white/95 text-neutral-950 shadow-[0_20px_60px_rgba(15,23,42,0.14)] backdrop-blur"
+      style={{ height: SCRIPT_RESPONSE_PANEL_HEIGHT }}
       data-script-node-output-panel="true"
     >
-      {!output ? (
-        <AssistantResponseBubble title={selectedView.label}>
-          <AIResponseTyping
-            showCursor={task.status === "running"}
-            speed={12}
-            text={task.status === "running" ? "" : "No response yet."}
-            thinkingState={task.status === "running" ? "thinking" : "typing"}
-          />
-        </AssistantResponseBubble>
-      ) : null}
-
-      {output && selectedOutput === "storyboard" ? (
-        <AssistantResponseBubble title="Storyboard" subtitle={output.title}>
-          <OutputSection title="Direction">
-            <p>{output.storyboard_direction.pov}</p>
-            <p>{output.storyboard_direction.visual_rhythm}</p>
-          </OutputSection>
-          {output.storyboard_direction.shots.map((shot) => (
-            <OutputSection
-              key={shot.shot_number}
-              title={`Shot ${shot.shot_number}: ${shot.framing}`}
+      <div className="flex items-start justify-between gap-3 border-b border-neutral-200 px-4 py-3">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <p className="text-sm font-semibold">Storyboard AI</p>
+            <Badge
+              className={cn(
+                "border-neutral-200 bg-neutral-50 text-neutral-600",
+                statusLabel === "Ready" &&
+                  "border-emerald-200 bg-emerald-50 text-emerald-700",
+                statusLabel === "Error" &&
+                  "border-red-200 bg-red-50 text-red-700",
+              )}
+              data-script-node-response-status="true"
             >
-              <p>{shot.pov}</p>
-              <p>{shot.action}</p>
-              <p>{shot.camera_movement}</p>
-              <p>{shot.duration_seconds}s</p>
-            </OutputSection>
-          ))}
-        </AssistantResponseBubble>
-      ) : null}
+              {statusLabel}
+            </Badge>
+          </div>
+          {statusDetail ? (
+            <p className="mt-1 truncate text-xs text-red-700">{statusDetail}</p>
+          ) : null}
+        </div>
+        {onHide ? (
+          <Button
+            aria-label="Hide Script response"
+            className="h-8 rounded-lg px-3 text-xs"
+            onClick={onHide}
+            type="button"
+            variant="ghost"
+          >
+            Hide
+          </Button>
+        ) : null}
+      </div>
 
-      {output && selectedOutput === "characters" ? (
-        <AssistantResponseBubble title="Characters" subtitle={output.title}>
-          {output.characters.map((character) => (
-            <OutputSection key={character.name} title={character.name}>
-              <p>{character.overview}</p>
-              <p>{character.style}</p>
-              <p>{character.clothing}</p>
-              <p>{character.height}</p>
-              <p>{character.appearance}</p>
-              <p>{character.personality}</p>
-              <p>{character.visual_prompt}</p>
-            </OutputSection>
-          ))}
-        </AssistantResponseBubble>
-      ) : null}
+      <div
+        className="flex-1 overflow-y-auto p-4"
+        data-script-node-output-scroll="true"
+      >
+        {!output ? (
+          <AssistantResponseBubble title={selectedView.label}>
+            {statusLabel === "Error" && statusDetail ? (
+              <p className="text-red-700">{statusDetail}</p>
+            ) : (
+              <AIResponseTyping
+                showCursor={task.status === "running"}
+                speed={12}
+                text={task.status === "running" ? "" : "No response yet."}
+                thinkingState={
+                  task.status === "running" ? "thinking" : "typing"
+                }
+              />
+            )}
+          </AssistantResponseBubble>
+        ) : null}
 
-      {output && selectedOutput === "scene" ? (
-        <AssistantResponseBubble
-          title="Scene"
-          subtitle="Composed from storyboard + characters"
-        >
-          {output.scene_descriptions.map((scene) => (
-            <OutputSection
-              key={scene.scene_number}
-              title={`Scene ${scene.scene_number}: ${scene.location}`}
-            >
-              <p>Shot reference: {scene.shot_reference}</p>
-              <p>{scene.characters.join(", ")}</p>
-              <p>{scene.description}</p>
-              <p>{scene.visual_prompt}</p>
+        {output && selectedOutput === "storyboard" ? (
+          <AssistantResponseBubble title="Storyboard" subtitle={output.title}>
+            <OutputSection title="Direction">
+              <p>{output.storyboard_direction.pov}</p>
+              <p>{output.storyboard_direction.visual_rhythm}</p>
             </OutputSection>
-          ))}
-        </AssistantResponseBubble>
-      ) : null}
+            {output.storyboard_direction.shots.map((shot) => (
+              <OutputSection
+                key={shot.shot_number}
+                title={`Shot ${shot.shot_number}: ${shot.framing}`}
+              >
+                <p>{shot.pov}</p>
+                <p>{shot.action}</p>
+                <p>{shot.camera_movement}</p>
+                <p>{shot.duration_seconds}s</p>
+              </OutputSection>
+            ))}
+          </AssistantResponseBubble>
+        ) : null}
+
+        {output && selectedOutput === "characters" ? (
+          <AssistantResponseBubble title="Characters" subtitle={output.title}>
+            {output.characters.map((character) => (
+              <OutputSection key={character.name} title={character.name}>
+                <p>{character.overview}</p>
+                <p>{character.style}</p>
+                <p>{character.clothing}</p>
+                <p>{character.height}</p>
+                <p>{character.appearance}</p>
+                <p>{character.personality}</p>
+                <p>{character.visual_prompt}</p>
+              </OutputSection>
+            ))}
+          </AssistantResponseBubble>
+        ) : null}
+
+        {output && selectedOutput === "scene" ? (
+          <AssistantResponseBubble
+            title="Scene"
+            subtitle="Composed from storyboard + characters"
+          >
+            {output.scene_descriptions.map((scene) => (
+              <OutputSection
+                key={scene.scene_number}
+                title={`Scene ${scene.scene_number}: ${scene.location}`}
+              >
+                <p>Shot reference: {scene.shot_reference}</p>
+                <p>{scene.characters.join(", ")}</p>
+                <p>{scene.description}</p>
+                <p>{scene.visual_prompt}</p>
+              </OutputSection>
+            ))}
+          </AssistantResponseBubble>
+        ) : null}
+      </div>
     </section>
   );
 }
@@ -1216,7 +1655,7 @@ function AssistantResponseBubble({
   children,
 }: AssistantResponseBubbleProps) {
   return (
-    <section className="mr-6 flex flex-col gap-3 rounded-2xl rounded-tl-md border border-neutral-200 bg-white p-4 text-xs leading-5 text-neutral-700 shadow-sm">
+    <section className="flex flex-col gap-3 rounded-2xl rounded-tl-md border border-neutral-200 bg-white p-4 text-xs leading-5 text-neutral-700 shadow-sm">
       <div>
         <p className="text-sm font-semibold text-neutral-950">{title}</p>
         {subtitle ? (
@@ -1255,6 +1694,7 @@ function Checklist({ items }: { items: string[] }) {
 type WorkflowNodeCardProps = {
   node: WorkflowNode;
   scriptInput: ScriptNodeInput | null;
+  scriptOutput: ScriptNodeOutput | null;
   selected: boolean;
   pendingPort: WorkflowPort | null;
   onDragStart: (
@@ -1271,6 +1711,7 @@ type WorkflowNodeCardProps = {
 function WorkflowNodeCard({
   node,
   scriptInput,
+  scriptOutput,
   selected,
   pendingPort,
   onDragStart,
@@ -1280,6 +1721,7 @@ function WorkflowNodeCard({
   const Icon = nodeIcons[node.type];
   const inputs = node.ports.filter((port) => port.direction === "input");
   const outputs = node.ports.filter((port) => port.direction === "output");
+  const scriptPreview = formatScriptNodePreview(scriptInput, scriptOutput);
 
   return (
     <article
@@ -1327,10 +1769,10 @@ function WorkflowNodeCard({
       <div className="px-4 pb-4">
         {node.type === "script" ? (
           <div className="max-h-28 overflow-hidden rounded-md border border-neutral-200 bg-neutral-50 p-3 text-xs leading-5 text-neutral-700">
-            <p className="font-semibold text-neutral-950">World view</p>
-            <p>
-              {scriptInput?.world_description.trim() || "No world prompt yet."}
+            <p className="font-semibold text-neutral-950">
+              {scriptPreview.heading}
             </p>
+            <p>{scriptPreview.body}</p>
           </div>
         ) : node.type === "storyboard" ? (
           <div className="rounded-md border border-neutral-200 bg-neutral-50 p-3">

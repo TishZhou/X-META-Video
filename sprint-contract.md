@@ -1,25 +1,18 @@
-# Sprint Contract - Feature 3 Script Node
+# Sprint Contract - Feature 4 Storyboard Node
 
 ## Sprint Overview
 
-**Sprint:** feature-3-script-node-io-contract
-**Feature:** Feature 3, Script Node
-**Status:** passing
-**Goal:** Implement a verified Script Node workflow where users enter one MV world-view description through the AI chat UI, run generation through backend API contracts, and review structured storyboard direction, character profiles, and scene descriptions while prompt wording remains centrally adjustable.
+**Sprint:** feature-4-storyboard-inline-composer-polish
+**Feature:** Feature 4, Storyboard Node
+**Status:** in_progress
+**Goal:** Address the eight browser comments on the existing `/workspace` Storyboard interaction without expanding into backend storyboard generation or durable shot-list persistence.
 
 ## Write Scope
 
-- `packages/shared-contracts/**`
-- `services/api/**`
 - `apps/web/src/components/xmeta/workflow-canvas/**`
-- `apps/web/src/components/uitripled/ai-chat-interface-shadcnui.tsx`
-- `apps/web/src/lib/workflow-canvas/**`
-- `apps/web/src/lib/script-node/**`
-- `apps/web/package.json`
-- Root and web environment examples
-- `docs/API.md`
-- Focused tests for changed backend/frontend/shared behavior
-- `feature_tasks/3.json`
+- `apps/web/src/lib/workflow-canvas/**` only if required for canvas bounds behavior
+- Focused tests for changed workspace behavior
+- `feature_tasks/4.json`
 - `feature_list.json`
 - `sprint-contract.md`
 - `evaluator-rubric.md`
@@ -32,51 +25,43 @@ Protected user edit:
 
 ## In Scope
 
-- Stable Script Node input, output, and task contracts.
-- Single-input `world_description` contract for the first MV world-view prompt.
-- Structured Script Node output split into storyboard direction, character profiles, and scene descriptions.
-- FastAPI routes for saving Script Node input, creating a generation task, reading task status, and reading structured results.
-- Server-owned prompt builder and provider adapter boundary.
-- Mock script provider as the default end-to-end verification path.
-- OpenAI-compatible provider settings read from server-only environment variables.
-- `/workspace` Script Node inline input composer bound under the selected Script node, with optional structured response history between the node and input.
-- White Figma-like workspace canvas styling for the current browser-comment pass.
-- Latest browser-comment behavior: no detached editor/modal; the Script node owns an input box below it, output selection stays in the input footer, and `AI修改` reveals or creates response history between the node and input.
-- Honest labels for mock provider, dev in-memory backend state, deferred production auth, and deferred downstream media generation.
+- Show confirmed Script output in the Script node card preview.
+- Make the Storyboard response/history panel align with the input composer width, use a fixed-height scrollable chatbox treatment, and allow the user to hide/show it.
+- Keep the response/composer group at stable canvas-world dimensions while canvas zoom changes.
+- Remove the left-side invisible drag wall so nodes can move to the far-left canvas area.
+- Remove the redundant small Storyboard output target control near the Generate button.
+- Change the composer selector from output target selection to model selection.
+- Move generation errors into the Storyboard response/status panel near the Ready state instead of rendering a detached red strip.
+- Preserve honest local/FastAPI/AI-disabled boundaries.
 
 ## Out of Scope
 
-- Final prompt quality tuning.
-- Production auth and multi-user workspace management.
-- Durable PostgreSQL task/workflow persistence beyond the minimal API scaffold.
-- Worker queue execution, object storage writes, generated media assets, and history timeline persistence.
-- Separate editable Storyboard Node implementation.
-- Image, audio, video, export, or asset library generation.
+- Production Storyboard Node backend, database persistence, queue workers, or model-provider execution.
+- Full editable shot-list data model.
+- Character, scene, image, audio, video, export, asset library, or history feature work.
+- Mobile-specific UI polish.
 
 ## Acceptance Criteria
 
-1. Script input and output contracts exist in shared TypeScript and FastAPI/Pydantic equivalents.
-2. Root environment example exposes `SCRIPT_MODEL_PROVIDER`, `SCRIPT_MODEL_BASE_URL`, `SCRIPT_MODEL_API_KEY`, `SCRIPT_MODEL_NAME`, `SCRIPT_MODEL_TIMEOUT_SECONDS`, and `SCRIPT_MODEL_MAX_RETRIES`.
-3. `PATCH /api/v1/projects/{project_id}/nodes/{node_id}` validates and saves Script Node input/settings.
-4. `POST /api/v1/projects/{project_id}/nodes/{node_id}/run` returns a task response and generates schema-valid mock output.
-5. `GET /api/v1/tasks/{task_id}` and `GET /api/v1/tasks/{task_id}/result` return task status and normalized Script Node output.
-6. Non-mock provider selection fails clearly when required provider env values are missing.
-7. Selecting the Script node in `/workspace` shows one AI chat-style MV world description input bound under the node.
-8. Successful generation renders selectable Storyboard, Characters, and Scene response targets; Scene is composed from storyboard and characters.
-9. The Script node status changes to `ready` only after validated output exists.
-10. `AI修改` reveals or generates response history between the Script node and input box.
-11. The Script Node does not render a detached floating editor, modal, or separate Choose output card.
-12. Verification evidence is recorded in `feature_list.json`, `sprint-contract.md`, `evaluator-rubric.md`, `progress.md`, and `session-handoff.md`.
+1. Script node preview displays the confirmed/generated world-view output, not only draft input.
+2. Storyboard response/history appears as a fixed-size scrollable chatbox aligned to the composer width.
+3. Users can hide and restore the Storyboard response/history panel.
+4. Composer and response sizing remains stable relative to the canvas world when zoom changes.
+5. A selected node can be dragged to the far-left canvas area without being blocked by an invisible boundary.
+6. The small output-target badge/button near Generate is removed.
+7. The left composer dropdown is a model selector.
+8. Generation errors render inside the response/status area near Ready.
+9. Verification evidence is recorded in `feature_list.json`, `sprint-contract.md`, `evaluator-rubric.md`, `progress.md`, and `session-handoff.md`.
 
 ## Verification Plan
 
 1. Baseline: `.\init.ps1` before implementation.
-2. Backend tests: run pytest under `services/api`.
-3. Frontend tests: `corepack pnpm --filter @xmeta/web test`.
+2. Focused frontend tests: workspace component test file.
+3. Full frontend tests: `corepack pnpm --filter @xmeta/web test`.
 4. Typecheck: `corepack pnpm --filter @xmeta/web typecheck`.
 5. Build: `corepack pnpm --filter @xmeta/web build`.
-6. Browser QA: desktop `/workspace` Script Node input-to-output flow with FastAPI mock provider running.
-7. JSON validation: parse `feature_list.json` and `feature_tasks/3.json`.
+6. Browser QA: desktop `/workspace` click-by-click verification for response hide/show, model selector, Generate error placement, zoom stability, and far-left node dragging.
+7. JSON validation: parse `feature_list.json` and `feature_tasks/4.json`.
 8. Whitespace check: `git diff --check`.
 9. Final restart path: `.\init.ps1`.
 
@@ -84,29 +69,14 @@ Protected user edit:
 
 | Phase | Outcome |
 | --- | --- |
-| Browser comment revision | Addressed four browser comments: white Figma-like canvas, vertical ChatGPT-like Script editor, selectable Storyboard/Characters/Scene response targets, and Script node preview showing only the input world view. |
-| Browser comment verification | Baseline `.\init.ps1` passed before changes; focused workspace plus TriplD chat tests passed 2 files / 9 tests; backend pytest passed 5 tests with one upstream Starlette TestClient deprecation warning; backend ruff passed; full web tests passed 9 files / 29 tests; `corepack pnpm --filter @xmeta/web typecheck` passed; `corepack pnpm --filter @xmeta/web build` passed. |
-| Browser comment QA | Production Browser QA on `http://127.0.0.1:3000/workspace` passed: white canvas and editor backgrounds measured, input/response flow was vertical, Storyboard/Characters/Scene output buttons worked, Script node preview showed only the submitted world view, endpoint sequence returned 200/202/200/200, console errors empty, failed requests empty, and no horizontal overflow. |
-| Browser comment final closure | `feature_list.json` and `feature_tasks/3.json` parsed successfully; `git diff --check` passed with line-ending warnings only; final `.\init.ps1` passed and reran web tests: 9 files / 29 tests. |
-| Follow-up browser comments | Moved Storyboard/Characters/Scene selection into the Generate-row dropdown, removed the separate Choose output card, placed the Script Agent response above the MV world input, reused the TriplD response typing component for empty/running response state, and added drag/resize/close/reopen behavior to the Script editor. |
-| Follow-up verification | Baseline `.\init.ps1` passed before changes; focused workspace plus TriplD chat tests passed 2 files / 9 tests; full web tests passed 9 files / 29 tests; `corepack pnpm --filter @xmeta/web typecheck` passed; `corepack pnpm --filter @xmeta/web build` passed; bundled Python backend pytest passed 5 tests with one upstream Starlette TestClient deprecation warning; bundled Python ruff passed. |
-| Follow-up Browser QA | Production Browser QA on `http://localhost:3002/workspace` with FastAPI mock provider passed: Choose output text absent, output dropdown contained only Storyboard/Characters/Scene, Characters selection updated the response, response stayed above input, editor drag and resize changed frame geometry, close removed the editor, clicking the Script node reopened it, generation returned 200 PATCH / 202 POST / 200 task / 200 result, Script node became ready, no console errors, no failed requests, and no horizontal overflow. |
-| Inline node composer revision | Removed the detached Script editor entirely. The selected Script node now renders one input composer directly below the node; the footer contains the Storyboard/Characters/Scene selector and `AI修改`; clicking `AI修改` reveals or creates response history between the node and input. |
-| Inline node composer QA | Production Browser QA on `http://localhost:3002/workspace` with FastAPI mock provider passed: no floating Script editor, inline composer present below the node, no initial history, `AI修改` generated a response, history appeared between node and input, selected Characters output persisted, endpoint sequence returned 200 PATCH / 202 POST / 200 task / 200 result, Script node became ready, console errors empty, failed requests empty, and document width equaled scrollWidth. |
-| Revised workflow | User clarified the Script Node workflow: one MV world-view description input, then AI expands into storyboard direction/POV/shots, character profiles with style/wardrobe/body details, and concrete scene descriptions derived from characters plus storyboard. |
-| Revised implementation | Updated shared contracts, FastAPI/Pydantic schemas, prompt builder, deterministic mock provider, backend tests, workspace editor, AI chat component props, response targets, and API docs for the single-input MV workflow. |
-| Revised verification | Backend pytest passed 5 tests with one upstream Starlette TestClient deprecation warning; backend ruff passed; focused workspace test passed 1 file / 5 tests; full web tests passed 9 files / 29 tests; `corepack pnpm --filter @xmeta/web typecheck` passed; `corepack pnpm --filter @xmeta/web build` passed. |
-| Revised Browser QA | Production Browser QA on `http://127.0.0.1:3000/workspace` passed: AI chat-style MV world description input visible, `Generate` called PATCH/run/task/result endpoints with 200/202/200/200, Script node became `ready`, Overview/Storyboard/Characters/Scenes tabs rendered, no console errors, no failed requests, no horizontal overflow, and no misleading media-generation claim. |
-| Revised final closure | `feature_list.json` and `feature_tasks/3.json` parsed successfully; `git diff --check` passed with line-ending warnings only; final `.\init.ps1` passed and reran web tests: 9 files / 29 tests. |
-| Baseline | Confirmed working directory `D:\X-META-Video`; read `AGENTS.md`, `docs/PRODUCT.md`, `docs/ARCHITECTURE.md`, `feature_list.json`, `progress.md`, `feature_tasks/3.json`, `sprint-contract.md`, and `evaluator-rubric.md`. |
-| Startup | `.\init.ps1` passed before implementation and reported 9 web test files / 28 tests. |
-| Recent commits | Reviewed `git log --oneline -5`: `5a8bb3a`, `f4931d0`, `c817efc`, `2a23d74`, and `f01d7b6`. |
-| Skill setup | Used shadcn, uiux-design-evaluator, and React best-practices guidance for the frontend implementation. |
-| Subagents | Spawned backend worker subagent for the `services/api/**` implementation slice with a disjoint write set. |
-| Contracts | Added shared TypeScript Script Node input, settings, output, task, and default input contracts in `packages/shared-contracts/src/index.ts`; documented Script Node request/output and `SCRIPT_MODEL_*` provider env values in `docs/API.md` and `.env.example`. |
-| Backend implementation | Added FastAPI Script Node PATCH/run/task/result routes, Pydantic schemas, in-memory dev node/task/result store, centralized prompt builder, deterministic mock provider, OpenAI-compatible provider config validation, CORS for frontend origins, and backend tests. |
-| Frontend implementation | Added `/workspace` selected Script node editor with the AI chat-style MV world input, FastAPI save/run/status/result client, task state display, structured response targets, and ready/blocked/running node status updates. |
-| Backend verification | Bundled Python setup installed `services/api[dev]`; `python -m pytest services/api/tests` passed 5 tests with one upstream Starlette TestClient deprecation warning; `python -m ruff check services/api` passed. |
-| Frontend verification | Focused workspace tests passed 2 files / 10 tests; full web tests passed 9 files / 29 tests; `corepack pnpm --filter @xmeta/web typecheck` passed; `corepack pnpm --filter @xmeta/web build` passed and included `/workspace`. |
-| Browser QA | Production Browser QA on `http://127.0.0.1:3000/workspace` passed for the original implementation. Revised MV-world Browser QA must verify the AI chat input, `Generate` action, Overview/Storyboard/Characters/Scenes tabs, no console errors, no failed requests, no horizontal overflow, and no misleading media-generation claim. |
-| Final closure | `feature_list.json` and `feature_tasks/3.json` parsed successfully; `git diff --check` passed with line-ending warnings only; final `.\init.ps1` passed and reran web tests: 9 files / 29 tests. |
+| Baseline | Confirmed working directory `D:\X-META-Video`; read `AGENTS.md`, `docs/PRODUCT.md`, `docs/ARCHITECTURE.md`, `feature_list.json`, `progress.md`, `feature_tasks/4.json`, `sprint-contract.md`, and `evaluator-rubric.md`. |
+| Startup | `.\init.ps1` passed before implementation and reported 9 web test files / 29 tests. |
+| Recent commits | Reviewed `git log --oneline -5`: `396604d`, `65cf5b4`, `94ae773`, `61d8580`, and `18d22c3`. |
+| Skill setup | Used shadcn rules, UI/UX evaluator references, and Browser/frontend testing guidance for the workspace UI pass. |
+| Subagents | Acting subagent assigned to the workspace source/test implementation slice; evaluation subagent reserved for post-implementation review. |
+| Implementation | Updated the workspace inline Script/Storyboard interaction so confirmed Script output appears in the Script node preview, Storyboard AI history is fixed-height/scrollable/hideable, the composer selector is a model selector, the redundant output-target badge is removed, errors render inside the response panel, zoom compensation keeps the panel/composer stable, and node drag allows negative x placement. |
+| Focused verification | `corepack pnpm --filter @xmeta/web test -- src/components/xmeta/workflow-canvas/workflow-canvas-workspace.test.tsx` passed 1 file / 9 tests. |
+| Full verification | `corepack pnpm --filter @xmeta/web test` passed 9 files / 33 tests; `corepack pnpm --filter @xmeta/web typecheck` passed; `corepack pnpm --filter @xmeta/web build` passed and included `/workspace`; JSON validation passed for `feature_list.json` and `feature_tasks/4.json`; `git diff --check` passed with line-ending warnings only. |
+| Browser QA | On `http://localhost:3000/workspace`, click-by-click Browser QA verified selecting Script reveals the composer, `AI修改` opens the Storyboard AI panel, Hide removes the panel while keeping the composer, the model selector changes to configured, configured-model failure shows `Failed to fetch` inside the panel with no detached strip, mock generation returns Ready and changes the Script preview to Confirmed Script, 50% zoom keeps panel/composer at 820px wide with a 288px response panel, and Script node drag reaches a negative canvas left position. |
+| Evaluation | Evaluation subagent recorded 90/100 with no source behavior findings; only P2 was missing final artifact/closure evidence, which this artifact update is resolving before the final startup run. |
+| Final startup | Final `.\init.ps1` passed after artifact updates and reran web tests: 9 files / 33 tests. A direct focused rerun also passed: 1 file / 9 tests. |

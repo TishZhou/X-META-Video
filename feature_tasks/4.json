@@ -2,14 +2,43 @@
     "parent_feature":  {
                            "id":  4,
                            "title":  "Storyboard Node",
-                           "status":  "not_started"
+                           "status":  "in_progress"
                        },
-    "planning_status":  "pending_decomposition",
+    "planning_status":  "in_progress",
     "notes":  [
-                  "Small features must be added here before implementation starts.",
-                  "Keep this file focused on Storyboard Node only."
+                  "Keep this file focused on Storyboard Node only.",
+                  "2026-06-29 browser-comment pass scopes Feature 4 to the existing /workspace Storyboard inline response/composer polish. Backend storyboard generation, durable persistence, editable shot-list schema, and asset generation remain deferred."
               ],
     "small_features":  [
-
+                           {
+                               "id":  "storyboard-node-001",
+                               "title":  "Storyboard inline response and composer polish",
+                               "status":  "passing",
+                               "scope":  [
+                                             "Display confirmed Script output in the Script node preview.",
+                                             "Make the Storyboard AI response/history panel fixed-size, scrollable, chatbox-like, hideable, and width-aligned with the input composer.",
+                                             "Keep the inline response/composer group at a stable canvas-world size ratio during zoom changes.",
+                                             "Allow workflow nodes to be dragged to the far left without an invisible boundary.",
+                                             "Remove the redundant small Storyboard output target badge near Generate.",
+                                             "Change the composer dropdown from output target selection to model selection.",
+                                             "Show generation errors inside the response/status area near Ready instead of a separate red strip."
+                                           ],
+                               "verification":  [
+                                                   "Run focused workspace component tests.",
+                                                   "Run full web tests, typecheck, build, JSON validation, git diff --check, and final .\\init.ps1.",
+                                                   "Use Browser QA on /workspace with click-by-click interaction verification for response hide/show, model selection, Generate error placement, zoom stability, and far-left node dragging."
+                                                 ],
+                               "evidence":  [
+                                                "apps/web/src/components/xmeta/workflow-canvas/workflow-canvas-workspace.tsx now renders confirmed Script output in the Script node preview after successful generation.",
+                                                "Storyboard AI response/history is width-aligned with the composer, fixed at 288px height, scrollable, and hideable/restorable.",
+                                                "The inline response/composer group compensates for canvas zoom so it remains 820px wide at 50% zoom, and node dragging permits negative x positions for far-left placement.",
+                                                "The composer selector is now a model selector, the redundant output-target badge near Generate was removed, and generation errors render inside the Storyboard AI panel status area.",
+                                                "Focused workspace component test passed: 1 file / 9 tests.",
+                                                "Full web tests passed: 9 files / 33 tests; typecheck passed; build passed with /workspace.",
+                                                "Browser QA on http://localhost:3000/workspace passed: AI修改 opened the panel, Hide removed only the panel, model selector changed to configured, Failed to fetch appeared inside the panel with no detached red strip, mock generation returned Ready and confirmed Script preview, 50% zoom kept panel/composer 820px wide and panel 288px high, and Script node dragged to negative left position.",
+                                                "JSON validation passed for feature_list.json and feature_tasks/4.json; git diff --check passed with line-ending warnings only.",
+                                                "Final .\\init.ps1 passed after artifact updates and reran web tests: 9 files / 33 tests."
+                                              ]
+                           }
                        ]
 }

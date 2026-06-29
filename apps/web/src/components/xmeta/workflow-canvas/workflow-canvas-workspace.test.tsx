@@ -5,13 +5,67 @@ import type {
   ScriptTaskStatusResponse,
 } from "@xmeta/shared-contracts";
 
-import { workflowNodeTemplates } from "@/lib/workflow-canvas/graph";
+import {
+  createInitialWorkflowGraphState,
+  workflowNodeTemplates,
+} from "@/lib/workflow-canvas/graph";
 
 import {
+  calculateDraggedNodePosition,
+  clampImageEditorFrame,
+  formatScriptNodePreview,
   formatTemplateIoLabel,
+  getInlineEditorCompensationScale,
+  getScriptResponseStatusLabel,
+  ImageNodeFloatingEditor,
+  isFloatingImageEditorNodeType,
   ScriptOutputTabs,
   WorkflowCanvasWorkspace,
 } from "./workflow-canvas-workspace";
+
+function makeScriptOutput(): ScriptNodeOutput {
+  return {
+    title: "Mock Script Title",
+    world_overview: "A structured MV world summary.",
+    storyboard_direction: {
+      pov: "third-person cinematic POV",
+      visual_rhythm: "soft opening, travel beat, neon performance payoff",
+      shots: [
+        {
+          shot_number: 1,
+          pov: "third-person observer",
+          framing: "wide frame",
+          action: "Reveal the world.",
+          camera_movement: "Push in.",
+          duration_seconds: 8,
+        },
+      ],
+    },
+    characters: [
+      {
+        name: "Lead",
+        overview: "Sweet visual direction",
+        style: "soft idol styling",
+        clothing: "white jacket",
+        height: "165 cm",
+        appearance: "bright eyes",
+        personality: "Decisive",
+        visual_prompt: "Strong silhouette",
+      },
+    ],
+    scene_descriptions: [
+      {
+        scene_number: 1,
+        shot_reference: 1,
+        characters: ["Lead"],
+        location: "desert jeep",
+        description: "A concrete scene description.",
+        visual_prompt: "Opening frame",
+      },
+    ],
+    missing_inputs: [],
+  };
+}
 
 describe("WorkflowCanvasWorkspace", () => {
   it("renders the workspace route regions and honest deferred states", () => {
@@ -80,17 +134,65 @@ describe("WorkflowCanvasWorkspace", () => {
     expect(html).not.toContain("Script Node API Ready");
     expect(html).toContain('data-script-node-inline-editor="true"');
     expect(html).toContain('data-script-node-input-composer="true"');
-    expect(html).toContain('data-script-output-select="true"');
+    expect(html).toContain('data-script-model-select="true"');
+    expect(html).toContain("Mock storyboard model");
+    expect(html).toContain("Configured model");
     expect(html).toContain('data-script-ai-revise="true"');
     expect(html).toContain("MV world description");
     expect(html).toContain("AI修改");
     expect(html).toContain("Generate");
     expect(html).toContain("Storyboard");
+    expect(html).not.toContain('data-script-output-select="true"');
+    expect(html).not.toContain("Script output target");
     expect(html).not.toContain('data-script-node-history="true"');
     expect(html).not.toContain('data-script-node-editor="true"');
+    expect(html).not.toContain('data-image-node-editor="true"');
     expect(html).not.toContain('aria-label="Close Script node editor"');
     expect(html).not.toContain("Choose output");
     expect(html).not.toContain("Storyboard + characters composed together");
+  });
+
+  it("renders the previous floating editor behavior for image-class nodes", () => {
+    const graph = createInitialWorkflowGraphState();
+    const imageNode = graph.nodes.find(
+      (candidate) => candidate.type === "composition",
+    );
+
+    expect(imageNode).toBeDefined();
+    expect(isFloatingImageEditorNodeType("composition")).toBe(true);
+    expect(isFloatingImageEditorNodeType("scene")).toBe(true);
+    expect(isFloatingImageEditorNodeType("character")).toBe(true);
+    expect(isFloatingImageEditorNodeType("script")).toBe(false);
+    expect(
+      clampImageEditorFrame(
+        { x: -200, y: -120, width: 100, height: 100 },
+        { width: 1000, height: 800 },
+      ),
+    ).toEqual({ x: 16, y: 16, width: 360, height: 360 });
+
+    const html = renderToStaticMarkup(
+      <ImageNodeFloatingEditor
+        frame={{ x: 880, y: 88, width: 430, height: 520 }}
+        node={imageNode!}
+        prompt="A neon jeep frame"
+        responseOpen={true}
+        onClose={() => undefined}
+        onFrameChange={() => undefined}
+        onPromptChange={() => undefined}
+        onResponseOpenChange={() => undefined}
+      />,
+    );
+
+    expect(html).toContain('data-image-node-editor="true"');
+    expect(html).toContain('data-image-node-drag-handle="true"');
+    expect(html).toContain('aria-label="Close Image node editor"');
+    expect(html).toContain('data-image-node-response="true"');
+    expect(html).toContain('data-image-model-select="true"');
+    expect(html).toContain('data-image-ai-revise="true"');
+    expect(html).toContain('aria-label="Resize Image node editor"');
+    expect(html).toContain("Mock image model");
+    expect(html).toContain("Image Agent");
+    expect(html).toContain("A neon jeep frame");
   });
 
   it("renders selectable structured Script output responses", () => {
@@ -101,47 +203,7 @@ describe("WorkflowCanvasWorkspace", () => {
       status: "succeeded",
       error: null,
     };
-    const output: ScriptNodeOutput = {
-      title: "Mock Script Title",
-      world_overview: "A structured MV world summary.",
-      storyboard_direction: {
-        pov: "third-person cinematic POV",
-        visual_rhythm: "soft opening, travel beat, neon performance payoff",
-        shots: [
-          {
-            shot_number: 1,
-            pov: "third-person observer",
-            framing: "wide frame",
-            action: "Reveal the world.",
-            camera_movement: "Push in.",
-            duration_seconds: 8,
-          },
-        ],
-      },
-      characters: [
-        {
-          name: "Lead",
-          overview: "Sweet visual direction",
-          style: "soft idol styling",
-          clothing: "white jacket",
-          height: "165 cm",
-          appearance: "bright eyes",
-          personality: "Decisive",
-          visual_prompt: "Strong silhouette",
-        },
-      ],
-      scene_descriptions: [
-        {
-          scene_number: 1,
-          shot_reference: 1,
-          characters: ["Lead"],
-          location: "desert jeep",
-          description: "A concrete scene description.",
-          visual_prompt: "Opening frame",
-        },
-      ],
-      missing_inputs: [],
-    };
+    const output = makeScriptOutput();
     const html = renderToStaticMarkup(
       <ScriptOutputTabs
         output={output}
@@ -152,7 +214,54 @@ describe("WorkflowCanvasWorkspace", () => {
 
     expect(html).toContain("Storyboard");
     expect(html).toContain("Mock Script Title");
+    expect(html).toContain("Ready");
+    expect(html).toContain('data-script-node-output-scroll="true"');
     expect(html).toContain("third-person cinematic POV");
     expect(html).not.toContain("Choose output");
+  });
+
+  it("shows generation errors in the response panel status area", () => {
+    const task: ScriptTaskStatusResponse = {
+      task_id: "task-1",
+      project_id: "local-project",
+      node_id: "script-1",
+      status: "failed",
+      error: "Provider unavailable",
+    };
+    const html = renderToStaticMarkup(
+      <ScriptOutputTabs
+        error="Provider unavailable"
+        output={null}
+        selectedOutput="storyboard"
+        task={task}
+        onHide={() => undefined}
+      />,
+    );
+
+    expect(html).toContain('data-script-node-response-status="true"');
+    expect(html).toContain("Error");
+    expect(html).toContain("Provider unavailable");
+    expect(html).toContain('aria-label="Hide Script response"');
+    expect(getScriptResponseStatusLabel(task, null, task.error)).toBe("Error");
+  });
+
+  it("keeps inline composer usable under zoom and permits far-left node dragging", () => {
+    expect(getInlineEditorCompensationScale(0.5)).toBe(2);
+    expect(getInlineEditorCompensationScale(1.25)).toBe(0.8);
+    expect(
+      calculateDraggedNodePosition({ x: -180, y: 8 }, { x: 40, y: 80 }),
+    ).toEqual({ x: -220, y: 16 });
+  });
+
+  it("formats the Script node preview from confirmed output when available", () => {
+    expect(
+      formatScriptNodePreview(
+        { world_description: "Draft world prompt" },
+        makeScriptOutput(),
+      ),
+    ).toEqual({
+      heading: "Confirmed Script",
+      body: "Mock Script Title: A structured MV world summary. 1 storyboard shots ready.",
+    });
   });
 });

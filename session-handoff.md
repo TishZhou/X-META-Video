@@ -1,66 +1,51 @@
-# Session Handoff
+﻿# Session Handoff
 
 ## Verified Now
 
+- Repository root: `D:\X-META-Video`
 - Feature 1 `Web Design`, Feature 2 `Workflow Canvas Foundation`, and Feature 3 `Script Node` are recorded as `passing`.
-- Current highest-priority unfinished feature is Feature 4, `Storyboard Node`.
+- Current active feature: Feature 4 `Storyboard Node`.
+- Current small task: `storyboard-node-001` is recorded as `passing`.
+- Full Feature 4 is still `in_progress`; editable shot-list schema, shot editing, durable persistence, queue workers, and generated storyboard assets remain future work.
 - `AGENTS.md` had pre-existing user edits and was not reverted.
-- Baseline `.\init.ps1` passed before Feature 3 implementation and reported 9 web test files / 28 tests.
-- Feature 3 final evidence is recorded in `feature_list.json`, `feature_tasks/3.json`, `sprint-contract.md`, `evaluator-rubric.md`, and `progress.md`.
-- Feature 3 has been revised to the user-approved MV workflow: one AI chat-style world-view description input expands into storyboard direction, character profiles, and scene descriptions.
-- The latest browser-comment revision uses a white Figma-like workspace canvas and binds the Script Node input composer directly under the selected Script node. `AI修改` reveals or creates response history between the node and input.
 
-## Feature 3 Implementation State
+## Feature 4 Browser-Comment State
 
-- Shared contracts live in `packages/shared-contracts/src/index.ts` for Script Node `world_description` input, settings, storyboard direction output, character profile output, scene description output, task state, and default input.
-- Root `.env.example` now includes server-only Script model settings: `SCRIPT_MODEL_PROVIDER`, `SCRIPT_MODEL_BASE_URL`, `SCRIPT_MODEL_API_KEY`, `SCRIPT_MODEL_NAME`, `SCRIPT_MODEL_TIMEOUT_SECONDS`, and `SCRIPT_MODEL_MAX_RETRIES`.
-- `docs/API.md` documents Script Node input/output shape and the provider env boundary.
-- FastAPI implementation lives under `services/api/xmeta_api/`:
-  - `PATCH /api/v1/projects/{project_id}/nodes/{node_id}` saves Script Node input/settings.
-  - `POST /api/v1/projects/{project_id}/nodes/{node_id}/run` creates and completes a mock Script generation task for the MVP.
-  - `GET /api/v1/tasks/{task_id}` returns task status.
-  - `GET /api/v1/tasks/{task_id}/result` returns structured `output`.
-  - Mock provider is default; non-mock provider selection validates required `SCRIPT_MODEL_*` env values and fails clearly if missing.
-- `/workspace` now shows a Script Node inline composer when the Script node is selected:
-  - Users can edit one MV world-view description directly under the Script node.
-  - Storyboard, Characters, and Scene selection lives in the composer footer.
-  - `AI修改` reveals or creates response history between the node and the input composer.
-  - `Generate` saves input, runs the backend task, reads status/result, and renders selectable Storyboard, Characters, and Scene response targets.
-  - No detached Script editor, modal, or right-side panel is used.
-  - The Script node card preview shows only the entered world view.
-  - The Script node changes to `ready` only after validated output exists.
+- `/workspace` still uses the Figma-like white dotted canvas with local/FastAPI/AI-disabled boundary labeling.
+- Script node preview now switches from draft world view to confirmed Script output after successful generation.
+- Storyboard AI response/history now appears as a fixed-height, scrollable, chatbox-like panel aligned to the input composer width.
+- The response/history panel can be hidden with Hide and restored with `AI淇敼`.
+- The inline response/composer group compensates against canvas zoom; Browser QA measured panel/composer at 820px wide and panel height at 288px while Canvas zoom was 50%.
+- The composer dropdown is now a model selector with `Mock storyboard model` and `Configured model`.
+- The redundant output-target badge/button near Generate was removed.
+- Generation errors render inside the Storyboard AI panel status area near Ready/Error rather than as a detached red strip.
+- Node drag no longer clamps x to the left edge; Browser QA dragged the Script node to a negative canvas left position.
 
 ## Evidence
 
-- Backend: bundled Python `python -m pytest services/api/tests` passed 5 tests with one upstream Starlette TestClient deprecation warning.
-- Backend lint: bundled Python `python -m ruff check services/api` passed.
-- Focused frontend: `corepack pnpm --filter @xmeta/web test -- src/components/xmeta/workflow-canvas/workflow-canvas-workspace.test.tsx src/lib/workflow-canvas/graph.test.ts` passed 2 files / 10 tests.
-- Revised focused frontend: `corepack pnpm --filter @xmeta/web test -- workflow-canvas-workspace` passed 1 file / 5 tests for the single-input MV world workflow.
-- Full frontend: `corepack pnpm --filter @xmeta/web test` passed 9 files / 29 tests.
+- Baseline `.\init.ps1` passed before implementation and reran web tests: 9 files / 29 tests.
+- Focused frontend verification passed: `corepack pnpm --filter @xmeta/web test -- src/components/xmeta/workflow-canvas/workflow-canvas-workspace.test.tsx` reported 1 file / 9 tests.
+- Full frontend verification passed: `corepack pnpm --filter @xmeta/web test` reported 9 files / 33 tests.
 - `corepack pnpm --filter @xmeta/web typecheck` passed.
 - `corepack pnpm --filter @xmeta/web build` passed and included `/workspace`.
-- Production Browser QA on `http://127.0.0.1:3000/workspace` passed for the revised workflow: AI chat-style MV world input visible, `Generate` FastAPI endpoint sequence returned 200/202/200/200, Script node became `ready`, selectable Storyboard/Characters/Scene response targets rendered, no console errors, no failed requests, no document overflow, and no misleading video generation claim.
-- Browser-comment verification passed: baseline `.\init.ps1`, focused workspace plus TriplD chat tests 2 files / 9 tests, backend pytest 5 tests, backend ruff, full web tests 9 files / 29 tests, `corepack pnpm --filter @xmeta/web typecheck`, and `corepack pnpm --filter @xmeta/web build`.
-- Browser-comment QA passed on `http://127.0.0.1:3000/workspace`: white canvas and editor backgrounds measured, vertical input/response flow confirmed, Storyboard/Characters/Scene output buttons worked, Script node preview contained only the submitted world view, endpoint sequence returned 200/202/200/200, console errors empty, failed requests empty, and no horizontal overflow.
-- Browser-comment final closure passed: feature JSON validation, `git diff --check` with line-ending warnings only, and final `.\init.ps1` rerunning web tests: 9 files / 29 tests.
-- Final closure passed for the revised MV workflow: feature JSON validation, `git diff --check` with line-ending warnings only, and final `.\init.ps1` rerunning web tests: 9 files / 29 tests.
-- Follow-up browser-comment verification passed: baseline `.\init.ps1`; focused workspace plus TriplD chat tests 2 files / 9 tests; full web tests 9 files / 29 tests; `corepack pnpm --filter @xmeta/web typecheck`; `corepack pnpm --filter @xmeta/web build`; bundled Python backend pytest 5 tests with one upstream Starlette TestClient deprecation warning; bundled Python ruff.
-- Follow-up production Browser QA passed on `http://localhost:3002/workspace`: Choose output absent, dropdown options exactly Storyboard/Characters/Scene, response above input, drag/resize/close/reopen worked, generation returned 200/202/200/200, Script node became ready, no console errors, no failed requests, and no horizontal overflow.
-- Inline-composer verification passed: baseline `.\init.ps1`; focused workspace test 1 file / 5 tests; full web tests 9 files / 29 tests; `corepack pnpm --filter @xmeta/web typecheck`; `corepack pnpm --filter @xmeta/web build`; bundled Python backend pytest 5 tests with one upstream Starlette TestClient deprecation warning; bundled Python ruff.
-- Inline-composer Browser QA passed on `http://localhost:3002/workspace`: no floating Script editor, inline composer below the selected Script node, history initially hidden, `AI修改` generated response history between node and input, endpoint sequence returned 200/202/200/200, Script node became ready, no console errors, no failed requests, and no horizontal overflow.
+- JSON validation passed for `feature_list.json` and `feature_tasks/4.json`.
+- `git diff --check` passed with line-ending warnings only.
+- Final `.\init.ps1` passed after artifact updates and reran web tests: 9 files / 33 tests.
+- Browser QA on `http://localhost:3000/workspace` passed click-by-click for selecting Script, opening `AI淇敼`, hiding/restoring response history, switching model, configured-model error placement, mock Ready success path, confirmed Script preview, 50% zoom geometry stability, and far-left node dragging.
+- Temporary FastAPI mock server on `127.0.0.1:8000` was stopped after Browser QA.
+- Evaluation subagent recorded 90/100 before final artifact closure, with no source behavior findings; the only finding was missing final closure evidence.
 
 ## Boundaries
 
 - Production auth and multi-user workspace management remain Feature 15.
 - Durable PostgreSQL workflow/task/history persistence, queue workers, object storage, asset lineage, and generated media remain later features.
-- Final prompt wording and model-quality tuning are intentionally deferred; the prompt builder is centralized for later adjustment.
-- Storyboard editing remains Feature 4 and should consume Script Node structured output rather than replacing this feature.
+- Full Storyboard Node implementation still needs editable shot-list fields for scene, character, action, dialogue, camera, duration, and prompt.
+- Character, scene, image composition, audio, video, export, asset library, and history features remain separate later features.
 
 ## Next Commands
 
 - Startup: `.\init.ps1`
-- Next feature prep: read `feature_tasks/4.json`
+- Focused web test: `corepack pnpm --filter @xmeta/web test -- src/components/xmeta/workflow-canvas/workflow-canvas-workspace.test.tsx`
 - Web test: `corepack pnpm --filter @xmeta/web test`
 - Web typecheck: `corepack pnpm --filter @xmeta/web typecheck`
 - Web build: `corepack pnpm --filter @xmeta/web build`
-- Backend test: `C:\Users\AI\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe -m pytest services/api/tests`
