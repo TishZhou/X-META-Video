@@ -1,7 +1,12 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
-import { WorkflowCanvasWorkspace } from "./workflow-canvas-workspace";
+import { workflowNodeTemplates } from "@/lib/workflow-canvas/graph";
+
+import {
+  formatTemplateIoLabel,
+  WorkflowCanvasWorkspace,
+} from "./workflow-canvas-workspace";
 
 describe("WorkflowCanvasWorkspace", () => {
   it("renders the workspace route regions and honest deferred states", () => {
@@ -26,6 +31,10 @@ describe("WorkflowCanvasWorkspace", () => {
     expect(html).toContain('data-workspace-bottom-toolbar="true"');
     expect(html).toContain('aria-label="Canvas zoom"');
     expect(html).toContain('data-workspace-zoom-range="true"');
+    expect(html).toContain('type="range"');
+    expect(html).toContain('min="50"');
+    expect(html).toContain('max="140"');
+    expect(html).toContain('step="1"');
     expect(html).not.toContain('aria-label="Select"');
     expect(html).not.toContain('aria-label="Move"');
     expect(html).not.toContain('aria-label="Fit view"');
@@ -34,6 +43,24 @@ describe("WorkflowCanvasWorkspace", () => {
     expect(html).not.toContain('data-workspace-add-menu="true"');
     expect(html).not.toContain("Node palette");
     expect(html).not.toContain("Quick add");
+  });
+
+  it("formats add-node menu labels with explicit input and output flow", () => {
+    const audioTemplate = workflowNodeTemplates.find(
+      (template) => template.type === "audio",
+    );
+    const videoTemplate = workflowNodeTemplates.find(
+      (template) => template.type === "video",
+    );
+
+    expect(audioTemplate).toBeDefined();
+    expect(videoTemplate).toBeDefined();
+    expect(formatTemplateIoLabel(audioTemplate!)).toBe(
+      "Audio: Input Dialogue -> Output Audio",
+    );
+    expect(formatTemplateIoLabel(videoTemplate!)).toBe(
+      "Video: Input Image + Audio -> Output Video",
+    );
   });
 
   it("renders initial typed graph nodes and selectable connection labels", () => {

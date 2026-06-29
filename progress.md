@@ -15,10 +15,20 @@ Record major decisions and progress each session. Keep the current verified stat
 - Current component guidance: `web-design-001` installed the user-provided TriplD shadcn component set as local source. See the concise usage map in `docs/TRIPLED_COMPONENT_GUIDE.md`.
 - Current design-system foundation: `web-design-002` defines shared style, layout, motion, responsive, accessibility, and product state language directly in frontend code under `apps/web/src/lib/design-system.ts`, `apps/web/src/components/xmeta/design-primitives.tsx`, `apps/web/src/index.css`, and `apps/web/tailwind.config.ts`.
 - Current app foundation: `web-design-004` implements the global shell, shared page containers, and wider desktop layout rhythm while preserving the root TriplD landing composition.
-- Current workspace canvas revision: Feature 2 `/workspace` now uses a canvas-first dark dotted work surface with a floating project bar, a persistent `Local only / FastAPI deferred / AI disabled` boundary label, a single bottom `Add node` entry, default nodes fitted into the first viewport, blank-canvas drag panning, one combined Canvas zoom slider, drag-line port connections, and no duplicated left node palette or right monitoring/Inspector panel.
+- Current workspace canvas revision: Feature 2 `/workspace` now uses a canvas-first dark dotted work surface with a floating project bar, a persistent `Local only / FastAPI deferred / AI disabled` boundary label, a single bottom `Add node` entry with explicit `Input -> Output` node flow labels, default nodes fitted into the first viewport, blank-canvas drag panning, one combined toolbar-inline Canvas zoom range slider, drag-line port connections, and no duplicated left node palette or right monitoring/Inspector panel.
 - Current blocker: none for starting Feature 3 after reading `feature_tasks/3.json` and rerunning the standard startup path.
 
 ## Session Log
+
+### Session 029
+
+- Date: 2026-06-29
+- Goal: Address follow-up browser comments on Feature 2 `/workspace`: make the Canvas zoom range visibly adjustable and make Add node names explicit about input/output flow.
+- Completed: Replaced the floating zoom popover with a toolbar-inline `input type="range"` slider that expands beside the `Canvas zoom` button on click/hover/focus; kept the 50%-140% free percentage range with 1% steps; changed Add node list labels to `Title: Input ... -> Output ...`; mapped Audio input from internal `Lines` wording to user-facing `Dialogue`; and kept the fix inside the Feature 2 web canvas.
+- Verification run: Baseline `.\init.ps1` passed before changes with 9 files / 27 tests; focused workflow canvas workspace tests passed 1 file / 4 tests; typecheck passed; full web tests passed 9 files / 28 tests; build passed; JSON validation passed; `git diff --check` passed with line-ending warnings only; final `.\init.ps1` passed with 9 files / 28 tests.
+- Rendered QA: Browser QA on `http://localhost:3000/workspace` verified the inline zoom range is an `INPUT` of type `range` with min 50, max 140, step 1; keyboard interaction changed the canvas stage scale to `0.56`; the expanded zoom control measured 224px wide with a visible range track; Add node menu text included `Audio: Input Dialogue -> Output Audio` and `Video: Input Image + Audio -> Output Video`; old single `Audio` menu naming was absent. The only console warning observed was a Next.js Fast Refresh full-reload warning caused by local source edits.
+- Known risk or unresolved issue: FastAPI durable persistence and AI execution remain deferred to later features.
+- Next best step: Start Feature 3 only after reading `feature_tasks/3.json` and rerunning `.\init.ps1`.
 
 ### Session 027
 

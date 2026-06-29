@@ -8,16 +8,16 @@
 - `AGENTS.md` had pre-existing user edits and was not reverted.
 - Baseline `.\init.ps1` passed before the 2026-06-29 tailoring pass and reported 9 web test files / 26 tests.
 - Post-tailoring verification passed: focused workflow canvas tests 2 files / 8 tests, full web tests 9 files / 27 tests, typecheck, build, fresh Browser QA, JSON validation, `git diff --check`, final `.\init.ps1`, and artifact evidence updates.
-- A later browser-comment pass is in progress/verified at code level: focused workflow canvas tests, typecheck, full web tests, and build passed after the toolbar, zoom, Add node, pan, and drag-connection changes.
+- A follow-up browser-comment pass is in progress/verified at focused-code and Browser-QA level: Canvas zoom is now a visible toolbar-inline range slider, and Add node labels now show explicit input/output flow.
 - The dev server is intentionally running at `http://localhost:3000`, and the in-app browser is open on `/workspace`.
 
 ## Feature 2 Implementation State
 
 - `/workspace` renders a canvas-first dark dotted work surface with hidden global top bar, floating project/status controls, graph viewport, bottom toolbar, local-only draft status, and the persistent boundary label `Local only / FastAPI deferred / AI disabled`.
 - The default Script, Storyboard, and Composition nodes are framed into the first desktop viewport through calculated initial/Fit view viewport logic.
-- Users can add placeholder nodes for script, storyboard, character image, prop/asset, scene image, image composition, audio, video, and export from the single bottom `Add node` menu, now displayed as a compact list of node names.
+- Users can add placeholder nodes for script, storyboard, character image, prop/asset, scene image, image composition, audio, video, and export from the single bottom `Add node` menu, now displayed as compact `Input -> Output` flow labels.
 - Blank-canvas pointer drag pans the viewport; the old Select/Move/Fit toolbar cluster has been removed.
-- Zoom is one combined `Canvas zoom` control with a hover/focus/click slider instead of separate zoom-in and zoom-out buttons.
+- Zoom is one combined `Canvas zoom` control with a toolbar-inline native range slider instead of separate zoom-in and zoom-out buttons.
 - Users create connections by dragging a line from an output port to a compatible input port; compatible input ports still highlight during the drag.
 - Newly added placeholder nodes start below the default graph instead of overlapping the visible starting flow.
 - Typed graph state lives under `apps/web/src/lib/workflow-canvas/` with first-class node, port, edge, selection, viewport, draft, and snapshot records.
@@ -35,6 +35,7 @@
 - 2026-06-29 fresh Browser QA: default node bounds stayed within the 1254px viewport (`script` right 431, `storyboard` right 771, `composition` right 1111), boundary label was visible, no Node palette/Quick add/Inspector text, no document overflow, Add Audio changed node count 3 -> 4, the Audio node did not overlap the default graph, and no warn/error logs occurred during the QA window.
 - 2026-06-29 verification: focused workflow canvas tests passed 2 files / 8 tests; full web tests passed 9 files / 27 tests; typecheck passed; build passed; JSON validation passed; `git diff --check` passed with line-ending warnings only.
 - 2026-06-29 browser-comment verification: focused workflow canvas tests passed 2 files / 8 tests; typecheck passed; full web tests passed 9 files / 27 tests; build passed. Browser interaction QA verified Add node list-only menu, blank-canvas panning, and drag connection edge count 2 -> 3 before in-app Browser drag automation timed out on zoom. Final short Browser health check verified `Canvas zoom` and slider DOM exist, old toolbar labels are absent, no framework overlay appears, and no warn/error logs occurred.
+- 2026-06-29 follow-up browser-comment verification: focused workspace tests passed 1 file / 4 tests; full web tests passed 9 files / 28 tests; typecheck, build, JSON validation, `git diff --check`, and final `.\init.ps1` passed. Browser QA verified the toolbar-inline `Canvas zoom` range is `input[type=range]` with min 50, max 140, and step 1; interaction changed the canvas stage to `scale(0.56)` and showed 56%; Add node menu labels include `Audio: Input Dialogue -> Output Audio` and `Video: Input Image + Audio -> Output Video` with no bare `Audio` item.
 - Final `.\init.ps1` passed after artifact updates and reran web verification: 9 test files / 27 tests.
 - Evaluator fix pass: toolbar Add Script now changes rendered node count from 3 to 4, all-node quick-add buttons exist, mode/help/context/inspector toggles are stateful, mobile canvas has internal scrollability at 390x844 without document overflow, and missing/stale ports reject with a visible reason. Post-fix tests passed 9 files / 26 tests, typecheck passed, build passed, and desktop/mobile Browser QA had empty console warn/error logs.
 

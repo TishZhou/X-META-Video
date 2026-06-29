@@ -569,21 +569,25 @@ function CanvasDock({
     >
       {showAddMenu ? (
         <div
-          className="absolute bottom-14 left-0 w-56 overflow-hidden rounded-xl border border-white/10 bg-neutral-900/95 p-1.5 shadow-2xl backdrop-blur sm:left-1/2 sm:-translate-x-1/2"
+          className="absolute bottom-14 left-0 w-72 overflow-hidden rounded-xl border border-white/10 bg-neutral-900/95 p-1.5 shadow-2xl backdrop-blur sm:left-1/2 sm:-translate-x-1/2"
           data-workspace-add-menu="true"
         >
           <div className="flex flex-col gap-1">
-            {templates.map((template) => (
-              <button
-                key={template.type}
-                type="button"
-                aria-label={`Add ${template.title} node`}
-                className="rounded-lg px-3 py-2 text-left text-sm font-medium text-neutral-100 transition hover:bg-white/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
-                onClick={() => onAddNode(template.type)}
-              >
-                {template.title}
-              </button>
-            ))}
+            {templates.map((template) => {
+              const ioLabel = formatTemplateIoLabel(template);
+
+              return (
+                <button
+                  key={template.type}
+                  type="button"
+                  aria-label={`Add ${ioLabel} node`}
+                  className="rounded-lg px-3 py-2 text-left text-sm font-medium text-neutral-100 transition hover:bg-white/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+                  onClick={() => onAddNode(template.type)}
+                >
+                  {ioLabel}
+                </button>
+              );
+            })}
           </div>
         </div>
       ) : null}
@@ -633,99 +637,68 @@ type ZoomControlProps = {
 };
 
 function ZoomControl({ open, zoom, onToggle, onZoomChange }: ZoomControlProps) {
-  const [dragging, setDragging] = useState(false);
-  const trackRef = useRef<HTMLDivElement>(null);
-  const zoomPercent =
-    ((zoom - MIN_INITIAL_ZOOM) / (1.4 - MIN_INITIAL_ZOOM)) * 100;
-
-  function applyZoomFromClientX(clientX: number) {
-    const rect = trackRef.current?.getBoundingClientRect();
-
-    if (!rect) {
-      return;
-    }
-
-    const ratio = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
-
-    onZoomChange(MIN_INITIAL_ZOOM + ratio * (1.4 - MIN_INITIAL_ZOOM));
-  }
+  const zoomPercent = Math.round(zoom * 100);
 
   return (
-    <div className="group relative">
+    <div className="group flex items-center gap-2">
       <ToolbarButton active={open} label="Canvas zoom" onClick={onToggle}>
         <Search aria-hidden="true" data-icon="inline-start" />
       </ToolbarButton>
       <div
         className={cn(
-          "pointer-events-none absolute bottom-12 left-1/2 w-48 -translate-x-1/2 rounded-xl border border-white/10 bg-neutral-900/95 p-3 opacity-0 shadow-2xl backdrop-blur transition group-focus-within:pointer-events-auto group-focus-within:opacity-100 group-hover:pointer-events-auto group-hover:opacity-100",
-          open && "pointer-events-auto opacity-100",
+          "pointer-events-none flex w-0 items-center gap-2 overflow-hidden rounded-lg border border-transparent opacity-0 transition-all group-focus-within:pointer-events-auto group-focus-within:w-56 group-focus-within:border-white/10 group-focus-within:bg-white/[0.04] group-focus-within:px-2 group-focus-within:py-1.5 group-focus-within:opacity-100 group-hover:pointer-events-auto group-hover:w-56 group-hover:border-white/10 group-hover:bg-white/[0.04] group-hover:px-2 group-hover:py-1.5 group-hover:opacity-100",
+          open &&
+            "pointer-events-auto w-56 border-white/10 bg-white/[0.04] px-2 py-1.5 opacity-100",
         )}
         data-workspace-zoom-slider="true"
       >
-        <div className="mb-2 flex items-center justify-between text-xs text-neutral-300">
-          <span>Zoom</span>
-          <span>{Math.round(zoom * 100)}%</span>
-        </div>
-        <div
+        <span className="w-9 text-right text-xs tabular-nums text-neutral-300">
+          {zoomPercent}%
+        </span>
+        <input
           aria-label="Canvas zoom"
-          aria-valuemax={140}
-          aria-valuemin={50}
-          aria-valuenow={Math.round(zoom * 100)}
-          className="relative h-5 cursor-ew-resize"
+          className="h-2 min-w-0 flex-1 cursor-ew-resize accent-white"
           data-workspace-zoom-range="true"
-          onPointerDown={(event) => {
-            event.stopPropagation();
-            setDragging(true);
-            applyZoomFromClientX(event.clientX);
-          }}
-          onPointerLeave={() => setDragging(false)}
-          onPointerMove={(event) => {
-            if (dragging) {
-              applyZoomFromClientX(event.clientX);
-            }
-          }}
-          onPointerUp={() => setDragging(false)}
-          onKeyDown={(event) => {
-            if (event.key === "ArrowLeft" || event.key === "ArrowDown") {
-              event.preventDefault();
-              onZoomChange(zoom - 0.05);
-            }
-
-            if (event.key === "ArrowRight" || event.key === "ArrowUp") {
-              event.preventDefault();
-              onZoomChange(zoom + 0.05);
-            }
-
-            if (event.key === "Home") {
-              event.preventDefault();
-              onZoomChange(MIN_INITIAL_ZOOM);
-            }
-
-            if (event.key === "End") {
-              event.preventDefault();
-              onZoomChange(1.4);
-            }
-          }}
-          ref={trackRef}
-          role="slider"
-          tabIndex={0}
+          max={140}
+          min={50}
+          onChange={(event) => onZoomChange(Number(event.currentTarget.value) / 100)}
+          onInput={(event) => onZoomChange(Number(event.currentTarget.value) / 100)}
+          onPointerDown={(event) => event.stopPropagation()}
+          step={1}
+          type="range"
+          value={zoomPercent}
         />
-        <div
-          className="pointer-events-none absolute left-3 right-3 bottom-5 h-1.5 rounded-full bg-white/15"
-          aria-hidden="true"
-        >
-          <div
-            className="h-full rounded-full bg-white"
-            style={{ width: `${zoomPercent}%` }}
-          />
-          <span
-            className="absolute top-1/2 block size-3 -translate-y-1/2 rounded-full border border-neutral-950 bg-white shadow"
-            style={{ left: `calc(${zoomPercent}% - 0.375rem)` }}
-          />
-        </div>
+        <span className="text-[0.68rem] text-neutral-500">140%</span>
       </div>
     </div>
   );
+}
+
+export function formatTemplateIoLabel(template: (typeof workflowNodeTemplates)[number]) {
+  const inputs = template.ports
+    .filter((port) => port.direction === "input")
+    .map((port) => formatPortDisplayLabel(port.label));
+  const outputs = template.ports
+    .filter((port) => port.direction === "output")
+    .map((port) => formatPortDisplayLabel(port.label));
+
+  return `${template.title}: Input ${formatPortSummary(inputs)} -> Output ${formatPortSummary(outputs)}`;
+}
+
+function formatPortSummary(labels: string[]) {
+  return labels.length > 0 ? labels.join(" + ") : "None";
+}
+
+function formatPortDisplayLabel(label: string) {
+  if (label === "Lines") {
+    return "Dialogue";
+  }
+
+  if (label === "Clip") {
+    return "Video";
+  }
+
+  return label;
 }
 
 type ToolbarButtonProps = {
