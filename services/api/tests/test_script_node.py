@@ -24,17 +24,9 @@ def clean_store_and_provider_env(monkeypatch: pytest.MonkeyPatch) -> None:
 
 def script_payload(**overrides: object) -> dict[str, object]:
     payload: dict[str, object] = {
-        "creative_brief": "A runaway idol discovers a hidden city under the stage.",
-        "content_type": "comic_drama",
-        "style": "neon noir",
-        "theme": "identity and trust",
-        "world_setting": "a rain-soaked future music district",
-        "duration_seconds": 90,
-        "language": "English",
-        "target_platform": "shorts",
-        "audience": "young adults",
-        "constraints": ["Keep scenes PG-13"],
-        "references": ["Backstage mystery tone"],
+        "world_description": (
+            "A sweet summer MV world with two girls, a desert jeep, and a neon stage."
+        ),
     }
     payload.update(overrides)
     return payload
@@ -49,10 +41,10 @@ def save_node(project_id: str = "project-1", node_id: str = "script-1") -> dict[
     return response.json()
 
 
-def test_patch_script_node_validates_content_type() -> None:
+def test_patch_script_node_validates_required_world_description() -> None:
     response = client.patch(
         "/api/v1/projects/project-1/nodes/script-1",
-        json={"input": script_payload(content_type="feature_film")},
+        json={"input": script_payload(world_description="")},
     )
 
     assert response.status_code == 422
@@ -64,7 +56,7 @@ def test_patch_script_node_saves_input_and_versions_updates() -> None:
         "/api/v1/projects/project-1/nodes/script-1",
         json={
             "input": script_payload(
-                creative_brief="A second brief for the same script node."
+                world_description="A second MV world for the same script node."
             )
         },
     )
@@ -73,7 +65,10 @@ def test_patch_script_node_saves_input_and_versions_updates() -> None:
     second = second_response.json()
     assert first["version"] == 1
     assert second["version"] == 2
-    assert second["input"]["creative_brief"] == "A second brief for the same script node."
+    assert (
+        second["input"]["world_description"]
+        == "A second MV world for the same script node."
+    )
 
 
 def test_run_script_node_creates_succeeded_task_and_task_lookup() -> None:
@@ -105,15 +100,18 @@ def test_task_result_returns_deterministic_mock_script_output() -> None:
     result_body = result_response.json()
     result = result_body["output"]
     assert result_body["status"] == "succeeded"
-    assert result["title"] == "Comic Drama: A runaway idol discovers a hidden city under the"
-    assert result["characters"][0]["name"] == "Lead"
-    assert result["story_beats"][0]["beat"] == "Opening hook"
-    assert result["shot_plan"][0]["duration_seconds"] == 30
-    assert result["dialogue_or_lyrics"][0]["speaker"] == "Lead"
-    assert result["camera_notes"]
-    assert result["scene_prompts"]
-    assert result["audio_notes"]
-    assert result["production_checklist"]
+    assert result["title"] == "MV World: A sweet summer MV world with two girls, a desert"
+    assert "world-view description" in result["world_overview"]
+    assert "third-person cinematic POV" in result["storyboard_direction"]["pov"]
+    assert result["storyboard_direction"]["shots"][0]["shot_number"] == 1
+    assert result["characters"][0]["name"] == "Lead Girl"
+    assert result["characters"][0]["overview"] == (
+        "Sweet visual direction with a lonely, determined core."
+    )
+    assert result["scene_descriptions"][0]["location"] == (
+        "desert highway beside a vintage jeep"
+    )
+    assert "desert jeep" in result["scene_descriptions"][0]["visual_prompt"]
     assert result["missing_inputs"] == []
 
 

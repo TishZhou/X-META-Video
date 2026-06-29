@@ -7,7 +7,7 @@ Record major decisions and progress each session. Keep the current verified stat
 - Repository root: `D:\X-META-Video`
 - Standard startup path: `.\init.ps1`
 - Standard web verification path: `corepack pnpm --filter @xmeta/web test`
-- Current highest-priority unfinished feature: Feature 3, Script Node
+- Current highest-priority unfinished feature: Feature 4, Storyboard Node
 - Current active feature: none; Feature 3 is now `passing`.
 - Current reset status: Feature 2 and Feature 3 have been removed from the active plan, their task files have been deleted, old web implementation files have been cleared while preserving minimal app structure, and the remaining feature plan has now been renumbered so old Features 4-17 are new Features 2-15.
 - Current feature numbering: Feature 1 remains Web Design and is now recorded as `passing`; Feature 2 is Workflow Canvas Foundation and is now `passing`; old Features 5-17 shifted to new Features 3-15.
@@ -16,9 +16,18 @@ Record major decisions and progress each session. Keep the current verified stat
 - Current design-system foundation: `web-design-002` defines shared style, layout, motion, responsive, accessibility, and product state language directly in frontend code under `apps/web/src/lib/design-system.ts`, `apps/web/src/components/xmeta/design-primitives.tsx`, `apps/web/src/index.css`, and `apps/web/tailwind.config.ts`.
 - Current app foundation: `web-design-004` implements the global shell, shared page containers, and wider desktop layout rhythm while preserving the root TriplD landing composition.
 - Current workspace canvas revision: Feature 2 `/workspace` now uses a canvas-first dark dotted work surface with a floating project bar, a persistent `Local only / FastAPI deferred / AI disabled` boundary label, a single bottom `Add node` entry with explicit `Input -> Output` node flow labels, default nodes fitted into the first viewport, blank-canvas drag panning, one combined toolbar-inline Canvas zoom range slider, drag-line port connections, and no duplicated left node palette or right monitoring/Inspector panel.
+- Current Script Node revision: Feature 3 now uses one AI chat-style MV world-view input (`world_description`) and returns structured storyboard direction, character profiles, and concrete scene descriptions through the FastAPI/mock provider contract.
 - Current blocker: none.
 
 ## Session Log
+
+### Session 031
+
+- Date: 2026-06-29
+- Goal: Revise Feature 3 Script Node workflow from a multi-field production form to the user-approved MV world-description interaction.
+- Completed: Replaced Script Node input contracts with a single `world_description`; revised shared TypeScript and FastAPI/Pydantic output contracts to storyboard direction, character profiles, and scene descriptions; updated the centralized prompt builder and deterministic mock provider; made the TriplD AI chat component reusable as a controlled input; changed the `/workspace` selected Script node editor to use that AI chat input; revised output tabs to Overview, Storyboard, Characters, and Scenes; updated backend/frontend tests and API/planning artifacts.
+- Verification run: Backend pytest passed 5 tests with one upstream Starlette TestClient deprecation warning; backend ruff passed; focused workspace test passed 1 file / 5 tests; full web tests passed 9 files / 29 tests; `corepack pnpm --filter @xmeta/web typecheck` passed; `corepack pnpm --filter @xmeta/web build` passed. Production Browser QA passed on `http://127.0.0.1:3000/workspace`: AI chat-style MV world input visible, endpoint sequence returned 200/202/200/200, Script node became ready, Overview/Storyboard/Characters/Scenes tabs rendered, console errors empty, failed requests empty, no horizontal overflow, and no misleading media-generation claim. JSON validation passed for `feature_list.json` and `feature_tasks/3.json`; `git diff --check` passed with line-ending warnings only; final `.\init.ps1` passed and reran web tests: 9 files / 29 tests.
+- Known risk or unresolved issue: Real prompt tuning and provider credentials remain intentionally deferred; downstream image/audio/video generation remains later feature scope.
 
 ### Session 030
 

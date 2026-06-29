@@ -97,16 +97,18 @@
                          "current_task_status":  "passing",
                          "current_task_evidence":  [
                                                        "2026-06-29 baseline .\\init.ps1 passed before Feature 3 implementation and reran web tests: 9 test files / 28 tests.",
-                                                       "packages/shared-contracts/src/index.ts defines Script Node input, output, settings, task, and default input contracts.",
-                                                       "services/api/xmeta_api implements FastAPI Script Node PATCH/run/task/result routes, Pydantic schemas, in-memory dev state, centralized prompt builder, mock provider, and SCRIPT_MODEL_* provider config validation.",
+                                                       "packages/shared-contracts/src/index.ts defines revised Script Node world_description input, storyboard direction, character profile, scene description, settings, task, and default input contracts.",
+                                                       "services/api/xmeta_api implements FastAPI Script Node PATCH/run/task/result routes, revised Pydantic schemas, in-memory dev state, centralized prompt builder, mock MV world provider, and SCRIPT_MODEL_* provider config validation.",
                                                        ".env.example documents SCRIPT_MODEL_PROVIDER, SCRIPT_MODEL_BASE_URL, SCRIPT_MODEL_API_KEY, SCRIPT_MODEL_NAME, SCRIPT_MODEL_TIMEOUT_SECONDS, and SCRIPT_MODEL_MAX_RETRIES.",
-                                                       "apps/web/src/components/xmeta/workflow-canvas/workflow-canvas-workspace.tsx exposes the selected Script node editor, saves/runs through FastAPI, renders structured output tabs, and changes the Script node to ready only after output exists.",
+                                                       "apps/web/src/components/uitripled/ai-chat-interface-shadcnui.tsx now supports controlled Script Node usage while preserving default standalone behavior.",
+                                                       "apps/web/src/components/xmeta/workflow-canvas/workflow-canvas-workspace.tsx exposes the selected Script node editor with one AI chat-style MV world description input, saves/runs through FastAPI, renders Overview/Storyboard/Characters/Scenes output tabs, and changes the Script node to ready only after output exists.",
                                                        "Backend verification passed: bundled Python pytest services/api/tests reported 5 passed with one upstream Starlette TestClient deprecation warning.",
                                                        "Frontend verification passed: focused workspace tests 2 files / 10 tests, full web tests 9 files / 29 tests, typecheck, and build.",
-                                                       "Production Browser QA on http://127.0.0.1:3000/workspace passed: Script editor visible, input-to-output flow called PATCH/run/task/result endpoints with 200/202/200/200, Script node became ready, output tabs rendered, no console errors, no failed requests, no document overflow, and no misleading video generation claim.",
+                                                       "Revised MV workflow verification passed: backend pytest 5 tests, backend ruff, focused workspace test 1 file / 5 tests, full web tests 9 files / 29 tests, typecheck, and build.",
+                                                       "Production Browser QA on http://127.0.0.1:3000/workspace passed for the revised MV workflow: AI chat-style world description input visible, input-to-output flow called PATCH/run/task/result endpoints with 200/202/200/200, Script node became ready, Overview/Storyboard/Characters/Scenes tabs rendered, no console errors, no failed requests, no document overflow, and no misleading video generation claim.",
                                                        "Final closure passed: feature_list.json and feature_tasks/3.json JSON validation, git diff --check with line-ending warnings only, and final .\\init.ps1 rerunning web tests: 9 files / 29 tests."
                                                    ],
-                         "user_visible_behavior":  "Users can enter a creative brief and generate structured plot, character profiles, storyboard draft, dialogue or lyrics, and camera notes through a backend API.",
+                         "user_visible_behavior":  "Users can enter one MV world-view description through the Script node AI chat input and generate structured storyboard direction, character profiles, and concrete scene descriptions through a backend API.",
                          "task_file":  "feature_tasks/3.json"
                      },
                      {

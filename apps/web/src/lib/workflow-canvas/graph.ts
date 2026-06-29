@@ -25,13 +25,13 @@ export const workflowNodeTemplates = [
   {
     type: "script",
     title: "Script",
-    description: "Turns a creative brief into plot, dialogue, profiles, and camera notes.",
+    description: "Expands an MV world prompt into storyboard, characters, and scenes.",
     ports: [
-      { key: "brief-in", label: "Brief", direction: "input", dataType: "brief" },
+      { key: "brief-in", label: "World", direction: "input", dataType: "brief" },
       { key: "script-out", label: "Script", direction: "output", dataType: "script" },
       {
         key: "profiles-out",
-        label: "Profiles",
+        label: "Characters",
         direction: "output",
         dataType: "character",
       },

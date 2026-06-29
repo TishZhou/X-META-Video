@@ -11,8 +11,8 @@
 
 ## Core Workflow
 
-1. User enters a creative brief.
-2. Script node generates plot, storyboard, dialogue / lyrics, camera movement, and character profiles.
+1. User enters an MV world-view description.
+2. Script node expands it into storyboard direction, character profiles, and concrete scene descriptions.
 3. Asset nodes generate characters, outfits, props, accessories, and scenes.
 4. Composition node merges characters and scenes into storyboard grids.
 5. Audio node generates voice, narration, or singing from dialogue / lyrics.
@@ -39,8 +39,8 @@ The canvas experience should clearly communicate entry, hover, selection, connec
 
 ### Script Node
 
-**Input:** creative brief, IP setting, style, theme, duration  
-**Output:** plot summary, storyboard, dialogue / lyrics, camera movement, character profiles
+**Input:** one MV world-view description with theme, character count, background, and mood
+**Output:** storyboard direction with POV/shots, character profiles with appearance and wardrobe, concrete scene descriptions
 
 ### Character Image Node
 

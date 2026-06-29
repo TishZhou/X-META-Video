@@ -15,6 +15,7 @@ import {
   Star,
   Zap,
 } from "lucide-react";
+import type { ChangeEvent } from "react";
 import { useEffect, useRef, useState } from "react";
 
 type DropdownType = "share" | "quick" | "history" | "magic" | "model" | null;
@@ -51,7 +52,35 @@ const magicOptions: ActionOption[] = [
 
 const models = ["GPT 5.0", "GPT 4.5 Turbo", "GPT 4.0", "Claude 3.5 Sonnet"];
 
-export function AIChatInterface() {
+type AIChatInterfaceProps = {
+  value?: string;
+  onValueChange?: (value: string) => void;
+  onSubmit?: (value: string) => void;
+  placeholder?: string;
+  eyebrow?: string;
+  description?: string;
+  submitLabel?: string;
+  disabled?: boolean;
+  submitDisabled?: boolean;
+  showTools?: boolean;
+  modelLabel?: string;
+  textareaLabel?: string;
+};
+
+export function AIChatInterface({
+  value,
+  onValueChange,
+  onSubmit,
+  placeholder = "Ask AI anything...",
+  eyebrow = "Prompt",
+  description = "Share goals, context, tone, and desired output.",
+  submitLabel = "Send",
+  disabled = false,
+  submitDisabled = false,
+  showTools = true,
+  modelLabel,
+  textareaLabel = "Chat input",
+}: AIChatInterfaceProps = {}) {
   const [inputValue, setInputValue] = useState("");
   const [isFocused, setIsFocused] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<DropdownType>(null);
@@ -61,6 +90,8 @@ export function AIChatInterface() {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const shouldAnimate = !prefersReducedMotion;
+  const isControlled = value !== undefined;
+  const currentValue = isControlled ? value : inputValue;
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -76,15 +107,31 @@ export function AIChatInterface() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleTextareaChange = (
-    event: React.ChangeEvent<HTMLTextAreaElement>
-  ) => {
-    setInputValue(event.target.value);
+  const handleTextareaChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
+    const nextValue = event.target.value;
+
+    if (!isControlled) {
+      setInputValue(nextValue);
+    }
+    onValueChange?.(nextValue);
 
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
       textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
     }
+  };
+
+  const handleSubmit = () => {
+    if (disabled || submitDisabled) {
+      return;
+    }
+
+    if (onSubmit) {
+      onSubmit(currentValue);
+      return;
+    }
+
+    console.log("Action: send-message");
   };
 
   const renderDropdown = (
@@ -141,119 +188,124 @@ export function AIChatInterface() {
           <div className="relative space-y-5">
             <div className="flex flex-col gap-1 text-left">
               <span className="text-xs font-semibold uppercase tracking-[0.32em] text-foreground/45">
-                Prompt
+                {eyebrow}
               </span>
               <p className="text-sm text-foreground/60">
-                Share goals, context, tone, and desired output.
+                {description}
               </p>
             </div>
             <label htmlFor="chat-input" className="sr-only">
-              Ask AI anything
+              {textareaLabel}
             </label>
             <Textarea
               id="chat-input"
               ref={textareaRef}
-              value={inputValue}
+              value={currentValue}
               onChange={handleTextareaChange}
-              placeholder="Ask AI anything..."
+              placeholder={placeholder}
               className="w-full resize-none bg-transparent text-base text-foreground/90 placeholder:text-foreground/40 focus:outline-none"
               onFocus={() => setIsFocused(true)}
               onBlur={() => setIsFocused(false)}
               rows={1}
-              aria-label="Chat input"
+              aria-label={textareaLabel}
+              disabled={disabled}
             />
 
             <div
               className="flex flex-wrap items-center gap-2 border-t border-border/25 pt-3"
               ref={dropdownRef}
             >
-              <div className="relative">
-                <Button
-                  onClick={() =>
-                    setActiveDropdown(
-                      activeDropdown === "share" ? null : "share"
-                    )
-                  }
-                  className="group rounded-xl p-2 bg-background/80 transition-all hover:bg-foreground/[0.05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/40"
-                  aria-label="Share options"
-                  aria-expanded={activeDropdown === "share"}
-                  aria-haspopup="menu"
-                  type="button"
-                >
-                  <Share2
-                    size={18}
-                    className="text-foreground/50 group-hover:text-foreground"
-                    strokeWidth={2}
-                  />
-                </Button>
-                {renderDropdown("share", shareOptions)}
-              </div>
+              {showTools ? (
+                <>
+                  <div className="relative">
+                    <Button
+                      onClick={() =>
+                        setActiveDropdown(
+                          activeDropdown === "share" ? null : "share"
+                        )
+                      }
+                      className="group rounded-xl p-2 bg-background/80 transition-all hover:bg-foreground/[0.05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/40"
+                      aria-label="Share options"
+                      aria-expanded={activeDropdown === "share"}
+                      aria-haspopup="menu"
+                      type="button"
+                    >
+                      <Share2
+                        size={18}
+                        className="text-foreground/50 group-hover:text-foreground"
+                        strokeWidth={2}
+                      />
+                    </Button>
+                    {renderDropdown("share", shareOptions)}
+                  </div>
 
-              <div className="relative">
-                <Button
-                  onClick={() =>
-                    setActiveDropdown(
-                      activeDropdown === "quick" ? null : "quick"
-                    )
-                  }
-                  className="group rounded-xl p-2 bg-background/80 transition-all hover:bg-foreground/[0.05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/40"
-                  aria-label="Quick actions"
-                  aria-expanded={activeDropdown === "quick"}
-                  aria-haspopup="menu"
-                  type="button"
-                >
-                  <Zap
-                    size={18}
-                    className="text-foreground/50 group-hover:text-foreground"
-                    strokeWidth={2}
-                  />
-                </Button>
-                {renderDropdown("quick", quickOptions)}
-              </div>
+                  <div className="relative">
+                    <Button
+                      onClick={() =>
+                        setActiveDropdown(
+                          activeDropdown === "quick" ? null : "quick"
+                        )
+                      }
+                      className="group rounded-xl p-2 bg-background/80 transition-all hover:bg-foreground/[0.05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/40"
+                      aria-label="Quick actions"
+                      aria-expanded={activeDropdown === "quick"}
+                      aria-haspopup="menu"
+                      type="button"
+                    >
+                      <Zap
+                        size={18}
+                        className="text-foreground/50 group-hover:text-foreground"
+                        strokeWidth={2}
+                      />
+                    </Button>
+                    {renderDropdown("quick", quickOptions)}
+                  </div>
 
-              <div className="relative">
-                <Button
-                  onClick={() =>
-                    setActiveDropdown(
-                      activeDropdown === "history" ? null : "history"
-                    )
-                  }
-                  className="group rounded-xl p-2 bg-background/80 transition-all hover:bg-foreground/[0.05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/40"
-                  aria-label="History"
-                  aria-expanded={activeDropdown === "history"}
-                  aria-haspopup="menu"
-                  type="button"
-                >
-                  <Clock
-                    size={18}
-                    className="text-foreground/50 group-hover:text-foreground"
-                    strokeWidth={2}
-                  />
-                </Button>
-                {renderDropdown("history", historyOptions)}
-              </div>
+                  <div className="relative">
+                    <Button
+                      onClick={() =>
+                        setActiveDropdown(
+                          activeDropdown === "history" ? null : "history"
+                        )
+                      }
+                      className="group rounded-xl p-2 bg-background/80 transition-all hover:bg-foreground/[0.05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/40"
+                      aria-label="History"
+                      aria-expanded={activeDropdown === "history"}
+                      aria-haspopup="menu"
+                      type="button"
+                    >
+                      <Clock
+                        size={18}
+                        className="text-foreground/50 group-hover:text-foreground"
+                        strokeWidth={2}
+                      />
+                    </Button>
+                    {renderDropdown("history", historyOptions)}
+                  </div>
 
-              <div className="relative">
-                <Button
-                  onClick={() =>
-                    setActiveDropdown(
-                      activeDropdown === "magic" ? null : "magic"
-                    )
-                  }
-                  className="group rounded-xl p-2 bg-background/80 transition-all hover:bg-foreground/[0.05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/40"
-                  aria-label="Magic options"
-                  aria-expanded={activeDropdown === "magic"}
-                  aria-haspopup="menu"
-                  type="button"
-                >
-                  <Sparkles
-                    size={18}
-                    className="text-foreground/50 group-hover:text-foreground"
-                    strokeWidth={2}
-                  />
-                </Button>
-                {renderDropdown("magic", magicOptions)}
-              </div>
+                  <div className="relative">
+                    <Button
+                      onClick={() =>
+                        setActiveDropdown(
+                          activeDropdown === "magic" ? null : "magic"
+                        )
+                      }
+                      className="group rounded-xl p-2 bg-background/80 transition-all hover:bg-foreground/[0.05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/40"
+                      aria-label="Magic options"
+                      aria-expanded={activeDropdown === "magic"}
+                      aria-haspopup="menu"
+                      type="button"
+                    >
+                      <Sparkles
+                        size={18}
+                        className="text-foreground/50 group-hover:text-foreground"
+                        strokeWidth={2}
+                      />
+                    </Button>
+                    {renderDropdown("magic", magicOptions)}
+                  </div>
+                </>
+              ) : null}
 
               <div className="relative ml-auto">
                 <Button
@@ -266,14 +318,15 @@ export function AIChatInterface() {
                   aria-label="Select AI model"
                   aria-expanded={activeDropdown === "model"}
                   aria-haspopup="listbox"
-                  type="button"
+                type="button"
+                  disabled={disabled || Boolean(modelLabel)}
                 >
-                  <span>{selectedModel}</span>
+                  <span>{modelLabel ?? selectedModel}</span>
                   <ChevronDown size={16} className="text-foreground/50" />
                 </Button>
 
                 <AnimatePresence>
-                  {activeDropdown === "model" && (
+                  {activeDropdown === "model" && !modelLabel && (
                     <motion.div
                       key="model-dropdown"
                       initial={{ opacity: 0, y: -8 }}
@@ -317,9 +370,10 @@ export function AIChatInterface() {
                 type="button"
                 size="lg"
                 className="inline-flex items-center gap-2 rounded-full px-5 text-xs uppercase tracking-[0.28em]"
-                onClick={() => console.log("Action: send-message")}
+                disabled={disabled || submitDisabled}
+                onClick={handleSubmit}
               >
-                Send
+                {submitLabel}
                 <ArrowUpRight className="h-4 w-4" />
               </Button>
             </div>

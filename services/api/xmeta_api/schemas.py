@@ -6,12 +6,6 @@ from enum import StrEnum
 from pydantic import BaseModel, ConfigDict, Field
 
 
-class ContentType(StrEnum):
-    COMIC_DRAMA = "comic_drama"
-    MV = "mv"
-    SHORT_VIDEO = "short_video"
-
-
 class TaskStatus(StrEnum):
     QUEUED = "queued"
     RUNNING = "running"
@@ -24,17 +18,7 @@ class TaskStatus(StrEnum):
 class ScriptInput(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
-    creative_brief: str = Field(..., min_length=1)
-    content_type: ContentType
-    style: str = Field(..., min_length=1)
-    theme: str = Field(..., min_length=1)
-    world_setting: str = Field(..., min_length=1)
-    duration_seconds: int = Field(..., ge=1, le=7200)
-    language: str = Field(..., min_length=1)
-    target_platform: str = Field(..., min_length=1)
-    audience: str = Field(..., min_length=1)
-    constraints: list[str] = Field(default_factory=list)
-    references: list[str] = Field(default_factory=list)
+    world_description: str = Field(..., min_length=1)
 
 
 class ScriptSettings(BaseModel):
@@ -55,47 +39,45 @@ class ScriptNodeSaveRequest(BaseModel):
 
 class CharacterProfile(BaseModel):
     name: str
-    role: str
+    overview: str
+    style: str
+    clothing: str
+    height: str
+    appearance: str
     personality: str
     visual_prompt: str
-    dialogue_style: str
 
 
-class StoryBeat(BaseModel):
-    beat: str
-    purpose: str
-    summary: str
-
-
-class ShotPlanItem(BaseModel):
+class StoryboardShot(BaseModel):
     shot_number: int
-    scene: str
+    pov: str
+    framing: str
     action: str
-    characters: list[str]
-    dialogue: str
-    camera: str
+    camera_movement: str
     duration_seconds: int
-    image_prompt: str
 
 
-class DialogueLine(BaseModel):
-    speaker: str
-    text: str
-    delivery: str
+class StoryboardDirection(BaseModel):
+    pov: str
+    visual_rhythm: str
+    shots: list[StoryboardShot]
+
+
+class SceneDescription(BaseModel):
+    scene_number: int
+    shot_reference: int
+    characters: list[str]
+    location: str
+    description: str
+    visual_prompt: str
 
 
 class ScriptOutput(BaseModel):
     title: str
-    logline: str
-    plot_summary: str
+    world_overview: str
+    storyboard_direction: StoryboardDirection
     characters: list[CharacterProfile]
-    story_beats: list[StoryBeat]
-    shot_plan: list[ShotPlanItem]
-    dialogue_or_lyrics: list[DialogueLine]
-    camera_notes: list[str]
-    scene_prompts: list[str]
-    audio_notes: list[str]
-    production_checklist: list[str]
+    scene_descriptions: list[SceneDescription]
     missing_inputs: list[str]
 
 

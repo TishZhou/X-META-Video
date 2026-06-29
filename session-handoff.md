@@ -7,10 +7,11 @@
 - `AGENTS.md` had pre-existing user edits and was not reverted.
 - Baseline `.\init.ps1` passed before Feature 3 implementation and reported 9 web test files / 28 tests.
 - Feature 3 final evidence is recorded in `feature_list.json`, `feature_tasks/3.json`, `sprint-contract.md`, `evaluator-rubric.md`, and `progress.md`.
+- Feature 3 has been revised to the user-approved MV workflow: one AI chat-style world-view description input expands into storyboard direction, character profiles, and scene descriptions.
 
 ## Feature 3 Implementation State
 
-- Shared contracts live in `packages/shared-contracts/src/index.ts` for Script Node input, settings, output, task state, and default input.
+- Shared contracts live in `packages/shared-contracts/src/index.ts` for Script Node `world_description` input, settings, storyboard direction output, character profile output, scene description output, task state, and default input.
 - Root `.env.example` now includes server-only Script model settings: `SCRIPT_MODEL_PROVIDER`, `SCRIPT_MODEL_BASE_URL`, `SCRIPT_MODEL_API_KEY`, `SCRIPT_MODEL_NAME`, `SCRIPT_MODEL_TIMEOUT_SECONDS`, and `SCRIPT_MODEL_MAX_RETRIES`.
 - `docs/API.md` documents Script Node input/output shape and the provider env boundary.
 - FastAPI implementation lives under `services/api/xmeta_api/`:
@@ -20,8 +21,8 @@
   - `GET /api/v1/tasks/{task_id}/result` returns structured `output`.
   - Mock provider is default; non-mock provider selection validates required `SCRIPT_MODEL_*` env values and fails clearly if missing.
 - `/workspace` now shows a Script Node editor when the Script node is selected:
-  - Users can edit brief, content type, style, theme, world setting, duration, language, platform, audience, constraints, and references.
-  - `Generate structured script` saves input, runs the backend task, reads status/result, and renders Overview, Characters, Shots, Lines, and Camera output tabs.
+  - Users can edit one MV world-view description through the TriplD AI chat input component.
+  - `Generate` saves input, runs the backend task, reads status/result, and renders Overview, Storyboard, Characters, and Scenes output tabs.
   - The Script node changes to `ready` only after validated output exists.
 
 ## Evidence
@@ -29,11 +30,12 @@
 - Backend: bundled Python `python -m pytest services/api/tests` passed 5 tests with one upstream Starlette TestClient deprecation warning.
 - Backend lint: bundled Python `python -m ruff check services/api` passed.
 - Focused frontend: `corepack pnpm --filter @xmeta/web test -- src/components/xmeta/workflow-canvas/workflow-canvas-workspace.test.tsx src/lib/workflow-canvas/graph.test.ts` passed 2 files / 10 tests.
+- Revised focused frontend: `corepack pnpm --filter @xmeta/web test -- workflow-canvas-workspace` passed 1 file / 5 tests for the single-input MV world workflow.
 - Full frontend: `corepack pnpm --filter @xmeta/web test` passed 9 files / 29 tests.
 - `corepack pnpm --filter @xmeta/web typecheck` passed.
 - `corepack pnpm --filter @xmeta/web build` passed and included `/workspace`.
-- Production Browser QA on `http://127.0.0.1:3000/workspace` passed: Script editor visible, edited inputs, FastAPI endpoint sequence returned 200/202/200/200, Script node became `ready`, output tabs rendered, no console errors, no failed requests, no document overflow, and no misleading video generation claim.
-- Final closure passed: feature JSON validation, `git diff --check` with line-ending warnings only, and final `.\init.ps1` rerunning web tests: 9 files / 29 tests.
+- Production Browser QA on `http://127.0.0.1:3000/workspace` passed for the revised workflow: AI chat-style MV world input visible, `Generate` FastAPI endpoint sequence returned 200/202/200/200, Script node became `ready`, Overview/Storyboard/Characters/Scenes tabs rendered, no console errors, no failed requests, no document overflow, and no misleading video generation claim.
+- Final closure passed for the revised MV workflow: feature JSON validation, `git diff --check` with line-ending warnings only, and final `.\init.ps1` rerunning web tests: 9 files / 29 tests.
 
 ## Boundaries
 

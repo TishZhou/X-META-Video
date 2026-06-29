@@ -77,10 +77,9 @@ describe("WorkflowCanvasWorkspace", () => {
     expect(html).toContain("Workflow connections");
     expect(html).toContain("Script Node API Ready");
     expect(html).toContain('data-script-node-editor="true"');
-    expect(html).toContain("Creative brief");
-    expect(html).toContain("Content type");
-    expect(html).toContain("Comic drama");
-    expect(html).toContain("Generate structured script");
+    expect(html).toContain("MV world prompt");
+    expect(html).toContain("MV world description");
+    expect(html).toContain("Generate");
     expect(html).toContain("Structured output");
   });
 
@@ -94,47 +93,43 @@ describe("WorkflowCanvasWorkspace", () => {
     };
     const output: ScriptNodeOutput = {
       title: "Mock Script Title",
-      logline: "A compact logline.",
-      plot_summary: "A structured plot summary.",
+      world_overview: "A structured MV world summary.",
+      storyboard_direction: {
+        pov: "third-person cinematic POV",
+        visual_rhythm: "soft opening, travel beat, neon performance payoff",
+        shots: [
+          {
+            shot_number: 1,
+            pov: "third-person observer",
+            framing: "wide frame",
+            action: "Reveal the world.",
+            camera_movement: "Push in.",
+            duration_seconds: 8,
+          },
+        ],
+      },
       characters: [
         {
           name: "Lead",
-          role: "protagonist",
+          overview: "Sweet visual direction",
+          style: "soft idol styling",
+          clothing: "white jacket",
+          height: "165 cm",
+          appearance: "bright eyes",
           personality: "Decisive",
           visual_prompt: "Strong silhouette",
-          dialogue_style: "Short confident lines",
         },
       ],
-      story_beats: [
+      scene_descriptions: [
         {
-          beat: "Opening hook",
-          purpose: "Establish conflict",
-          summary: "A visible conflict starts the piece.",
-        },
-      ],
-      shot_plan: [
-        {
-          shot_number: 1,
-          scene: "Opening",
-          action: "Reveal the lead.",
+          scene_number: 1,
+          shot_reference: 1,
           characters: ["Lead"],
-          dialogue: "Lead: Go.",
-          camera: "Push in.",
-          duration_seconds: 8,
-          image_prompt: "Opening frame",
+          location: "desert jeep",
+          description: "A concrete scene description.",
+          visual_prompt: "Opening frame",
         },
       ],
-      dialogue_or_lyrics: [
-        {
-          speaker: "Lead",
-          text: "Go.",
-          delivery: "Controlled",
-        },
-      ],
-      camera_notes: ["Push in on the turn."],
-      scene_prompts: ["Scene prompt"],
-      audio_notes: ["Audio note"],
-      production_checklist: ["Review shots"],
       missing_inputs: [],
     };
     const html = renderToStaticMarkup(
@@ -142,11 +137,13 @@ describe("WorkflowCanvasWorkspace", () => {
     );
 
     expect(html).toContain("Overview");
+    expect(html).toContain("Storyboard");
     expect(html).toContain("Characters");
-    expect(html).toContain("Shots");
-    expect(html).toContain("Camera");
+    expect(html).toContain("Scenes");
     expect(html).toContain("Mock Script Title");
     expect(html).toContain("Lead");
+    expect(html).toContain("third-person cinematic POV");
+    expect(html).toContain("desert jeep");
     expect(html).toContain("Opening frame");
   });
 });

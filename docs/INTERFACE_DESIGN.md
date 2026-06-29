@@ -12,7 +12,7 @@ Use `docs/TRIPLED_COMPONENT_GUIDE.md` as the concise map for where each installe
 
 - Primary user: a creator or production operator building AI comic dramas, MVs, or short-form videos.
 - Product type: dense creative production web app, not a marketing-only site.
-- Core task: move from creative brief to node workflow, generated assets, task status, history, and export readiness.
+- Core task: move from MV world-view prompt to node workflow, generated assets, task status, history, and export readiness.
 - Missing backend capabilities must stay clearly labeled and disabled until later feature work implements them.
 
 ## Screen Set

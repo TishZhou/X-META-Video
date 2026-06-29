@@ -129,74 +129,55 @@ For `node_type=script`, `input` uses this shape:
 
 ```json
 {
-  "creative_brief": "A palace time-travel comedy about a strategist hiding a secret.",
-  "content_type": "comic_drama",
-  "style": "cinematic comic drama",
-  "theme": "identity and ambition",
-  "world_setting": "Tang-inspired palace court",
-  "duration_seconds": 90,
-  "language": "Chinese",
-  "target_platform": "short_video",
-  "audience": "general audience",
-  "constraints": ["3 main characters", "no explicit violence"],
-  "references": ["fast hook", "palace intrigue"]
+  "world_description": "A sweet summer MV world with two girls, a desert jeep, and a neon stage."
 }
 ```
 
-`content_type` values:
-```txt
-comic_drama
-mv
-short_video
-```
+The MVP Script Node intentionally accepts one world-view description from the AI chat input. The backend prompt builder expands that single input into downstream-ready structure.
 
 ### Script Node Output
 Script generation task results return structured JSON under `output`, not assistant prose:
 
 ```json
 {
-  "title": "Hidden Moon Court",
-  "logline": "A displaced strategist must survive one night in court by turning gossip into leverage.",
-  "plot_summary": "string",
+  "title": "MV World: A sweet summer MV world",
+  "world_overview": "string",
+  "storyboard_direction": {
+    "pov": "third-person cinematic POV with occasional first-person inserts",
+    "visual_rhythm": "soft opening, kinetic travel beat, neon performance payoff",
+    "shots": [
+      {
+        "shot_number": 1,
+        "pov": "third-person observer",
+        "framing": "wide establishing frame",
+        "action": "string",
+        "camera_movement": "slow push-in from environment to faces",
+        "duration_seconds": 8
+      }
+    ]
+  },
   "characters": [
     {
       "name": "string",
-      "role": "string",
+      "overview": "sweet visual direction",
+      "style": "string",
+      "clothing": "string",
+      "height": "string",
+      "appearance": "string",
       "personality": "string",
-      "visual_prompt": "string",
-      "dialogue_style": "string"
+      "visual_prompt": "string"
     }
   ],
-  "story_beats": [
+  "scene_descriptions": [
     {
-      "beat": "Opening hook",
-      "purpose": "Establish conflict",
-      "summary": "string"
-    }
-  ],
-  "shot_plan": [
-    {
-      "shot_number": 1,
-      "scene": "string",
-      "action": "string",
+      "scene_number": 1,
+      "shot_reference": 1,
       "characters": ["string"],
-      "dialogue": "string",
-      "camera": "string",
-      "duration_seconds": 6,
-      "image_prompt": "string"
+      "location": "desert highway beside a vintage jeep",
+      "description": "string",
+      "visual_prompt": "string"
     }
   ],
-  "dialogue_or_lyrics": [
-    {
-      "speaker": "string",
-      "text": "string",
-      "delivery": "string"
-    }
-  ],
-  "camera_notes": ["string"],
-  "scene_prompts": ["string"],
-  "audio_notes": ["string"],
-  "production_checklist": ["string"],
   "missing_inputs": []
 }
 ```

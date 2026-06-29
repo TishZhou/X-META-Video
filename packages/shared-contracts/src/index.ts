@@ -23,26 +23,8 @@ export const NODE_TYPES = [
 
 export type NodeType = (typeof NODE_TYPES)[number];
 
-export const SCRIPT_CONTENT_TYPES = [
-  "comic_drama",
-  "mv",
-  "short_video",
-] as const;
-
-export type ScriptContentType = (typeof SCRIPT_CONTENT_TYPES)[number];
-
 export type ScriptNodeInput = {
-  creative_brief: string;
-  content_type: ScriptContentType;
-  style: string;
-  theme: string;
-  world_setting: string;
-  duration_seconds: number;
-  language: string;
-  target_platform: string;
-  audience: string;
-  constraints: string[];
-  references: string[];
+  world_description: string;
 };
 
 export type ScriptNodeSettings = {
@@ -53,47 +35,45 @@ export type ScriptNodeSettings = {
 
 export type ScriptCharacterProfile = {
   name: string;
-  role: string;
+  overview: string;
+  style: string;
+  clothing: string;
+  height: string;
+  appearance: string;
   personality: string;
   visual_prompt: string;
-  dialogue_style: string;
 };
 
-export type ScriptStoryBeat = {
-  beat: string;
-  purpose: string;
-  summary: string;
-};
-
-export type ScriptShot = {
+export type ScriptStoryboardShot = {
   shot_number: number;
-  scene: string;
+  pov: string;
+  framing: string;
   action: string;
-  characters: string[];
-  dialogue: string;
-  camera: string;
+  camera_movement: string;
   duration_seconds: number;
-  image_prompt: string;
 };
 
-export type ScriptLine = {
-  speaker: string;
-  text: string;
-  delivery: string;
+export type ScriptStoryboardDirection = {
+  pov: string;
+  visual_rhythm: string;
+  shots: ScriptStoryboardShot[];
+};
+
+export type ScriptSceneDescription = {
+  scene_number: number;
+  shot_reference: number;
+  characters: string[];
+  location: string;
+  description: string;
+  visual_prompt: string;
 };
 
 export type ScriptNodeOutput = {
   title: string;
-  logline: string;
-  plot_summary: string;
+  world_overview: string;
+  storyboard_direction: ScriptStoryboardDirection;
   characters: ScriptCharacterProfile[];
-  story_beats: ScriptStoryBeat[];
-  shot_plan: ScriptShot[];
-  dialogue_or_lyrics: ScriptLine[];
-  camera_notes: string[];
-  scene_prompts: string[];
-  audio_notes: string[];
-  production_checklist: string[];
+  scene_descriptions: ScriptSceneDescription[];
   missing_inputs: string[];
 };
 
@@ -129,15 +109,5 @@ export type ScriptTaskResultResponse = ScriptTaskStatusResponse & {
 };
 
 export const DEFAULT_SCRIPT_NODE_INPUT: ScriptNodeInput = {
-  creative_brief: "",
-  content_type: "comic_drama",
-  style: "cinematic comic drama",
-  theme: "",
-  world_setting: "",
-  duration_seconds: 90,
-  language: "Chinese",
-  target_platform: "short_video",
-  audience: "general audience",
-  constraints: [],
-  references: [],
+  world_description: "",
 };

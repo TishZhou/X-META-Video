@@ -6,11 +6,11 @@ from typing import Protocol
 
 from .schemas import (
     CharacterProfile,
-    DialogueLine,
+    SceneDescription,
     ScriptInput,
     ScriptOutput,
-    ShotPlanItem,
-    StoryBeat,
+    StoryboardDirection,
+    StoryboardShot,
 )
 
 
@@ -74,135 +74,145 @@ class MockScriptProvider:
 
     def generate(self, script_input: ScriptInput, prompt: str) -> ScriptOutput:
         del prompt
-        content_type = script_input.content_type.value.replace("_", " ")
-        title_seed = script_input.creative_brief.rstrip(".")[:48]
-        shot_duration = max(1, script_input.duration_seconds // 3)
+        description = script_input.world_description.rstrip(".")
+        title_seed = description[:48]
 
         return ScriptOutput(
-            title=f"{content_type.title()}: {title_seed}",
-            logline=(
-                f"A {script_input.style} {content_type} for {script_input.target_platform} "
-                f"about {script_input.creative_brief.rstrip('.')}."
+            title=f"MV World: {title_seed}",
+            world_overview=(
+                f"The MV world-view description expands from: {description}. It is "
+                "organized for downstream storyboard, character image, and scene "
+                "image nodes."
             ),
-            plot_summary=(
-                f"In {script_input.world_setting}, the story explores {script_input.theme}. "
-                "The structure is ready for downstream storyboard, character, scene, audio, "
-                "and video nodes."
+            storyboard_direction=StoryboardDirection(
+                pov=(
+                    "third-person cinematic POV with occasional first-person inserts "
+                    "when emotion peaks"
+                ),
+                visual_rhythm=(
+                    "soft opening, kinetic travel beat, then a luminous performance "
+                    "payoff"
+                ),
+                shots=[
+                    StoryboardShot(
+                        shot_number=1,
+                        pov="third-person observer",
+                        framing="wide establishing frame",
+                        action=(
+                            "Introduce the world, the main characters, and the emotional "
+                            "distance between them."
+                        ),
+                        camera_movement="slow push-in from environment to faces",
+                        duration_seconds=8,
+                    ),
+                    StoryboardShot(
+                        shot_number=2,
+                        pov="first-person insert",
+                        framing="handheld close-up sequence",
+                        action=(
+                            "Show a tactile object or gesture that reveals what the "
+                            "characters are searching for."
+                        ),
+                        camera_movement="quick inserts with a gentle whip transition",
+                        duration_seconds=10,
+                    ),
+                    StoryboardShot(
+                        shot_number=3,
+                        pov="third-person performance POV",
+                        framing="medium-to-wide chorus staging",
+                        action=(
+                            "Resolve the search into a synchronized visual hook that can "
+                            "feed scene and composition nodes."
+                        ),
+                        camera_movement="orbit move ending on a locked hero frame",
+                        duration_seconds=12,
+                    ),
+                ],
             ),
             characters=[
                 CharacterProfile(
-                    name="Lead",
-                    role="protagonist",
-                    personality="Resourceful, emotionally guarded, and quick under pressure.",
-                    visual_prompt=(
-                        f"Lead character in {script_input.world_setting}, {script_input.style}, "
-                        "clear silhouette, production reference sheet."
+                    name="Lead Girl",
+                    overview="Sweet visual direction with a lonely, determined core.",
+                    style="soft idol MV styling with clean silhouettes",
+                    clothing=(
+                        "white cropped jacket, pale pink layered skirt, silver hair "
+                        "clips, travel-worn boots"
                     ),
-                    dialogue_style="Short, decisive lines with a hidden emotional edge.",
+                    height="about 165 cm",
+                    appearance=(
+                        "bright eyes, shoulder-length dark hair, delicate makeup, "
+                        "expressive but restrained posture"
+                    ),
+                    personality="gentle on the surface, stubborn when the goal is threatened",
+                    visual_prompt=(
+                        "sweet idol heroine, white jacket, pale pink skirt, desert wind, "
+                        "clean full-body character reference"
+                    ),
                 ),
                 CharacterProfile(
-                    name="Counterpart",
-                    role="foil",
-                    personality="Charismatic, skeptical, and able to raise the stakes.",
+                    name="Second Girl",
+                    overview="Contrasting cool sweetness, protective and quietly bold.",
+                    style="retro road-trip styling with neon stage accents",
+                    clothing=(
+                        "denim vest, cream tank top, black shorts, red scarf, chunky "
+                        "bracelets"
+                    ),
+                    height="about 170 cm",
+                    appearance=(
+                        "long wavy hair, sharper eyeliner, athletic stance, confident "
+                        "half-smile"
+                    ),
+                    personality="playful under pressure, loyal, and visually assertive",
                     visual_prompt=(
-                        f"Counterpart character matching {script_input.style}, contrast to Lead, "
-                        "expressive face, reusable visual identity."
-                    ),
-                    dialogue_style="Calm challenges that force the lead to reveal intent.",
-                ),
-            ],
-            story_beats=[
-                StoryBeat(
-                    beat="Opening hook",
-                    purpose="Establish conflict",
-                    summary="Open on a problem that makes the brief immediately visible.",
-                ),
-                StoryBeat(
-                    beat="Escalation",
-                    purpose="Force a decision",
-                    summary="The lead discovers the cost of hesitation and commits to action.",
-                ),
-                StoryBeat(
-                    beat="Payoff",
-                    purpose="Create a reusable final image",
-                    summary="The emotional turn resolves into a clear cliffhanger or finish.",
-                ),
-            ],
-            shot_plan=[
-                ShotPlanItem(
-                    shot_number=1,
-                    scene="Opening",
-                    action="Establish the world, lead, and core conflict.",
-                    characters=["Lead"],
-                    dialogue="Lead: This is the moment everything changes.",
-                    camera="Wide establishing frame, then push toward the lead.",
-                    duration_seconds=shot_duration,
-                    image_prompt=(
-                        f"{script_input.world_setting}, opening conflict, {script_input.style}, "
-                        "cinematic composition."
-                    ),
-                ),
-                ShotPlanItem(
-                    shot_number=2,
-                    scene="Confrontation",
-                    action="The counterpart blocks the lead and exposes the hidden risk.",
-                    characters=["Lead", "Counterpart"],
-                    dialogue="Counterpart: Then prove what this story is worth.",
-                    camera="Alternating close-ups with a slow lateral move.",
-                    duration_seconds=shot_duration,
-                    image_prompt=(
-                        f"High-stakes confrontation in {script_input.world_setting}, "
-                        f"{script_input.style}, readable staging."
-                    ),
-                ),
-                ShotPlanItem(
-                    shot_number=3,
-                    scene="Final image",
-                    action="The lead turns the situation into a hook for the next node.",
-                    characters=["Lead", "Counterpart"],
-                    dialogue="Lead: Watch closely. I only need one chance.",
-                    camera="Steady final push-in with a strong silhouette.",
-                    duration_seconds=max(1, script_input.duration_seconds - shot_duration * 2),
-                    image_prompt=(
-                        f"Memorable final image, {script_input.theme}, {script_input.style}, "
-                        "short video ending frame."
+                        "cool sweet idol heroine, denim vest, red scarf, road-trip look, "
+                        "full-body character reference"
                     ),
                 ),
             ],
-            dialogue_or_lyrics=[
-                DialogueLine(
-                    speaker="Lead",
-                    text="This is the moment everything changes.",
-                    delivery="Quiet confidence, under pressure.",
+            scene_descriptions=[
+                SceneDescription(
+                    scene_number=1,
+                    shot_reference=1,
+                    characters=["Lead Girl", "Second Girl"],
+                    location="desert highway beside a vintage jeep",
+                    description=(
+                        "The two girls stand near a sun-faded jeep on an open desert "
+                        "road, letting the world-view description become a concrete "
+                        "travel scene."
+                    ),
+                    visual_prompt=(
+                        f"{description}, two sweet idol girls, desert highway, vintage "
+                        "jeep, warm sunlight, production-ready scene prompt"
+                    ),
                 ),
-                DialogueLine(
-                    speaker="Counterpart",
-                    text="Then prove what this story is worth.",
-                    delivery="Calm challenge, controlled tension.",
+                SceneDescription(
+                    scene_number=2,
+                    shot_reference=2,
+                    characters=["Lead Girl"],
+                    location="inside the moving jeep",
+                    description=(
+                        "A close interior scene catches the lead gripping a small "
+                        "keepsake while wind and reflected light imply motion."
+                    ),
+                    visual_prompt=(
+                        "inside a desert jeep, close-up emotional insert, sweet idol MV, "
+                        "dusty window reflections"
+                    ),
                 ),
-                DialogueLine(
-                    speaker="Lead",
-                    text="Watch closely. I only need one chance.",
-                    delivery="Low voice, decisive final beat.",
+                SceneDescription(
+                    scene_number=3,
+                    shot_reference=3,
+                    characters=["Lead Girl", "Second Girl"],
+                    location="night neon performance stage",
+                    description=(
+                        "The road world transforms into a neon stage where both "
+                        "characters perform the final visual hook."
+                    ),
+                    visual_prompt=(
+                        "night neon stage, two idol characters, synchronized chorus pose, "
+                        "cinematic MV scene"
+                    ),
                 ),
-            ],
-            camera_notes=[
-                "Use wide-to-close framing to make the hook legible.",
-                "Keep shot transitions simple so Feature 4 can expand the storyboard.",
-                "Preserve character continuity with stable silhouettes and wardrobe notes.",
-            ],
-            scene_prompts=[
-                f"{script_input.world_setting}, {script_input.style}, production-ready location.",
-                f"Emotional confrontation scene, {script_input.theme}, clean subject separation.",
-            ],
-            audio_notes=[
-                f"Keep dialogue clear for {script_input.audience}.",
-                "Build music intensity at the escalation beat and leave space for final line.",
-            ],
-            production_checklist=[
-                "Confirm character names before image generation.",
-                "Review shot durations before storyboard expansion.",
-                "Pass selected visual prompts to character and scene nodes.",
             ],
             missing_inputs=[],
         )
