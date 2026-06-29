@@ -16,7 +16,7 @@ Updated: 2026-06-29
 | Shared Script Node contracts | 15 | 15 | Typed frontend/backend contracts cover single world-description input, storyboard direction, characters, scenes, task, and status shapes. |
 | Backend API behavior | 20 | 20 | FastAPI routes validate save/run/status/result behavior and return structured MV expansion task/output responses. |
 | Provider and prompt boundary | 15 | 15 | Mock provider works by default; OpenAI-compatible provider env validation fails clearly when incomplete; prompt builder is centralized. |
-| Workspace Script editor | 20 | 20 | Selecting Script node opens a desktop editor, accepts one AI chat-style MV world prompt, runs generation, and renders structured output tabs. |
+| Workspace Script editor | 20 | 20 | Selecting Script node opens a desktop editor, accepts one AI chat-style MV world prompt in a vertical chat flow, runs generation, and renders selectable structured response targets. |
 | Honest product boundaries | 10 | 10 | UI/API labels mock/dev state honestly and do not imply image/audio/video/export generation or production auth is complete. |
 | Verification coverage | 15 | 15 | Backend tests, web tests, typecheck, build, Browser QA, JSON validation, `git diff --check`, and final `.\init.ps1` pass. |
 | Artifact evidence | 5 | 5 | `feature_list.json`, `sprint-contract.md`, `evaluator-rubric.md`, `progress.md`, and `session-handoff.md` record final evidence. |
@@ -34,6 +34,7 @@ Current score: 100 / 100 after the revised MV world-description workflow impleme
 - Remaining deferred capabilities are explicit: production auth, durable PostgreSQL persistence, queue workers, asset/history storage, final prompt tuning, and downstream media generation.
 - Revision pass replaced the earlier multi-field creative brief form with the user-approved single MV world-view description flow.
 - Revision pass found no open P1/P2/P3 issues in the updated contract after backend pytest, frontend tests, typecheck, build, Browser QA, JSON validation, and final startup verification.
+- Browser-comment revision changed the workspace to a white Figma-like canvas, moved Script Node input/output into a vertical chat flow, added Storyboard/Characters/Scene output selection, and made the Script node card display only the user's world view.
 
 ## Verification Evidence
 
@@ -54,6 +55,9 @@ Current score: 100 / 100 after the revised MV world-description workflow impleme
 - Revised workflow build passed: `corepack pnpm --filter @xmeta/web build`.
 - Revised workflow Browser QA passed on `http://127.0.0.1:3000/workspace`: AI chat-style MV world input visible, `Generate` endpoint sequence returned 200/202/200/200, Script node became `ready`, Overview/Storyboard/Characters/Scenes tabs rendered, console errors empty, failed requests empty, no horizontal overflow, and no misleading media-generation claim.
 - Revised workflow final closure passed: `feature_list.json` and `feature_tasks/3.json` JSON validation, `git diff --check` with line-ending warnings only, and final `.\init.ps1` rerunning 9 web test files / 29 tests.
+- Browser-comment verification passed: baseline `.\init.ps1`, focused workspace plus TriplD chat tests 2 files / 9 tests, backend pytest 5 tests, backend ruff, full web tests 9 files / 29 tests, `corepack pnpm --filter @xmeta/web typecheck`, and `corepack pnpm --filter @xmeta/web build`.
+- Browser-comment QA passed on `http://127.0.0.1:3000/workspace`: white canvas and editor backgrounds measured, vertical input/response flow confirmed, Storyboard/Characters/Scene output buttons worked, Script node preview contained only the submitted world view, endpoint sequence returned 200/202/200/200, console errors empty, failed requests empty, and no horizontal overflow.
+- Browser-comment final closure passed: `feature_list.json` and `feature_tasks/3.json` JSON validation, `git diff --check` with line-ending warnings only, and final `.\init.ps1` rerunning 9 web test files / 29 tests.
 
 ## Verdict
 

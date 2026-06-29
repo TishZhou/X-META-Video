@@ -39,7 +39,8 @@ Protected user edit:
 - Server-owned prompt builder and provider adapter boundary.
 - Mock script provider as the default end-to-end verification path.
 - OpenAI-compatible provider settings read from server-only environment variables.
-- `/workspace` Script Node editor for desktop input, run state, and structured output tabs.
+- `/workspace` Script Node editor for desktop input, run state, output target selection, and structured response bubbles.
+- White Figma-like workspace canvas styling for the current browser-comment pass.
 - Honest labels for mock provider, dev in-memory backend state, deferred production auth, and deferred downstream media generation.
 
 ## Out of Scope
@@ -59,8 +60,8 @@ Protected user edit:
 4. `POST /api/v1/projects/{project_id}/nodes/{node_id}/run` returns a task response and generates schema-valid mock output.
 5. `GET /api/v1/tasks/{task_id}` and `GET /api/v1/tasks/{task_id}/result` return task status and normalized Script Node output.
 6. Non-mock provider selection fails clearly when required provider env values are missing.
-7. Selecting the Script node in `/workspace` opens an editor with one AI chat-style MV world description input and a run action.
-8. Successful generation renders Overview, Storyboard, Characters, and Scenes tabs.
+7. Selecting the Script node in `/workspace` opens an editor with one AI chat-style MV world description input and a run action in a vertical chat flow.
+8. Successful generation renders selectable Storyboard, Characters, and Scene response targets; Scene is composed from storyboard and characters.
 9. The Script node status changes to `ready` only after validated output exists.
 10. Verification evidence is recorded in `feature_list.json`, `sprint-contract.md`, `evaluator-rubric.md`, `progress.md`, and `session-handoff.md`.
 
@@ -80,8 +81,12 @@ Protected user edit:
 
 | Phase | Outcome |
 | --- | --- |
+| Browser comment revision | Addressed four browser comments: white Figma-like canvas, vertical ChatGPT-like Script editor, selectable Storyboard/Characters/Scene response targets, and Script node preview showing only the input world view. |
+| Browser comment verification | Baseline `.\init.ps1` passed before changes; focused workspace plus TriplD chat tests passed 2 files / 9 tests; backend pytest passed 5 tests with one upstream Starlette TestClient deprecation warning; backend ruff passed; full web tests passed 9 files / 29 tests; `corepack pnpm --filter @xmeta/web typecheck` passed; `corepack pnpm --filter @xmeta/web build` passed. |
+| Browser comment QA | Production Browser QA on `http://127.0.0.1:3000/workspace` passed: white canvas and editor backgrounds measured, input/response flow was vertical, Storyboard/Characters/Scene output buttons worked, Script node preview showed only the submitted world view, endpoint sequence returned 200/202/200/200, console errors empty, failed requests empty, and no horizontal overflow. |
+| Browser comment final closure | `feature_list.json` and `feature_tasks/3.json` parsed successfully; `git diff --check` passed with line-ending warnings only; final `.\init.ps1` passed and reran web tests: 9 files / 29 tests. |
 | Revised workflow | User clarified the Script Node workflow: one MV world-view description input, then AI expands into storyboard direction/POV/shots, character profiles with style/wardrobe/body details, and concrete scene descriptions derived from characters plus storyboard. |
-| Revised implementation | Updated shared contracts, FastAPI/Pydantic schemas, prompt builder, deterministic mock provider, backend tests, workspace editor, AI chat component props, output tabs, and API docs for the single-input MV workflow. |
+| Revised implementation | Updated shared contracts, FastAPI/Pydantic schemas, prompt builder, deterministic mock provider, backend tests, workspace editor, AI chat component props, response targets, and API docs for the single-input MV workflow. |
 | Revised verification | Backend pytest passed 5 tests with one upstream Starlette TestClient deprecation warning; backend ruff passed; focused workspace test passed 1 file / 5 tests; full web tests passed 9 files / 29 tests; `corepack pnpm --filter @xmeta/web typecheck` passed; `corepack pnpm --filter @xmeta/web build` passed. |
 | Revised Browser QA | Production Browser QA on `http://127.0.0.1:3000/workspace` passed: AI chat-style MV world description input visible, `Generate` called PATCH/run/task/result endpoints with 200/202/200/200, Script node became `ready`, Overview/Storyboard/Characters/Scenes tabs rendered, no console errors, no failed requests, no horizontal overflow, and no misleading media-generation claim. |
 | Revised final closure | `feature_list.json` and `feature_tasks/3.json` parsed successfully; `git diff --check` passed with line-ending warnings only; final `.\init.ps1` passed and reran web tests: 9 files / 29 tests. |
@@ -92,7 +97,7 @@ Protected user edit:
 | Subagents | Spawned backend worker subagent for the `services/api/**` implementation slice with a disjoint write set. |
 | Contracts | Added shared TypeScript Script Node input, settings, output, task, and default input contracts in `packages/shared-contracts/src/index.ts`; documented Script Node request/output and `SCRIPT_MODEL_*` provider env values in `docs/API.md` and `.env.example`. |
 | Backend implementation | Added FastAPI Script Node PATCH/run/task/result routes, Pydantic schemas, in-memory dev node/task/result store, centralized prompt builder, deterministic mock provider, OpenAI-compatible provider config validation, CORS for frontend origins, and backend tests. |
-| Frontend implementation | Added `/workspace` selected Script node editor with the AI chat-style MV world input, FastAPI save/run/status/result client, task state display, structured output tabs, and ready/blocked/running node status updates. |
+| Frontend implementation | Added `/workspace` selected Script node editor with the AI chat-style MV world input, FastAPI save/run/status/result client, task state display, structured response targets, and ready/blocked/running node status updates. |
 | Backend verification | Bundled Python setup installed `services/api[dev]`; `python -m pytest services/api/tests` passed 5 tests with one upstream Starlette TestClient deprecation warning; `python -m ruff check services/api` passed. |
 | Frontend verification | Focused workspace tests passed 2 files / 10 tests; full web tests passed 9 files / 29 tests; `corepack pnpm --filter @xmeta/web typecheck` passed; `corepack pnpm --filter @xmeta/web build` passed and included `/workspace`. |
 | Browser QA | Production Browser QA on `http://127.0.0.1:3000/workspace` passed for the original implementation. Revised MV-world Browser QA must verify the AI chat input, `Generate` action, Overview/Storyboard/Characters/Scenes tabs, no console errors, no failed requests, no horizontal overflow, and no misleading media-generation claim. |

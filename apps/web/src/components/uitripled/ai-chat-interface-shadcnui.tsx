@@ -65,6 +65,8 @@ type AIChatInterfaceProps = {
   showTools?: boolean;
   modelLabel?: string;
   textareaLabel?: string;
+  showHeader?: boolean;
+  variant?: "default" | "chat";
 };
 
 export function AIChatInterface({
@@ -80,6 +82,8 @@ export function AIChatInterface({
   showTools = true,
   modelLabel,
   textareaLabel = "Chat input",
+  showHeader = true,
+  variant = "default",
 }: AIChatInterfaceProps = {}) {
   const [inputValue, setInputValue] = useState("");
   const [isFocused, setIsFocused] = useState(false);
@@ -178,22 +182,30 @@ export function AIChatInterface({
       transition={shouldAnimate ? { duration: 0.5 } : { duration: 0 }}
       className="relative w-full"
     >
-      <div className="space-y-8">
+      <div className={variant === "chat" ? "flex flex-col" : "space-y-8"}>
         <div
-          className={`relative rounded-[28px] border border-border/50 bg-background/70 px-6 py-6 backdrop-blur-xl transition w-full z-10 ${
+          className={`relative w-full border transition z-10 ${
+            variant === "chat"
+              ? "rounded-2xl border-neutral-200 bg-white px-4 py-4 shadow-sm"
+              : "rounded-[28px] border-border/50 bg-background/70 px-6 py-6 backdrop-blur-xl"
+          } ${
             isFocused ? "shadow-[0_28px_80px_rgba(15,23,42,0.24)]" : ""
           }`}
         >
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/20/20 via-transparent to-transparent" />
+          {variant === "default" ? (
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/20/20 via-transparent to-transparent" />
+          ) : null}
           <div className="relative space-y-5">
-            <div className="flex flex-col gap-1 text-left">
-              <span className="text-xs font-semibold uppercase tracking-[0.32em] text-foreground/45">
-                {eyebrow}
-              </span>
-              <p className="text-sm text-foreground/60">
-                {description}
-              </p>
-            </div>
+            {showHeader ? (
+              <div className="flex flex-col gap-1 text-left">
+                <span className="text-xs font-semibold uppercase tracking-[0.32em] text-foreground/45">
+                  {eyebrow}
+                </span>
+                <p className="text-sm text-foreground/60">
+                  {description}
+                </p>
+              </div>
+            ) : null}
             <label htmlFor="chat-input" className="sr-only">
               {textareaLabel}
             </label>
@@ -203,7 +215,7 @@ export function AIChatInterface({
               value={currentValue}
               onChange={handleTextareaChange}
               placeholder={placeholder}
-              className="w-full resize-none bg-transparent text-base text-foreground/90 placeholder:text-foreground/40 focus:outline-none"
+              className="w-full resize-none border-0 bg-transparent px-0 text-base text-foreground/90 shadow-none placeholder:text-foreground/40 focus:outline-none focus-visible:ring-0"
               onFocus={() => setIsFocused(true)}
               onBlur={() => setIsFocused(false)}
               rows={1}
@@ -369,7 +381,11 @@ export function AIChatInterface({
               <Button
                 type="button"
                 size="lg"
-                className="inline-flex items-center gap-2 rounded-full px-5 text-xs uppercase tracking-[0.28em]"
+                className={
+                  variant === "chat"
+                    ? "inline-flex items-center gap-2 rounded-lg px-4 text-sm normal-case tracking-normal"
+                    : "inline-flex items-center gap-2 rounded-full px-5 text-xs uppercase tracking-[0.28em]"
+                }
                 disabled={disabled || submitDisabled}
                 onClick={handleSubmit}
               >

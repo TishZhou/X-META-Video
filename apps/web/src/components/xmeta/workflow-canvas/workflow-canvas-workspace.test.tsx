@@ -75,15 +75,18 @@ describe("WorkflowCanvasWorkspace", () => {
     expect(html).toContain('data-workflow-node="storyboard"');
     expect(html).toContain('data-workflow-node="composition"');
     expect(html).toContain("Workflow connections");
-    expect(html).toContain("Script Node API Ready");
+    expect(html).toContain("World view");
+    expect(html).toContain("A sweet but lonely summer MV world");
+    expect(html).not.toContain("Script Node API Ready");
     expect(html).toContain('data-script-node-editor="true"');
     expect(html).toContain("MV world prompt");
     expect(html).toContain("MV world description");
     expect(html).toContain("Generate");
-    expect(html).toContain("Structured output");
+    expect(html).toContain("Choose output");
+    expect(html).toContain("Storyboard + characters composed together");
   });
 
-  it("renders structured Script output tabs", () => {
+  it("renders selectable structured Script output responses", () => {
     const task: ScriptTaskStatusResponse = {
       task_id: "task-1",
       project_id: "local-project",
@@ -136,14 +139,11 @@ describe("WorkflowCanvasWorkspace", () => {
       <ScriptOutputTabs output={output} task={task} />,
     );
 
-    expect(html).toContain("Overview");
     expect(html).toContain("Storyboard");
     expect(html).toContain("Characters");
-    expect(html).toContain("Scenes");
+    expect(html).toContain("Scene");
     expect(html).toContain("Mock Script Title");
-    expect(html).toContain("Lead");
+    expect(html).toContain("Response");
     expect(html).toContain("third-person cinematic POV");
-    expect(html).toContain("desert jeep");
-    expect(html).toContain("Opening frame");
   });
 });

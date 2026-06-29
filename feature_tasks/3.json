@@ -52,7 +52,8 @@
       "acceptance_criteria": [
         "The editor is reachable from the selected Script node in /workspace.",
         "The editor includes one required AI chat-style MV world description input.",
-        "Run action saves input, starts generation through the Script Node API client, shows task state, and renders Overview, Storyboard, Characters, and Scenes tabs.",
+        "Run action saves input, starts generation through the Script Node API client, shows task state, and renders selectable Storyboard, Characters, and Scene response targets.",
+        "Scene response is labeled as composed from the generated storyboard and character profiles.",
         "The Script node status changes to ready only after validated output exists.",
         "Image, audio, video, persistence, and production auth gaps remain honestly labeled."
       ],

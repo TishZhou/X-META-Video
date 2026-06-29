@@ -42,7 +42,6 @@ import { ReactFlowProvider } from "@xyflow/react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AIChatInterface } from "@/components/uitripled/ai-chat-interface-shadcnui";
 import {
   Tooltip,
@@ -485,7 +484,7 @@ export function WorkflowCanvasWorkspace({
       <ReactFlowProvider>
         <section
           aria-label="Workflow canvas"
-          className="relative min-h-screen overflow-hidden bg-[#0b0b0c] text-neutral-100"
+          className="relative min-h-screen overflow-hidden bg-[#f8fafc] text-neutral-950"
           data-workspace-canvas-page="true"
         >
           <div
@@ -493,12 +492,12 @@ export function WorkflowCanvasWorkspace({
             aria-hidden="true"
             style={{
               backgroundImage:
-                "radial-gradient(circle at center, rgba(255,255,255,0.13) 1px, transparent 1.3px)",
+                "radial-gradient(circle at center, rgba(15,23,42,0.14) 1px, transparent 1.3px)",
               backgroundSize: "18px 18px",
             }}
           />
           <div
-            className="absolute inset-0 bg-[radial-gradient(circle_at_50%_45%,rgba(255,255,255,0.035),transparent_42%)]"
+            className="absolute inset-0 bg-[radial-gradient(circle_at_50%_45%,rgba(255,255,255,0.72),transparent_46%)]"
             aria-hidden="true"
           />
 
@@ -508,7 +507,7 @@ export function WorkflowCanvasWorkspace({
             nodeCount={state.nodes.length}
           />
           <div
-            className="pointer-events-none absolute left-4 top-16 z-30 max-w-[calc(100vw-2rem)] rounded-lg border border-white/10 bg-neutral-900/85 px-3 py-1.5 text-xs text-neutral-300 shadow-2xl backdrop-blur"
+            className="pointer-events-none absolute left-4 top-16 z-30 max-w-[calc(100vw-2rem)] rounded-lg border border-neutral-200 bg-white/90 px-3 py-1.5 text-xs text-neutral-600 shadow-sm backdrop-blur"
             data-workspace-boundary-label="true"
           >
             Local only / FastAPI deferred / AI disabled
@@ -551,7 +550,7 @@ export function WorkflowCanvasWorkspace({
                 <WorkflowNodeCard
                   key={node.id}
                   node={node}
-                  scriptOutput={node.type === "script" ? scriptOutput : null}
+                  scriptInput={node.type === "script" ? scriptInput : null}
                   selected={
                     state.selection.kind === "node" && state.selection.id === node.id
                   }
@@ -626,26 +625,26 @@ function WorkspaceTopBar({
       className="pointer-events-none absolute left-0 right-0 top-0 z-30 flex items-start justify-between gap-4 p-4"
       data-workspace-floating-topbar="true"
     >
-      <div className="pointer-events-auto flex items-center gap-2 rounded-xl border border-white/10 bg-neutral-900/90 px-3 py-2 shadow-2xl backdrop-blur">
-        <div className="flex size-7 items-center justify-center rounded-md bg-white text-neutral-950">
+      <div className="pointer-events-auto flex items-center gap-2 rounded-xl border border-neutral-200 bg-white/95 px-3 py-2 text-neutral-950 shadow-sm backdrop-blur">
+        <div className="flex size-7 items-center justify-center rounded-md bg-neutral-950 text-white">
           <Layers3 aria-hidden="true" />
         </div>
         <span className="text-sm font-semibold">Untitled project</span>
-        <Separator orientation="vertical" className="h-5 bg-white/10" />
+        <Separator orientation="vertical" className="h-5 bg-neutral-200" />
         <Button
           size="sm"
           variant="ghost"
-          className="h-7 px-2 text-xs text-neutral-200 hover:bg-white/10 hover:text-white"
+          className="h-7 px-2 text-xs text-neutral-700 hover:bg-neutral-100 hover:text-neutral-950"
         >
           Canvas 1
         </Button>
       </div>
 
       <div className="pointer-events-auto flex items-center gap-2">
-        <Badge className="border-white/10 bg-neutral-900/90 text-neutral-200">
+        <Badge className="border-neutral-200 bg-white/95 text-neutral-700">
           {draftStatus}
         </Badge>
-        <Badge className="border-white/10 bg-neutral-900/90 text-neutral-200">
+        <Badge className="border-neutral-200 bg-white/95 text-neutral-700">
           {nodeCount} nodes / {edgeCount} edges
         </Badge>
         <ToolbarButton label="Share">
@@ -697,7 +696,7 @@ function CanvasDock({
     >
       {showAddMenu ? (
         <div
-          className="absolute bottom-14 left-0 w-72 overflow-hidden rounded-xl border border-white/10 bg-neutral-900/95 p-1.5 shadow-2xl backdrop-blur sm:left-1/2 sm:-translate-x-1/2"
+          className="absolute bottom-14 left-0 w-72 overflow-hidden rounded-xl border border-neutral-200 bg-white/95 p-1.5 shadow-lg backdrop-blur sm:left-1/2 sm:-translate-x-1/2"
           data-workspace-add-menu="true"
         >
           <div className="flex flex-col gap-1">
@@ -709,7 +708,7 @@ function CanvasDock({
                   key={template.type}
                   type="button"
                   aria-label={`Add ${ioLabel} node`}
-                  className="rounded-lg px-3 py-2 text-left text-sm font-medium text-neutral-100 transition hover:bg-white/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+                  className="rounded-lg px-3 py-2 text-left text-sm font-medium text-neutral-700 transition hover:bg-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-950/20"
                   onClick={() => onAddNode(template.type)}
                 >
                   {ioLabel}
@@ -720,18 +719,18 @@ function CanvasDock({
         </div>
       ) : null}
 
-      <div className="flex max-w-full items-center gap-1 overflow-x-auto rounded-xl border border-white/10 bg-neutral-900/95 p-2 shadow-2xl backdrop-blur">
+      <div className="flex max-w-full items-center gap-1 overflow-x-auto rounded-xl border border-neutral-200 bg-white/95 p-2 shadow-lg backdrop-blur">
         <ToolbarButton active={showAddMenu} label="Add node" onClick={onToggleAddMenu}>
           <Plus aria-hidden="true" data-icon="inline-start" />
         </ToolbarButton>
-        <Separator orientation="vertical" className="mx-1 h-7 bg-white/10" />
+        <Separator orientation="vertical" className="mx-1 h-7 bg-neutral-200" />
         <ZoomControl
           open={showZoomControl}
           zoom={zoom}
           onToggle={onZoomToggle}
           onZoomChange={onZoomChange}
         />
-        <Separator orientation="vertical" className="mx-1 h-7 bg-white/10" />
+        <Separator orientation="vertical" className="mx-1 h-7 bg-neutral-200" />
         <ToolbarButton label="Save local snapshot" onClick={onSave}>
           <Save aria-hidden="true" data-icon="inline-start" />
         </ToolbarButton>
@@ -774,18 +773,18 @@ function ZoomControl({ open, zoom, onToggle, onZoomChange }: ZoomControlProps) {
       </ToolbarButton>
       <div
         className={cn(
-          "pointer-events-none flex w-0 items-center gap-2 overflow-hidden rounded-lg border border-transparent opacity-0 transition-all group-focus-within:pointer-events-auto group-focus-within:w-56 group-focus-within:border-white/10 group-focus-within:bg-white/[0.04] group-focus-within:px-2 group-focus-within:py-1.5 group-focus-within:opacity-100 group-hover:pointer-events-auto group-hover:w-56 group-hover:border-white/10 group-hover:bg-white/[0.04] group-hover:px-2 group-hover:py-1.5 group-hover:opacity-100",
+          "pointer-events-none flex w-0 items-center gap-2 overflow-hidden rounded-lg border border-transparent opacity-0 transition-all group-focus-within:pointer-events-auto group-focus-within:w-56 group-focus-within:border-neutral-200 group-focus-within:bg-neutral-50 group-focus-within:px-2 group-focus-within:py-1.5 group-focus-within:opacity-100 group-hover:pointer-events-auto group-hover:w-56 group-hover:border-neutral-200 group-hover:bg-neutral-50 group-hover:px-2 group-hover:py-1.5 group-hover:opacity-100",
           open &&
-            "pointer-events-auto w-56 border-white/10 bg-white/[0.04] px-2 py-1.5 opacity-100",
+            "pointer-events-auto w-56 border-neutral-200 bg-neutral-50 px-2 py-1.5 opacity-100",
         )}
         data-workspace-zoom-slider="true"
       >
-        <span className="w-9 text-right text-xs tabular-nums text-neutral-300">
+        <span className="w-9 text-right text-xs tabular-nums text-neutral-600">
           {zoomPercent}%
         </span>
         <input
           aria-label="Canvas zoom"
-          className="h-2 min-w-0 flex-1 cursor-ew-resize accent-white"
+          className="h-2 min-w-0 flex-1 cursor-ew-resize accent-neutral-950"
           data-workspace-zoom-range="true"
           max={140}
           min={50}
@@ -856,8 +855,9 @@ function ToolbarButton({
           disabled={disabled}
           onClick={onClick}
           className={cn(
-            "size-9 rounded-lg text-neutral-300 hover:bg-white/10 hover:text-white",
-            active && "bg-white text-neutral-950 hover:bg-white hover:text-neutral-950",
+            "size-9 rounded-lg text-neutral-600 hover:bg-neutral-100 hover:text-neutral-950",
+            active &&
+              "bg-neutral-950 text-white hover:bg-neutral-900 hover:text-white",
           )}
         >
           {children}
@@ -877,14 +877,14 @@ type CanvasStatusBarProps = {
 
 function CanvasStatusBar({ edge, node, notice, zoom }: CanvasStatusBarProps) {
   return (
-    <div className="pointer-events-none absolute bottom-5 left-5 z-30 flex max-w-[calc(50vw-8rem)] items-center gap-3 text-xs text-neutral-400">
-      <span className="rounded-lg bg-neutral-900/80 px-2 py-1 backdrop-blur">
+    <div className="pointer-events-none absolute bottom-5 left-5 z-30 flex max-w-[calc(50vw-8rem)] items-center gap-3 text-xs text-neutral-600">
+      <span className="rounded-lg border border-neutral-200 bg-white/90 px-2 py-1 shadow-sm backdrop-blur">
         Asset manager
       </span>
-      <span className="rounded-lg bg-neutral-900/80 px-2 py-1 backdrop-blur">
+      <span className="rounded-lg border border-neutral-200 bg-white/90 px-2 py-1 shadow-sm backdrop-blur">
         {Math.round(zoom * 100)}%
       </span>
-      <span className="hidden rounded-lg bg-neutral-900/80 px-2 py-1 backdrop-blur md:inline">
+      <span className="hidden rounded-lg border border-neutral-200 bg-white/90 px-2 py-1 shadow-sm backdrop-blur md:inline">
         {node
           ? `Selected: ${node.title}`
           : edge
@@ -921,51 +921,51 @@ function ScriptNodeEditor({
 
   return (
     <aside
-      className="absolute right-5 top-20 z-40 flex max-h-[calc(100vh-8rem)] w-[32rem] max-w-[calc(100vw-2.5rem)] flex-col gap-3 overflow-hidden rounded-lg border border-white/10 bg-neutral-950/95 p-4 text-neutral-100 shadow-2xl backdrop-blur"
+      className="absolute right-5 top-20 z-40 flex max-h-[calc(100vh-8rem)] w-[34rem] max-w-[calc(100vw-2.5rem)] flex-col gap-4 overflow-hidden rounded-xl border border-neutral-200 bg-white/95 p-4 text-neutral-950 shadow-[0_24px_80px_rgba(15,23,42,0.16)] backdrop-blur"
       data-script-node-editor="true"
       aria-label="Script node editor"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-sm font-semibold">Script Node</p>
-          <p className="text-xs text-neutral-400">
-            MV world prompt in, storyboard, characters, and scenes out.
+          <p className="text-xs text-neutral-500">
+            MV world prompt in. Choose storyboard, characters, or scene output.
           </p>
         </div>
-        <Badge className="border-white/10 bg-white/5 text-neutral-200">
+        <Badge className="border-neutral-200 bg-neutral-50 text-neutral-700">
           {task.status}
         </Badge>
       </div>
 
-      <div className="grid min-h-0 flex-1 grid-cols-[1fr_1.1fr] gap-3 overflow-hidden">
-        <div className="flex min-h-0 flex-col gap-3 overflow-y-auto pr-1">
-          <AIChatInterface
-            value={input.world_description}
-            onValueChange={(value) => onInputChange("world_description", value)}
-            onSubmit={onGenerate}
-            placeholder="Describe the MV world: theme, number of characters, background, emotional tone, key locations..."
-            eyebrow="MV world prompt"
-            description="Enter one world-view description. The Script Node expands it into storyboard direction, character looks, and concrete scenes."
-            submitLabel={busy ? "Generating" : "Generate"}
-            disabled={busy}
-            submitDisabled={!promptReady}
-            showTools={false}
-            modelLabel="Script agent"
-            textareaLabel="MV world description"
-          />
+      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto pr-1">
+        <AIChatInterface
+          value={input.world_description}
+          onValueChange={(value) => onInputChange("world_description", value)}
+          onSubmit={onGenerate}
+          placeholder="Describe the MV world: theme, number of characters, background, emotional tone, key locations..."
+          eyebrow="MV world prompt"
+          description="Enter one world-view description. The Script Node expands it into storyboard direction, character looks, and concrete scenes."
+          submitLabel={busy ? "Generating" : "Generate"}
+          disabled={busy}
+          submitDisabled={!promptReady}
+          showTools={false}
+          modelLabel="Script agent"
+          textareaLabel="MV world description"
+          showHeader={false}
+          variant="chat"
+        />
 
-          {error ? (
-            <p className="rounded-md border border-red-400/30 bg-red-500/10 px-3 py-2 text-xs text-red-100">
-              {error}
-            </p>
-          ) : null}
+        {error ? (
+          <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+            {error}
+          </p>
+        ) : null}
 
-          {!promptReady ? (
-            <p className="rounded-md border border-white/10 bg-white/[0.03] px-3 py-2 text-xs leading-5 text-neutral-400">
-              Add the MV world description before running the Script Node.
-            </p>
-          ) : null}
-        </div>
+        {!promptReady ? (
+          <p className="rounded-md border border-neutral-200 bg-neutral-50 px-3 py-2 text-xs leading-5 text-neutral-500">
+            Add the MV world description before running the Script Node.
+          </p>
+        ) : null}
 
         <ScriptOutputTabs output={output} task={task} />
       </div>
@@ -978,50 +978,94 @@ type ScriptOutputTabsProps = {
   task: ScriptTaskStatusResponse;
 };
 
+type ScriptOutputFocus = "storyboard" | "characters" | "scene";
+
+const scriptOutputViews = [
+  {
+    id: "storyboard",
+    label: "Storyboard",
+    description: "POV and shot direction",
+  },
+  {
+    id: "characters",
+    label: "Characters",
+    description: "Looks, wardrobe, and body details",
+  },
+  {
+    id: "scene",
+    label: "Scene",
+    description: "Storyboard + characters composed together",
+  },
+] as const satisfies Array<{
+  id: ScriptOutputFocus;
+  label: string;
+  description: string;
+}>;
+
 export function ScriptOutputTabs({ output, task }: ScriptOutputTabsProps) {
-  if (!output) {
-    return (
-      <div
-        className="flex min-h-0 flex-col justify-between rounded-lg border border-white/10 bg-white/[0.03] p-4"
-        data-script-node-empty-output="true"
-      >
-        <div className="flex flex-col gap-2">
-          <p className="text-sm font-semibold">Structured output</p>
-          <p className="text-xs leading-5 text-neutral-400">
-            Run generation to receive storyboard direction, character profiles,
-            and concrete scene descriptions as JSON-backed sections.
-          </p>
-        </div>
-        <div className="rounded-md border border-white/10 bg-neutral-950/70 p-3 text-xs text-neutral-400">
-          Task: {task.task_id} / {task.status}
-        </div>
-      </div>
-    );
-  }
+  const [selectedOutput, setSelectedOutput] =
+    useState<ScriptOutputFocus>("storyboard");
+  const selectedView = scriptOutputViews.find((view) => view.id === selectedOutput);
 
   return (
-    <Tabs defaultValue="overview" className="flex min-h-0 flex-col overflow-hidden">
-      <TabsList className="grid h-auto grid-cols-4 bg-white/[0.06] text-neutral-300">
-        <TabsTrigger value="overview">Overview</TabsTrigger>
-        <TabsTrigger value="storyboard">Storyboard</TabsTrigger>
-        <TabsTrigger value="characters">Characters</TabsTrigger>
-        <TabsTrigger value="scenes">Scenes</TabsTrigger>
-      </TabsList>
+    <section className="flex flex-col gap-3" data-script-node-output-panel="true">
+      <div className="flex flex-col gap-2 rounded-2xl border border-neutral-200 bg-neutral-50 p-3">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-sm font-semibold text-neutral-950">Choose output</p>
+            <p className="text-xs text-neutral-500">
+              Select what this Script Node should show or generate next.
+            </p>
+          </div>
+          <Badge className="border-neutral-200 bg-white text-neutral-600">
+            {task.status}
+          </Badge>
+        </div>
+        <div className="grid grid-cols-3 gap-2">
+          {scriptOutputViews.map((view) => (
+            <Button
+              key={view.id}
+              type="button"
+              variant={selectedOutput === view.id ? "default" : "outline"}
+              className={cn(
+                "h-auto flex-col items-start gap-1 whitespace-normal rounded-lg px-3 py-2 text-left text-xs",
+                selectedOutput !== view.id &&
+                  "border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-100",
+              )}
+              onClick={() => setSelectedOutput(view.id)}
+            >
+              <span className="font-semibold">{view.label}</span>
+              <span className="text-[0.68rem] font-normal opacity-70">
+                {view.description}
+              </span>
+            </Button>
+          ))}
+        </div>
+      </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto rounded-b-lg border border-t-0 border-white/10 bg-white/[0.03] p-3">
-        <TabsContent forceMount value="overview" className="m-0 flex flex-col gap-3">
-          <OutputSection title={output.title}>
-            <p>{output.world_overview}</p>
-            <Checklist
-              items={[
-                `${output.storyboard_direction.shots.length} storyboard shots`,
-                `${output.characters.length} character profiles`,
-                `${output.scene_descriptions.length} scene descriptions`,
-              ]}
-            />
-          </OutputSection>
-        </TabsContent>
-        <TabsContent forceMount value="storyboard" className="m-0 flex flex-col gap-3">
+      {!output ? (
+        <AssistantResponseBubble
+          title={selectedView?.label ?? "Selected output"}
+          subtitle="Script Agent"
+        >
+          <p>
+            Run generation to receive the selected Script Node output as a
+            structured response.
+          </p>
+          {selectedOutput === "scene" ? (
+            <p>
+              Scene output is composed from the generated storyboard and
+              character profiles.
+            </p>
+          ) : null}
+          <p className="rounded-md border border-neutral-200 bg-white px-3 py-2 text-neutral-500">
+            Task: {task.task_id} / {task.status}
+          </p>
+        </AssistantResponseBubble>
+      ) : null}
+
+      {output && selectedOutput === "storyboard" ? (
+        <AssistantResponseBubble title="Storyboard" subtitle={output.title}>
           <OutputSection title="Direction">
             <p>{output.storyboard_direction.pov}</p>
             <p>{output.storyboard_direction.visual_rhythm}</p>
@@ -1037,8 +1081,11 @@ export function ScriptOutputTabs({ output, task }: ScriptOutputTabsProps) {
               <p>{shot.duration_seconds}s</p>
             </OutputSection>
           ))}
-        </TabsContent>
-        <TabsContent forceMount value="characters" className="m-0 flex flex-col gap-3">
+        </AssistantResponseBubble>
+      ) : null}
+
+      {output && selectedOutput === "characters" ? (
+        <AssistantResponseBubble title="Characters" subtitle={output.title}>
           {output.characters.map((character) => (
             <OutputSection key={character.name} title={character.name}>
               <p>{character.overview}</p>
@@ -1050,8 +1097,11 @@ export function ScriptOutputTabs({ output, task }: ScriptOutputTabsProps) {
               <p>{character.visual_prompt}</p>
             </OutputSection>
           ))}
-        </TabsContent>
-        <TabsContent forceMount value="scenes" className="m-0 flex flex-col gap-3">
+        </AssistantResponseBubble>
+      ) : null}
+
+      {output && selectedOutput === "scene" ? (
+        <AssistantResponseBubble title="Scene" subtitle="Composed from storyboard + characters">
           {output.scene_descriptions.map((scene) => (
             <OutputSection
               key={scene.scene_number}
@@ -1063,9 +1113,36 @@ export function ScriptOutputTabs({ output, task }: ScriptOutputTabsProps) {
               <p>{scene.visual_prompt}</p>
             </OutputSection>
           ))}
-        </TabsContent>
+        </AssistantResponseBubble>
+      ) : null}
+    </section>
+  );
+}
+
+type AssistantResponseBubbleProps = {
+  title: string;
+  subtitle: string;
+  children: ReactNode;
+};
+
+function AssistantResponseBubble({
+  title,
+  subtitle,
+  children,
+}: AssistantResponseBubbleProps) {
+  return (
+    <section className="mr-6 flex flex-col gap-3 rounded-2xl rounded-tl-md border border-neutral-200 bg-white p-4 text-xs leading-5 text-neutral-700 shadow-sm">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p className="text-sm font-semibold text-neutral-950">{title}</p>
+          <p className="text-xs text-neutral-500">{subtitle}</p>
+        </div>
+        <Badge className="border-neutral-200 bg-neutral-50 text-neutral-600">
+          Response
+        </Badge>
       </div>
-    </Tabs>
+      {children}
+    </section>
   );
 }
 
@@ -1076,8 +1153,8 @@ type OutputSectionProps = {
 
 function OutputSection({ title, children }: OutputSectionProps) {
   return (
-    <section className="flex flex-col gap-2 rounded-md border border-white/10 bg-neutral-950/70 p-3 text-xs leading-5 text-neutral-300">
-      <h3 className="text-sm font-semibold text-neutral-100">{title}</h3>
+    <section className="flex flex-col gap-2 rounded-md border border-neutral-200 bg-neutral-50 p-3 text-xs leading-5 text-neutral-700">
+      <h3 className="text-sm font-semibold text-neutral-950">{title}</h3>
       {children}
     </section>
   );
@@ -1095,7 +1172,7 @@ function Checklist({ items }: { items: string[] }) {
 
 type WorkflowNodeCardProps = {
   node: WorkflowNode;
-  scriptOutput: ScriptNodeOutput | null;
+  scriptInput: ScriptNodeInput | null;
   selected: boolean;
   pendingPort: WorkflowPort | null;
   onDragStart: (
@@ -1111,7 +1188,7 @@ type WorkflowNodeCardProps = {
 
 function WorkflowNodeCard({
   node,
-  scriptOutput,
+  scriptInput,
   selected,
   pendingPort,
   onDragStart,
@@ -1125,8 +1202,10 @@ function WorkflowNodeCard({
   return (
     <article
       className={cn(
-        "absolute rounded-lg border bg-[#242424] text-neutral-100 shadow-[0_18px_50px_rgba(0,0,0,0.35)] transition",
-        selected ? "border-white/70" : "border-white/10 hover:border-white/25",
+        "absolute rounded-lg border bg-white text-neutral-950 shadow-[0_18px_50px_rgba(15,23,42,0.12)] transition",
+        selected
+          ? "border-neutral-950/70"
+          : "border-neutral-200 hover:border-neutral-300",
       )}
       data-workflow-node={node.type}
       style={{
@@ -1147,56 +1226,47 @@ function WorkflowNodeCard({
         onPointerDown={(event) => onDragStart(event, node)}
         onClick={() => onSelect({ kind: "node", id: node.id })}
       >
-        <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-white/10 text-neutral-300">
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-neutral-100 text-neutral-700">
           <Icon aria-hidden="true" />
         </span>
         <span className="min-w-0 flex-1">
           <span className="block truncate text-sm font-semibold">{node.title}</span>
           <span className="block truncate text-xs text-neutral-500">{node.id}</span>
         </span>
-        <Badge className="border-white/10 bg-white/5 text-neutral-300">
+        <Badge className="border-neutral-200 bg-neutral-50 text-neutral-700">
           {node.status}
         </Badge>
       </button>
 
       <div className="px-4 pb-4">
         {node.type === "script" ? (
-          <div className="max-h-28 overflow-hidden rounded-md border border-white/10 bg-[#111]/80 p-3 text-xs leading-5 text-neutral-200">
-            <p className="font-semibold">
-              {scriptOutput?.title ?? "Script Node API Ready"}
-            </p>
+          <div className="max-h-28 overflow-hidden rounded-md border border-neutral-200 bg-neutral-50 p-3 text-xs leading-5 text-neutral-700">
+            <p className="font-semibold text-neutral-950">World view</p>
             <p>
-              {scriptOutput
-                ? scriptOutput.world_overview
-                : "World prompt -> storyboard direction, character profiles, and scene descriptions."}
-            </p>
-            <p>
-              {scriptOutput
-                ? `${scriptOutput.storyboard_direction.shots.length} shots / ${scriptOutput.characters.length} characters / ${scriptOutput.scene_descriptions.length} scenes`
-                : "Provider: FastAPI mock by default"}
+              {scriptInput?.world_description.trim() || "No world prompt yet."}
             </p>
           </div>
         ) : node.type === "storyboard" ? (
-          <div className="rounded-md border border-white/10 bg-white/[0.03] p-3">
+          <div className="rounded-md border border-neutral-200 bg-neutral-50 p-3">
             <div className="mb-3 flex items-center justify-center">
               <div className="flex flex-col gap-1.5">
-                <span className="block h-1 w-8 rounded bg-neutral-500" />
-                <span className="block h-1 w-8 rounded bg-neutral-500" />
-                <span className="block h-1 w-8 rounded bg-neutral-500" />
+                <span className="block h-1 w-8 rounded bg-neutral-400" />
+                <span className="block h-1 w-8 rounded bg-neutral-400" />
+                <span className="block h-1 w-8 rounded bg-neutral-400" />
               </div>
             </div>
-            <div className="grid grid-cols-3 items-center gap-2 text-center text-[11px] text-neutral-400">
+            <div className="grid grid-cols-3 items-center gap-2 text-center text-[11px] text-neutral-500">
               <span>Confirm shot</span>
-              <span className="font-semibold text-neutral-100">Draw assets</span>
+              <span className="font-semibold text-neutral-950">Draw assets</span>
               <span>Compose lines</span>
             </div>
           </div>
         ) : node.type === "composition" || node.type === "video" ? (
-          <div className="flex h-24 items-center justify-center rounded-md border border-white/10 bg-white/[0.03]">
+          <div className="flex h-24 items-center justify-center rounded-md border border-neutral-200 bg-neutral-50">
             <Film aria-hidden="true" className="text-neutral-500" />
           </div>
         ) : (
-          <div className="flex h-24 items-center justify-center rounded-md border border-white/10 bg-white/[0.03]">
+          <div className="flex h-24 items-center justify-center rounded-md border border-neutral-200 bg-neutral-50">
             <Image aria-hidden="true" className="text-neutral-500" />
           </div>
         )}
@@ -1250,9 +1320,11 @@ function PortButton({ port, index, compatible, onConnectionStart }: PortButtonPr
     <button
       type="button"
       className={cn(
-        "absolute flex size-5 items-center justify-center rounded-full border bg-[#242424] text-[0px] shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70",
+        "absolute flex size-5 items-center justify-center rounded-full border bg-white text-[0px] shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-950/20",
         leftSide ? "-left-2.5" : "-right-2.5",
-        compatible ? "border-white bg-white" : "border-white/40 hover:border-white",
+        compatible
+          ? "border-neutral-950 bg-neutral-950 text-white"
+          : "border-neutral-300 hover:border-neutral-950",
       )}
       style={{ top: PORT_TOP + index * PORT_GAP }}
       aria-label={`${port.direction} ${port.label} ${port.dataType} port`}
@@ -1313,7 +1385,7 @@ function WorkflowEdges({ connectionPreview, state, onSelect }: WorkflowEdgesProp
             />
             <path
               d={path}
-              stroke={selected ? "rgba(255,255,255,0.95)" : "rgba(148,163,184,0.62)"}
+              stroke={selected ? "rgba(15,23,42,0.9)" : "rgba(100,116,139,0.55)"}
               strokeWidth={selected ? "3" : "2"}
               fill="none"
               pointerEvents="none"
@@ -1333,7 +1405,7 @@ function WorkflowEdges({ connectionPreview, state, onSelect }: WorkflowEdgesProp
       {previewPath ? (
         <path
           d={previewPath}
-          stroke="rgba(255,255,255,0.9)"
+          stroke="rgba(15,23,42,0.82)"
           strokeDasharray="7 7"
           strokeWidth="2.5"
           fill="none"
