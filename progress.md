@@ -15,10 +15,21 @@ Record major decisions and progress each session. Keep the current verified stat
 - Current component guidance: `web-design-001` installed the user-provided TriplD shadcn component set as local source. See the concise usage map in `docs/TRIPLED_COMPONENT_GUIDE.md`.
 - Current design-system foundation: `web-design-002` defines shared style, layout, motion, responsive, accessibility, and product state language directly in frontend code under `apps/web/src/lib/design-system.ts`, `apps/web/src/components/xmeta/design-primitives.tsx`, `apps/web/src/index.css`, and `apps/web/tailwind.config.ts`.
 - Current app foundation: `web-design-004` implements the global shell, shared page containers, and wider desktop layout rhythm while preserving the root TriplD landing composition.
-- Current workspace canvas revision: Feature 2 `/workspace` now uses a canvas-first dark dotted work surface with a floating project bar, a single bottom `Add node` entry, and no duplicated left node palette or right monitoring/Inspector panel.
+- Current workspace canvas revision: Feature 2 `/workspace` now uses a canvas-first dark dotted work surface with a floating project bar, a persistent `Local only / FastAPI deferred / AI disabled` boundary label, a single bottom `Add node` entry, default nodes fitted into the first viewport, and no duplicated left node palette or right monitoring/Inspector panel.
 - Current blocker: none for starting Feature 3 after reading `feature_tasks/3.json` and rerunning the standard startup path.
 
 ## Session Log
+
+### Session 027
+
+- Date: 2026-06-29
+- Goal: Open the site, keep the browser open, and tailor Feature 2 `/workspace` results without expanding beyond the Workflow Canvas Foundation.
+- Completed: Started the web dev server on `http://localhost:3000`, opened `/workspace` in the in-app browser, moved the default Script/Storyboard/Composition graph into a fully visible desktop-safe frame, replaced fixed viewport offsets with calculated initial/Fit view framing, added the persistent `Local only / FastAPI deferred / AI disabled` label, and adjusted added node placement so Audio lands below the default graph without overlap.
+- Subagents: Acting subagent implemented the bounded canvas polish; evaluator subagent initially scored 88/100 and flagged missing persistent deferred-backend labeling plus rerun QA needs. Main fix pass resolved the findings and recorded 100/100 in `evaluator-rubric.md`.
+- Verification run: Baseline `.\init.ps1` passed before tailoring with 9 files / 26 tests; focused workflow canvas tests passed 2 files / 8 tests; full web tests passed 9 files / 27 tests; typecheck passed; build passed; JSON validation passed; `git diff --check` passed with line-ending warnings only; final `.\init.ps1` passed with 9 files / 27 tests.
+- Rendered QA: Fresh Browser QA on `http://localhost:3000/workspace` passed for page identity, nonblank canvas, three default nodes fully visible in the 1254px viewport, persistent local/FastAPI/AI boundary label, no Node palette/Quick add/Inspector text, no framework overlay, no document overflow, Add node -> Add Audio node changing node count 3 -> 4, menu closure, no overlap between Audio and the default graph, and no warn/error logs during the QA window.
+- Known risk or unresolved issue: FastAPI durable persistence, AI execution, provider calls, task orchestration, generated assets, and export rendering remain deferred to later features.
+- Next best step: Start Feature 3, Script Node, after reading `feature_tasks/3.json` and rerunning `.\init.ps1`.
 
 ### Session 026
 

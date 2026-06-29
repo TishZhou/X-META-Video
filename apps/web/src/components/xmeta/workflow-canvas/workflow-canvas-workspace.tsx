@@ -71,6 +71,17 @@ const PORT_TOP = 76;
 const PORT_GAP = 30;
 const CANVAS_WIDTH = 2200;
 const CANVAS_HEIGHT = 1280;
+const INITIAL_GRAPH_BOUNDS = {
+  minX: 160,
+  minY: 210,
+  maxX: 1128,
+  maxY: 528,
+};
+const INITIAL_GRAPH_MARGIN_X = 32;
+const INITIAL_GRAPH_TOP_Y = 112;
+const INITIAL_GRAPH_BOTTOM_RESERVED = 132;
+const MIN_INITIAL_ZOOM = 0.5;
+const MAX_INITIAL_ZOOM = 1;
 
 const nodeIcons = {
   script: Wand2,
@@ -100,6 +111,36 @@ type DragState = {
   nodeId: string;
   offset: WorkflowPoint;
 } | null;
+
+export function calculateInitialCanvasViewport(
+  viewportWidth: number,
+  viewportHeight: number,
+) {
+  const graphWidth = INITIAL_GRAPH_BOUNDS.maxX - INITIAL_GRAPH_BOUNDS.minX;
+  const graphHeight = INITIAL_GRAPH_BOUNDS.maxY - INITIAL_GRAPH_BOUNDS.minY;
+  const availableWidth = Math.max(
+    320,
+    viewportWidth - INITIAL_GRAPH_MARGIN_X * 2,
+  );
+  const availableHeight = Math.max(
+    240,
+    viewportHeight - INITIAL_GRAPH_TOP_Y - INITIAL_GRAPH_BOTTOM_RESERVED,
+  );
+  const zoom = Math.min(
+    MAX_INITIAL_ZOOM,
+    Math.max(
+      MIN_INITIAL_ZOOM,
+      Math.min(availableWidth / graphWidth, availableHeight / graphHeight),
+    ),
+  );
+  const fittedWidth = graphWidth * zoom;
+  const x =
+    Math.round((viewportWidth - fittedWidth) / 2) -
+    Math.round(INITIAL_GRAPH_BOUNDS.minX * zoom);
+  const y = Math.round(INITIAL_GRAPH_TOP_Y - INITIAL_GRAPH_BOUNDS.minY * zoom);
+
+  return { x, y, zoom };
+}
 
 export function WorkflowCanvasWorkspace() {
   const [state, dispatch] = useReducer(
@@ -132,38 +173,9 @@ export function WorkflowCanvasWorkspace() {
 
   useEffect(() => {
     function applyResponsiveViewport() {
-      const width = window.innerWidth;
-
-      if (width < 640) {
-        dispatch({
-          type: "setViewport",
-          viewport: { x: -320, y: -110, zoom: 0.56 },
-          markDirty: false,
-        });
-        return;
-      }
-
-      if (width < 1280) {
-        dispatch({
-          type: "setViewport",
-          viewport: { x: -430, y: -180, zoom: 0.72 },
-          markDirty: false,
-        });
-        return;
-      }
-
-      if (width < 1500) {
-        dispatch({
-          type: "setViewport",
-          viewport: { x: -280, y: -120, zoom: 0.82 },
-          markDirty: false,
-        });
-        return;
-      }
-
       dispatch({
         type: "setViewport",
-        viewport: { x: 0, y: 0, zoom: 1 },
+        viewport: calculateInitialCanvasViewport(window.innerWidth, window.innerHeight),
         markDirty: false,
       });
     }
@@ -183,12 +195,14 @@ export function WorkflowCanvasWorkspace() {
   }, []);
 
   function addNode(nodeType: WorkflowNodeType) {
-    const offset = state.nodes.length * 42;
+    const addedNodeIndex = Math.max(0, state.nodes.length - 3);
+    const column = addedNodeIndex % 2;
+    const row = Math.floor(addedNodeIndex / 2);
 
     dispatch({
       type: "addNode",
       nodeType,
-      position: { x: 520 + offset, y: 250 + offset },
+      position: { x: 500 + column * 340, y: 560 + row * 230 },
     });
     setShowAddMenu(false);
   }
@@ -266,11 +280,23 @@ export function WorkflowCanvasWorkspace() {
   }
 
   function adjustZoom(delta: number) {
-    const zoom = Math.min(1.4, Math.max(0.56, state.viewport.zoom + delta));
+    const zoom = Math.min(1.4, Math.max(MIN_INITIAL_ZOOM, state.viewport.zoom + delta));
 
     dispatch({
       type: "setViewport",
       viewport: { ...state.viewport, zoom },
+    });
+  }
+
+  function fitCanvasView() {
+    dispatch({
+      type: "setViewport",
+      viewport: calculateInitialCanvasViewport(window.innerWidth, window.innerHeight),
+      markDirty: false,
+    });
+    dispatch({
+      type: "setNotice",
+      notice: "Canvas fitted to current placeholder graph.",
     });
   }
 
@@ -301,6 +327,12 @@ export function WorkflowCanvasWorkspace() {
             edgeCount={state.edges.length}
             nodeCount={state.nodes.length}
           />
+          <div
+            className="pointer-events-none absolute left-4 top-16 z-30 max-w-[calc(100vw-2rem)] rounded-lg border border-white/10 bg-neutral-900/85 px-3 py-1.5 text-xs text-neutral-300 shadow-2xl backdrop-blur"
+            data-workspace-boundary-label="true"
+          >
+            Local only / FastAPI deferred / AI disabled
+          </div>
 
           <div
             ref={canvasRef}
@@ -362,7 +394,7 @@ export function WorkflowCanvasWorkspace() {
             templates={workflowNodeTemplates}
             onAddNode={addNode}
             onDelete={() => dispatch({ type: "deleteSelection" })}
-            onFit={() => dispatch({ type: "fitView" })}
+            onFit={fitCanvasView}
             onModeChange={setMode}
             onSave={() => dispatch({ type: "saveSnapshot" })}
             onRestore={() => dispatch({ type: "restoreSnapshot" })}

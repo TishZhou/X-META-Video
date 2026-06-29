@@ -219,9 +219,9 @@ export function createWorkflowSnapshot(
 }
 
 export function createInitialWorkflowGraphState(): WorkflowGraphState {
-  const script = createWorkflowNode("script", { x: 620, y: 390 }, 1);
-  const storyboard = createWorkflowNode("storyboard", { x: 1000, y: 410 }, 2);
-  const composition = createWorkflowNode("composition", { x: 1370, y: 560 }, 3);
+  const script = createWorkflowNode("script", { x: 160, y: 210 }, 1);
+  const storyboard = createWorkflowNode("storyboard", { x: 500, y: 230 }, 2);
+  const composition = createWorkflowNode("composition", { x: 840, y: 350 }, 3);
   const initialNodes = [script, storyboard, composition];
   const scriptOut = findPort(initialNodes, `${script.id}:script-out`);
   const storyboardIn = findPort(initialNodes, `${storyboard.id}:script-in`);

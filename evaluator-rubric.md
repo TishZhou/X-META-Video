@@ -1,6 +1,6 @@
 # Evaluator Rubric - Feature 2 Workflow Canvas Foundation
 
-Updated: 2026-06-26
+Updated: 2026-06-29
 
 ## Evaluation Scope
 
@@ -22,7 +22,7 @@ Updated: 2026-06-26
 | Structured save/restore boundary | 10 | 10 | Snapshot tests round-trip structured payloads without DOM HTML; UI labels FastAPI durable persistence as unavailable/deferred. |
 | Verification and artifacts | 10 | 10 | Baseline startup, tests, typecheck, build, Browser QA, JSON validation, `git diff --check`, and final startup evidence are recorded. |
 
-Current score: 100 / 100 by main rubric; independent evaluator re-score was 96 / 100 before this final stale-evidence cleanup.
+Current score: 100 / 100 after the 2026-06-29 Feature 2 tailoring pass.
 
 ## Initial Findings
 
@@ -32,6 +32,8 @@ Current score: 100 / 100 by main rubric; independent evaluator re-score was 96 /
 - `AGENTS.md` is modified before this session and should remain protected as user work.
 - Backend persistence, AI generation, provider calls, and orchestration are out of scope and must be labeled honestly.
 - User-requested visual revision removed the duplicated left node palette and right monitoring/Inspector panel; desktop canvas QA is the acceptance target for this revision.
+- 2026-06-29 evaluator subagent initially scored the tailoring pass 88 / 100 and flagged: P2 missing persistent visible backend/AI boundary label, P2 dirty relevant implementation files pending integration, and P3 live Browser interaction QA needing rerun after tooling instability.
+- 2026-06-29 main/acting fix pass resolved those findings: `/workspace` now shows `Local only / FastAPI deferred / AI disabled` persistently, implementation edits were reviewed and verified, and fresh Browser QA reran Add node -> Add Audio with no warn/error logs during the QA window.
 
 ## Verification Evidence
 
@@ -50,7 +52,11 @@ Current score: 100 / 100 by main rubric; independent evaluator re-score was 96 /
 - Post-evaluator fix typecheck and build passed.
 - Post-revision verification passed: `corepack pnpm --filter @xmeta/web test`, `corepack pnpm --filter @xmeta/web typecheck`, and `corepack pnpm --filter @xmeta/web build`.
 - Final revision startup passed: `.\init.ps1` reran web verification with 9 test files / 26 tests.
+- 2026-06-29 focused tailoring tests passed: `corepack pnpm --filter @xmeta/web test -- src/lib/workflow-canvas/graph.test.ts src/components/xmeta/workflow-canvas/workflow-canvas-workspace.test.tsx` reported 2 files / 8 tests.
+- 2026-06-29 full tailoring verification passed: `corepack pnpm --filter @xmeta/web test` reported 9 files / 27 tests; `corepack pnpm --filter @xmeta/web typecheck` passed; `corepack pnpm --filter @xmeta/web build` passed.
+- 2026-06-29 fresh Browser QA passed on `http://localhost:3000/workspace`: title `Workspace Canvas | X-META Video`, default node bounds stayed within the 1254px viewport (`script` right 431, `storyboard` right 771, `composition` right 1111), boundary label was visible, no Node palette/Quick add/Inspector text, no framework overlay, no document overflow, Add Audio changed node count 3 -> 4, the menu closed, the Audio node did not overlap the default graph, and no warn/error logs occurred during the QA window.
+- 2026-06-29 final closure passed: JSON validation for `feature_list.json` and `feature_tasks/2.json`, `git diff --check` with line-ending warnings only, and final `.\init.ps1` rerunning 9 files / 27 tests.
 
 ## Verdict
 
-Passing after evaluator fix pass and stale-evidence cleanup.
+Passing after evaluator fix pass, stale-evidence cleanup, and 2026-06-29 tailoring QA.

@@ -1,6 +1,6 @@
 ﻿{
     "project":  "X-META Video",
-    "last_updated":  "2026-06-26",
+    "last_updated":  "2026-06-29",
     "rules":  {
                   "single_active_feature":  true,
                   "passing_requires_evidence":  true,
@@ -70,7 +70,11 @@
                                                        "corepack pnpm --filter @xmeta/web build passed and includes the /workspace route.",
                                                        "Browser QA on http://localhost:3000/workspace desktop passed: route title correct, nonblank dark canvas, global top bar hidden, floating workspace top bar present, bottom toolbar present, no duplicated Node palette, no Inspector/right monitoring panel, no Quick add duplicate list, console warn/error logs empty, and no document overflow.",
                                                        "Bottom Add node interaction QA passed before final visual closure: Add node opened the menu, Add Audio node changed rendered nodes from 3 to 4, and the menu closed after creation.",
-                                                       "Final .\\init.ps1 passed after artifact updates and reran web tests: 9 test files / 26 tests."
+                                                       "Final .\\init.ps1 passed after artifact updates and reran web tests: 9 test files / 26 tests.",
+                                                       "2026-06-29 Feature 2 tailoring kept /workspace open in the in-app browser, moved the default three-node graph into a fully visible desktop-safe frame, added calculated initial/Fit view framing, and kept the single bottom Add node entry.",
+                                                       "2026-06-29 /workspace now shows a persistent boundary label: Local only / FastAPI deferred / AI disabled.",
+                                                       "2026-06-29 Add node interaction QA passed: Add Audio node changed rendered nodes from 3 to 4, closed the menu, and placed the new Audio node below the default graph without overlapping Script, Storyboard, or Composition.",
+                                                       "2026-06-29 verification passed: focused workflow canvas tests 2 files / 8 tests, full web tests 9 files / 27 tests, typecheck, build, fresh Browser QA with no warn/error logs during the QA window, JSON validation, git diff --check, and final .\\init.ps1 rerunning 9 files / 27 tests."
                                                    ],
                          "user_visible_behavior":  "Users can work on a Figma-like dark canvas with nodes, edges, drag, zoom, selection, a single bottom add entry, and restorable layout state.",
                          "task_file":  "feature_tasks/2.json"

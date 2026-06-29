@@ -8,6 +8,26 @@ import {
 } from "./graph";
 
 describe("workflow graph state", () => {
+  it("frames the default three-node graph within a 1280px desktop canvas", () => {
+    const state = createInitialWorkflowGraphState();
+    const nodeWidth = 288;
+    const portReach = 10;
+    const composition = state.nodes.find((node) => node.type === "composition");
+    const left = Math.min(...state.nodes.map((node) => node.position.x));
+    const right = Math.max(
+      ...state.nodes.map((node) => node.position.x + nodeWidth + portReach),
+    );
+
+    expect(state.nodes.map((node) => node.type)).toEqual([
+      "script",
+      "storyboard",
+      "composition",
+    ]);
+    expect(composition?.position.x).toBeLessThanOrEqual(840);
+    expect(left).toBeGreaterThanOrEqual(120);
+    expect(right).toBeLessThanOrEqual(1160);
+  });
+
   it("adds, selects, moves, and deletes placeholder nodes deterministically", () => {
     const initial = createInitialWorkflowGraphState();
     const added = workflowGraphReducer(initial, {

@@ -11,6 +11,10 @@ describe("WorkflowCanvasWorkspace", () => {
     expect(html).toContain("Canvas 1");
     expect(html).toContain('data-workflow-canvas="viewport"');
     expect(html).toContain('data-workspace-bottom-toolbar="true"');
+    expect(html).toContain('data-workspace-boundary-label="true"');
+    expect(html).toContain("Local only");
+    expect(html).toContain("FastAPI deferred");
+    expect(html).toContain("AI disabled");
     expect(html).not.toContain("Node palette");
     expect(html).not.toContain("Inspector");
   });

@@ -6,13 +6,16 @@
 - Feature 1 `Web Design` is also recorded as `passing`; no feature is currently active.
 - Current highest-priority unfinished feature is Feature 3, `Script Node`.
 - `AGENTS.md` had pre-existing user edits and was not reverted.
-- Baseline `.\init.ps1` passed before implementation and reported 6 web test files / 18 tests.
-- Post-revision verification passed: web tests 9 files / 26 tests, typecheck, build, desktop Browser QA, JSON validation, `git diff --check`, and final `.\init.ps1`.
+- Baseline `.\init.ps1` passed before the 2026-06-29 tailoring pass and reported 9 web test files / 26 tests.
+- Post-tailoring verification passed: focused workflow canvas tests 2 files / 8 tests, full web tests 9 files / 27 tests, typecheck, build, fresh Browser QA, JSON validation, `git diff --check`, final `.\init.ps1`, and artifact evidence updates.
+- The dev server is intentionally running at `http://localhost:3000`, and the in-app browser is open on `/workspace`.
 
 ## Feature 2 Implementation State
 
-- `/workspace` renders a canvas-first dark dotted work surface with hidden global top bar, floating project/status controls, graph viewport, bottom toolbar, local-only draft status, and honest unavailable backend/AI labels.
+- `/workspace` renders a canvas-first dark dotted work surface with hidden global top bar, floating project/status controls, graph viewport, bottom toolbar, local-only draft status, and the persistent boundary label `Local only / FastAPI deferred / AI disabled`.
+- The default Script, Storyboard, and Composition nodes are framed into the first desktop viewport through calculated initial/Fit view viewport logic.
 - Users can add placeholder nodes for script, storyboard, character image, prop/asset, scene image, image composition, audio, video, and export from the single bottom `Add node` menu.
+- Newly added placeholder nodes start below the default graph instead of overlapping the visible starting flow.
 - Typed graph state lives under `apps/web/src/lib/workflow-canvas/` with first-class node, port, edge, selection, viewport, draft, and snapshot records.
 - Connections store source/target node and port ids, edge id, data type, status, and label; invalid, duplicate, and self connections are rejected.
 - Edges render from state as selectable SVG objects and can be inspected/deleted separately from nodes.
@@ -25,7 +28,9 @@
 - `corepack pnpm --filter @xmeta/web build` passed and included `/workspace`.
 - Desktop Browser QA at `http://localhost:3000/workspace`: correct title, nonblank dark canvas, hidden global top bar, floating project/status controls, bottom toolbar present, no duplicated `Node palette`, no `Inspector`/right monitoring panel, no `Quick add` duplicate list, console warn/error logs empty, and no document overflow.
 - Bottom-add interaction QA: `Add node` opened the node-type menu, `Add Audio node` increased rendered node count from 3 to 4, and the menu closed after creation.
-- Final `.\init.ps1` passed after artifact updates and reran web verification: 9 test files / 26 tests.
+- 2026-06-29 fresh Browser QA: default node bounds stayed within the 1254px viewport (`script` right 431, `storyboard` right 771, `composition` right 1111), boundary label was visible, no Node palette/Quick add/Inspector text, no document overflow, Add Audio changed node count 3 -> 4, the Audio node did not overlap the default graph, and no warn/error logs occurred during the QA window.
+- 2026-06-29 verification: focused workflow canvas tests passed 2 files / 8 tests; full web tests passed 9 files / 27 tests; typecheck passed; build passed; JSON validation passed; `git diff --check` passed with line-ending warnings only.
+- Final `.\init.ps1` passed after artifact updates and reran web verification: 9 test files / 27 tests.
 - Evaluator fix pass: toolbar Add Script now changes rendered node count from 3 to 4, all-node quick-add buttons exist, mode/help/context/inspector toggles are stateful, mobile canvas has internal scrollability at 390x844 without document overflow, and missing/stale ports reject with a visible reason. Post-fix tests passed 9 files / 26 tests, typecheck passed, build passed, and desktop/mobile Browser QA had empty console warn/error logs.
 
 ## Boundaries
