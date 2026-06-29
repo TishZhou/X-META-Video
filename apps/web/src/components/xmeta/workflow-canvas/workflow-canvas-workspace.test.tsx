@@ -68,7 +68,7 @@ describe("WorkflowCanvasWorkspace", () => {
     );
   });
 
-  it("renders initial typed graph nodes and the selected Script node editor", () => {
+  it("renders initial typed graph nodes and the selected Script node inline input", () => {
     const html = renderToStaticMarkup(<WorkflowCanvasWorkspace />);
 
     expect(html).toContain('data-workflow-node="script"');
@@ -78,13 +78,17 @@ describe("WorkflowCanvasWorkspace", () => {
     expect(html).toContain("World view");
     expect(html).toContain("A sweet but lonely summer MV world");
     expect(html).not.toContain("Script Node API Ready");
-    expect(html).toContain('data-script-node-editor="true"');
+    expect(html).toContain('data-script-node-inline-editor="true"');
+    expect(html).toContain('data-script-node-input-composer="true"');
+    expect(html).toContain('data-script-output-select="true"');
+    expect(html).toContain('data-script-ai-revise="true"');
     expect(html).toContain("MV world description");
+    expect(html).toContain("AI修改");
     expect(html).toContain("Generate");
     expect(html).toContain("Storyboard");
-    expect(html).toContain('aria-label="Close Script node editor"');
-    expect(html).toContain('data-script-node-drag-handle="true"');
-    expect(html).toContain('data-script-node-resize-handle="true"');
+    expect(html).not.toContain('data-script-node-history="true"');
+    expect(html).not.toContain('data-script-node-editor="true"');
+    expect(html).not.toContain('aria-label="Close Script node editor"');
     expect(html).not.toContain("Choose output");
     expect(html).not.toContain("Storyboard + characters composed together");
   });

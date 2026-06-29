@@ -21,7 +21,6 @@ import {
   Video,
   Wand2,
   Search,
-  X,
 } from "lucide-react";
 import {
   DEFAULT_SCRIPT_NODE_INPUT,
@@ -43,8 +42,8 @@ import { ReactFlowProvider } from "@xyflow/react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { AIChatInterface } from "@/components/uitripled/ai-chat-interface-shadcnui";
 import { AIResponseTyping } from "@/components/uitripled/ai-response-typing-shadcnui";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Tooltip,
   TooltipContent,
@@ -73,6 +72,8 @@ import { cn } from "@/lib/utils";
 
 const NODE_WIDTH = 288;
 const NODE_HEIGHT = 178;
+const SCRIPT_INLINE_EDITOR_WIDTH = 820;
+const SCRIPT_INLINE_EDITOR_GAP = 72;
 const PORT_TOP = 76;
 const PORT_GAP = 30;
 const CANVAS_WIDTH = 2200;
@@ -144,24 +145,6 @@ const emptyScriptTask: ScriptTaskStatusResponse = {
   error: null,
 };
 
-type ScriptPanelFrame = {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-};
-
-const SCRIPT_PANEL_MIN_WIDTH = 420;
-const SCRIPT_PANEL_MIN_HEIGHT = 420;
-const SCRIPT_PANEL_VIEWPORT_MARGIN = 16;
-
-const defaultScriptPanelFrame: ScriptPanelFrame = {
-  x: 1032,
-  y: 80,
-  width: 560,
-  height: 620,
-};
-
 type ScriptOutputFocus = "storyboard" | "characters" | "scene";
 
 const scriptOutputViews = [
@@ -181,47 +164,6 @@ const scriptOutputViews = [
   id: ScriptOutputFocus;
   label: string;
 }>;
-
-function clampScriptPanelFrame(frame: ScriptPanelFrame): ScriptPanelFrame {
-  if (typeof window === "undefined") {
-    return frame;
-  }
-
-  const viewportWidth = window.innerWidth;
-  const viewportHeight = window.innerHeight;
-  const maxWidth = Math.max(
-    SCRIPT_PANEL_MIN_WIDTH,
-    viewportWidth - SCRIPT_PANEL_VIEWPORT_MARGIN * 2,
-  );
-  const maxHeight = Math.max(
-    SCRIPT_PANEL_MIN_HEIGHT,
-    viewportHeight - SCRIPT_PANEL_VIEWPORT_MARGIN * 2,
-  );
-  const width = Math.min(
-    Math.max(frame.width, SCRIPT_PANEL_MIN_WIDTH),
-    maxWidth,
-  );
-  const height = Math.min(
-    Math.max(frame.height, SCRIPT_PANEL_MIN_HEIGHT),
-    maxHeight,
-  );
-  const x = Math.min(
-    Math.max(frame.x, SCRIPT_PANEL_VIEWPORT_MARGIN),
-    Math.max(
-      SCRIPT_PANEL_VIEWPORT_MARGIN,
-      viewportWidth - width - SCRIPT_PANEL_VIEWPORT_MARGIN,
-    ),
-  );
-  const y = Math.min(
-    Math.max(frame.y, SCRIPT_PANEL_VIEWPORT_MARGIN),
-    Math.max(
-      SCRIPT_PANEL_VIEWPORT_MARGIN,
-      viewportHeight - height - SCRIPT_PANEL_VIEWPORT_MARGIN,
-    ),
-  );
-
-  return { x, y, width, height };
-}
 
 function findScriptOutputView(id: ScriptOutputFocus) {
   return (
@@ -284,10 +226,7 @@ export function WorkflowCanvasWorkspace({
     useState<ScriptTaskStatusResponse>(emptyScriptTask);
   const [scriptError, setScriptError] = useState<string | null>(null);
   const [scriptBusy, setScriptBusy] = useState(false);
-  const [scriptPanelOpen, setScriptPanelOpen] = useState(true);
-  const [scriptPanelFrame, setScriptPanelFrame] = useState<ScriptPanelFrame>(
-    defaultScriptPanelFrame,
-  );
+  const [scriptHistoryOpen, setScriptHistoryOpen] = useState(false);
   const [scriptOutputFocus, setScriptOutputFocus] =
     useState<ScriptOutputFocus>("storyboard");
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -341,34 +280,6 @@ export function WorkflowCanvasWorkspace({
       );
     };
   }, []);
-
-  useEffect(() => {
-    setScriptPanelFrame((current) => {
-      const next = {
-        ...current,
-        x: Math.max(
-          SCRIPT_PANEL_VIEWPORT_MARGIN,
-          window.innerWidth - current.width - 24,
-        ),
-        y: Math.max(SCRIPT_PANEL_VIEWPORT_MARGIN, current.y),
-        height: Math.min(
-          current.height,
-          Math.max(
-            SCRIPT_PANEL_MIN_HEIGHT,
-            window.innerHeight - SCRIPT_PANEL_VIEWPORT_MARGIN * 2,
-          ),
-        ),
-      };
-
-      return clampScriptPanelFrame(next);
-    });
-  }, []);
-
-  useEffect(() => {
-    if (selectedScriptNode) {
-      setScriptPanelOpen(true);
-    }
-  }, [selectedScriptNode]);
 
   function addNode(nodeType: WorkflowNodeType) {
     const addedNodeIndex = Math.max(0, state.nodes.length - 3);
@@ -442,7 +353,7 @@ export function WorkflowCanvasWorkspace({
 
     if (
       target.closest(
-        "[data-workflow-node], [data-workflow-edge-hit], button, [data-workspace-bottom-toolbar], [data-workspace-floating-topbar]",
+        "[data-workflow-node], [data-workflow-edge-hit], [data-script-node-inline-editor], button, textarea, input, select, [data-workspace-bottom-toolbar], [data-workspace-floating-topbar]",
       )
     ) {
       return;
@@ -501,9 +412,6 @@ export function WorkflowCanvasWorkspace({
       },
     });
     dispatch({ type: "select", selection: { kind: "node", id: node.id } });
-    if (node.type === "script") {
-      setScriptPanelOpen(true);
-    }
   }
 
   function startPortConnection(
@@ -590,6 +498,7 @@ export function WorkflowCanvasWorkspace({
 
       setScriptTask(result.task);
       setScriptOutput(result.output);
+      setScriptHistoryOpen(true);
       dispatch({
         type: "setNodeStatus",
         nodeId: selectedScriptNode.id,
@@ -702,13 +611,29 @@ export function WorkflowCanvasWorkspace({
                   onDragStart={startNodeDrag}
                   onSelect={(selection) => {
                     dispatch({ type: "select", selection });
-                    if (node.type === "script") {
-                      setScriptPanelOpen(true);
-                    }
                   }}
                   onPortConnectionStart={startPortConnection}
                 />
               ))}
+              {selectedScriptNode ? (
+                <ScriptNodeInlineEditor
+                  busy={scriptBusy}
+                  error={scriptError}
+                  historyOpen={scriptHistoryOpen}
+                  input={scriptInput}
+                  node={selectedScriptNode}
+                  output={scriptOutput}
+                  outputFocus={scriptOutputFocus}
+                  task={scriptTask}
+                  onGenerate={() => {
+                    setScriptHistoryOpen(true);
+                    void generateScriptNode();
+                  }}
+                  onHistoryOpenChange={setScriptHistoryOpen}
+                  onInputChange={updateScriptInput}
+                  onOutputFocusChange={setScriptOutputFocus}
+                />
+              ) : null}
             </div>
           </div>
 
@@ -718,25 +643,6 @@ export function WorkflowCanvasWorkspace({
             notice={state.notice}
             zoom={state.viewport.zoom}
           />
-
-          {selectedScriptNode && scriptPanelOpen ? (
-            <ScriptNodeEditor
-              busy={scriptBusy}
-              error={scriptError}
-              frame={scriptPanelFrame}
-              input={scriptInput}
-              output={scriptOutput}
-              outputFocus={scriptOutputFocus}
-              task={scriptTask}
-              onClose={() => setScriptPanelOpen(false)}
-              onFrameChange={(frame) =>
-                setScriptPanelFrame(clampScriptPanelFrame(frame))
-              }
-              onGenerate={generateScriptNode}
-              onInputChange={updateScriptInput}
-              onOutputFocusChange={setScriptOutputFocus}
-            />
-          ) : null}
 
           <CanvasDock
             selection={state.selection}
@@ -1061,17 +967,17 @@ function CanvasStatusBar({ edge, node, notice, zoom }: CanvasStatusBarProps) {
   );
 }
 
-type ScriptNodeEditorProps = {
+type ScriptNodeInlineEditorProps = {
   busy: boolean;
   error: string | null;
-  frame: ScriptPanelFrame;
+  historyOpen: boolean;
   input: ScriptNodeInput;
+  node: WorkflowNode;
   output: ScriptNodeOutput | null;
   outputFocus: ScriptOutputFocus;
   task: ScriptTaskStatusResponse;
-  onClose: () => void;
-  onFrameChange: (frame: ScriptPanelFrame) => void;
   onGenerate: () => void;
+  onHistoryOpenChange: (open: boolean) => void;
   onInputChange: <Field extends keyof ScriptNodeInput>(
     field: Field,
     value: ScriptNodeInput[Field],
@@ -1079,173 +985,135 @@ type ScriptNodeEditorProps = {
   onOutputFocusChange: (focus: ScriptOutputFocus) => void;
 };
 
-function ScriptNodeEditor({
+function ScriptNodeInlineEditor({
   busy,
   error,
-  frame,
+  historyOpen,
   input,
+  node,
   output,
   outputFocus,
   task,
-  onClose,
-  onFrameChange,
   onGenerate,
+  onHistoryOpenChange,
   onInputChange,
   onOutputFocusChange,
-}: ScriptNodeEditorProps) {
+}: ScriptNodeInlineEditorProps) {
   const promptReady = input.world_description.trim().length > 0;
   const selectedOutputView = findScriptOutputView(outputFocus);
-  const outputLabels = scriptOutputViews.map((view) => view.label);
+  const left = Math.max(
+    16,
+    node.position.x - (SCRIPT_INLINE_EDITOR_WIDTH - NODE_WIDTH) / 2,
+  );
+  const top = node.position.y + NODE_HEIGHT + SCRIPT_INLINE_EDITOR_GAP;
 
-  function handlePanelDragStart(event: ReactPointerEvent<HTMLElement>) {
-    if (event.button !== 0) {
-      return;
-    }
+  function handleAiRevise() {
+    onHistoryOpenChange(true);
 
-    const target = event.target as HTMLElement;
-
-    if (target.closest("button, textarea, input, select")) {
-      return;
-    }
-
-    event.preventDefault();
-    event.stopPropagation();
-
-    const startClient = { x: event.clientX, y: event.clientY };
-    const startFrame = frame;
-
-    function handlePointerMove(pointerEvent: PointerEvent) {
-      onFrameChange({
-        ...startFrame,
-        x: startFrame.x + pointerEvent.clientX - startClient.x,
-        y: startFrame.y + pointerEvent.clientY - startClient.y,
-      });
-    }
-
-    function handlePointerUp() {
-      window.removeEventListener("pointermove", handlePointerMove);
-      window.removeEventListener("pointerup", handlePointerUp);
-    }
-
-    window.addEventListener("pointermove", handlePointerMove);
-    window.addEventListener("pointerup", handlePointerUp);
-  }
-
-  function handlePanelResizeStart(event: ReactPointerEvent<HTMLDivElement>) {
-    if (event.button !== 0) {
-      return;
-    }
-
-    event.preventDefault();
-    event.stopPropagation();
-
-    const startClient = { x: event.clientX, y: event.clientY };
-    const startFrame = frame;
-
-    function handlePointerMove(pointerEvent: PointerEvent) {
-      onFrameChange({
-        ...startFrame,
-        width: startFrame.width + pointerEvent.clientX - startClient.x,
-        height: startFrame.height + pointerEvent.clientY - startClient.y,
-      });
-    }
-
-    function handlePointerUp() {
-      window.removeEventListener("pointermove", handlePointerMove);
-      window.removeEventListener("pointerup", handlePointerUp);
-    }
-
-    window.addEventListener("pointermove", handlePointerMove);
-    window.addEventListener("pointerup", handlePointerUp);
-  }
-
-  function handleOutputSelect(label: string) {
-    const selectedView = scriptOutputViews.find((view) => view.label === label);
-
-    if (selectedView) {
-      onOutputFocusChange(selectedView.id);
+    if (!output && !busy && promptReady) {
+      onGenerate();
     }
   }
 
   return (
-    <aside
-      className="absolute z-40 flex flex-col overflow-hidden rounded-xl border border-neutral-200 bg-white/95 p-4 text-neutral-950 shadow-[0_24px_80px_rgba(15,23,42,0.16)] backdrop-blur"
+    <div
+      className="absolute z-30 flex flex-col"
       style={{
-        left: frame.x,
-        top: frame.y,
-        width: frame.width,
-        height: frame.height,
+        left,
+        top,
+        width: SCRIPT_INLINE_EDITOR_WIDTH,
       }}
-      data-script-node-editor="true"
-      aria-label="Script node editor"
+      data-script-node-inline-editor="true"
+      aria-label="Script node inline editor"
+      onPointerDown={(event) => event.stopPropagation()}
     >
-      <div
-        className="flex cursor-move items-start justify-between gap-3 pb-2"
-        data-script-node-drag-handle="true"
-        onPointerDown={handlePanelDragStart}
-      >
-        <div className="min-w-0">
-          <p className="text-sm font-semibold">Script Node</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Badge className="border-neutral-200 bg-neutral-50 text-neutral-700">
-            {task.status}
-          </Badge>
-          <Button
-            aria-label="Close Script node editor"
-            className="size-7 rounded-md p-0 text-neutral-500 hover:bg-neutral-100 hover:text-neutral-950"
-            onClick={onClose}
-            type="button"
-            variant="ghost"
-          >
-            <X aria-hidden="true" className="size-4" />
-          </Button>
-        </div>
-      </div>
-
-      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden">
-        <div className="min-h-0 flex-1 overflow-y-auto pr-1">
+      {historyOpen ? (
+        <div className="mb-3" data-script-node-history="true">
           <ScriptOutputTabs
             output={output}
             selectedOutput={outputFocus}
             task={task}
           />
         </div>
+      ) : null}
 
-        {error ? (
-          <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
-            {error}
-          </p>
-        ) : null}
+      {error ? (
+        <p className="mb-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+          {error}
+        </p>
+      ) : null}
 
-        <AIChatInterface
+      <section
+        className="rounded-xl border border-neutral-200 bg-white/95 p-3 text-neutral-950 shadow-[0_20px_60px_rgba(15,23,42,0.14)] backdrop-blur"
+        data-script-node-input-composer="true"
+      >
+        <label htmlFor="script-node-world-input" className="sr-only">
+          MV world description
+        </label>
+        <Textarea
+          id="script-node-world-input"
           value={input.world_description}
-          onValueChange={(value) => onInputChange("world_description", value)}
-          onSubmit={onGenerate}
+          onChange={(event) =>
+            onInputChange("world_description", event.target.value)
+          }
           placeholder="Describe the MV world: theme, number of characters, background, emotional tone, key locations..."
-          eyebrow="MV world prompt"
-          description="Enter one world-view description. The Script Node expands it into storyboard direction, character looks, and concrete scenes."
-          submitLabel={busy ? "Generating" : "Generate"}
           disabled={busy}
-          submitDisabled={!promptReady}
-          showTools={false}
-          modelLabel={selectedOutputView.label}
-          modelOptions={outputLabels}
-          onModelSelect={handleOutputSelect}
-          textareaLabel="MV world description"
-          showHeader={false}
-          variant="chat"
+          aria-label="MV world description"
+          className="min-h-20 resize-none border-0 bg-transparent px-0 text-sm shadow-none placeholder:text-neutral-400 focus-visible:ring-0"
         />
-      </div>
 
-      <div
-        aria-label="Resize Script node editor"
-        className="absolute bottom-1 right-1 size-4 cursor-nwse-resize rounded-sm border-b-2 border-r-2 border-neutral-400/70"
-        data-script-node-resize-handle="true"
-        onPointerDown={handlePanelResizeStart}
-        role="separator"
-      />
-    </aside>
+        <div className="mt-3 flex items-center justify-between gap-3 border-t border-neutral-200 pt-3">
+          <div className="flex items-center gap-2">
+            <label htmlFor="script-output-target" className="sr-only">
+              Script output target
+            </label>
+            <select
+              id="script-output-target"
+              aria-label="Script output target"
+              className="h-9 rounded-lg border border-neutral-200 bg-white px-3 text-xs font-medium text-neutral-700 shadow-sm"
+              data-script-output-select="true"
+              disabled={busy}
+              value={outputFocus}
+              onChange={(event) =>
+                onOutputFocusChange(event.target.value as ScriptOutputFocus)
+              }
+            >
+              {scriptOutputViews.map((view) => (
+                <option key={view.id} value={view.id}>
+                  {view.label}
+                </option>
+              ))}
+            </select>
+            <Button
+              className="h-9 rounded-lg px-3 text-xs"
+              data-script-ai-revise="true"
+              disabled={busy || !promptReady}
+              onClick={handleAiRevise}
+              type="button"
+              variant="outline"
+            >
+              AI修改
+            </Button>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Badge className="border-neutral-200 bg-neutral-50 text-neutral-600">
+              {selectedOutputView.label}
+            </Badge>
+            <Button
+              aria-label="Generate Script node"
+              className="h-9 rounded-lg px-4 text-xs"
+              disabled={busy || !promptReady}
+              onClick={onGenerate}
+              type="button"
+            >
+              {busy ? "Generating" : "Generate"}
+              <Sparkles aria-hidden="true" className="size-4" />
+            </Button>
+          </div>
+        </div>
+      </section>
+    </div>
   );
 }
 

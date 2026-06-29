@@ -39,9 +39,9 @@ Protected user edit:
 - Server-owned prompt builder and provider adapter boundary.
 - Mock script provider as the default end-to-end verification path.
 - OpenAI-compatible provider settings read from server-only environment variables.
-- `/workspace` Script Node editor for desktop input, run state, output target selection, and structured response bubbles.
+- `/workspace` Script Node inline input composer bound under the selected Script node, with optional structured response history between the node and input.
 - White Figma-like workspace canvas styling for the current browser-comment pass.
-- Follow-up browser-comment editor behavior: output selection lives in the Generate-row dropdown, response appears above input, and the Script editor can be dragged, resized, closed, and reopened from the Script node.
+- Latest browser-comment behavior: no detached editor/modal; the Script node owns an input box below it, output selection stays in the input footer, and `AI修改` reveals or creates response history between the node and input.
 - Honest labels for mock provider, dev in-memory backend state, deferred production auth, and deferred downstream media generation.
 
 ## Out of Scope
@@ -61,11 +61,11 @@ Protected user edit:
 4. `POST /api/v1/projects/{project_id}/nodes/{node_id}/run` returns a task response and generates schema-valid mock output.
 5. `GET /api/v1/tasks/{task_id}` and `GET /api/v1/tasks/{task_id}/result` return task status and normalized Script Node output.
 6. Non-mock provider selection fails clearly when required provider env values are missing.
-7. Selecting the Script node in `/workspace` opens an editor with one AI chat-style MV world description input and a run action in a vertical chat flow.
+7. Selecting the Script node in `/workspace` shows one AI chat-style MV world description input bound under the node.
 8. Successful generation renders selectable Storyboard, Characters, and Scene response targets; Scene is composed from storyboard and characters.
 9. The Script node status changes to `ready` only after validated output exists.
-10. The Script Node editor renders as a ChatGPT-like response-over-input panel; output target selection is the Generate-row dropdown with only Storyboard, Characters, and Scene names.
-11. The Script Node editor can be dragged, resized, closed, and reopened by clicking the Script node.
+10. `AI修改` reveals or generates response history between the Script node and input box.
+11. The Script Node does not render a detached floating editor, modal, or separate Choose output card.
 12. Verification evidence is recorded in `feature_list.json`, `sprint-contract.md`, `evaluator-rubric.md`, `progress.md`, and `session-handoff.md`.
 
 ## Verification Plan
@@ -91,6 +91,8 @@ Protected user edit:
 | Follow-up browser comments | Moved Storyboard/Characters/Scene selection into the Generate-row dropdown, removed the separate Choose output card, placed the Script Agent response above the MV world input, reused the TriplD response typing component for empty/running response state, and added drag/resize/close/reopen behavior to the Script editor. |
 | Follow-up verification | Baseline `.\init.ps1` passed before changes; focused workspace plus TriplD chat tests passed 2 files / 9 tests; full web tests passed 9 files / 29 tests; `corepack pnpm --filter @xmeta/web typecheck` passed; `corepack pnpm --filter @xmeta/web build` passed; bundled Python backend pytest passed 5 tests with one upstream Starlette TestClient deprecation warning; bundled Python ruff passed. |
 | Follow-up Browser QA | Production Browser QA on `http://localhost:3002/workspace` with FastAPI mock provider passed: Choose output text absent, output dropdown contained only Storyboard/Characters/Scene, Characters selection updated the response, response stayed above input, editor drag and resize changed frame geometry, close removed the editor, clicking the Script node reopened it, generation returned 200 PATCH / 202 POST / 200 task / 200 result, Script node became ready, no console errors, no failed requests, and no horizontal overflow. |
+| Inline node composer revision | Removed the detached Script editor entirely. The selected Script node now renders one input composer directly below the node; the footer contains the Storyboard/Characters/Scene selector and `AI修改`; clicking `AI修改` reveals or creates response history between the node and input. |
+| Inline node composer QA | Production Browser QA on `http://localhost:3002/workspace` with FastAPI mock provider passed: no floating Script editor, inline composer present below the node, no initial history, `AI修改` generated a response, history appeared between node and input, selected Characters output persisted, endpoint sequence returned 200 PATCH / 202 POST / 200 task / 200 result, Script node became ready, console errors empty, failed requests empty, and document width equaled scrollWidth. |
 | Revised workflow | User clarified the Script Node workflow: one MV world-view description input, then AI expands into storyboard direction/POV/shots, character profiles with style/wardrobe/body details, and concrete scene descriptions derived from characters plus storyboard. |
 | Revised implementation | Updated shared contracts, FastAPI/Pydantic schemas, prompt builder, deterministic mock provider, backend tests, workspace editor, AI chat component props, response targets, and API docs for the single-input MV workflow. |
 | Revised verification | Backend pytest passed 5 tests with one upstream Starlette TestClient deprecation warning; backend ruff passed; focused workspace test passed 1 file / 5 tests; full web tests passed 9 files / 29 tests; `corepack pnpm --filter @xmeta/web typecheck` passed; `corepack pnpm --filter @xmeta/web build` passed. |
