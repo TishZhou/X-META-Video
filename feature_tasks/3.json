@@ -9,6 +9,7 @@
     "Feature 3 implements the Script Node MV world-description input/output interaction and API contract only.",
     "The current Script Node input is a single AI chat-style world-view description.",
     "The Script Node output expands that description into storyboard direction, character profiles, and concrete scene descriptions.",
+    "The current Script Node editor shows the agent response above the input, keeps Storyboard/Characters/Scene selection in the Generate-row dropdown, and supports drag, resize, close, and reopen.",
     "Prompt wording is intentionally centralized and adjustable later without changing route or UI contracts.",
     "Real provider credentials are supplied through environment variables; mock provider remains the default verification path.",
     "Storyboards as a separate editable node remain Feature 4."
@@ -53,7 +54,9 @@
         "The editor is reachable from the selected Script node in /workspace.",
         "The editor includes one required AI chat-style MV world description input.",
         "Run action saves input, starts generation through the Script Node API client, shows task state, and renders selectable Storyboard, Characters, and Scene response targets.",
-        "Scene response is labeled as composed from the generated storyboard and character profiles.",
+        "Output target selection is in the dropdown immediately left of Generate and shows only Storyboard, Characters, and Scene names.",
+        "The response area appears above the input in a ChatGPT-like layout and does not use a separate Choose output card.",
+        "The Script Node editor can be dragged, resized, closed, and reopened by clicking the Script node.",
         "The Script node status changes to ready only after validated output exists.",
         "Image, audio, video, persistence, and production auth gaps remain honestly labeled."
       ],

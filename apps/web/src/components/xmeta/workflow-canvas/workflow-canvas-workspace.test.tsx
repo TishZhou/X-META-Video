@@ -79,11 +79,14 @@ describe("WorkflowCanvasWorkspace", () => {
     expect(html).toContain("A sweet but lonely summer MV world");
     expect(html).not.toContain("Script Node API Ready");
     expect(html).toContain('data-script-node-editor="true"');
-    expect(html).toContain("MV world prompt");
     expect(html).toContain("MV world description");
     expect(html).toContain("Generate");
-    expect(html).toContain("Choose output");
-    expect(html).toContain("Storyboard + characters composed together");
+    expect(html).toContain("Storyboard");
+    expect(html).toContain('aria-label="Close Script node editor"');
+    expect(html).toContain('data-script-node-drag-handle="true"');
+    expect(html).toContain('data-script-node-resize-handle="true"');
+    expect(html).not.toContain("Choose output");
+    expect(html).not.toContain("Storyboard + characters composed together");
   });
 
   it("renders selectable structured Script output responses", () => {
@@ -136,14 +139,16 @@ describe("WorkflowCanvasWorkspace", () => {
       missing_inputs: [],
     };
     const html = renderToStaticMarkup(
-      <ScriptOutputTabs output={output} task={task} />,
+      <ScriptOutputTabs
+        output={output}
+        selectedOutput="storyboard"
+        task={task}
+      />,
     );
 
     expect(html).toContain("Storyboard");
-    expect(html).toContain("Characters");
-    expect(html).toContain("Scene");
     expect(html).toContain("Mock Script Title");
-    expect(html).toContain("Response");
     expect(html).toContain("third-person cinematic POV");
+    expect(html).not.toContain("Choose output");
   });
 });

@@ -64,6 +64,8 @@ type AIChatInterfaceProps = {
   submitDisabled?: boolean;
   showTools?: boolean;
   modelLabel?: string;
+  modelOptions?: string[];
+  onModelSelect?: (model: string) => void;
   textareaLabel?: string;
   showHeader?: boolean;
   variant?: "default" | "chat";
@@ -81,6 +83,8 @@ export function AIChatInterface({
   submitDisabled = false,
   showTools = true,
   modelLabel,
+  modelOptions,
+  onModelSelect,
   textareaLabel = "Chat input",
   showHeader = true,
   variant = "default",
@@ -96,6 +100,9 @@ export function AIChatInterface({
   const shouldAnimate = !prefersReducedMotion;
   const isControlled = value !== undefined;
   const currentValue = isControlled ? value : inputValue;
+  const selectableModels = modelOptions?.length ? modelOptions : models;
+  const selectedModelLabel = modelLabel ?? selectedModel;
+  const hasCustomModelOptions = Boolean(modelOptions?.length);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -141,7 +148,7 @@ export function AIChatInterface({
   const renderDropdown = (
     type: DropdownType,
     options: ActionOption[],
-    align: "left" | "right" = "left"
+    align: "left" | "right" = "left",
   ) => (
     <AnimatePresence>
       {activeDropdown === type && (
@@ -188,9 +195,7 @@ export function AIChatInterface({
             variant === "chat"
               ? "rounded-2xl border-neutral-200 bg-white px-4 py-4 shadow-sm"
               : "rounded-[28px] border-border/50 bg-background/70 px-6 py-6 backdrop-blur-xl"
-          } ${
-            isFocused ? "shadow-[0_28px_80px_rgba(15,23,42,0.24)]" : ""
-          }`}
+          } ${isFocused ? "shadow-[0_28px_80px_rgba(15,23,42,0.24)]" : ""}`}
         >
           {variant === "default" ? (
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/20/20 via-transparent to-transparent" />
@@ -201,9 +206,7 @@ export function AIChatInterface({
                 <span className="text-xs font-semibold uppercase tracking-[0.32em] text-foreground/45">
                   {eyebrow}
                 </span>
-                <p className="text-sm text-foreground/60">
-                  {description}
-                </p>
+                <p className="text-sm text-foreground/60">{description}</p>
               </div>
             ) : null}
             <label htmlFor="chat-input" className="sr-only">
@@ -233,7 +236,7 @@ export function AIChatInterface({
                     <Button
                       onClick={() =>
                         setActiveDropdown(
-                          activeDropdown === "share" ? null : "share"
+                          activeDropdown === "share" ? null : "share",
                         )
                       }
                       className="group rounded-xl p-2 bg-background/80 transition-all hover:bg-foreground/[0.05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/40"
@@ -255,7 +258,7 @@ export function AIChatInterface({
                     <Button
                       onClick={() =>
                         setActiveDropdown(
-                          activeDropdown === "quick" ? null : "quick"
+                          activeDropdown === "quick" ? null : "quick",
                         )
                       }
                       className="group rounded-xl p-2 bg-background/80 transition-all hover:bg-foreground/[0.05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/40"
@@ -277,7 +280,7 @@ export function AIChatInterface({
                     <Button
                       onClick={() =>
                         setActiveDropdown(
-                          activeDropdown === "history" ? null : "history"
+                          activeDropdown === "history" ? null : "history",
                         )
                       }
                       className="group rounded-xl p-2 bg-background/80 transition-all hover:bg-foreground/[0.05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/40"
@@ -299,7 +302,7 @@ export function AIChatInterface({
                     <Button
                       onClick={() =>
                         setActiveDropdown(
-                          activeDropdown === "magic" ? null : "magic"
+                          activeDropdown === "magic" ? null : "magic",
                         )
                       }
                       className="group rounded-xl p-2 bg-background/80 transition-all hover:bg-foreground/[0.05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/40"
@@ -323,58 +326,65 @@ export function AIChatInterface({
                 <Button
                   onClick={() =>
                     setActiveDropdown(
-                      activeDropdown === "model" ? null : "model"
+                      activeDropdown === "model" ? null : "model",
                     )
                   }
                   className="flex items-center gap-2 rounded-xl border border-border/30 bg-background/80 px-3 py-1.5 text-sm font-medium text-foreground/80 transition hover:border-border/40 hover:bg-background/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/40"
                   aria-label="Select AI model"
                   aria-expanded={activeDropdown === "model"}
                   aria-haspopup="listbox"
-                type="button"
-                  disabled={disabled || Boolean(modelLabel)}
+                  type="button"
+                  disabled={
+                    disabled || (Boolean(modelLabel) && !hasCustomModelOptions)
+                  }
                 >
-                  <span>{modelLabel ?? selectedModel}</span>
+                  <span>{selectedModelLabel}</span>
                   <ChevronDown size={16} className="text-foreground/50" />
                 </Button>
 
                 <AnimatePresence>
-                  {activeDropdown === "model" && !modelLabel && (
-                    <motion.div
-                      key="model-dropdown"
-                      initial={{ opacity: 0, y: -8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -8 }}
-                      transition={{ duration: 0.18, ease: "easeOut" }}
-                      className="absolute right-0 mt-3 w-56 rounded-2xl border border-border/40 bg-background/85 py-2 shadow-[0_24px_60px_rgba(15,23,42,0.24)] backdrop-blur-xl z-50"
-                      role="listbox"
-                    >
-                      {models.map((model) => (
-                        <Button
-                          key={model}
-                          onClick={() => {
-                            setSelectedModel(model);
-                            setActiveDropdown(null);
-                          }}
-                          className={`flex w-full items-center justify-between px-4 py-2 text-sm transition-all ${
-                            selectedModel === model
-                              ? "bg-primary/15 font-medium text-primary hover:bg-primary/20"
-                              : "text-foreground/80 hover:bg-foreground/[0.05]"
-                          }`}
-                          role="option"
-                          aria-selected={selectedModel === model}
-                          type="button"
-                          variant={
-                            selectedModel === model ? "default" : "ghost"
-                          }
-                        >
-                          {model}
-                          {selectedModel === model && (
-                            <Star size={14} className="text-primary/80" />
-                          )}
-                        </Button>
-                      ))}
-                    </motion.div>
-                  )}
+                  {activeDropdown === "model" &&
+                    (!modelLabel || hasCustomModelOptions) && (
+                      <motion.div
+                        key="model-dropdown"
+                        initial={{ opacity: 0, y: -8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -8 }}
+                        transition={{ duration: 0.18, ease: "easeOut" }}
+                        className="absolute right-0 mt-3 w-56 rounded-2xl border border-border/40 bg-background/85 py-2 shadow-[0_24px_60px_rgba(15,23,42,0.24)] backdrop-blur-xl z-50"
+                        role="listbox"
+                      >
+                        {selectableModels.map((model) => (
+                          <Button
+                            key={model}
+                            onClick={() => {
+                              if (hasCustomModelOptions) {
+                                onModelSelect?.(model);
+                              } else {
+                                setSelectedModel(model);
+                              }
+                              setActiveDropdown(null);
+                            }}
+                            className={`flex w-full items-center justify-between px-4 py-2 text-sm transition-all ${
+                              selectedModelLabel === model
+                                ? "bg-primary/15 font-medium text-primary hover:bg-primary/20"
+                                : "text-foreground/80 hover:bg-foreground/[0.05]"
+                            }`}
+                            role="option"
+                            aria-selected={selectedModelLabel === model}
+                            type="button"
+                            variant={
+                              selectedModelLabel === model ? "default" : "ghost"
+                            }
+                          >
+                            {model}
+                            {selectedModelLabel === model && (
+                              <Star size={14} className="text-primary/80" />
+                            )}
+                          </Button>
+                        ))}
+                      </motion.div>
+                    )}
                 </AnimatePresence>
               </div>
 

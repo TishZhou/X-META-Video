@@ -21,6 +21,7 @@ import {
   Video,
   Wand2,
   Search,
+  X,
 } from "lucide-react";
 import {
   DEFAULT_SCRIPT_NODE_INPUT,
@@ -43,6 +44,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { AIChatInterface } from "@/components/uitripled/ai-chat-interface-shadcnui";
+import { AIResponseTyping } from "@/components/uitripled/ai-response-typing-shadcnui";
 import {
   Tooltip,
   TooltipContent,
@@ -142,6 +144,91 @@ const emptyScriptTask: ScriptTaskStatusResponse = {
   error: null,
 };
 
+type ScriptPanelFrame = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+
+const SCRIPT_PANEL_MIN_WIDTH = 420;
+const SCRIPT_PANEL_MIN_HEIGHT = 420;
+const SCRIPT_PANEL_VIEWPORT_MARGIN = 16;
+
+const defaultScriptPanelFrame: ScriptPanelFrame = {
+  x: 1032,
+  y: 80,
+  width: 560,
+  height: 620,
+};
+
+type ScriptOutputFocus = "storyboard" | "characters" | "scene";
+
+const scriptOutputViews = [
+  {
+    id: "storyboard",
+    label: "Storyboard",
+  },
+  {
+    id: "characters",
+    label: "Characters",
+  },
+  {
+    id: "scene",
+    label: "Scene",
+  },
+] as const satisfies Array<{
+  id: ScriptOutputFocus;
+  label: string;
+}>;
+
+function clampScriptPanelFrame(frame: ScriptPanelFrame): ScriptPanelFrame {
+  if (typeof window === "undefined") {
+    return frame;
+  }
+
+  const viewportWidth = window.innerWidth;
+  const viewportHeight = window.innerHeight;
+  const maxWidth = Math.max(
+    SCRIPT_PANEL_MIN_WIDTH,
+    viewportWidth - SCRIPT_PANEL_VIEWPORT_MARGIN * 2,
+  );
+  const maxHeight = Math.max(
+    SCRIPT_PANEL_MIN_HEIGHT,
+    viewportHeight - SCRIPT_PANEL_VIEWPORT_MARGIN * 2,
+  );
+  const width = Math.min(
+    Math.max(frame.width, SCRIPT_PANEL_MIN_WIDTH),
+    maxWidth,
+  );
+  const height = Math.min(
+    Math.max(frame.height, SCRIPT_PANEL_MIN_HEIGHT),
+    maxHeight,
+  );
+  const x = Math.min(
+    Math.max(frame.x, SCRIPT_PANEL_VIEWPORT_MARGIN),
+    Math.max(
+      SCRIPT_PANEL_VIEWPORT_MARGIN,
+      viewportWidth - width - SCRIPT_PANEL_VIEWPORT_MARGIN,
+    ),
+  );
+  const y = Math.min(
+    Math.max(frame.y, SCRIPT_PANEL_VIEWPORT_MARGIN),
+    Math.max(
+      SCRIPT_PANEL_VIEWPORT_MARGIN,
+      viewportHeight - height - SCRIPT_PANEL_VIEWPORT_MARGIN,
+    ),
+  );
+
+  return { x, y, width, height };
+}
+
+function findScriptOutputView(id: ScriptOutputFocus) {
+  return (
+    scriptOutputViews.find((view) => view.id === id) ?? scriptOutputViews[0]
+  );
+}
+
 export function calculateInitialCanvasViewport(
   viewportWidth: number,
   viewportHeight: number,
@@ -186,21 +273,34 @@ export function WorkflowCanvasWorkspace({
   const [showZoomControl, setShowZoomControl] = useState(false);
   const [dragState, setDragState] = useState<DragState>(null);
   const [panState, setPanState] = useState<PanState>(null);
-  const [connectionDrag, setConnectionDrag] = useState<ConnectionDragState>(null);
-  const [scriptInput, setScriptInput] = useState<ScriptNodeInput>(defaultScriptInput);
-  const [scriptOutput, setScriptOutput] = useState<ScriptNodeOutput | null>(null);
+  const [connectionDrag, setConnectionDrag] =
+    useState<ConnectionDragState>(null);
+  const [scriptInput, setScriptInput] =
+    useState<ScriptNodeInput>(defaultScriptInput);
+  const [scriptOutput, setScriptOutput] = useState<ScriptNodeOutput | null>(
+    null,
+  );
   const [scriptTask, setScriptTask] =
     useState<ScriptTaskStatusResponse>(emptyScriptTask);
   const [scriptError, setScriptError] = useState<string | null>(null);
   const [scriptBusy, setScriptBusy] = useState(false);
+  const [scriptPanelOpen, setScriptPanelOpen] = useState(true);
+  const [scriptPanelFrame, setScriptPanelFrame] = useState<ScriptPanelFrame>(
+    defaultScriptPanelFrame,
+  );
+  const [scriptOutputFocus, setScriptOutputFocus] =
+    useState<ScriptOutputFocus>("storyboard");
   const canvasRef = useRef<HTMLDivElement>(null);
   const selectedNode =
     state.selection.kind === "node"
       ? findNode(state.nodes, state.selection.id)
       : null;
   const selectedEdge =
-    state.selection.kind === "edge" ? findEdge(state.edges, state.selection.id) : null;
-  const selectedScriptNode = selectedNode?.type === "script" ? selectedNode : null;
+    state.selection.kind === "edge"
+      ? findEdge(state.edges, state.selection.id)
+      : null;
+  const selectedScriptNode =
+    selectedNode?.type === "script" ? selectedNode : null;
   const pendingPort = useMemo(() => {
     if (!connectionDrag) {
       return null;
@@ -217,7 +317,10 @@ export function WorkflowCanvasWorkspace({
     function applyResponsiveViewport() {
       dispatch({
         type: "setViewport",
-        viewport: calculateInitialCanvasViewport(window.innerWidth, window.innerHeight),
+        viewport: calculateInitialCanvasViewport(
+          window.innerWidth,
+          window.innerHeight,
+        ),
         markDirty: false,
       });
     }
@@ -232,9 +335,40 @@ export function WorkflowCanvasWorkspace({
       window.clearTimeout(firstCalibration);
       window.clearTimeout(secondCalibration);
       window.removeEventListener("resize", applyResponsiveViewport);
-      window.visualViewport?.removeEventListener("resize", applyResponsiveViewport);
+      window.visualViewport?.removeEventListener(
+        "resize",
+        applyResponsiveViewport,
+      );
     };
   }, []);
+
+  useEffect(() => {
+    setScriptPanelFrame((current) => {
+      const next = {
+        ...current,
+        x: Math.max(
+          SCRIPT_PANEL_VIEWPORT_MARGIN,
+          window.innerWidth - current.width - 24,
+        ),
+        y: Math.max(SCRIPT_PANEL_VIEWPORT_MARGIN, current.y),
+        height: Math.min(
+          current.height,
+          Math.max(
+            SCRIPT_PANEL_MIN_HEIGHT,
+            window.innerHeight - SCRIPT_PANEL_VIEWPORT_MARGIN * 2,
+          ),
+        ),
+      };
+
+      return clampScriptPanelFrame(next);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (selectedScriptNode) {
+      setScriptPanelOpen(true);
+    }
+  }, [selectedScriptNode]);
 
   function addNode(nodeType: WorkflowNodeType) {
     const addedNodeIndex = Math.max(0, state.nodes.length - 3);
@@ -328,7 +462,9 @@ export function WorkflowCanvasWorkspace({
       const target = event.target as HTMLElement;
       const inputPortId =
         target
-          .closest<HTMLButtonElement>('button[data-workflow-port-direction="input"]')
+          .closest<HTMLButtonElement>(
+            'button[data-workflow-port-direction="input"]',
+          )
           ?.getAttribute("data-workflow-port-id") ?? null;
 
       if (inputPortId) {
@@ -340,7 +476,8 @@ export function WorkflowCanvasWorkspace({
       } else {
         dispatch({
           type: "setNotice",
-          notice: "Connection cancelled. Drop the line on a compatible input port.",
+          notice:
+            "Connection cancelled. Drop the line on a compatible input port.",
         });
       }
     }
@@ -364,6 +501,9 @@ export function WorkflowCanvasWorkspace({
       },
     });
     dispatch({ type: "select", selection: { kind: "node", id: node.id } });
+    if (node.type === "script") {
+      setScriptPanelOpen(true);
+    }
   }
 
   function startPortConnection(
@@ -454,7 +594,8 @@ export function WorkflowCanvasWorkspace({
         type: "setNodeStatus",
         nodeId: selectedScriptNode.id,
         status: "ready",
-        notice: "Script output is ready. Downstream media nodes remain deferred.",
+        notice:
+          "Script output is ready. Downstream media nodes remain deferred.",
       });
     } catch (error) {
       const message =
@@ -544,7 +685,9 @@ export function WorkflowCanvasWorkspace({
               <WorkflowEdges
                 connectionPreview={connectionDrag}
                 state={state}
-                onSelect={(selection) => dispatch({ type: "select", selection })}
+                onSelect={(selection) =>
+                  dispatch({ type: "select", selection })
+                }
               />
               {state.nodes.map((node) => (
                 <WorkflowNodeCard
@@ -552,11 +695,17 @@ export function WorkflowCanvasWorkspace({
                   node={node}
                   scriptInput={node.type === "script" ? scriptInput : null}
                   selected={
-                    state.selection.kind === "node" && state.selection.id === node.id
+                    state.selection.kind === "node" &&
+                    state.selection.id === node.id
                   }
                   pendingPort={pendingPort}
                   onDragStart={startNodeDrag}
-                  onSelect={(selection) => dispatch({ type: "select", selection })}
+                  onSelect={(selection) => {
+                    dispatch({ type: "select", selection });
+                    if (node.type === "script") {
+                      setScriptPanelOpen(true);
+                    }
+                  }}
                   onPortConnectionStart={startPortConnection}
                 />
               ))}
@@ -570,15 +719,22 @@ export function WorkflowCanvasWorkspace({
             zoom={state.viewport.zoom}
           />
 
-          {selectedScriptNode ? (
+          {selectedScriptNode && scriptPanelOpen ? (
             <ScriptNodeEditor
               busy={scriptBusy}
               error={scriptError}
+              frame={scriptPanelFrame}
               input={scriptInput}
               output={scriptOutput}
+              outputFocus={scriptOutputFocus}
               task={scriptTask}
+              onClose={() => setScriptPanelOpen(false)}
+              onFrameChange={(frame) =>
+                setScriptPanelFrame(clampScriptPanelFrame(frame))
+              }
               onGenerate={generateScriptNode}
               onInputChange={updateScriptInput}
+              onOutputFocusChange={setScriptOutputFocus}
             />
           ) : null}
 
@@ -720,7 +876,11 @@ function CanvasDock({
       ) : null}
 
       <div className="flex max-w-full items-center gap-1 overflow-x-auto rounded-xl border border-neutral-200 bg-white/95 p-2 shadow-lg backdrop-blur">
-        <ToolbarButton active={showAddMenu} label="Add node" onClick={onToggleAddMenu}>
+        <ToolbarButton
+          active={showAddMenu}
+          label="Add node"
+          onClick={onToggleAddMenu}
+        >
           <Plus aria-hidden="true" data-icon="inline-start" />
         </ToolbarButton>
         <Separator orientation="vertical" className="mx-1 h-7 bg-neutral-200" />
@@ -788,8 +948,12 @@ function ZoomControl({ open, zoom, onToggle, onZoomChange }: ZoomControlProps) {
           data-workspace-zoom-range="true"
           max={140}
           min={50}
-          onChange={(event) => onZoomChange(Number(event.currentTarget.value) / 100)}
-          onInput={(event) => onZoomChange(Number(event.currentTarget.value) / 100)}
+          onChange={(event) =>
+            onZoomChange(Number(event.currentTarget.value) / 100)
+          }
+          onInput={(event) =>
+            onZoomChange(Number(event.currentTarget.value) / 100)
+          }
           onPointerDown={(event) => event.stopPropagation()}
           step={1}
           type="range"
@@ -801,7 +965,9 @@ function ZoomControl({ open, zoom, onToggle, onZoomChange }: ZoomControlProps) {
   );
 }
 
-export function formatTemplateIoLabel(template: (typeof workflowNodeTemplates)[number]) {
+export function formatTemplateIoLabel(
+  template: (typeof workflowNodeTemplates)[number],
+) {
   const inputs = template.ports
     .filter((port) => port.direction === "input")
     .map((port) => formatPortDisplayLabel(port.label));
@@ -898,46 +1064,160 @@ function CanvasStatusBar({ edge, node, notice, zoom }: CanvasStatusBarProps) {
 type ScriptNodeEditorProps = {
   busy: boolean;
   error: string | null;
+  frame: ScriptPanelFrame;
   input: ScriptNodeInput;
   output: ScriptNodeOutput | null;
+  outputFocus: ScriptOutputFocus;
   task: ScriptTaskStatusResponse;
+  onClose: () => void;
+  onFrameChange: (frame: ScriptPanelFrame) => void;
   onGenerate: () => void;
   onInputChange: <Field extends keyof ScriptNodeInput>(
     field: Field,
     value: ScriptNodeInput[Field],
   ) => void;
+  onOutputFocusChange: (focus: ScriptOutputFocus) => void;
 };
 
 function ScriptNodeEditor({
   busy,
   error,
+  frame,
   input,
   output,
+  outputFocus,
   task,
+  onClose,
+  onFrameChange,
   onGenerate,
   onInputChange,
+  onOutputFocusChange,
 }: ScriptNodeEditorProps) {
   const promptReady = input.world_description.trim().length > 0;
+  const selectedOutputView = findScriptOutputView(outputFocus);
+  const outputLabels = scriptOutputViews.map((view) => view.label);
+
+  function handlePanelDragStart(event: ReactPointerEvent<HTMLElement>) {
+    if (event.button !== 0) {
+      return;
+    }
+
+    const target = event.target as HTMLElement;
+
+    if (target.closest("button, textarea, input, select")) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    const startClient = { x: event.clientX, y: event.clientY };
+    const startFrame = frame;
+
+    function handlePointerMove(pointerEvent: PointerEvent) {
+      onFrameChange({
+        ...startFrame,
+        x: startFrame.x + pointerEvent.clientX - startClient.x,
+        y: startFrame.y + pointerEvent.clientY - startClient.y,
+      });
+    }
+
+    function handlePointerUp() {
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", handlePointerUp);
+    }
+
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", handlePointerUp);
+  }
+
+  function handlePanelResizeStart(event: ReactPointerEvent<HTMLDivElement>) {
+    if (event.button !== 0) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    const startClient = { x: event.clientX, y: event.clientY };
+    const startFrame = frame;
+
+    function handlePointerMove(pointerEvent: PointerEvent) {
+      onFrameChange({
+        ...startFrame,
+        width: startFrame.width + pointerEvent.clientX - startClient.x,
+        height: startFrame.height + pointerEvent.clientY - startClient.y,
+      });
+    }
+
+    function handlePointerUp() {
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", handlePointerUp);
+    }
+
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", handlePointerUp);
+  }
+
+  function handleOutputSelect(label: string) {
+    const selectedView = scriptOutputViews.find((view) => view.label === label);
+
+    if (selectedView) {
+      onOutputFocusChange(selectedView.id);
+    }
+  }
 
   return (
     <aside
-      className="absolute right-5 top-20 z-40 flex max-h-[calc(100vh-8rem)] w-[34rem] max-w-[calc(100vw-2.5rem)] flex-col gap-4 overflow-hidden rounded-xl border border-neutral-200 bg-white/95 p-4 text-neutral-950 shadow-[0_24px_80px_rgba(15,23,42,0.16)] backdrop-blur"
+      className="absolute z-40 flex flex-col overflow-hidden rounded-xl border border-neutral-200 bg-white/95 p-4 text-neutral-950 shadow-[0_24px_80px_rgba(15,23,42,0.16)] backdrop-blur"
+      style={{
+        left: frame.x,
+        top: frame.y,
+        width: frame.width,
+        height: frame.height,
+      }}
       data-script-node-editor="true"
       aria-label="Script node editor"
     >
-      <div className="flex items-start justify-between gap-3">
+      <div
+        className="flex cursor-move items-start justify-between gap-3 pb-2"
+        data-script-node-drag-handle="true"
+        onPointerDown={handlePanelDragStart}
+      >
         <div className="min-w-0">
           <p className="text-sm font-semibold">Script Node</p>
-          <p className="text-xs text-neutral-500">
-            MV world prompt in. Choose storyboard, characters, or scene output.
-          </p>
         </div>
-        <Badge className="border-neutral-200 bg-neutral-50 text-neutral-700">
-          {task.status}
-        </Badge>
+        <div className="flex items-center gap-2">
+          <Badge className="border-neutral-200 bg-neutral-50 text-neutral-700">
+            {task.status}
+          </Badge>
+          <Button
+            aria-label="Close Script node editor"
+            className="size-7 rounded-md p-0 text-neutral-500 hover:bg-neutral-100 hover:text-neutral-950"
+            onClick={onClose}
+            type="button"
+            variant="ghost"
+          >
+            <X aria-hidden="true" className="size-4" />
+          </Button>
+        </div>
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto pr-1">
+      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden">
+        <div className="min-h-0 flex-1 overflow-y-auto pr-1">
+          <ScriptOutputTabs
+            output={output}
+            selectedOutput={outputFocus}
+            task={task}
+          />
+        </div>
+
+        {error ? (
+          <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+            {error}
+          </p>
+        ) : null}
+
         <AIChatInterface
           value={input.world_description}
           onValueChange={(value) => onInputChange("world_description", value)}
@@ -949,118 +1229,52 @@ function ScriptNodeEditor({
           disabled={busy}
           submitDisabled={!promptReady}
           showTools={false}
-          modelLabel="Script agent"
+          modelLabel={selectedOutputView.label}
+          modelOptions={outputLabels}
+          onModelSelect={handleOutputSelect}
           textareaLabel="MV world description"
           showHeader={false}
           variant="chat"
         />
-
-        {error ? (
-          <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
-            {error}
-          </p>
-        ) : null}
-
-        {!promptReady ? (
-          <p className="rounded-md border border-neutral-200 bg-neutral-50 px-3 py-2 text-xs leading-5 text-neutral-500">
-            Add the MV world description before running the Script Node.
-          </p>
-        ) : null}
-
-        <ScriptOutputTabs output={output} task={task} />
       </div>
+
+      <div
+        aria-label="Resize Script node editor"
+        className="absolute bottom-1 right-1 size-4 cursor-nwse-resize rounded-sm border-b-2 border-r-2 border-neutral-400/70"
+        data-script-node-resize-handle="true"
+        onPointerDown={handlePanelResizeStart}
+        role="separator"
+      />
     </aside>
   );
 }
 
 type ScriptOutputTabsProps = {
   output: ScriptNodeOutput | null;
+  selectedOutput: ScriptOutputFocus;
   task: ScriptTaskStatusResponse;
 };
 
-type ScriptOutputFocus = "storyboard" | "characters" | "scene";
-
-const scriptOutputViews = [
-  {
-    id: "storyboard",
-    label: "Storyboard",
-    description: "POV and shot direction",
-  },
-  {
-    id: "characters",
-    label: "Characters",
-    description: "Looks, wardrobe, and body details",
-  },
-  {
-    id: "scene",
-    label: "Scene",
-    description: "Storyboard + characters composed together",
-  },
-] as const satisfies Array<{
-  id: ScriptOutputFocus;
-  label: string;
-  description: string;
-}>;
-
-export function ScriptOutputTabs({ output, task }: ScriptOutputTabsProps) {
-  const [selectedOutput, setSelectedOutput] =
-    useState<ScriptOutputFocus>("storyboard");
-  const selectedView = scriptOutputViews.find((view) => view.id === selectedOutput);
+export function ScriptOutputTabs({
+  output,
+  selectedOutput,
+  task,
+}: ScriptOutputTabsProps) {
+  const selectedView = findScriptOutputView(selectedOutput);
 
   return (
-    <section className="flex flex-col gap-3" data-script-node-output-panel="true">
-      <div className="flex flex-col gap-2 rounded-2xl border border-neutral-200 bg-neutral-50 p-3">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <p className="text-sm font-semibold text-neutral-950">Choose output</p>
-            <p className="text-xs text-neutral-500">
-              Select what this Script Node should show or generate next.
-            </p>
-          </div>
-          <Badge className="border-neutral-200 bg-white text-neutral-600">
-            {task.status}
-          </Badge>
-        </div>
-        <div className="grid grid-cols-3 gap-2">
-          {scriptOutputViews.map((view) => (
-            <Button
-              key={view.id}
-              type="button"
-              variant={selectedOutput === view.id ? "default" : "outline"}
-              className={cn(
-                "h-auto flex-col items-start gap-1 whitespace-normal rounded-lg px-3 py-2 text-left text-xs",
-                selectedOutput !== view.id &&
-                  "border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-100",
-              )}
-              onClick={() => setSelectedOutput(view.id)}
-            >
-              <span className="font-semibold">{view.label}</span>
-              <span className="text-[0.68rem] font-normal opacity-70">
-                {view.description}
-              </span>
-            </Button>
-          ))}
-        </div>
-      </div>
-
+    <section
+      className="flex flex-col gap-3"
+      data-script-node-output-panel="true"
+    >
       {!output ? (
-        <AssistantResponseBubble
-          title={selectedView?.label ?? "Selected output"}
-          subtitle="Script Agent"
-        >
-          <p>
-            Run generation to receive the selected Script Node output as a
-            structured response.
-          </p>
-          {selectedOutput === "scene" ? (
-            <p>
-              Scene output is composed from the generated storyboard and
-              character profiles.
-            </p>
-          ) : null}
-          <p className="rounded-md border border-neutral-200 bg-white px-3 py-2 text-neutral-500">
-            Task: {task.task_id} / {task.status}
-          </p>
+        <AssistantResponseBubble title={selectedView.label}>
+          <AIResponseTyping
+            showCursor={task.status === "running"}
+            speed={12}
+            text={task.status === "running" ? "" : "No response yet."}
+            thinkingState={task.status === "running" ? "thinking" : "typing"}
+          />
         </AssistantResponseBubble>
       ) : null}
 
@@ -1101,7 +1315,10 @@ export function ScriptOutputTabs({ output, task }: ScriptOutputTabsProps) {
       ) : null}
 
       {output && selectedOutput === "scene" ? (
-        <AssistantResponseBubble title="Scene" subtitle="Composed from storyboard + characters">
+        <AssistantResponseBubble
+          title="Scene"
+          subtitle="Composed from storyboard + characters"
+        >
           {output.scene_descriptions.map((scene) => (
             <OutputSection
               key={scene.scene_number}
@@ -1121,7 +1338,7 @@ export function ScriptOutputTabs({ output, task }: ScriptOutputTabsProps) {
 
 type AssistantResponseBubbleProps = {
   title: string;
-  subtitle: string;
+  subtitle?: string;
   children: ReactNode;
 };
 
@@ -1132,14 +1349,11 @@ function AssistantResponseBubble({
 }: AssistantResponseBubbleProps) {
   return (
     <section className="mr-6 flex flex-col gap-3 rounded-2xl rounded-tl-md border border-neutral-200 bg-white p-4 text-xs leading-5 text-neutral-700 shadow-sm">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <p className="text-sm font-semibold text-neutral-950">{title}</p>
+      <div>
+        <p className="text-sm font-semibold text-neutral-950">{title}</p>
+        {subtitle ? (
           <p className="text-xs text-neutral-500">{subtitle}</p>
-        </div>
-        <Badge className="border-neutral-200 bg-neutral-50 text-neutral-600">
-          Response
-        </Badge>
+        ) : null}
       </div>
       {children}
     </section>
@@ -1230,8 +1444,12 @@ function WorkflowNodeCard({
           <Icon aria-hidden="true" />
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-sm font-semibold">{node.title}</span>
-          <span className="block truncate text-xs text-neutral-500">{node.id}</span>
+          <span className="block truncate text-sm font-semibold">
+            {node.title}
+          </span>
+          <span className="block truncate text-xs text-neutral-500">
+            {node.id}
+          </span>
         </span>
         <Badge className="border-neutral-200 bg-neutral-50 text-neutral-700">
           {node.status}
@@ -1257,7 +1475,9 @@ function WorkflowNodeCard({
             </div>
             <div className="grid grid-cols-3 items-center gap-2 text-center text-[11px] text-neutral-500">
               <span>Confirm shot</span>
-              <span className="font-semibold text-neutral-950">Draw assets</span>
+              <span className="font-semibold text-neutral-950">
+                Draw assets
+              </span>
               <span>Compose lines</span>
             </div>
           </div>
@@ -1313,7 +1533,12 @@ type PortButtonProps = {
   ) => void;
 };
 
-function PortButton({ port, index, compatible, onConnectionStart }: PortButtonProps) {
+function PortButton({
+  port,
+  index,
+  compatible,
+  onConnectionStart,
+}: PortButtonProps) {
   const leftSide = port.direction === "input";
 
   return (
@@ -1343,7 +1568,11 @@ type WorkflowEdgesProps = {
   onSelect: (selection: WorkflowSelection) => void;
 };
 
-function WorkflowEdges({ connectionPreview, state, onSelect }: WorkflowEdgesProps) {
+function WorkflowEdges({
+  connectionPreview,
+  state,
+  onSelect,
+}: WorkflowEdgesProps) {
   const previewPath = connectionPreview
     ? makeConnectionPreviewPath(state, connectionPreview)
     : null;
@@ -1385,7 +1614,9 @@ function WorkflowEdges({ connectionPreview, state, onSelect }: WorkflowEdgesProp
             />
             <path
               d={path}
-              stroke={selected ? "rgba(15,23,42,0.9)" : "rgba(100,116,139,0.55)"}
+              stroke={
+                selected ? "rgba(15,23,42,0.9)" : "rgba(100,116,139,0.55)"
+              }
               strokeWidth={selected ? "3" : "2"}
               fill="none"
               pointerEvents="none"
@@ -1428,7 +1659,8 @@ function makeConnectionPreviewPath(
   }
 
   const sourcePoint = portPoint(sourceNode, sourcePort);
-  const midX = sourcePoint.x + (connectionPreview.pointer.x - sourcePoint.x) / 2;
+  const midX =
+    sourcePoint.x + (connectionPreview.pointer.x - sourcePoint.x) / 2;
 
   return `M ${sourcePoint.x} ${sourcePoint.y} C ${midX} ${sourcePoint.y}, ${midX} ${connectionPreview.pointer.y}, ${connectionPreview.pointer.x} ${connectionPreview.pointer.y}`;
 }
@@ -1443,7 +1675,10 @@ function portPoint(node: WorkflowNode, port: WorkflowPort) {
   );
 
   return {
-    x: port.direction === "input" ? node.position.x : node.position.x + NODE_WIDTH,
+    x:
+      port.direction === "input"
+        ? node.position.x
+        : node.position.x + NODE_WIDTH,
     y: node.position.y + PORT_TOP + index * PORT_GAP + 10,
   };
 }

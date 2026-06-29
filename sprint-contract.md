@@ -41,6 +41,7 @@ Protected user edit:
 - OpenAI-compatible provider settings read from server-only environment variables.
 - `/workspace` Script Node editor for desktop input, run state, output target selection, and structured response bubbles.
 - White Figma-like workspace canvas styling for the current browser-comment pass.
+- Follow-up browser-comment editor behavior: output selection lives in the Generate-row dropdown, response appears above input, and the Script editor can be dragged, resized, closed, and reopened from the Script node.
 - Honest labels for mock provider, dev in-memory backend state, deferred production auth, and deferred downstream media generation.
 
 ## Out of Scope
@@ -63,7 +64,9 @@ Protected user edit:
 7. Selecting the Script node in `/workspace` opens an editor with one AI chat-style MV world description input and a run action in a vertical chat flow.
 8. Successful generation renders selectable Storyboard, Characters, and Scene response targets; Scene is composed from storyboard and characters.
 9. The Script node status changes to `ready` only after validated output exists.
-10. Verification evidence is recorded in `feature_list.json`, `sprint-contract.md`, `evaluator-rubric.md`, `progress.md`, and `session-handoff.md`.
+10. The Script Node editor renders as a ChatGPT-like response-over-input panel; output target selection is the Generate-row dropdown with only Storyboard, Characters, and Scene names.
+11. The Script Node editor can be dragged, resized, closed, and reopened by clicking the Script node.
+12. Verification evidence is recorded in `feature_list.json`, `sprint-contract.md`, `evaluator-rubric.md`, `progress.md`, and `session-handoff.md`.
 
 ## Verification Plan
 
@@ -85,6 +88,9 @@ Protected user edit:
 | Browser comment verification | Baseline `.\init.ps1` passed before changes; focused workspace plus TriplD chat tests passed 2 files / 9 tests; backend pytest passed 5 tests with one upstream Starlette TestClient deprecation warning; backend ruff passed; full web tests passed 9 files / 29 tests; `corepack pnpm --filter @xmeta/web typecheck` passed; `corepack pnpm --filter @xmeta/web build` passed. |
 | Browser comment QA | Production Browser QA on `http://127.0.0.1:3000/workspace` passed: white canvas and editor backgrounds measured, input/response flow was vertical, Storyboard/Characters/Scene output buttons worked, Script node preview showed only the submitted world view, endpoint sequence returned 200/202/200/200, console errors empty, failed requests empty, and no horizontal overflow. |
 | Browser comment final closure | `feature_list.json` and `feature_tasks/3.json` parsed successfully; `git diff --check` passed with line-ending warnings only; final `.\init.ps1` passed and reran web tests: 9 files / 29 tests. |
+| Follow-up browser comments | Moved Storyboard/Characters/Scene selection into the Generate-row dropdown, removed the separate Choose output card, placed the Script Agent response above the MV world input, reused the TriplD response typing component for empty/running response state, and added drag/resize/close/reopen behavior to the Script editor. |
+| Follow-up verification | Baseline `.\init.ps1` passed before changes; focused workspace plus TriplD chat tests passed 2 files / 9 tests; full web tests passed 9 files / 29 tests; `corepack pnpm --filter @xmeta/web typecheck` passed; `corepack pnpm --filter @xmeta/web build` passed; bundled Python backend pytest passed 5 tests with one upstream Starlette TestClient deprecation warning; bundled Python ruff passed. |
+| Follow-up Browser QA | Production Browser QA on `http://localhost:3002/workspace` with FastAPI mock provider passed: Choose output text absent, output dropdown contained only Storyboard/Characters/Scene, Characters selection updated the response, response stayed above input, editor drag and resize changed frame geometry, close removed the editor, clicking the Script node reopened it, generation returned 200 PATCH / 202 POST / 200 task / 200 result, Script node became ready, no console errors, no failed requests, and no horizontal overflow. |
 | Revised workflow | User clarified the Script Node workflow: one MV world-view description input, then AI expands into storyboard direction/POV/shots, character profiles with style/wardrobe/body details, and concrete scene descriptions derived from characters plus storyboard. |
 | Revised implementation | Updated shared contracts, FastAPI/Pydantic schemas, prompt builder, deterministic mock provider, backend tests, workspace editor, AI chat component props, response targets, and API docs for the single-input MV workflow. |
 | Revised verification | Backend pytest passed 5 tests with one upstream Starlette TestClient deprecation warning; backend ruff passed; focused workspace test passed 1 file / 5 tests; full web tests passed 9 files / 29 tests; `corepack pnpm --filter @xmeta/web typecheck` passed; `corepack pnpm --filter @xmeta/web build` passed. |

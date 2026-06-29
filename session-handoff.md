@@ -8,7 +8,7 @@
 - Baseline `.\init.ps1` passed before Feature 3 implementation and reported 9 web test files / 28 tests.
 - Feature 3 final evidence is recorded in `feature_list.json`, `feature_tasks/3.json`, `sprint-contract.md`, `evaluator-rubric.md`, and `progress.md`.
 - Feature 3 has been revised to the user-approved MV workflow: one AI chat-style world-view description input expands into storyboard direction, character profiles, and scene descriptions.
-- The latest browser-comment revision uses a white Figma-like workspace canvas and a vertical ChatGPT-like Script Node input/response flow.
+- The latest browser-comment revision uses a white Figma-like workspace canvas and a ChatGPT-like Script Node editor with response above input, Storyboard/Characters/Scene in the Generate-row dropdown, and drag/resize/close/reopen behavior.
 
 ## Feature 3 Implementation State
 
@@ -23,8 +23,10 @@
   - Mock provider is default; non-mock provider selection validates required `SCRIPT_MODEL_*` env values and fails clearly if missing.
 - `/workspace` now shows a Script Node editor when the Script node is selected:
   - Users can edit one MV world-view description through the TriplD AI chat input component.
+  - The Script Agent response appears above the input, and the input stays at the bottom of the editor.
+  - Storyboard, Characters, and Scene selection lives in the dropdown immediately left of `Generate` and shows names only.
   - `Generate` saves input, runs the backend task, reads status/result, and renders selectable Storyboard, Characters, and Scene response targets.
-  - Scene output is labeled as composed from generated storyboard and character profiles.
+  - The editor can be dragged, resized, closed, and reopened by clicking the Script node again.
   - The Script node card preview shows only the entered world view.
   - The Script node changes to `ready` only after validated output exists.
 
@@ -42,6 +44,8 @@
 - Browser-comment QA passed on `http://127.0.0.1:3000/workspace`: white canvas and editor backgrounds measured, vertical input/response flow confirmed, Storyboard/Characters/Scene output buttons worked, Script node preview contained only the submitted world view, endpoint sequence returned 200/202/200/200, console errors empty, failed requests empty, and no horizontal overflow.
 - Browser-comment final closure passed: feature JSON validation, `git diff --check` with line-ending warnings only, and final `.\init.ps1` rerunning web tests: 9 files / 29 tests.
 - Final closure passed for the revised MV workflow: feature JSON validation, `git diff --check` with line-ending warnings only, and final `.\init.ps1` rerunning web tests: 9 files / 29 tests.
+- Follow-up browser-comment verification passed: baseline `.\init.ps1`; focused workspace plus TriplD chat tests 2 files / 9 tests; full web tests 9 files / 29 tests; `corepack pnpm --filter @xmeta/web typecheck`; `corepack pnpm --filter @xmeta/web build`; bundled Python backend pytest 5 tests with one upstream Starlette TestClient deprecation warning; bundled Python ruff.
+- Follow-up production Browser QA passed on `http://localhost:3002/workspace`: Choose output absent, dropdown options exactly Storyboard/Characters/Scene, response above input, drag/resize/close/reopen worked, generation returned 200/202/200/200, Script node became ready, no console errors, no failed requests, and no horizontal overflow.
 
 ## Boundaries
 

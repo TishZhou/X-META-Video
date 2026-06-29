@@ -16,10 +16,19 @@ Record major decisions and progress each session. Keep the current verified stat
 - Current design-system foundation: `web-design-002` defines shared style, layout, motion, responsive, accessibility, and product state language directly in frontend code under `apps/web/src/lib/design-system.ts`, `apps/web/src/components/xmeta/design-primitives.tsx`, `apps/web/src/index.css`, and `apps/web/tailwind.config.ts`.
 - Current app foundation: `web-design-004` implements the global shell, shared page containers, and wider desktop layout rhythm while preserving the root TriplD landing composition.
 - Current workspace canvas revision: `/workspace` now uses a Figma-like white dotted work surface with a floating project bar, a persistent `Local only / FastAPI deferred / AI disabled` boundary label, a single bottom `Add node` entry with explicit `Input -> Output` node flow labels, default nodes fitted into the first viewport, blank-canvas drag panning, one combined toolbar-inline Canvas zoom range slider, drag-line port connections, and no duplicated left node palette or right monitoring/Inspector panel.
-- Current Script Node revision: Feature 3 now uses one AI chat-style MV world-view input (`world_description`), a vertical ChatGPT-like input/response flow, output target selection for Storyboard / Characters / Scene, and structured storyboard direction, character profiles, and concrete scene descriptions through the FastAPI/mock provider contract.
+- Current Script Node revision: Feature 3 now uses one AI chat-style MV world-view input (`world_description`), a ChatGPT-like response-over-input editor, output target selection for Storyboard / Characters / Scene in the Generate-row dropdown, draggable/resizable/closable editor behavior, and structured storyboard direction, character profiles, and concrete scene descriptions through the FastAPI/mock provider contract.
 - Current blocker: none.
 
 ## Session Log
+
+### Session 033
+
+- Date: 2026-06-29
+- Goal: Address follow-up browser comments on the Feature 3 Script Node editor interaction.
+- Completed: Removed the separate `Choose output` card; moved Storyboard / Characters / Scene into the dropdown immediately left of `Generate` with names only; placed the Script Agent response above the MV world input; reused the TriplD response typing component for no-output/running response state; removed extra explanatory copy from the editor header/response area; and added drag, resize, close, and click-Script-node-to-reopen behavior for the Script editor.
+- Verification run: Baseline `.\init.ps1` passed before changes with 9 web test files / 29 tests; focused workspace plus TriplD chat tests passed 2 files / 9 tests; full web tests passed 9 files / 29 tests; `corepack pnpm --filter @xmeta/web typecheck` passed; `corepack pnpm --filter @xmeta/web build` passed and included `/workspace`; bundled Python backend pytest passed 5 tests with one upstream Starlette TestClient deprecation warning; bundled Python ruff passed.
+- Rendered QA: Production Browser QA on `http://localhost:3002/workspace` with FastAPI mock provider passed: Choose output text absent, output dropdown options exactly Storyboard/Characters/Scene, Characters selection updated the response title, response stayed above input before and after close/reopen, drag changed editor position, resize changed editor size, close removed the editor, clicking the Script node reopened it, generation endpoint sequence returned 200 PATCH / 202 POST / 200 task / 200 result, Script node became ready, console errors empty, failed requests empty, and no horizontal overflow.
+- Known risk or unresolved issue: The temporary QA production server used `FRONTEND_ORIGINS` including port 3002; source defaults still allow 3000 only. Existing local dev server on 3000 was left as user environment state, while temporary QA servers should be stopped before session close.
 
 ### Session 031
 
