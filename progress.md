@@ -15,7 +15,7 @@ Record major decisions and progress each session. Keep the current verified stat
 - Current component guidance: `web-design-001` installed the user-provided TriplD shadcn component set as local source. See the concise usage map in `docs/TRIPLED_COMPONENT_GUIDE.md`.
 - Current design-system foundation: `web-design-002` defines shared style, layout, motion, responsive, accessibility, and product state language directly in frontend code under `apps/web/src/lib/design-system.ts`, `apps/web/src/components/xmeta/design-primitives.tsx`, `apps/web/src/index.css`, and `apps/web/tailwind.config.ts`.
 - Current app foundation: `web-design-004` implements the global shell, shared page containers, and wider desktop layout rhythm while preserving the root TriplD landing composition.
-- Current workspace canvas revision: Feature 2 `/workspace` now uses a canvas-first dark dotted work surface with a floating project bar, a persistent `Local only / FastAPI deferred / AI disabled` boundary label, a single bottom `Add node` entry, default nodes fitted into the first viewport, and no duplicated left node palette or right monitoring/Inspector panel.
+- Current workspace canvas revision: Feature 2 `/workspace` now uses a canvas-first dark dotted work surface with a floating project bar, a persistent `Local only / FastAPI deferred / AI disabled` boundary label, a single bottom `Add node` entry, default nodes fitted into the first viewport, blank-canvas drag panning, one combined Canvas zoom slider, drag-line port connections, and no duplicated left node palette or right monitoring/Inspector panel.
 - Current blocker: none for starting Feature 3 after reading `feature_tasks/3.json` and rerunning the standard startup path.
 
 ## Session Log
@@ -30,6 +30,16 @@ Record major decisions and progress each session. Keep the current verified stat
 - Rendered QA: Fresh Browser QA on `http://localhost:3000/workspace` passed for page identity, nonblank canvas, three default nodes fully visible in the 1254px viewport, persistent local/FastAPI/AI boundary label, no Node palette/Quick add/Inspector text, no framework overlay, no document overflow, Add node -> Add Audio node changing node count 3 -> 4, menu closure, no overlap between Audio and the default graph, and no warn/error logs during the QA window.
 - Known risk or unresolved issue: FastAPI durable persistence, AI execution, provider calls, task orchestration, generated assets, and export rendering remain deferred to later features.
 - Next best step: Start Feature 3, Script Node, after reading `feature_tasks/3.json` and rerunning `.\init.ps1`.
+
+### Session 028
+
+- Date: 2026-06-29
+- Goal: Address four in-browser comments on Feature 2 `/workspace`: remove nonfunctional toolbar buttons, make canvas drag pan the viewport, merge zoom controls, simplify Add node menu, and make connections drag-line based.
+- Completed: Removed the Select, Move, and Fit view toolbar cluster; replaced separate Zoom in/Zoom out buttons with one `Canvas zoom` control that opens a slider on hover/focus/click; simplified Add node to a compact node-name list; changed port connections from click-output/click-input to dragging from an output port to an input port; preserved compatible input highlighting; and kept all behavior local to the web canvas.
+- Verification run: Baseline `.\init.ps1` passed before changes with 9 files / 27 tests; focused workflow canvas tests passed 2 files / 8 tests; typecheck passed; full web tests passed 9 files / 27 tests; build passed; JSON validation passed; `git diff --check` passed with line-ending warnings only; final `.\init.ps1` passed with 9 files / 27 tests.
+- Rendered QA: Browser interaction QA verified Add node list-only menu, blank-canvas panning, and drag connection increasing edge count from 2 to 3. Browser automation timed out while dragging the zoom slider, so final rendered evidence for zoom is a short Browser health check verifying `Canvas zoom` and slider DOM exist, removed toolbar labels are absent, page identity is correct, no framework overlay appears, and no warn/error logs occurred.
+- Known risk or unresolved issue: Browser drag automation for the zoom slider was unstable; manual browser inspection remains available because `/workspace` stayed open. Backend persistence and AI execution remain deferred.
+- Next best step: Either manually tune the exact zoom slider feel in the open browser, or start Feature 3 after reading `feature_tasks/3.json` and rerunning `.\init.ps1`.
 
 ### Session 026
 

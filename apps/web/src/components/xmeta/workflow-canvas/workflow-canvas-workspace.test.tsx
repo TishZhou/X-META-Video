@@ -24,6 +24,13 @@ describe("WorkflowCanvasWorkspace", () => {
 
     expect(html).toContain('aria-label="Add node"');
     expect(html).toContain('data-workspace-bottom-toolbar="true"');
+    expect(html).toContain('aria-label="Canvas zoom"');
+    expect(html).toContain('data-workspace-zoom-range="true"');
+    expect(html).not.toContain('aria-label="Select"');
+    expect(html).not.toContain('aria-label="Move"');
+    expect(html).not.toContain('aria-label="Fit view"');
+    expect(html).not.toContain('aria-label="Zoom in"');
+    expect(html).not.toContain('aria-label="Zoom out"');
     expect(html).not.toContain('data-workspace-add-menu="true"');
     expect(html).not.toContain("Node palette");
     expect(html).not.toContain("Quick add");

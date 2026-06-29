@@ -17,7 +17,8 @@
     "Registry evidence: apps/web/components.json configures @uitripled, but shadcn registry search for toolbar from apps/web was blocked by @uitripled catalog parse errors requiring name and homepage; the same search found no standalone toolbar item, so the canvas toolbar should be composed from available primitives.",
     "Architecture boundary remains: Web owns canvas UX and local draft graph state; FastAPI later owns durable workflow/project/task state; web must not call AI providers directly.",
     "Feature 2 implementation completed on 2026-06-26 with a canvas-first /workspace route, typed graph reducer, first-class ports and edges, local structured snapshots, reusable placeholder node UI, stateful bottom toolbar controls, stale-port rejection, and honest deferred backend/AI execution labels.",
-    "User-requested visual revision changed /workspace to match the reference direction: the dark dotted canvas is the main theme, node creation lives behind one bottom Add node entry, the left node palette was removed to avoid duplicate add controls, and the right monitoring/Inspector panel was removed."
+    "User-requested visual revision changed /workspace to match the reference direction: the dark dotted canvas is the main theme, node creation lives behind one bottom Add node entry, the left node palette was removed to avoid duplicate add controls, and the right monitoring/Inspector panel was removed.",
+    "2026-06-29 browser-comment tailoring removed the Select, Move, and Fit view toolbar cluster; blank canvas drag now pans the viewport; zoom is one combined Canvas zoom control with a hover/focus/click slider; the Add node menu is a compact node-name list; and connections are created by dragging a line from an output port to a compatible input port."
   ],
   "small_features": [
     {
@@ -42,7 +43,7 @@
         "Verify users can add placeholder nodes for script, storyboard, character image, prop/asset, scene image, image composition, audio, video, and export from the bottom Add node menu.",
         "Verify command, mode, zoom, fit, help, context, and panel toggles are keyboard-accessible and expose tooltips."
       ],
-      "notes": "Implemented with local shadcn-style Button, Tooltip, Separator, Tabs, and Badge primitives. Users add placeholder node types from the single bottom Add node menu; toolbar controls expose select, move, fit, zoom, save, restore, delete, and help without duplicating a left node palette."
+      "notes": "Implemented with local shadcn-style Button, Tooltip, Separator, Tabs, and Badge primitives. Users add placeholder node types from the single bottom Add node menu, now shown as a compact node-name list. The toolbar keeps Add node, combined Canvas zoom, save, restore, delete, and help while blank-canvas drag handles viewport panning."
     },
     {
       "id": "workflow-canvas-003",
@@ -66,7 +67,7 @@
         "Verify users can start a connection from an output port, preview the edge, drop on a compatible input port, and reject invalid/self/duplicate connections with clear feedback.",
         "Verify connections do not auto-run node functionality or hidden generation tasks."
       ],
-      "notes": "Implemented as typed port and edge records with sourceNodeId, sourcePortId, targetNodeId, targetPortId, dataType, status, and label. Invalid, self, and duplicate connections are rejected by reducer logic and never start generation."
+      "notes": "Implemented as typed port and edge records with sourceNodeId, sourcePortId, targetNodeId, targetPortId, dataType, status, and label. Users create connections by dragging from an output port to a compatible input port; compatible targets highlight during drag. Invalid, self, and duplicate connections are rejected by reducer logic and never start generation."
     },
     {
       "id": "workflow-canvas-005",
