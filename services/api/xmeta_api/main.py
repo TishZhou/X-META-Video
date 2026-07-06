@@ -56,8 +56,8 @@ def run_script_node(project_id: str, node_id: str) -> TaskState:
             detail="Script node input not found. Save node input before running.",
         )
 
-    settings = ScriptProviderSettings.from_env()
     try:
+        settings = ScriptProviderSettings.from_env()
         provider = get_script_provider(settings)
     except ProviderConfigurationError as exc:
         raise HTTPException(

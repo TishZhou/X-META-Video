@@ -1,6 +1,6 @@
 ﻿{
     "project":  "X-META Video",
-    "last_updated":  "2026-06-29",
+    "last_updated":  "2026-07-06",
     "rules":  {
                   "single_active_feature":  true,
                   "passing_requires_evidence":  true,
@@ -93,7 +93,7 @@
                                               "Read feature_tasks/3.json completely before working on this feature.",
                                               "Run .\\init.ps1 and record evidence before marking this feature passing."
                                           ],
-                         "current_task":  "script-node-004",
+                         "current_task":  "script-node-005",
                          "current_task_status":  "passing",
                          "current_task_evidence":  [
                                                        "2026-06-29 baseline .\\init.ps1 passed before Feature 3 implementation and reran web tests: 9 test files / 29 tests.",
@@ -115,7 +115,14 @@
                                                        "Inline-composer verification passed: baseline .\\init.ps1, focused workspace test 1 file / 5 tests, full web tests 9 files / 29 tests, typecheck after build regenerated .next/types, build, bundled Python backend pytest 5 tests, and bundled Python ruff.",
                                                        "Inline-composer Browser QA on http://localhost:3002/workspace passed: no floating Script editor, inline composer below the selected Script node, history initially hidden, AI修改 generated response history between node and input, Characters output persisted, endpoint sequence returned 200 PATCH / 202 POST / 200 task / 200 result, Script node became ready, console errors empty, failed requests empty, and no horizontal overflow.",
                                                        "Production Browser QA on http://127.0.0.1:3000/workspace passed for the revised MV workflow: AI chat-style world description input visible, input-to-output flow called PATCH/run/task/result endpoints with 200/202/200/200, Script node became ready, selectable Storyboard/Characters/Scene response targets rendered, no console errors, no failed requests, no document overflow, and no misleading video generation claim.",
-                                                       "Final closure passed: feature_list.json and feature_tasks/3.json JSON validation, git diff --check with line-ending warnings only, and final .\\init.ps1 rerunning web tests: 9 files / 29 tests."
+                                                       "Final closure passed: feature_list.json and feature_tasks/3.json JSON validation, git diff --check with line-ending warnings only, and final .\\init.ps1 rerunning web tests: 9 files / 29 tests.",
+                                                       "2026-07-06 script-node-005 replaced the non-executing OpenAI-compatible provider stub with a real server-side OpenAI-compatible text provider that posts to /responses, parses output_text or output content text, strips fenced JSON, and validates ScriptOutput.",
+                                                       "2026-07-06 .env.example and docs/API.md now document text, image, video, and music model categories; only text execution is implemented for Feature 3, while image/video/music remain honest configuration slots for later nodes.",
+                                                       "2026-07-06 provider env supports TEXT_MODEL_* with OPENAI_API_KEY fallback and legacy SCRIPT_MODEL_* compatibility; default text model is gpt-5.4-mini when OpenAI is selected.",
+                                                       "2026-07-06 backend pytest passed through .venv-api: 17 tests with one upstream Starlette TestClient deprecation warning.",
+                                                       "2026-07-06 backend ruff passed for services/api.",
+                                                       "2026-07-06 frontend safety test passed: corepack pnpm --filter @xmeta/web test reported 9 files / 33 tests.",
+                                                       "2026-07-06 evaluator subagent re-scored source behavior at 96/100 with no open P1/P2 findings after invalid env and unsupported-provider fixes."
                                                    ],
                          "user_visible_behavior":  "Users can enter one MV world-view description in an input composer directly under the Script node, choose Storyboard, Characters, or Scene from the composer footer, click AI修改 to show or create response history between the node and input, and generate structured storyboard direction, character profiles, and concrete scene descriptions through a backend API.",
                          "task_file":  "feature_tasks/3.json"

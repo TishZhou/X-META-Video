@@ -185,15 +185,37 @@ Script generation task results return structured JSON under `output`, not assist
 Script provider configuration is server-only:
 
 ```txt
-SCRIPT_MODEL_PROVIDER=mock
-SCRIPT_MODEL_BASE_URL=
-SCRIPT_MODEL_API_KEY=
-SCRIPT_MODEL_NAME=
-SCRIPT_MODEL_TIMEOUT_SECONDS=60
-SCRIPT_MODEL_MAX_RETRIES=1
+OPENAI_API_KEY=
+OPENAI_BASE_URL=https://api.openai.com/v1
+
+TEXT_MODEL_PROVIDER=mock
+TEXT_MODEL_BASE_URL=https://api.openai.com/v1
+TEXT_MODEL_API_KEY=
+TEXT_MODEL_NAME=gpt-5.4-mini
+TEXT_MODEL_TEMPERATURE=
+TEXT_MODEL_TIMEOUT_SECONDS=60
+TEXT_MODEL_MAX_RETRIES=1
+
+IMAGE_MODEL_PROVIDER=mock
+IMAGE_MODEL_BASE_URL=https://api.openai.com/v1
+IMAGE_MODEL_API_KEY=
+IMAGE_MODEL_NAME=gpt-image-1-mini
+
+VIDEO_MODEL_PROVIDER=mock
+VIDEO_MODEL_BASE_URL=https://api.openai.com/v1
+VIDEO_MODEL_API_KEY=
+VIDEO_MODEL_NAME=sora-2
+
+MUSIC_MODEL_PROVIDER=mock
+MUSIC_MODEL_BASE_URL=https://api.openai.com/v1
+MUSIC_MODEL_API_KEY=
+MUSIC_MODEL_NAME=
+MUSIC_MODEL_IMPLEMENTATION_STATUS=config_only_no_openai_dedicated_music_endpoint
 ```
 
-`mock` is the default development provider. Non-mock OpenAI-compatible provider selection must fail clearly when base URL, API key, or model are missing.
+`mock` is the default development provider. For Feature 3, only the text category is executed: set `TEXT_MODEL_PROVIDER=openai` or `TEXT_MODEL_PROVIDER=openai-compatible`, provide `OPENAI_API_KEY` or `TEXT_MODEL_API_KEY`, and the Script Node will call the configured OpenAI-compatible `/responses` endpoint. `TEXT_MODEL_BASE_URL` and `TEXT_MODEL_NAME` default to OpenAI's API base URL and the low-cost `gpt-5.4-mini` model. Legacy `SCRIPT_MODEL_*` names remain a compatibility fallback for the Script Node only.
+
+Image and video model env values are configuration slots for later nodes. Music is also a configuration slot; the checked OpenAI docs cover audio/speech models, but this API contract does not claim a dedicated OpenAI music-generation endpoint is implemented.
 
 ## Tasks
 

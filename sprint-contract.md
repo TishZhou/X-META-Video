@@ -1,82 +1,79 @@
-# Sprint Contract - Feature 4 Storyboard Node
+# Sprint Contract - Feature 3 Script Node API Hookup
 
 ## Sprint Overview
 
-**Sprint:** feature-4-storyboard-inline-composer-polish
-**Feature:** Feature 4, Storyboard Node
+**Sprint:** feature-3-openai-provider-hookup
+**Feature:** Feature 3, Script Node
 **Status:** in_progress
-**Goal:** Address the eight browser comments on the existing `/workspace` Storyboard interaction without expanding into backend storyboard generation or durable shot-list persistence.
+**Goal:** Keep the Script Node agent/provider interface generic while wiring the text path to OpenAI's API and adding server-side environment configuration for text, image, video, and music model categories.
 
 ## Write Scope
 
-- `apps/web/src/components/xmeta/workflow-canvas/**`
-- `apps/web/src/lib/workflow-canvas/**` only if required for canvas bounds behavior
-- Focused tests for changed workspace behavior
-- `feature_tasks/4.json`
+- `services/api/xmeta_api/providers.py`
+- `services/api/tests/test_script_node.py`
+- `.env.example`
+- `docs/API.md` only for provider/env contract updates
+- `feature_tasks/3.json`
 - `feature_list.json`
 - `sprint-contract.md`
 - `evaluator-rubric.md`
 - `progress.md`
 - `session-handoff.md`
 
-Protected user edit:
+Protected existing edits:
 
-- `AGENTS.md` is already modified and must not be reverted.
+- `AGENTS.md` and `pnpm-workspace.yaml` are already modified in the working tree and must not be reverted.
 
 ## In Scope
 
-- Show confirmed Script output in the Script node card preview.
-- Make the Storyboard response/history panel align with the input composer width, use a fixed-height scrollable chatbox treatment, and allow the user to hide/show it.
-- Keep the response/composer group at stable canvas-world dimensions while canvas zoom changes.
-- Remove the left-side invisible drag wall so nodes can move to the far-left canvas area.
-- Remove the redundant small Storyboard output target control near the Generate button.
-- Change the composer selector from output target selection to model selection.
-- Move generation errors into the Storyboard response/status panel near the Ready state instead of rendering a detached red strip.
-- Preserve honest local/FastAPI/AI-disabled boundaries.
+- Preserve `ScriptProvider.generate(...) -> ScriptOutput` as the Script Node's generic provider interface.
+- Keep `mock` as the default verification provider.
+- Add an OpenAI text provider path for Script Node generation through the Responses API.
+- Parse provider text as JSON and validate it into the existing `ScriptOutput` Pydantic contract.
+- Add `.env.example` slots for four model categories: text, image, video, and music.
+- Ensure image, video, and music are configuration-only in this pass; no new generation routes or user-visible claims are added.
+- Fail clearly when OpenAI text generation is selected but required credentials or model settings are missing.
 
 ## Out of Scope
 
-- Production Storyboard Node backend, database persistence, queue workers, or model-provider execution.
-- Full editable shot-list data model.
-- Character, scene, image, audio, video, export, asset library, or history feature work.
-- Mobile-specific UI polish.
+- Implementing Character Image, Scene Image, Audio, Video, Export, Asset Library, queue workers, durable persistence, or object storage.
+- Frontend UI changes.
+- Real end-to-end provider execution with a live API key.
+- Claiming OpenAI music generation is production-ready. OpenAI docs cover audio/speech, while a dedicated music generation endpoint is not documented in the checked official pages.
 
 ## Acceptance Criteria
 
-1. Script node preview displays the confirmed/generated world-view output, not only draft input.
-2. Storyboard response/history appears as a fixed-size scrollable chatbox aligned to the composer width.
-3. Users can hide and restore the Storyboard response/history panel.
-4. Composer and response sizing remains stable relative to the canvas world when zoom changes.
-5. A selected node can be dragged to the far-left canvas area without being blocked by an invisible boundary.
-6. The small output-target badge/button near Generate is removed.
-7. The left composer dropdown is a model selector.
-8. Generation errors render inside the response/status area near Ready.
-9. Verification evidence is recorded in `feature_list.json`, `sprint-contract.md`, `evaluator-rubric.md`, `progress.md`, and `session-handoff.md`.
+1. Script Node still passes with the mock provider by default.
+2. Setting the text provider to OpenAI requires only server-side env plus a user-supplied API key.
+3. OpenAI text calls use the configured text model, base URL, timeout, and retry settings.
+4. OpenAI provider output is parsed as structured JSON and validated into `ScriptOutput`.
+5. Missing OpenAI provider config returns a clear `503` message without leaking secrets.
+6. `.env.example` documents text, image, video, and music model configuration using OpenAI-first defaults where the API is documented, and explicit placeholders where not implemented.
+7. Verification evidence is recorded in `feature_list.json`, `feature_tasks/3.json`, `sprint-contract.md`, `evaluator-rubric.md`, `progress.md`, and `session-handoff.md`.
 
 ## Verification Plan
 
 1. Baseline: `.\init.ps1` before implementation.
-2. Focused frontend tests: workspace component test file.
-3. Full frontend tests: `corepack pnpm --filter @xmeta/web test`.
-4. Typecheck: `corepack pnpm --filter @xmeta/web typecheck`.
-5. Build: `corepack pnpm --filter @xmeta/web build`.
-6. Browser QA: desktop `/workspace` click-by-click verification for response hide/show, model selector, Generate error placement, zoom stability, and far-left node dragging.
-7. JSON validation: parse `feature_list.json` and `feature_tasks/4.json`.
-8. Whitespace check: `git diff --check`.
-9. Final restart path: `.\init.ps1`.
+2. Backend tests: bundled Python pytest under `services/api`.
+3. Backend lint: bundled Python ruff under `services/api`.
+4. Frontend safety: `corepack pnpm --filter @xmeta/web test`.
+5. Typecheck/build if source impact reaches shared/frontend contracts.
+6. JSON validation: parse `feature_list.json` and `feature_tasks/3.json`.
+7. Whitespace check: `git diff --check`.
+8. Final restart path: `.\init.ps1`.
 
 ## Sprint Log
 
 | Phase | Outcome |
 | --- | --- |
-| Baseline | Confirmed working directory `D:\X-META-Video`; read `AGENTS.md`, `docs/PRODUCT.md`, `docs/ARCHITECTURE.md`, `feature_list.json`, `progress.md`, `feature_tasks/4.json`, `sprint-contract.md`, and `evaluator-rubric.md`. |
-| Startup | `.\init.ps1` passed before implementation and reported 9 web test files / 29 tests. |
-| Recent commits | Reviewed `git log --oneline -5`: `396604d`, `65cf5b4`, `94ae773`, `61d8580`, and `18d22c3`. |
-| Skill setup | Used shadcn rules, UI/UX evaluator references, and Browser/frontend testing guidance for the workspace UI pass. |
-| Subagents | Acting subagent assigned to the workspace source/test implementation slice; evaluation subagent reserved for post-implementation review. |
-| Implementation | Updated the workspace inline Script/Storyboard interaction so confirmed Script output appears in the Script node preview, Storyboard AI history is fixed-height/scrollable/hideable, the composer selector is a model selector, the redundant output-target badge is removed, errors render inside the response panel, zoom compensation keeps the panel/composer stable, and node drag allows negative x placement. |
-| Focused verification | `corepack pnpm --filter @xmeta/web test -- src/components/xmeta/workflow-canvas/workflow-canvas-workspace.test.tsx` passed 1 file / 9 tests. |
-| Full verification | `corepack pnpm --filter @xmeta/web test` passed 9 files / 33 tests; `corepack pnpm --filter @xmeta/web typecheck` passed; `corepack pnpm --filter @xmeta/web build` passed and included `/workspace`; JSON validation passed for `feature_list.json` and `feature_tasks/4.json`; `git diff --check` passed with line-ending warnings only. |
-| Browser QA | On `http://localhost:3000/workspace`, click-by-click Browser QA verified selecting Script reveals the composer, `AI修改` opens the Storyboard AI panel, Hide removes the panel while keeping the composer, the model selector changes to configured, configured-model failure shows `Failed to fetch` inside the panel with no detached strip, mock generation returns Ready and changes the Script preview to Confirmed Script, 50% zoom keeps panel/composer at 820px wide with a 288px response panel, and Script node drag reaches a negative canvas left position. |
-| Evaluation | Evaluation subagent recorded 90/100 with no source behavior findings; only P2 was missing final artifact/closure evidence, which this artifact update is resolving before the final startup run. |
-| Final startup | Final `.\init.ps1` passed after artifact updates and reran web tests: 9 files / 33 tests. A direct focused rerun also passed: 1 file / 9 tests. |
+| Baseline | Confirmed working directory `D:\X-META-Video`; read `AGENTS.md`, `docs/PRODUCT.md`, `docs/ARCHITECTURE.md`, `feature_list.json`, `progress.md`, `feature_tasks/3.json`, `sprint-contract.md`, `evaluator-rubric.md`, and recent commits. |
+| Startup | `.\init.ps1` passed before implementation and reran web tests: 9 files / 33 tests. |
+| Official docs | Checked current OpenAI docs: text generation uses Responses API examples with `client.responses.create`; model guidance recommends smaller variants such as `gpt-5.4-mini` or `gpt-5.4-nano` for latency/cost; image generation is documented separately; video generation is documented under Sora; no dedicated music generation endpoint was found in the checked official audio docs. |
+| Subagents | Acting subagent assigned to provider/env/test implementation scope; evaluation subagent reserved for post-implementation review. |
+| Implementation | Replaced the non-executing OpenAI-compatible Script Node provider stub with a real server-side text provider using the configured `/responses` endpoint, `TEXT_MODEL_*` env, `OPENAI_API_KEY` fallback, legacy `SCRIPT_MODEL_*` compatibility, JSON/fenced-JSON parsing, and `ScriptOutput` validation. |
+| Env contract | `.env.example` and `docs/API.md` now define text, image, video, and music model categories. Text defaults to OpenAI API base URL and `gpt-5.4-mini` when selected; image/video/music remain configuration slots only. |
+| Backend verification | `.\\.venv-api\\Scripts\\python.exe -m pytest services/api/tests` passed 17 tests with one upstream Starlette TestClient deprecation warning; `.\\.venv-api\\Scripts\\python.exe -m ruff check services/api` passed. |
+| Frontend safety | `corepack pnpm --filter @xmeta/web test` passed 9 files / 33 tests. |
+| JSON and diff | JSON validation passed for `feature_list.json` and `feature_tasks/3.json`; `git diff --check` passed with LF/CRLF warnings only. |
+| Evaluation loop | Evaluation subagent initially scored 82/100 and flagged stale artifacts plus invalid numeric env and unsupported-provider behavior. The source fixes now return clear provider config errors, reject unsupported providers, and add failure-path coverage for invalid env, unsupported provider, missing output text, invalid JSON, schema-invalid JSON, and HTTP failure. Re-evaluation scored source behavior 96/100 with no open P1/P2 findings. |
+| Final startup | Final `.\init.ps1` passed after artifact updates and reran web tests: 9 files / 33 tests. |

@@ -1,9 +1,18 @@
 from __future__ import annotations
 
+import json
+
+import httpx
 import pytest
 from fastapi.testclient import TestClient
 
 from xmeta_api.main import app
+from xmeta_api.providers import (
+    OpenAICompatibleScriptProvider,
+    ProviderExecutionError,
+    ScriptProviderSettings,
+)
+from xmeta_api.schemas import ScriptInput
 from xmeta_api.store import store
 
 
@@ -14,10 +23,22 @@ client = TestClient(app)
 def clean_store_and_provider_env(monkeypatch: pytest.MonkeyPatch) -> None:
     store.reset()
     for name in (
+        "TEXT_MODEL_PROVIDER",
+        "TEXT_MODEL_BASE_URL",
+        "TEXT_MODEL_API_KEY",
+        "TEXT_MODEL_NAME",
+        "TEXT_MODEL_TEMPERATURE",
+        "TEXT_MODEL_TIMEOUT_SECONDS",
+        "TEXT_MODEL_MAX_RETRIES",
         "SCRIPT_MODEL_PROVIDER",
         "SCRIPT_MODEL_BASE_URL",
         "SCRIPT_MODEL_API_KEY",
         "SCRIPT_MODEL_NAME",
+        "SCRIPT_MODEL_TEMPERATURE",
+        "SCRIPT_MODEL_TIMEOUT_SECONDS",
+        "SCRIPT_MODEL_MAX_RETRIES",
+        "OPENAI_BASE_URL",
+        "OPENAI_API_KEY",
     ):
         monkeypatch.delenv(name, raising=False)
 
@@ -115,17 +136,299 @@ def test_task_result_returns_deterministic_mock_script_output() -> None:
     assert result["missing_inputs"] == []
 
 
-def test_non_mock_provider_fails_clearly_when_config_is_missing(
+def test_text_model_config_defaults_to_mock() -> None:
+    settings = ScriptProviderSettings.from_env()
+
+    assert settings.provider == "mock"
+    assert settings.base_url == "https://api.openai.com/v1"
+    assert settings.api_key is None
+    assert settings.model == "gpt-5.4-mini"
+    assert settings.temperature is None
+    assert settings.timeout_seconds == 60
+    assert settings.max_retries == 1
+
+
+def test_text_model_config_falls_back_to_openai_api_key(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("TEXT_MODEL_PROVIDER", "openai")
+    monkeypatch.setenv("OPENAI_API_KEY", "openai-key")
+
+    settings = ScriptProviderSettings.from_env()
+
+    assert settings.provider == "openai"
+    assert settings.base_url == "https://api.openai.com/v1"
+    assert settings.api_key == "openai-key"
+    assert settings.model == "gpt-5.4-mini"
+
+
+def test_text_model_config_supports_legacy_script_model_env(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("SCRIPT_MODEL_PROVIDER", "openai-compatible")
+    monkeypatch.setenv("SCRIPT_MODEL_BASE_URL", "https://legacy-openai.test/v1")
+    monkeypatch.setenv("SCRIPT_MODEL_API_KEY", "legacy-key")
+    monkeypatch.setenv("SCRIPT_MODEL_NAME", "legacy-model")
+
+    settings = ScriptProviderSettings.from_env()
+
+    assert settings.provider == "openai-compatible"
+    assert settings.base_url == "https://legacy-openai.test/v1"
+    assert settings.api_key == "legacy-key"
+    assert settings.model == "legacy-model"
+
+
+def test_text_model_provider_fails_clearly_when_config_is_missing(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     save_node()
-    monkeypatch.setenv("SCRIPT_MODEL_PROVIDER", "openai-compatible")
+    monkeypatch.setenv("TEXT_MODEL_PROVIDER", "openai")
 
     response = client.post("/api/v1/projects/project-1/nodes/script-1/run")
 
     assert response.status_code == 503
     detail = response.json()["detail"]
-    assert "openai-compatible" in detail
-    assert "SCRIPT_MODEL_BASE_URL" in detail
-    assert "SCRIPT_MODEL_API_KEY" in detail
-    assert "SCRIPT_MODEL_NAME" in detail
+    assert "openai" in detail
+    assert "TEXT_MODEL_API_KEY or OPENAI_API_KEY" in detail
+
+
+def test_text_model_provider_fails_clearly_for_invalid_numeric_env(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    save_node()
+    monkeypatch.setenv("TEXT_MODEL_PROVIDER", "openai")
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+    monkeypatch.setenv("TEXT_MODEL_TIMEOUT_SECONDS", "slow")
+
+    response = client.post("/api/v1/projects/project-1/nodes/script-1/run")
+
+    assert response.status_code == 503
+    assert response.json()["detail"] == "TEXT_MODEL_TIMEOUT_SECONDS must be an integer."
+
+
+def test_text_model_provider_rejects_unsupported_provider_name(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    save_node()
+    monkeypatch.setenv("TEXT_MODEL_PROVIDER", "seedance")
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+
+    response = client.post("/api/v1/projects/project-1/nodes/script-1/run")
+
+    assert response.status_code == 503
+    detail = response.json()["detail"]
+    assert "seedance" in detail
+    assert "Allowed providers" in detail
+
+
+def valid_script_output_json() -> str:
+    return json.dumps(
+        {
+            "title": "Generated MV",
+            "world_overview": "A validated generated world overview.",
+            "storyboard_direction": {
+                "pov": "third-person cinematic",
+                "visual_rhythm": "slow build into a bright performance hook",
+                "shots": [
+                    {
+                        "shot_number": 1,
+                        "pov": "third-person",
+                        "framing": "wide",
+                        "action": "Introduce the desert jeep world.",
+                        "camera_movement": "slow push",
+                        "duration_seconds": 8,
+                    }
+                ],
+            },
+            "characters": [
+                {
+                    "name": "Lead",
+                    "overview": "Optimistic lead.",
+                    "style": "idol road movie",
+                    "clothing": "white jacket and pink skirt",
+                    "height": "165 cm",
+                    "appearance": "bright eyes and shoulder-length hair",
+                    "personality": "gentle but determined",
+                    "visual_prompt": "idol lead full-body reference",
+                }
+            ],
+            "scene_descriptions": [
+                {
+                    "scene_number": 1,
+                    "shot_reference": 1,
+                    "characters": ["Lead"],
+                    "location": "desert road",
+                    "description": "A desert road opening scene.",
+                    "visual_prompt": "desert road, vintage jeep, MV scene",
+                }
+            ],
+            "missing_inputs": [],
+        }
+    )
+
+
+def test_openai_compatible_provider_posts_responses_api_and_reads_output_text() -> None:
+    seen: dict[str, object] = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen["url"] = str(request.url)
+        seen["authorization"] = request.headers["authorization"]
+        seen["payload"] = json.loads(request.content)
+        return httpx.Response(200, json={"output_text": valid_script_output_json()})
+
+    provider = OpenAICompatibleScriptProvider(
+        ScriptProviderSettings(
+            provider="openai-compatible",
+            base_url="https://api.openai.test/v1/",
+            api_key="test-key",
+            model="gpt-test",
+            temperature=0.4,
+        ),
+        client=httpx.Client(transport=httpx.MockTransport(handler)),
+    )
+
+    result = provider.generate(ScriptInput(**script_payload()), "Return ScriptOutput JSON.")
+
+    assert seen["url"] == "https://api.openai.test/v1/responses"
+    assert seen["authorization"] == "Bearer test-key"
+    assert seen["payload"] == {
+        "model": "gpt-test",
+        "input": "Return ScriptOutput JSON.",
+        "temperature": 0.4,
+    }
+    assert result.title == "Generated MV"
+    assert result.characters[0].name == "Lead"
+
+
+def test_openai_compatible_provider_falls_back_to_output_content_text() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        del request
+        return httpx.Response(
+            200,
+            json={
+                "output": [
+                    {
+                        "content": [
+                            {
+                                "type": "output_text",
+                                "text": valid_script_output_json(),
+                            }
+                        ]
+                    }
+                ]
+            },
+        )
+
+    provider = OpenAICompatibleScriptProvider(
+        ScriptProviderSettings(
+            provider="openai-compatible",
+            base_url="https://api.openai.test/v1",
+            api_key="test-key",
+            model="gpt-test",
+        ),
+        client=httpx.Client(transport=httpx.MockTransport(handler)),
+    )
+
+    result = provider.generate(ScriptInput(**script_payload()), "Return ScriptOutput JSON.")
+
+    assert result.storyboard_direction.shots[0].action == "Introduce the desert jeep world."
+
+
+def test_openai_compatible_provider_accepts_fenced_json_output() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        del request
+        return httpx.Response(
+            200,
+            json={"output_text": f"```json\n{valid_script_output_json()}\n```"},
+        )
+
+    provider = OpenAICompatibleScriptProvider(
+        ScriptProviderSettings(
+            provider="openai",
+            base_url="https://api.openai.test/v1",
+            api_key="test-key",
+            model="gpt-test",
+        ),
+        client=httpx.Client(transport=httpx.MockTransport(handler)),
+    )
+
+    result = provider.generate(ScriptInput(**script_payload()), "Return ScriptOutput JSON.")
+
+    assert result.title == "Generated MV"
+
+
+def test_openai_compatible_provider_rejects_missing_output_text() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        del request
+        return httpx.Response(200, json={"output": []})
+
+    provider = OpenAICompatibleScriptProvider(
+        ScriptProviderSettings(
+            provider="openai",
+            base_url="https://api.openai.test/v1",
+            api_key="test-key",
+            model="gpt-test",
+        ),
+        client=httpx.Client(transport=httpx.MockTransport(handler)),
+    )
+
+    with pytest.raises(ProviderExecutionError, match="did not include output text"):
+        provider.generate(ScriptInput(**script_payload()), "Return ScriptOutput JSON.")
+
+
+def test_openai_compatible_provider_rejects_invalid_json() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        del request
+        return httpx.Response(200, json={"output_text": "not json"})
+
+    provider = OpenAICompatibleScriptProvider(
+        ScriptProviderSettings(
+            provider="openai",
+            base_url="https://api.openai.test/v1",
+            api_key="test-key",
+            model="gpt-test",
+        ),
+        client=httpx.Client(transport=httpx.MockTransport(handler)),
+    )
+
+    with pytest.raises(ProviderExecutionError, match="invalid JSON"):
+        provider.generate(ScriptInput(**script_payload()), "Return ScriptOutput JSON.")
+
+
+def test_openai_compatible_provider_rejects_schema_invalid_json() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        del request
+        return httpx.Response(200, json={"output_text": "{}"})
+
+    provider = OpenAICompatibleScriptProvider(
+        ScriptProviderSettings(
+            provider="openai",
+            base_url="https://api.openai.test/v1",
+            api_key="test-key",
+            model="gpt-test",
+        ),
+        client=httpx.Client(transport=httpx.MockTransport(handler)),
+    )
+
+    with pytest.raises(ProviderExecutionError, match="does not match ScriptOutput"):
+        provider.generate(ScriptInput(**script_payload()), "Return ScriptOutput JSON.")
+
+
+def test_openai_compatible_provider_reports_http_failure() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        del request
+        return httpx.Response(500, json={"error": "upstream failed"})
+
+    provider = OpenAICompatibleScriptProvider(
+        ScriptProviderSettings(
+            provider="openai",
+            base_url="https://api.openai.test/v1",
+            api_key="test-key",
+            model="gpt-test",
+            max_retries=0,
+        ),
+        client=httpx.Client(transport=httpx.MockTransport(handler)),
+    )
+
+    with pytest.raises(ProviderExecutionError, match="Text model request failed"):
+        provider.generate(ScriptInput(**script_payload()), "Return ScriptOutput JSON.")

@@ -1,51 +1,46 @@
-# Evaluator Rubric - Feature 4 Storyboard Node
+# Evaluator Rubric - Feature 3 Script Node API Hookup
 
-Updated: 2026-06-29
+Updated: 2026-07-06
 
 ## Evaluation Scope
 
 - Role: Evaluation subagent, with main-agent artifact recording.
-- Target: Feature 4 `Storyboard Node` browser-comment pass for `/workspace` inline response/composer behavior.
-- Required read set: `AGENTS.md`, `docs/PRODUCT.md`, `docs/ARCHITECTURE.md`, `feature_list.json`, `feature_tasks/4.json`, `sprint-contract.md`, `progress.md`, and changed workspace implementation files.
-- Evaluation basis: sprint acceptance criteria, architecture boundaries, shadcn composition guidance, UI/UX visibility/natural mapping/standardization, and actual verification output.
+- Target: Feature 3 `Script Node` OpenAI text-provider hookup and four-category model env contract.
+- Required read set: `AGENTS.md`, `docs/PRODUCT.md`, `docs/ARCHITECTURE.md`, `docs/API.md`, `feature_list.json`, `feature_tasks/3.json`, `sprint-contract.md`, `progress.md`, and changed backend/provider files.
+- Evaluation basis: sprint acceptance criteria, architecture boundaries, provider neutrality, secret safety, mock-provider continuity, and actual verification output.
 
 ## Scorecard
 
-| Criterion | Points | Current | Evidence Required |
+| Criterion | Points | Current | Evidence |
 | --- | ---: | ---: | --- |
-| Script preview confirmation | 10 | 10 | Script card preview displays confirmed output once available. |
-| Storyboard chatbox response panel | 20 | 20 | Response/history panel is width-aligned with the composer, fixed-height, scrollable, and visually chatbox-like. |
-| Hide/show response control | 10 | 10 | User can hide and restore the AI modification/history panel without losing composer access. |
-| Zoom and drag behavior | 15 | 15 | Composer/response group keeps stable world-size proportions under zoom, and nodes can drag to the far-left canvas area. |
-| Composer controls | 15 | 15 | Redundant output badge near Generate is gone, and the left dropdown is a model selector. |
-| Error placement and status clarity | 10 | 10 | Generation errors render in the response/status area near Ready instead of as a detached strip. |
-| Verification coverage | 15 | 15 | Focused tests, full web tests, typecheck, build, Browser QA, JSON validation, `git diff --check`, and final `.\init.ps1` pass. |
-| Artifact evidence | 5 | 5 | `feature_list.json`, `sprint-contract.md`, `evaluator-rubric.md`, `progress.md`, and `session-handoff.md` record final evidence. |
+| Generic provider boundary | 15 | 15 | Script Node still calls `ScriptProvider.generate(...) -> ScriptOutput`; route logic is not OpenAI-specific. |
+| OpenAI text execution | 25 | 25 | `OpenAICompatibleScriptProvider` posts to `{base_url}/responses`, uses configured model/input/temperature, parses output text, strips fenced JSON, and validates `ScriptOutput`. |
+| Env contract clarity | 20 | 19 | `.env.example` and `docs/API.md` expose text, image, video, and music slots; image/video/music are labeled config-only. One minor precision gap remains for legacy temperature env error naming. |
+| Mock and failure behavior | 15 | 14 | Mock remains default; missing key, invalid numeric env, unsupported provider, invalid provider output, missing output text, and HTTP failures are covered. |
+| Verification coverage | 20 | 20 | Backend pytest, backend ruff, web test, JSON validation, `git diff --check`, and final startup path are recorded. |
+| Artifact evidence | 5 | 5 | Feature list, feature task, sprint contract, rubric, progress, and handoff are updated for this Feature 3 optimization. |
 
-Current score: 100 / 100 after final closure re-evaluation.
+Current score: 98 / 100 after artifact closure.
 
-## Initial Findings
+## Findings
 
-- Baseline `.\init.ps1` passed before source changes with 9 web test files / 29 tests.
-- Feature 4 task decomposition was empty at session start and is now initialized for this Storyboard browser-comment pass.
-- `AGENTS.md` has pre-existing user edits and remains protected from reverts.
-- Production storyboard backend, durable persistence, queue workers, and editable shot-list schema remain out of scope for this pass.
-- Source-level acceptance behavior is implemented in the changed workspace component and covered by focused tests and Browser QA evidence.
-- Resolved P2: Final closure evidence is now recorded across `feature_list.json`, `feature_tasks/4.json`, `sprint-contract.md`, `progress.md`, and `session-handoff.md`; final startup and focused rerun evidence are present.
+- Initial P1 artifact finding resolved: current evidence is recorded in `feature_list.json`, `feature_tasks/3.json`, `sprint-contract.md`, `evaluator-rubric.md`, `progress.md`, and `session-handoff.md`.
+- Initial P2 invalid env finding resolved: invalid numeric text-model env values now raise `ProviderConfigurationError` and route responses return clear `503` configuration errors.
+- Initial P2 unsupported provider finding resolved: non-mock providers are limited to `openai` and `openai-compatible`.
+- Initial P3 failure-coverage gap resolved for invalid numeric env, unsupported provider, missing output text, invalid JSON, schema-invalid JSON, and HTTP failure.
+- Remaining P3: when a bad legacy `SCRIPT_MODEL_TEMPERATURE` fallback is used, the error message names the new `TEXT_MODEL_TEMPERATURE` env. This is acceptable for the new contract and does not affect normal setup.
 
 ## Verification Evidence
 
-- Baseline `.\init.ps1` passed before implementation and reran web tests: 9 files / 29 tests.
-- Focused workspace component test passed: 9 tests.
-- Full web tests passed: 9 files / 33 tests.
-- Typecheck passed.
-- Build passed and included `/workspace`.
-- Browser QA passed for response hide/show, model selector, error placement, successful mock Ready path, confirmed Script preview, stable 50% zoom with 820x288 panel/composer, and far-left drag to a negative Script node left position.
-- JSON validation passed for `feature_list.json` and `feature_tasks/4.json`.
-- `git diff --check` passed with line-ending warnings only.
+- Baseline `.\init.ps1` passed before implementation and reran web tests: 9 files / 33 tests.
+- `.\\.venv-api\\Scripts\\python.exe -m pytest services/api/tests` passed: 17 tests with one upstream Starlette TestClient deprecation warning.
+- `.\\.venv-api\\Scripts\\python.exe -m ruff check services/api` passed.
+- `corepack pnpm --filter @xmeta/web test` passed: 9 files / 33 tests.
+- JSON validation passed for `feature_list.json` and `feature_tasks/3.json`.
+- `git diff --check` passed with LF/CRLF warnings only.
+- Evaluation subagent re-scored source behavior at 96/100 with no open P1/P2 findings before final artifact closure.
 - Final `.\init.ps1` passed after artifact updates and reran web tests: 9 files / 33 tests.
-- Focused workspace component test rerun passed: 1 file / 9 tests.
 
 ## Verdict
 
-Passing for the approved Feature 4 browser-comment scope. No open P1/P2/P3 findings.
+Passing for the approved Feature 3 OpenAI text-provider hookup scope. Image, video, and music generation remain unimplemented and are documented as configuration slots only.

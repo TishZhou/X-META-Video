@@ -4,7 +4,7 @@
     "title": "Script Node",
     "status": "passing"
   },
-  "planning_status": "script_node_io_contract_passing",
+  "planning_status": "script_node_openai_text_provider_passing",
   "notes": [
     "Feature 3 implements the Script Node MV world-description input/output interaction and API contract only.",
     "The current Script Node input is a single AI chat-style world-view description.",
@@ -12,7 +12,8 @@
     "The current Script Node interaction binds one input composer under the selected Script node, and the AI response history appears between the node and input after AI修改 or generation.",
     "Prompt wording is intentionally centralized and adjustable later without changing route or UI contracts.",
     "Real provider credentials are supplied through environment variables; mock provider remains the default verification path.",
-    "Storyboards as a separate editable node remain Feature 4."
+    "Storyboards as a separate editable node remain Feature 4.",
+    "2026-07-06 provider optimization scope adds OpenAI text execution for Script Node while keeping image, video, and music as agent-layer configuration slots only."
   ],
   "small_features": [
     {
@@ -79,6 +80,28 @@
       "verification": [
         "Run JSON validation for feature_list.json and feature_tasks/3.json.",
         "Run final .\\init.ps1."
+      ]
+    },
+    {
+      "id": "script-node-005",
+      "title": "Hook Script Node text provider to OpenAI API",
+      "status": "passing",
+      "user_visible_behavior": "When server env selects the OpenAI text provider and an API key is supplied, Script Node generation can call the configured OpenAI-compatible Responses API while the default mock path remains available for local verification.",
+      "acceptance_criteria": [
+        "The Script Node continues to use the generic ScriptProvider interface and returns the existing ScriptOutput contract.",
+        "TEXT_MODEL_PROVIDER=openai or openai-compatible calls the configured /responses endpoint with the configured text model.",
+        "OPENAI_API_KEY can be used as the shared credential fallback, so local setup only needs the key plus provider selection.",
+        "The OpenAI response text is parsed as JSON, including normal output_text, output content text, and fenced JSON output.",
+        "Text, image, video, and music model categories are documented in .env.example, but only text execution is implemented in this Feature 3 optimization.",
+        "Missing text provider credentials fail clearly without exposing secrets."
+      ],
+      "verification": [
+        "2026-07-06 .\\.venv-api\\Scripts\\python.exe -m pytest services/api/tests passed: 17 tests with one upstream Starlette TestClient deprecation warning.",
+        "2026-07-06 .\\.venv-api\\Scripts\\python.exe -m ruff check services/api passed.",
+        "2026-07-06 corepack pnpm --filter @xmeta/web test passed: 9 files / 33 tests.",
+        "2026-07-06 JSON validation passed for feature_list.json and feature_tasks/3.json.",
+        "2026-07-06 git diff --check passed with LF/CRLF warnings only.",
+        "2026-07-06 final .\\init.ps1 passed after artifact updates and reran web tests: 9 files / 33 tests."
       ]
     }
   ]
