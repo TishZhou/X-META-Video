@@ -146,8 +146,6 @@ const SCRIPT_REVISE_STATUS_LABEL = "AI\u4fee\u6539\u4e2d";
 const SCRIPT_REVISE_LABEL = "AI\u4fee\u6539";
 const SCRIPT_GENERATE_LABEL = "\u751f\u6210";
 const SCRIPT_GENERATING_LABEL = "\u751f\u6210\u4e2d";
-const SCRIPT_GENERATED_HISTORY_MESSAGE =
-  "\u5df2\u6839\u636e\u4f60\u7684\u5267\u60c5\u7247\u6bb5\u3001\u6545\u4e8b\u548c\u4e16\u754c\u89c2\u6784\u60f3\u751f\u6210 Script Node \u7ed3\u679c\u3002\u7ee7\u7eed\u4fee\u6539\u4e0b\u65b9\u6587\u5b57\u540e\u70b9\u51fb\u751f\u6210\uff0c\u53ef\u4ee5\u66f4\u65b0\u8fd9\u6761\u5386\u53f2\u8bb0\u5f55\u3002";
 
 const defaultScriptInput: ScriptNodeInput = {
   ...DEFAULT_SCRIPT_NODE_INPUT,
@@ -222,6 +220,20 @@ export function getInlineEditorCompensationScale(zoom: number) {
   }
 
   return Number((1 / zoom).toFixed(3));
+}
+
+export function isEditableKeyboardTarget(target: EventTarget | null) {
+  const element = target as { closest?: (selector: string) => unknown } | null;
+
+  if (!element || typeof element.closest !== "function") {
+    return false;
+  }
+
+  return Boolean(
+    element.closest(
+      "textarea, input, select, [contenteditable='true'], [role='textbox']",
+    ),
+  );
 }
 
 export function isFloatingImageEditorNodeType(type: WorkflowNodeType) {
@@ -300,6 +312,28 @@ export function getScriptResponseStatusLabel(
   }
 
   return "Waiting";
+}
+
+export function formatScriptOutputConversationReply(output: ScriptNodeOutput) {
+  const characterNames = output.characters
+    .map((character) => character.name.trim())
+    .filter(Boolean)
+    .join("\u3001");
+  const sceneLocations = output.scene_descriptions
+    .map((scene) => scene.location.trim())
+    .filter(Boolean)
+    .join("\u3001");
+
+  return [
+    output.title,
+    output.world_overview,
+    output.storyboard_direction.pov,
+    output.storyboard_direction.visual_rhythm,
+    characterNames ? `\u89d2\u8272\uff1a${characterNames}` : null,
+    sceneLocations ? `\u573a\u666f\uff1a${sceneLocations}` : null,
+  ]
+    .filter(Boolean)
+    .join("\n\n");
 }
 
 export function calculateInitialCanvasViewport(
@@ -722,6 +756,10 @@ export function WorkflowCanvasWorkspace({
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
             onKeyDown={(event) => {
+              if (isEditableKeyboardTarget(event.target)) {
+                return;
+              }
+
               if (event.key === "Delete" || event.key === "Backspace") {
                 dispatch({ type: "deleteSelection" });
               }
@@ -1226,6 +1264,7 @@ function ScriptNodeInlineEditor({
           placeholder={SCRIPT_WORLD_DESCRIPTION_PLACEHOLDER}
           disabled={busy}
           aria-label={SCRIPT_WORLD_DESCRIPTION_LABEL}
+          onKeyDown={(event) => event.stopPropagation()}
           className="min-h-20 resize-none border-0 bg-transparent px-0 text-sm shadow-none placeholder:text-neutral-400 focus-visible:ring-0"
         />
 
@@ -1589,7 +1628,9 @@ export function ScriptOutputTabs({
           <AssistantResponseBubble
             title={responseMode === "revise" ? SCRIPT_REVISE_LABEL : "AI"}
           >
-            <p>{SCRIPT_GENERATED_HISTORY_MESSAGE}</p>
+            <p className="whitespace-pre-line">
+              {formatScriptOutputConversationReply(output)}
+            </p>
           </AssistantResponseBubble>
         ) : null}
       </div>

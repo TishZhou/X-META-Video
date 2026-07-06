@@ -13,11 +13,13 @@ import {
 import {
   calculateDraggedNodePosition,
   clampImageEditorFrame,
+  formatScriptOutputConversationReply,
   formatScriptNodePreview,
   formatTemplateIoLabel,
   getInlineEditorCompensationScale,
   getScriptResponseStatusLabel,
   ImageNodeFloatingEditor,
+  isEditableKeyboardTarget,
   isFloatingImageEditorNodeType,
   ScriptOutputTabs,
   WorkflowCanvasWorkspace,
@@ -222,11 +224,21 @@ describe("WorkflowCanvasWorkspace", () => {
     expect(html).toContain("A generated snow MV world");
     expect(html).toContain("Ready");
     expect(html).toContain('data-script-node-output-scroll="true"');
-    expect(html).toContain("Script Node");
+    expect(html).toContain("Mock Script Title");
+    expect(html).toContain("A structured MV world summary.");
+    expect(html).toContain("soft opening, travel beat, neon performance payoff");
     expect(html).not.toContain("Shot 1");
     expect(html).not.toContain("Direction");
-    expect(html).not.toContain("third-person cinematic POV");
+    expect(html).not.toContain(
+      "\u5df2\u6839\u636e\u4f60\u7684\u5267\u60c5\u7247\u6bb5\u3001\u6545\u4e8b\u548c\u4e16\u754c\u89c2\u6784\u60f3\u751f\u6210 Script Node \u7ed3\u679c",
+    );
     expect(html).not.toContain("Choose output");
+  });
+
+  it("formats Script output as an AI conversation reply from returned data", () => {
+    expect(formatScriptOutputConversationReply(makeScriptOutput())).toBe(
+      "Mock Script Title\n\nA structured MV world summary.\n\nthird-person cinematic POV\n\nsoft opening, travel beat, neon performance payoff\n\n\u89d2\u8272\uff1aLead\n\n\u573a\u666f\uff1adesert jeep",
+    );
   });
 
   it("shows generation errors in the response panel status area", () => {
@@ -284,6 +296,19 @@ describe("WorkflowCanvasWorkspace", () => {
     expect(
       calculateDraggedNodePosition({ x: -180, y: 8 }, { x: 40, y: 80 }),
     ).toEqual({ x: -220, y: 16 });
+  });
+
+  it("treats form controls as editable keyboard targets", () => {
+    const textareaTarget = {
+      closest: (selector: string) =>
+        selector.includes("textarea") ? {} : null,
+    } as unknown as EventTarget;
+    const canvasTarget = {
+      closest: () => null,
+    } as unknown as EventTarget;
+
+    expect(isEditableKeyboardTarget(textareaTarget)).toBe(true);
+    expect(isEditableKeyboardTarget(canvasTarget)).toBe(false);
   });
 
   it("formats the Script node preview from confirmed output when available", () => {
