@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import {
   ArrowDownToLine,
@@ -136,10 +136,22 @@ type ConnectionDragState = {
 
 type ScriptGenerationRunner = typeof runScriptGeneration;
 
+const DEFAULT_SCRIPT_WORLD_DESCRIPTION =
+  "\u751f\u6210\u4e00\u4e2a\u51b0\u96ea\u76f8\u5173\u7684mv\u7684\u4e16\u754c\u89c2";
+const SCRIPT_WORLD_DESCRIPTION_PLACEHOLDER =
+  "\u63cf\u8ff0\u4f60\u7684\u5267\u60c5\u7247\u6bb5\u3001\u6545\u4e8b\u548c\u4e16\u754c\u89c2\u6784\u60f3";
+const SCRIPT_WORLD_DESCRIPTION_LABEL =
+  "\u5267\u60c5\u7247\u6bb5\u3001\u6545\u4e8b\u548c\u4e16\u754c\u89c2\u6784\u60f3";
+const SCRIPT_REVISE_STATUS_LABEL = "AI\u4fee\u6539\u4e2d";
+const SCRIPT_REVISE_LABEL = "AI\u4fee\u6539";
+const SCRIPT_GENERATE_LABEL = "\u751f\u6210";
+const SCRIPT_GENERATING_LABEL = "\u751f\u6210\u4e2d";
+const SCRIPT_GENERATED_HISTORY_MESSAGE =
+  "\u5df2\u6839\u636e\u4f60\u7684\u5267\u60c5\u7247\u6bb5\u3001\u6545\u4e8b\u548c\u4e16\u754c\u89c2\u6784\u60f3\u751f\u6210 Script Node \u7ed3\u679c\u3002\u7ee7\u7eed\u4fee\u6539\u4e0b\u65b9\u6587\u5b57\u540e\u70b9\u51fb\u751f\u6210\uff0c\u53ef\u4ee5\u66f4\u65b0\u8fd9\u6761\u5386\u53f2\u8bb0\u5f55\u3002";
+
 const defaultScriptInput: ScriptNodeInput = {
   ...DEFAULT_SCRIPT_NODE_INPUT,
-  world_description:
-    "A sweet but lonely summer MV world: two girls travel through desert highways, a vintage jeep, and a night neon stage to recover a lost chorus.",
+  world_description: DEFAULT_SCRIPT_WORLD_DESCRIPTION,
 };
 
 const emptyScriptTask: ScriptTaskStatusResponse = {
@@ -150,8 +162,8 @@ const emptyScriptTask: ScriptTaskStatusResponse = {
   error: null,
 };
 
-type ScriptOutputFocus = "storyboard" | "characters" | "scene";
 type ScriptModelSelection = "mock" | "configured";
+type ScriptResponseMode = "generation" | "revise";
 type ImageEditorFrame = {
   x: number;
   y: number;
@@ -171,46 +183,22 @@ const defaultImageEditorFrame: ImageEditorFrame = {
   height: 520,
 };
 
-const scriptOutputViews = [
-  {
-    id: "storyboard",
-    label: "Storyboard",
-  },
-  {
-    id: "characters",
-    label: "Characters",
-  },
-  {
-    id: "scene",
-    label: "Scene",
-  },
-] as const satisfies Array<{
-  id: ScriptOutputFocus;
-  label: string;
-}>;
-
 const scriptModelOptions = [
   {
-    id: "mock",
-    label: "Mock storyboard model",
-    settings: { provider: "mock", model: "storyboard-browser-polish" },
+    id: "configured",
+    label: "gpt-5.4-mini",
+    settings: {},
   },
   {
-    id: "configured",
-    label: "Configured model",
-    settings: {},
+    id: "mock",
+    label: "Mock local model",
+    settings: { provider: "mock", model: "storyboard-browser-polish" },
   },
 ] as const satisfies Array<{
   id: ScriptModelSelection;
   label: string;
   settings: { provider?: string; model?: string };
 }>;
-
-function findScriptOutputView(id: ScriptOutputFocus) {
-  return (
-    scriptOutputViews.find((view) => view.id === id) ?? scriptOutputViews[0]
-  );
-}
 
 function findScriptModelOption(id: ScriptModelSelection) {
   return (
@@ -370,8 +358,10 @@ export function WorkflowCanvasWorkspace({
   const [scriptError, setScriptError] = useState<string | null>(null);
   const [scriptBusy, setScriptBusy] = useState(false);
   const [scriptHistoryOpen, setScriptHistoryOpen] = useState(false);
-  const [scriptOutputFocus] = useState<ScriptOutputFocus>("storyboard");
-  const [scriptModel, setScriptModel] = useState<ScriptModelSelection>("mock");
+  const [scriptResponseMode, setScriptResponseMode] =
+    useState<ScriptResponseMode>("generation");
+  const [scriptModel, setScriptModel] =
+    useState<ScriptModelSelection>("configured");
   const [imageEditorOpen, setImageEditorOpen] = useState(false);
   const [imageEditorFrame, setImageEditorFrame] = useState<ImageEditorFrame>(
     defaultImageEditorFrame,
@@ -783,19 +773,21 @@ export function WorkflowCanvasWorkspace({
                   error={scriptError}
                   historyOpen={scriptHistoryOpen}
                   input={scriptInput}
+                  responseMode={scriptResponseMode}
                   node={selectedScriptNode}
                   output={scriptOutput}
-                  outputFocus={scriptOutputFocus}
                   model={scriptModel}
                   task={scriptTask}
                   viewportZoom={state.viewport.zoom}
                   onGenerate={() => {
+                    setScriptResponseMode("generation");
                     setScriptHistoryOpen(true);
                     void generateScriptNode();
                   }}
                   onHistoryOpenChange={setScriptHistoryOpen}
                   onInputChange={updateScriptInput}
                   onModelChange={setScriptModel}
+                  onResponseModeChange={setScriptResponseMode}
                 />
               ) : null}
             </div>
@@ -1149,10 +1141,10 @@ type ScriptNodeInlineEditorProps = {
   error: string | null;
   historyOpen: boolean;
   input: ScriptNodeInput;
+  responseMode: ScriptResponseMode;
   model: ScriptModelSelection;
   node: WorkflowNode;
   output: ScriptNodeOutput | null;
-  outputFocus: ScriptOutputFocus;
   task: ScriptTaskStatusResponse;
   viewportZoom: number;
   onGenerate: () => void;
@@ -1162,6 +1154,7 @@ type ScriptNodeInlineEditorProps = {
     value: ScriptNodeInput[Field],
   ) => void;
   onModelChange: (model: ScriptModelSelection) => void;
+  onResponseModeChange: (mode: ScriptResponseMode) => void;
 };
 
 function ScriptNodeInlineEditor({
@@ -1169,27 +1162,25 @@ function ScriptNodeInlineEditor({
   error,
   historyOpen,
   input,
+  responseMode,
   model,
   node,
   output,
-  outputFocus,
   task,
   viewportZoom,
   onGenerate,
   onHistoryOpenChange,
   onInputChange,
   onModelChange,
+  onResponseModeChange,
 }: ScriptNodeInlineEditorProps) {
   const promptReady = input.world_description.trim().length > 0;
   const left = node.position.x - (SCRIPT_INLINE_EDITOR_WIDTH - NODE_WIDTH) / 2;
   const top = node.position.y + NODE_HEIGHT + SCRIPT_INLINE_EDITOR_GAP;
 
   function handleAiRevise() {
+    onResponseModeChange("revise");
     onHistoryOpenChange(true);
-
-    if (!output && !busy && promptReady) {
-      onGenerate();
-    }
   }
 
   return (
@@ -1210,8 +1201,9 @@ function ScriptNodeInlineEditor({
         <div className="mb-3" data-script-node-history="true">
           <ScriptOutputTabs
             error={error}
+            input={input}
             output={output}
-            selectedOutput={outputFocus}
+            responseMode={responseMode}
             task={task}
             onHide={() => onHistoryOpenChange(false)}
           />
@@ -1223,7 +1215,7 @@ function ScriptNodeInlineEditor({
         data-script-node-input-composer="true"
       >
         <label htmlFor="script-node-world-input" className="sr-only">
-          MV world description
+          {SCRIPT_WORLD_DESCRIPTION_LABEL}
         </label>
         <Textarea
           id="script-node-world-input"
@@ -1231,9 +1223,9 @@ function ScriptNodeInlineEditor({
           onChange={(event) =>
             onInputChange("world_description", event.target.value)
           }
-          placeholder="Describe the MV world: theme, number of characters, background, emotional tone, key locations..."
+          placeholder={SCRIPT_WORLD_DESCRIPTION_PLACEHOLDER}
           disabled={busy}
-          aria-label="MV world description"
+          aria-label={SCRIPT_WORLD_DESCRIPTION_LABEL}
           className="min-h-20 resize-none border-0 bg-transparent px-0 text-sm shadow-none placeholder:text-neutral-400 focus-visible:ring-0"
         />
 
@@ -1267,7 +1259,7 @@ function ScriptNodeInlineEditor({
               type="button"
               variant="outline"
             >
-              AI修改
+              {SCRIPT_REVISE_LABEL}
             </Button>
           </div>
 
@@ -1279,7 +1271,7 @@ function ScriptNodeInlineEditor({
               onClick={onGenerate}
               type="button"
             >
-              {busy ? "Generating" : "Generate"}
+              {busy ? SCRIPT_GENERATING_LABEL : SCRIPT_GENERATE_LABEL}
               <Sparkles aria-hidden="true" className="size-4" />
             </Button>
           </div>
@@ -1506,21 +1498,26 @@ export function ImageNodeFloatingEditor({
 
 type ScriptOutputTabsProps = {
   error?: string | null;
+  input: ScriptNodeInput;
   output: ScriptNodeOutput | null;
-  selectedOutput: ScriptOutputFocus;
+  responseMode: ScriptResponseMode;
   task: ScriptTaskStatusResponse;
   onHide?: () => void;
 };
 
 export function ScriptOutputTabs({
   error,
+  input,
   output,
-  selectedOutput,
+  responseMode,
   task,
   onHide,
 }: ScriptOutputTabsProps) {
-  const selectedView = findScriptOutputView(selectedOutput);
-  const statusLabel = getScriptResponseStatusLabel(task, output, error);
+  const promptText = input.world_description.trim();
+  const statusLabel =
+    responseMode === "revise" && !error && task.status !== "running"
+      ? SCRIPT_REVISE_STATUS_LABEL
+      : getScriptResponseStatusLabel(task, output, error);
   const statusDetail = error ?? task.error ?? null;
 
   return (
@@ -1538,6 +1535,8 @@ export function ScriptOutputTabs({
                 "border-neutral-200 bg-neutral-50 text-neutral-600",
                 statusLabel === "Ready" &&
                   "border-emerald-200 bg-emerald-50 text-emerald-700",
+                statusLabel === SCRIPT_REVISE_STATUS_LABEL &&
+                  "border-sky-200 bg-sky-50 text-sky-700",
                 statusLabel === "Error" &&
                   "border-red-200 bg-red-50 text-red-700",
               )}
@@ -1567,75 +1566,30 @@ export function ScriptOutputTabs({
         className="flex-1 overflow-y-auto p-4"
         data-script-node-output-scroll="true"
       >
-        {!output ? (
-          <AssistantResponseBubble title={selectedView.label}>
-            {statusLabel === "Error" && statusDetail ? (
-              <p className="text-red-700">{statusDetail}</p>
-            ) : (
-              <AIResponseTyping
-                showCursor={task.status === "running"}
-                speed={12}
-                text={task.status === "running" ? "" : "No response yet."}
-                thinkingState={
-                  task.status === "running" ? "thinking" : "typing"
-                }
-              />
-            )}
+        {promptText ? <UserPromptBubble>{promptText}</UserPromptBubble> : null}
+
+        {statusLabel === "Error" && statusDetail ? (
+          <AssistantResponseBubble title="AI">
+            <p className="text-red-700">{statusDetail}</p>
           </AssistantResponseBubble>
         ) : null}
 
-        {output && selectedOutput === "storyboard" ? (
-          <AssistantResponseBubble title="Storyboard" subtitle={output.title}>
-            <OutputSection title="Direction">
-              <p>{output.storyboard_direction.pov}</p>
-              <p>{output.storyboard_direction.visual_rhythm}</p>
-            </OutputSection>
-            {output.storyboard_direction.shots.map((shot) => (
-              <OutputSection
-                key={shot.shot_number}
-                title={`Shot ${shot.shot_number}: ${shot.framing}`}
-              >
-                <p>{shot.pov}</p>
-                <p>{shot.action}</p>
-                <p>{shot.camera_movement}</p>
-                <p>{shot.duration_seconds}s</p>
-              </OutputSection>
-            ))}
+        {task.status === "running" ? (
+          <AssistantResponseBubble title="AI">
+            <AIResponseTyping
+              showCursor
+              speed={12}
+              text=""
+              thinkingState="thinking"
+            />
           </AssistantResponseBubble>
         ) : null}
 
-        {output && selectedOutput === "characters" ? (
-          <AssistantResponseBubble title="Characters" subtitle={output.title}>
-            {output.characters.map((character) => (
-              <OutputSection key={character.name} title={character.name}>
-                <p>{character.overview}</p>
-                <p>{character.style}</p>
-                <p>{character.clothing}</p>
-                <p>{character.height}</p>
-                <p>{character.appearance}</p>
-                <p>{character.personality}</p>
-                <p>{character.visual_prompt}</p>
-              </OutputSection>
-            ))}
-          </AssistantResponseBubble>
-        ) : null}
-
-        {output && selectedOutput === "scene" ? (
+        {output && task.status !== "running" && !statusDetail ? (
           <AssistantResponseBubble
-            title="Scene"
-            subtitle="Composed from storyboard + characters"
+            title={responseMode === "revise" ? SCRIPT_REVISE_LABEL : "AI"}
           >
-            {output.scene_descriptions.map((scene) => (
-              <OutputSection
-                key={scene.scene_number}
-                title={`Scene ${scene.scene_number}: ${scene.location}`}
-              >
-                <p>Shot reference: {scene.shot_reference}</p>
-                <p>{scene.characters.join(", ")}</p>
-                <p>{scene.description}</p>
-                <p>{scene.visual_prompt}</p>
-              </OutputSection>
-            ))}
+            <p>{SCRIPT_GENERATED_HISTORY_MESSAGE}</p>
           </AssistantResponseBubble>
         ) : null}
       </div>
@@ -1667,15 +1621,9 @@ function AssistantResponseBubble({
   );
 }
 
-type OutputSectionProps = {
-  title: string;
-  children: ReactNode;
-};
-
-function OutputSection({ title, children }: OutputSectionProps) {
+function UserPromptBubble({ children }: { children: ReactNode }) {
   return (
-    <section className="flex flex-col gap-2 rounded-md border border-neutral-200 bg-neutral-50 p-3 text-xs leading-5 text-neutral-700">
-      <h3 className="text-sm font-semibold text-neutral-950">{title}</h3>
+    <section className="mb-3 ml-auto max-w-[82%] rounded-2xl rounded-tr-md bg-neutral-950 px-4 py-3 text-xs leading-5 text-white shadow-sm">
       {children}
     </section>
   );

@@ -130,18 +130,24 @@ describe("WorkflowCanvasWorkspace", () => {
     expect(html).toContain('data-workflow-node="composition"');
     expect(html).toContain("Workflow connections");
     expect(html).toContain("World view");
-    expect(html).toContain("A sweet but lonely summer MV world");
+    expect(html).toContain(
+      "\u751f\u6210\u4e00\u4e2a\u51b0\u96ea\u76f8\u5173\u7684mv\u7684\u4e16\u754c\u89c2",
+    );
     expect(html).not.toContain("Script Node API Ready");
     expect(html).toContain('data-script-node-inline-editor="true"');
     expect(html).toContain('data-script-node-input-composer="true"');
     expect(html).toContain('data-script-model-select="true"');
-    expect(html).toContain("Mock storyboard model");
-    expect(html).toContain("Configured model");
+    expect(html).toContain("gpt-5.4-mini");
+    expect(html).toContain("Mock local model");
     expect(html).toContain('data-script-ai-revise="true"');
-    expect(html).toContain("MV world description");
-    expect(html).toContain("AI修改");
-    expect(html).toContain("Generate");
+    expect(html).toContain(
+      "\u63cf\u8ff0\u4f60\u7684\u5267\u60c5\u7247\u6bb5\u3001\u6545\u4e8b\u548c\u4e16\u754c\u89c2\u6784\u60f3",
+    );
+    expect(html).toContain("AI\u4fee\u6539");
+    expect(html).toContain("\u751f\u6210");
     expect(html).toContain("Storyboard");
+    expect(html).not.toContain("Mock storyboard model");
+    expect(html).not.toContain("Configured model");
     expect(html).not.toContain('data-script-output-select="true"');
     expect(html).not.toContain("Script output target");
     expect(html).not.toContain('data-script-node-history="true"');
@@ -206,17 +212,20 @@ describe("WorkflowCanvasWorkspace", () => {
     const output = makeScriptOutput();
     const html = renderToStaticMarkup(
       <ScriptOutputTabs
+        input={{ world_description: "A generated snow MV world" }}
         output={output}
-        selectedOutput="storyboard"
+        responseMode="generation"
         task={task}
       />,
     );
 
-    expect(html).toContain("Storyboard");
-    expect(html).toContain("Mock Script Title");
+    expect(html).toContain("A generated snow MV world");
     expect(html).toContain("Ready");
     expect(html).toContain('data-script-node-output-scroll="true"');
-    expect(html).toContain("third-person cinematic POV");
+    expect(html).toContain("Script Node");
+    expect(html).not.toContain("Shot 1");
+    expect(html).not.toContain("Direction");
+    expect(html).not.toContain("third-person cinematic POV");
     expect(html).not.toContain("Choose output");
   });
 
@@ -231,8 +240,9 @@ describe("WorkflowCanvasWorkspace", () => {
     const html = renderToStaticMarkup(
       <ScriptOutputTabs
         error="Provider unavailable"
+        input={{ world_description: "A generated snow MV world" }}
         output={null}
-        selectedOutput="storyboard"
+        responseMode="generation"
         task={task}
         onHide={() => undefined}
       />,
@@ -243,6 +253,29 @@ describe("WorkflowCanvasWorkspace", () => {
     expect(html).toContain("Provider unavailable");
     expect(html).toContain('aria-label="Hide Script response"');
     expect(getScriptResponseStatusLabel(task, null, task.error)).toBe("Error");
+  });
+
+  it("marks the opened response panel as AI revise mode without structured shots", () => {
+    const task: ScriptTaskStatusResponse = {
+      task_id: "task-1",
+      project_id: "local-project",
+      node_id: "script-1",
+      status: "succeeded",
+      error: null,
+    };
+    const html = renderToStaticMarkup(
+      <ScriptOutputTabs
+        input={{ world_description: "A generated snow MV world" }}
+        output={makeScriptOutput()}
+        responseMode="revise"
+        task={task}
+      />,
+    );
+
+    expect(html).toContain("AI\u4fee\u6539\u4e2d");
+    expect(html).toContain("AI\u4fee\u6539");
+    expect(html).not.toContain("Shot 1");
+    expect(html).not.toContain("Direction");
   });
 
   it("keeps inline composer usable under zoom and permits far-left node dragging", () => {
