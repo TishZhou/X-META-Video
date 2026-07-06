@@ -315,6 +315,10 @@ export function getScriptResponseStatusLabel(
 }
 
 export function formatScriptOutputConversationReply(output: ScriptNodeOutput) {
+  if (output.agent_output?.trim()) {
+    return output.agent_output.trim();
+  }
+
   const characterNames = output.characters
     .map((character) => character.name.trim())
     .filter(Boolean)

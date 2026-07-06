@@ -113,6 +113,14 @@ class MockScriptProvider:
 
         return ScriptOutput(
             title=f"MV World: {title_seed}",
+            agent_output=(
+                f"MV World: {title_seed}\n\n"
+                f"{description} can become a road-movie MV world with two idol "
+                "characters moving from a wide environment into intimate inserts, "
+                "then resolving on a luminous performance scene.\n\n"
+                "The output is ready for storyboard, character reference, and scene "
+                "image nodes."
+            ),
             world_overview=(
                 f"The MV world-view description expands from: {description}. It is "
                 "organized for downstream storyboard, character image, and scene "
@@ -276,7 +284,10 @@ class OpenAICompatibleScriptProvider:
         response_data = self._post_response(payload)
         response_text = _strip_json_fence(_extract_response_text(response_data))
         try:
-            return ScriptOutput.model_validate(json.loads(response_text))
+            output = ScriptOutput.model_validate(json.loads(response_text))
+            if output.agent_output and output.agent_output.strip():
+                return output
+            return output.model_copy(update={"agent_output": response_text})
         except json.JSONDecodeError as exc:
             raise ProviderExecutionError("Text model returned invalid JSON.") from exc
         except ValidationError as exc:

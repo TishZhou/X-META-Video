@@ -70,6 +70,7 @@ export type ScriptSceneDescription = {
 
 export type ScriptNodeOutput = {
   title: string;
+  agent_output?: string | null;
   world_overview: string;
   storyboard_direction: ScriptStoryboardDirection;
   characters: ScriptCharacterProfile[];

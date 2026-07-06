@@ -74,6 +74,7 @@ class SceneDescription(BaseModel):
 
 class ScriptOutput(BaseModel):
     title: str
+    agent_output: str | None = None
     world_overview: str
     storyboard_direction: StoryboardDirection
     characters: list[CharacterProfile]

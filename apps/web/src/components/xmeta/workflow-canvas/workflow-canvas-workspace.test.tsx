@@ -28,6 +28,7 @@ import {
 function makeScriptOutput(): ScriptNodeOutput {
   return {
     title: "Mock Script Title",
+    agent_output: "Agent generated answer for the chat history.",
     world_overview: "A structured MV world summary.",
     storyboard_direction: {
       pov: "third-person cinematic POV",
@@ -224,9 +225,9 @@ describe("WorkflowCanvasWorkspace", () => {
     expect(html).toContain("A generated snow MV world");
     expect(html).toContain("Ready");
     expect(html).toContain('data-script-node-output-scroll="true"');
-    expect(html).toContain("Mock Script Title");
-    expect(html).toContain("A structured MV world summary.");
-    expect(html).toContain("soft opening, travel beat, neon performance payoff");
+    expect(html).toContain("Agent generated answer for the chat history.");
+    expect(html).not.toContain("A structured MV world summary.");
+    expect(html).not.toContain("soft opening, travel beat, neon performance payoff");
     expect(html).not.toContain("Shot 1");
     expect(html).not.toContain("Direction");
     expect(html).not.toContain(
@@ -237,6 +238,14 @@ describe("WorkflowCanvasWorkspace", () => {
 
   it("formats Script output as an AI conversation reply from returned data", () => {
     expect(formatScriptOutputConversationReply(makeScriptOutput())).toBe(
+      "Agent generated answer for the chat history.",
+    );
+  });
+
+  it("falls back to a readable Script output reply when agent output is absent", () => {
+    const { agent_output: _agentOutput, ...output } = makeScriptOutput();
+
+    expect(formatScriptOutputConversationReply(output)).toBe(
       "Mock Script Title\n\nA structured MV world summary.\n\nthird-person cinematic POV\n\nsoft opening, travel beat, neon performance payoff\n\n\u89d2\u8272\uff1aLead\n\n\u573a\u666f\uff1adesert jeep",
     );
   });

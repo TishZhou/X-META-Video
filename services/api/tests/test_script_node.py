@@ -122,6 +122,7 @@ def test_task_result_returns_deterministic_mock_script_output() -> None:
     result = result_body["output"]
     assert result_body["status"] == "succeeded"
     assert result["title"] == "MV World: A sweet summer MV world with two girls, a desert"
+    assert "road-movie MV world" in result["agent_output"]
     assert "world-view description" in result["world_overview"]
     assert "third-person cinematic POV" in result["storyboard_direction"]["pov"]
     assert result["storyboard_direction"]["shots"][0]["shot_number"] == 1
@@ -225,6 +226,7 @@ def valid_script_output_json() -> str:
     return json.dumps(
         {
             "title": "Generated MV",
+            "agent_output": "This is the agent answer shown in chat history.",
             "world_overview": "A validated generated world overview.",
             "storyboard_direction": {
                 "pov": "third-person cinematic",
@@ -298,6 +300,7 @@ def test_openai_compatible_provider_posts_responses_api_and_reads_output_text() 
     }
     assert result.title == "Generated MV"
     assert result.characters[0].name == "Lead"
+    assert result.agent_output == "This is the agent answer shown in chat history."
 
 
 def test_openai_compatible_provider_falls_back_to_output_content_text() -> None:
@@ -332,6 +335,30 @@ def test_openai_compatible_provider_falls_back_to_output_content_text() -> None:
     result = provider.generate(ScriptInput(**script_payload()), "Return ScriptOutput JSON.")
 
     assert result.storyboard_direction.shots[0].action == "Introduce the desert jeep world."
+
+
+def test_openai_compatible_provider_uses_raw_text_when_agent_output_is_missing() -> None:
+    response_text = json.dumps(
+        json.loads(valid_script_output_json()) | {"agent_output": None}
+    )
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        del request
+        return httpx.Response(200, json={"output_text": response_text})
+
+    provider = OpenAICompatibleScriptProvider(
+        ScriptProviderSettings(
+            provider="openai-compatible",
+            base_url="https://api.openai.test/v1",
+            api_key="test-key",
+            model="gpt-test",
+        ),
+        client=httpx.Client(transport=httpx.MockTransport(handler)),
+    )
+
+    result = provider.generate(ScriptInput(**script_payload()), "Return ScriptOutput JSON.")
+
+    assert result.agent_output == response_text
 
 
 def test_openai_compatible_provider_accepts_fenced_json_output() -> None:
