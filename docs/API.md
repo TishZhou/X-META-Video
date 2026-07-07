@@ -53,12 +53,51 @@ Global rules:
 
 | Method | Path | Purpose | Auth |
 |---|---|---|---|
-| `POST` | `/auth/login` | Login and create session/JWT | public |
-| `POST` | `/auth/refresh` | Refresh session/JWT | session |
+| `POST` | `/auth/register` | Register user, create default workspace, and create session cookie | public |
+| `POST` | `/auth/login` | Login and create HttpOnly cookie session | public |
+| `POST` | `/auth/refresh` | Refresh HttpOnly cookie session | session |
 | `POST` | `/auth/logout` | Revoke current session | session |
 | `GET` | `/auth/me` | Current user profile | user |
 | `GET` | `/accounts` | Organizations/workspaces visible to user | user |
 | `POST` | `/accounts/active` | Set or confirm active organization | user |
+
+Auth sessions use the `xmeta_session` HttpOnly cookie. Auth responses do not return access or refresh tokens to browser JavaScript.
+
+`POST /auth/register` request:
+```json
+{
+  "email": "creator@example.com",
+  "password": "correct horse battery staple",
+  "name": "Creator One",
+  "workspace_name": "Creator Studio"
+}
+```
+
+Registration creates a default organization/workspace and assigns the registering user the `owner` membership role.
+
+`POST /auth/login` request:
+```json
+{
+  "email": "creator@example.com",
+  "password": "correct horse battery staple"
+}
+```
+
+Auth session response:
+```json
+{
+  "user": {
+    "user_id": "user_123",
+    "email": "creator@example.com",
+    "name": "Creator One"
+  },
+  "active_organization": {
+    "org_id": "org_123",
+    "name": "Creator Studio",
+    "role": "owner"
+  }
+}
+```
 
 `GET /accounts` response:
 ```json

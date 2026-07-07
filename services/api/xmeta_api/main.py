@@ -1,10 +1,20 @@
 from __future__ import annotations
 
 import os
+from collections.abc import Generator
 
-from fastapi import FastAPI, HTTPException, status
+from fastapi import Cookie, Depends, FastAPI, HTTPException, Response, status
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.orm import Session
 
+from .account_database import iter_account_db
+from .account_models import Membership, Organization, RefreshSession, User
+from .account_service import (
+    AccountConflictError,
+    AccountService,
+    InvalidCredentialsError,
+    UnauthorizedSessionError,
+)
 from .prompt import build_script_dialogue_prompt
 from .providers import (
     ProviderConfigurationError,
@@ -24,6 +34,13 @@ from .schemas import (
     TaskResult,
     TaskState,
     TaskStatus,
+    AccountOrganizationResponse,
+    AccountsResponse,
+    AccountUserResponse,
+    ActiveAccountRequest,
+    AuthLoginRequest,
+    AuthRegisterRequest,
+    AuthSessionResponse,
 )
 from .store import store
 
@@ -46,6 +63,207 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+SESSION_COOKIE_NAME = "xmeta_session"
+
+
+def get_account_db() -> Generator[Session, None, None]:
+    yield from iter_account_db()
+
+
+def _user_response(user: User) -> AccountUserResponse:
+    return AccountUserResponse(user_id=user.id, email=user.email, name=user.name)
+
+
+def _organization_response(
+    organization: Organization,
+    membership: Membership,
+) -> AccountOrganizationResponse:
+    return AccountOrganizationResponse(
+        org_id=organization.id,
+        name=organization.name,
+        role=membership.role.value,
+    )
+
+
+def _set_session_cookie(response: Response, raw_token: str) -> None:
+    response.set_cookie(
+        key=SESSION_COOKIE_NAME,
+        value=raw_token,
+        httponly=True,
+        samesite=os.getenv("COOKIE_SAMESITE", "lax"),
+        secure=os.getenv("COOKIE_SECURE", "false").lower() == "true",
+        max_age=60 * 60 * 24 * 30,
+        path="/",
+    )
+
+
+def _clear_session_cookie(response: Response) -> None:
+    response.delete_cookie(key=SESSION_COOKIE_NAME, path="/")
+
+
+def _session_response(
+    *,
+    service: AccountService,
+    user: User,
+    membership: Membership,
+) -> AuthSessionResponse:
+    organization = membership.organization or service.get_organization(membership.organization_id)
+    if organization is None:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Active organization not found.",
+        )
+    return AuthSessionResponse(
+        user=_user_response(user),
+        active_organization=_organization_response(organization, membership),
+    )
+
+
+def _current_session(
+    db: Session,
+    raw_token: str | None,
+) -> tuple[AccountService, RefreshSession, User, Membership]:
+    service = AccountService(db)
+    try:
+        refresh_session = service.get_session(raw_token)
+    except UnauthorizedSessionError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=str(exc),
+        ) from exc
+
+    user = service.get_user(refresh_session.user_id)
+    membership = service.get_membership(
+        refresh_session.user_id,
+        refresh_session.active_organization_id,
+    )
+    if user is None or membership is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required.",
+        )
+    return service, refresh_session, user, membership
+
+
+@app.post(
+    "/api/v1/auth/register",
+    response_model=AuthSessionResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def register_account(
+    request: AuthRegisterRequest,
+    response: Response,
+    db: Session = Depends(get_account_db),
+) -> AuthSessionResponse:
+    service = AccountService(db)
+    try:
+        user, organization, membership = service.register_user(
+            email=request.email,
+            password=request.password,
+            name=request.name,
+            workspace_name=request.workspace_name,
+        )
+    except AccountConflictError as exc:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+
+    session_token = service.create_session(user_id=user.id, organization_id=organization.id)
+    _set_session_cookie(response, session_token.raw_token)
+    return AuthSessionResponse(
+        user=_user_response(user),
+        active_organization=_organization_response(organization, membership),
+    )
+
+
+@app.post("/api/v1/auth/login", response_model=AuthSessionResponse)
+def login_account(
+    request: AuthLoginRequest,
+    response: Response,
+    db: Session = Depends(get_account_db),
+) -> AuthSessionResponse:
+    service = AccountService(db)
+    try:
+        user, membership = service.authenticate_user(email=request.email, password=request.password)
+    except InvalidCredentialsError as exc:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc)) from exc
+
+    session_token = service.create_session(
+        user_id=user.id,
+        organization_id=membership.organization_id,
+    )
+    _set_session_cookie(response, session_token.raw_token)
+    return _session_response(service=service, user=user, membership=membership)
+
+
+@app.post("/api/v1/auth/logout", status_code=status.HTTP_204_NO_CONTENT)
+def logout_account(
+    response: Response,
+    db: Session = Depends(get_account_db),
+    session_token: str | None = Cookie(default=None, alias=SESSION_COOKIE_NAME),
+) -> Response:
+    AccountService(db).revoke_session(session_token)
+    _clear_session_cookie(response)
+    response.status_code = status.HTTP_204_NO_CONTENT
+    return response
+
+
+@app.post("/api/v1/auth/refresh", response_model=AuthSessionResponse)
+def refresh_account_session(
+    response: Response,
+    db: Session = Depends(get_account_db),
+    session_token: str | None = Cookie(default=None, alias=SESSION_COOKIE_NAME),
+) -> AuthSessionResponse:
+    service, refresh_session, user, membership = _current_session(db, session_token)
+    new_session = service.create_session(
+        user_id=refresh_session.user_id,
+        organization_id=refresh_session.active_organization_id,
+    )
+    service.revoke_session(session_token)
+    _set_session_cookie(response, new_session.raw_token)
+    return _session_response(service=service, user=user, membership=membership)
+
+
+@app.get("/api/v1/auth/me", response_model=AuthSessionResponse)
+def get_current_account(
+    db: Session = Depends(get_account_db),
+    session_token: str | None = Cookie(default=None, alias=SESSION_COOKIE_NAME),
+) -> AuthSessionResponse:
+    service, _refresh_session, user, membership = _current_session(db, session_token)
+    return _session_response(service=service, user=user, membership=membership)
+
+
+@app.get("/api/v1/accounts", response_model=AccountsResponse)
+def list_accounts(
+    db: Session = Depends(get_account_db),
+    session_token: str | None = Cookie(default=None, alias=SESSION_COOKIE_NAME),
+) -> AccountsResponse:
+    service, _refresh_session, user, _membership = _current_session(db, session_token)
+    organizations = [
+        _organization_response(membership.organization, membership)
+        for membership in service.list_memberships(user.id)
+        if membership.organization is not None
+    ]
+    return AccountsResponse(organizations=organizations)
+
+
+@app.post("/api/v1/accounts/active", response_model=AuthSessionResponse)
+def set_active_account(
+    request: ActiveAccountRequest,
+    db: Session = Depends(get_account_db),
+    session_token: str | None = Cookie(default=None, alias=SESSION_COOKIE_NAME),
+) -> AuthSessionResponse:
+    service, refresh_session, user, _current_membership = _current_session(db, session_token)
+    membership = service.get_membership(refresh_session.user_id, request.org_id)
+    if membership is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have access to this workspace.",
+        )
+    refresh_session, membership = service.set_active_organization(
+        raw_token=session_token or "",
+        organization_id=request.org_id,
+    )
+    return _session_response(service=service, user=user, membership=membership)
 
 
 @app.patch(

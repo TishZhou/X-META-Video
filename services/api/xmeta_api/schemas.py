@@ -147,3 +147,46 @@ class TaskResult(BaseModel):
     status: TaskStatus
     error: str | None = None
     output: ScriptOutput | None = None
+
+
+class AuthRegisterRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    email: str = Field(..., min_length=3)
+    password: str = Field(..., min_length=8)
+    name: str = Field(..., min_length=1)
+    workspace_name: str = Field(..., min_length=1)
+
+
+class AuthLoginRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    email: str = Field(..., min_length=3)
+    password: str = Field(..., min_length=1)
+
+
+class ActiveAccountRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    org_id: str = Field(..., min_length=1)
+
+
+class AccountUserResponse(BaseModel):
+    user_id: str
+    email: str
+    name: str
+
+
+class AccountOrganizationResponse(BaseModel):
+    org_id: str
+    name: str
+    role: str
+
+
+class AuthSessionResponse(BaseModel):
+    user: AccountUserResponse
+    active_organization: AccountOrganizationResponse
+
+
+class AccountsResponse(BaseModel):
+    organizations: list[AccountOrganizationResponse]

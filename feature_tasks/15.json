@@ -4,11 +4,11 @@
     "title": "Production Auth And Workspace Management",
     "status": "in_progress"
   },
-  "planning_status": "auth_account_001_in_progress",
+  "planning_status": "auth_account_003_passing",
   "notes": [
     "Keep this file focused on Production Auth And Workspace Management only.",
     "Feature 15 work is starting on branch zheng while Feature 4 canvas/storyboard work remains active in the shared project context.",
-    "First implementation slice is planning and foundation preparation only; do not implement auth code until auth-account-002 starts.",
+    "auth-account-001 was planning only; auth-account-002 and auth-account-003 now implement the backend account foundation and API slice.",
     "Email/password registration is the first real login path. GitHub and Google OAuth are disabled UI placeholders until a later provider-integration task.",
     "The account model uses organization membership roles: owner, admin, editor, viewer. Do not add a coarse global admin/user shortcut.",
     "Registration creates a default workspace and owner membership for the registering user.",
@@ -21,7 +21,7 @@
     {
       "id": "auth-account-001",
       "title": "Plan account system implementation scope",
-      "status": "in_progress",
+      "status": "passing",
       "user_visible_behavior": "The product team has a clear, verifiable account-system implementation path before backend auth or account UI code is written.",
       "scope": [
         "Decompose Production Auth And Workspace Management into small implementation slices.",
@@ -45,13 +45,15 @@
         "Use a reviewer/evaluator pass to confirm the planning artifacts match AGENTS.md and the agreed account-system defaults."
       ],
       "evidence": [
-        "Pending final verification."
+        "Feature 15 was decomposed into auth-account-001 through auth-account-007.",
+        "Planning defaults were recorded for email/password registration, workspace ownership, membership roles, HttpOnly cookies, OAuth placeholders, development outbox, Billing Coming soon, and workspace compatibility.",
+        "Baseline and final startup verification passed with 9 web files / 40 tests after planning artifact updates."
       ]
     },
     {
       "id": "auth-account-002",
       "title": "Create account persistence foundation",
-      "status": "not_started",
+      "status": "passing",
       "user_visible_behavior": "Account, workspace, membership, session, and email-token state can be stored durably instead of using local or in-memory placeholders.",
       "scope": [
         "Add SQLAlchemy database session/Base and Alembic configuration.",
@@ -69,12 +71,21 @@
         "Run backend pytest for account persistence.",
         "Run backend ruff.",
         "Run .\\init.ps1 after artifact updates."
+      ],
+      "evidence": [
+        "Added SQLAlchemy account models for users, organizations, memberships, refresh sessions, and account outbox tokens.",
+        "Added Alembic configuration and initial account foundation migration.",
+        "Focused account tests passed: 8 tests.",
+        "Backend full tests passed: 31 tests.",
+        "Backend ruff passed for xmeta_api and tests.",
+        "Alembic upgrade smoke passed with SQLite in-memory DATABASE_URL.",
+        "Migration persistence test verifies lowercase role and outbox token enum values."
       ]
     },
     {
       "id": "auth-account-003",
       "title": "Implement registration, login, session, and account APIs",
-      "status": "not_started",
+      "status": "passing",
       "user_visible_behavior": "Users can register, log in, stay signed in through HttpOnly cookies, log out, view their profile, and select an active workspace.",
       "scope": [
         "Implement POST /api/v1/auth/register, POST /api/v1/auth/login, POST /api/v1/auth/refresh, POST /api/v1/auth/logout, GET /api/v1/auth/me, GET /api/v1/accounts, and POST /api/v1/accounts/active.",
@@ -93,6 +104,12 @@
         "Run backend auth API pytest.",
         "Run backend ruff.",
         "Run focused frontend API/client tests if web clients are added."
+      ],
+      "evidence": [
+        "Implemented POST /api/v1/auth/register, POST /api/v1/auth/login, POST /api/v1/auth/refresh, POST /api/v1/auth/logout, GET /api/v1/auth/me, GET /api/v1/accounts, and POST /api/v1/accounts/active.",
+        "Register/login set HttpOnly xmeta_session cookies and do not expose access or refresh tokens in JSON responses.",
+        "Registration creates a default workspace and owner membership.",
+        "Duplicate registration, wrong password, me/accounts, logout, refresh rotation, old-cookie revocation, active workspace membership validation, unauthenticated active selection, inaccessible workspace selection, migration persistence, and service-level role defaults are covered by backend tests."
       ]
     },
     {

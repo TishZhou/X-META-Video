@@ -44,9 +44,10 @@
                      {
                          "id":  4,
                          "title":  "Storyboard Node",
-                         "status":  "in_progress",
+                         "status":  "blocked",
                          "current_task":  "storyboard-node-001",
                          "current_task_status":  "passing",
+                         "branch_note":  "Paused on branch zheng while Feature 15 account work is active; resume storyboard/canvas work on its own branch before continuing Feature 4.",
                          "user_visible_behavior":  "Users can convert script output into an editable shot list with scene, character, action, dialogue, camera, duration, and prompt fields.",
                          "task_file":  "feature_tasks/4.json"
                      },
@@ -123,7 +124,9 @@
                      {
                          "id":  15,
                          "title":  "Production Auth And Workspace Management",
-                         "status":  "not_started",
+                         "status":  "in_progress",
+                         "current_task":  "auth-account-003",
+                         "current_task_status":  "passing",
                          "user_visible_behavior":  "Users can log in, select a workspace, and access projects, assets, tasks, and history through production account and role boundaries.",
                          "task_file":  "feature_tasks/15.json"
                      }
