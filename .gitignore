@@ -64,6 +64,7 @@ temp/
 Thumbs.db
 .idea/
 .vscode/
+.worktrees/
 *.swp
 *.swo
 
