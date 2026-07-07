@@ -18,6 +18,12 @@
 - FastAPI reads provider config from process env, root `.env`, `services/api/.env`, or this repo's current real-env `.env.example` fallback.
 - The verify skill was updated: future AI/provider verification must compare visible reply content with backend provider/model metadata and record whether the path was mock, unavailable, or live provider-backed.
 
+## Feature 15 Planning Note
+
+- Branch `zheng` now contains planning artifacts for Feature 15 `auth-account-001`; this decomposes account-system work but does not implement auth code.
+- `feature_list.json` remains conservative: Feature 4 stays the active shared project context and Feature 15 remains `not_started` until implementation actually begins.
+- Account defaults recorded for the next slice: email/password registration, default workspace owner membership, organization roles, HttpOnly cookies, disabled OAuth placeholders, development outbox, Billing Coming soon, and `/workspace` compatibility.
+
 ## Verification Evidence
 
 - Baseline `.\init.ps1` passed before implementation and reran web tests: 9 files / 39 tests.
@@ -29,6 +35,7 @@
 - `corepack pnpm --filter @xmeta/web build` passed and included `/workspace`.
 - API preflight against `POST /api/v1/projects/local-project/nodes/script-1/chat` read `.env.example`, called the live OpenAI-compatible provider, and returned assistant content with `provider: openai` and `model: gpt-5.4-mini`.
 - Browser E2E passed on the user's in-app browser tab at `http://localhost:3000/workspace`: initial UI had no static `gpt-5.4-mini` claim; `AI modify` opened backend-waiting conversation state; Send produced a natural-language assistant reply with `Backend: openai / gpt-5.4-mini`; no `Script AI turn` mock text, mock backend label, or console warn/error logs.
+- Feature 15 planning verification: baseline and final `.\init.ps1` passed with 9 web files / 40 tests, JSON validation passed for `feature_list.json` and `feature_tasks/15.json`, and `git diff --check` passed with CRLF warnings only.
 
 ## Boundaries
 
@@ -36,6 +43,7 @@
 - Current dialogue remains request/response from the UI perspective, not SSE/WebSocket streaming.
 - Conversation history is not yet automatically summarized into the generation prompt; users can refine the main prompt before Generate.
 - Durable chat persistence, production auth, queue workers, task event streaming, object storage, asset lineage, generated media, and export remain later feature scope.
+- Feature 15 `auth-account-001` is planning-only; real auth APIs, migrations, account UI, OAuth, email delivery, and billing remain future slices.
 
 ## Next Commands
 

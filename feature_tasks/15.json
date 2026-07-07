@@ -1,15 +1,192 @@
-﻿{
-    "parent_feature":  {
-                           "id":  15,
-                           "title":  "Production Auth And Workspace Management",
-                           "status":  "not_started"
-                       },
-    "planning_status":  "pending_decomposition",
-    "notes":  [
-                  "Small features must be added here before implementation starts.",
-                  "Keep this file focused on Production Auth And Workspace Management only."
-              ],
-    "small_features":  [
-
-                       ]
+{
+  "parent_feature": {
+    "id": 15,
+    "title": "Production Auth And Workspace Management",
+    "status": "in_progress"
+  },
+  "planning_status": "auth_account_001_in_progress",
+  "notes": [
+    "Keep this file focused on Production Auth And Workspace Management only.",
+    "Feature 15 work is starting on branch zheng while Feature 4 canvas/storyboard work remains active in the shared project context.",
+    "First implementation slice is planning and foundation preparation only; do not implement auth code until auth-account-002 starts.",
+    "Email/password registration is the first real login path. GitHub and Google OAuth are disabled UI placeholders until a later provider-integration task.",
+    "The account model uses organization membership roles: owner, admin, editor, viewer. Do not add a coarse global admin/user shortcut.",
+    "Registration creates a default workspace and owner membership for the registering user.",
+    "Sessions use HttpOnly cookies; browser JavaScript must not store bearer tokens.",
+    "Invitations, email verification, and password reset use a development outbox first; no production email provider is in scope for the first pass.",
+    "Billing is owner-visible Coming soon UI only until a later billing task.",
+    "Existing workspace and Script/Task flows must remain usable after login and must not be broken for ongoing canvas work."
+  ],
+  "small_features": [
+    {
+      "id": "auth-account-001",
+      "title": "Plan account system implementation scope",
+      "status": "in_progress",
+      "user_visible_behavior": "The product team has a clear, verifiable account-system implementation path before backend auth or account UI code is written.",
+      "scope": [
+        "Decompose Production Auth And Workspace Management into small implementation slices.",
+        "Define the account model defaults: email/password registration, default workspace ownership, membership roles, HttpOnly cookie sessions, disabled OAuth placeholders, development email outbox, and Billing Coming soon.",
+        "Record how account work proceeds on branch zheng without erasing the current Feature 4 storyboard/canvas context.",
+        "Define write scope, acceptance criteria, verification plan, risks, and evaluator rubric for the first account-system slice."
+      ],
+      "acceptance_criteria": [
+        "feature_tasks/15.json contains auth-account-001 through auth-account-007 with scope, acceptance criteria, and verification guidance.",
+        "sprint-contract.md describes the Feature 15 planning slice, write scope, out-of-scope work, implementation defaults, and verification plan.",
+        "feature_list.json records auth-account-001 as Feature 15 branch work while preserving Feature 4 context.",
+        "progress.md and session-handoff.md record the account-system branch start and baseline verification evidence.",
+        "evaluator-rubric.md is initialized for Feature 15 and records an evaluator score over 140 before the slice is accepted.",
+        "JSON validation, git diff checks, and the standard startup path pass after artifact updates."
+      ],
+      "verification": [
+        "Run .\\init.ps1 before artifact edits and after artifact edits.",
+        "Parse feature_list.json and feature_tasks/15.json as JSON.",
+        "Run .\\scripts\\initialize-evaluator-rubric.ps1 before evaluator scoring.",
+        "Run git diff --check.",
+        "Use a reviewer/evaluator pass to confirm the planning artifacts match AGENTS.md and the agreed account-system defaults."
+      ],
+      "evidence": [
+        "Pending final verification."
+      ]
+    },
+    {
+      "id": "auth-account-002",
+      "title": "Create account persistence foundation",
+      "status": "not_started",
+      "user_visible_behavior": "Account, workspace, membership, session, and email-token state can be stored durably instead of using local or in-memory placeholders.",
+      "scope": [
+        "Add SQLAlchemy database session/Base and Alembic configuration.",
+        "Add users, organizations, memberships, refresh sessions, and development outbox/token tables.",
+        "Add seed/test fixtures only where needed for local verification.",
+        "Keep project, asset, task, and history persistence out of this slice unless needed for foreign-key boundaries."
+      ],
+      "acceptance_criteria": [
+        "Migrations create durable account tables with organization membership roles owner, admin, editor, and viewer.",
+        "Password hashes are stored; plaintext passwords are never stored.",
+        "Registration prerequisites are represented in persistence without adding UI or route behavior yet.",
+        "Database tests cover model constraints and role defaults."
+      ],
+      "verification": [
+        "Run backend pytest for account persistence.",
+        "Run backend ruff.",
+        "Run .\\init.ps1 after artifact updates."
+      ]
+    },
+    {
+      "id": "auth-account-003",
+      "title": "Implement registration, login, session, and account APIs",
+      "status": "not_started",
+      "user_visible_behavior": "Users can register, log in, stay signed in through HttpOnly cookies, log out, view their profile, and select an active workspace.",
+      "scope": [
+        "Implement POST /api/v1/auth/register, POST /api/v1/auth/login, POST /api/v1/auth/refresh, POST /api/v1/auth/logout, GET /api/v1/auth/me, GET /api/v1/accounts, and POST /api/v1/accounts/active.",
+        "Registration creates a default organization/workspace and owner membership.",
+        "Use HttpOnly cookies for session transport.",
+        "Do not implement GitHub or Google OAuth routes in this slice."
+      ],
+      "acceptance_criteria": [
+        "Register and login set server-owned session cookies.",
+        "Refresh rotates or validates refresh session state without exposing tokens to browser JavaScript.",
+        "Logout revokes the current session.",
+        "Accounts list only organizations visible to the authenticated user.",
+        "Active organization selection validates membership."
+      ],
+      "verification": [
+        "Run backend auth API pytest.",
+        "Run backend ruff.",
+        "Run focused frontend API/client tests if web clients are added."
+      ]
+    },
+    {
+      "id": "auth-account-004",
+      "title": "Apply actor context and RBAC to existing APIs",
+      "status": "not_started",
+      "user_visible_behavior": "Existing project and generation APIs honor login, active workspace, and role permissions while staying usable in local development.",
+      "scope": [
+        "Create backend actor context resolution for user_id, org_id, role, request_id, and optional project_id.",
+        "Protect existing Script Node and Task routes with role checks.",
+        "Keep Editor able to save and generate, Viewer read-only, and Owner/Admin able to manage workspace-level resources.",
+        "Preserve local /workspace development through registration/login and test fixtures."
+      ],
+      "acceptance_criteria": [
+        "Unauthenticated requests to protected APIs fail clearly with 401.",
+        "Authenticated users cannot access organizations or project resources they do not belong to.",
+        "Role checks distinguish viewer read-only behavior from editor generation behavior.",
+        "Existing Script Node tests are updated without weakening provider/model verification."
+      ],
+      "verification": [
+        "Run backend pytest for auth plus Script/Task API authorization.",
+        "Run existing Script Node backend tests.",
+        "Run web workspace tests and typecheck."
+      ]
+    },
+    {
+      "id": "auth-account-005",
+      "title": "Build login, registration, and workspace selection UI",
+      "status": "not_started",
+      "user_visible_behavior": "Users can create an account, sign in, select a workspace, and see real account context in the app shell instead of the Studio Admin placeholder.",
+      "scope": [
+        "Add login and registration routes using the existing design system and TriplD/shadcn components where appropriate.",
+        "Add workspace selection or confirmation UI after authentication.",
+        "Replace the top-bar placeholder account label with real user/workspace/role state.",
+        "Show GitHub and Google OAuth as disabled Coming soon controls."
+      ],
+      "acceptance_criteria": [
+        "Login and registration forms call backend auth APIs and show validation errors.",
+        "Successful login or registration leads to an active workspace context.",
+        "Top bar no longer implies a fake Studio Admin account.",
+        "Disabled OAuth controls explain that provider login is not implemented yet."
+      ],
+      "verification": [
+        "Run focused web tests for auth pages and top bar state.",
+        "Run full web tests, typecheck, and build.",
+        "Run Browser E2E for register to workspace entry."
+      ]
+    },
+    {
+      "id": "auth-account-006",
+      "title": "Build full account center MVP",
+      "status": "not_started",
+      "user_visible_behavior": "Users can manage profile, workspace settings, members, roles, password/security flows, and see honest placeholders for OAuth and Billing.",
+      "scope": [
+        "Add account center routes for profile, workspace settings, members, security, OAuth placeholders, and Billing Coming soon.",
+        "Support member invitation through the development outbox, member listing, role changes, and removal.",
+        "Support password change and password reset request/confirm through development outbox tokens.",
+        "Keep Billing as owner-visible Coming soon only."
+      ],
+      "acceptance_criteria": [
+        "Owner/Admin can invite, list, change roles, and remove members within their organization.",
+        "Editor and Viewer cannot manage members or Billing surfaces.",
+        "Password flows use tokenized outbox records and do not expose raw secrets.",
+        "Every disabled or not-yet-implemented button explains its unavailable state through UI."
+      ],
+      "verification": [
+        "Run backend member/security pytest.",
+        "Run web account center tests.",
+        "Run Browser E2E for account center profile, member, security, and placeholder flows."
+      ]
+    },
+    {
+      "id": "auth-account-007",
+      "title": "Close Feature 15 account system evidence",
+      "status": "not_started",
+      "user_visible_behavior": "Feature status, sprint evidence, evaluator score, and handoff notes accurately describe what account capabilities are done and what remains deferred.",
+      "scope": [
+        "Update docs only where durable API/account behavior changed.",
+        "Record final verification, Browser E2E evidence, evaluator score, and known limitations.",
+        "Confirm repo remains restartable through .\\init.ps1.",
+        "Leave branch ready for review without committing or pushing unless explicitly requested."
+      ],
+      "acceptance_criteria": [
+        "feature_list.json records Feature 15 status accurately after implementation and verification.",
+        "sprint-contract.md, evaluator-rubric.md, progress.md, and session-handoff.md contain final evidence.",
+        "No unavailable frontend account action is shown without a clear unavailable-state explanation.",
+        "Final verification covers backend, frontend, build, JSON, git diff, and Browser E2E paths."
+      ],
+      "verification": [
+        "Run all relevant backend and frontend verification commands.",
+        "Run final .\\init.ps1.",
+        "Run Browser E2E for the account workflow.",
+        "Run git status and report remaining changes."
+      ]
+    }
+  ]
 }

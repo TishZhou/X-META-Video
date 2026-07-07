@@ -9,6 +9,7 @@ Record major decisions and progress each session. Keep the current verified stat
 - Standard web verification path: `corepack pnpm --filter @xmeta/web test`
 - Current highest-priority unfinished feature: Feature 4, Storyboard Node
 - Current active feature: Feature 4, Storyboard Node; current small task `storyboard-node-001` is `passing`, while the full editable Storyboard Node remains `in_progress`.
+- Account-system branch note: branch `zheng` is starting Feature 15 `auth-account-001` planning while preserving the shared Feature 4 storyboard/canvas context for merge coordination.
 - Current reset status: Feature 2 and Feature 3 have been removed from the active plan, their task files have been deleted, old web implementation files have been cleared while preserving minimal app structure, and the remaining feature plan has now been renumbered so old Features 4-17 are new Features 2-15.
 - Current feature numbering: Feature 1 remains Web Design and is now recorded as `passing`; Feature 2 is Workflow Canvas Foundation and is now `passing`; old Features 5-17 shifted to new Features 3-15.
 - Current web baseline: `/` renders the `web-design-004` app foundation with a global `AppShell`, global top bar, TriplD wave hero, feature preview, creation entry cards, and shared 88rem desktop page containers.
@@ -26,6 +27,16 @@ Record major decisions and progress each session. Keep the current verified stat
 - Current blocker: none.
 
 ## Session Log
+
+### Session 041
+
+- Date: 2026-07-07
+- Goal: Start Feature 15 `Production Auth And Workspace Management` with the planning-only `auth-account-001` slice, following AGENTS startup and artifact rules before any auth code is written.
+- Completed: Confirmed branch `zheng`, read AGENTS, product, architecture, feature list, progress, and recent commits; ran baseline `.\init.ps1`; decomposed Feature 15 into seven small features covering account planning, PostgreSQL/Alembic persistence, auth/session/account APIs, actor context/RBAC, auth UI, account center MVP, and closure evidence.
+- Planning decisions recorded: email/password registration is the first real login path; registration creates a default workspace and owner membership; roles are organization membership roles owner/admin/editor/viewer; invited members default to editor; sessions use HttpOnly cookies; GitHub/Google OAuth are disabled UI placeholders first; invitations, verification, and password reset use a development outbox first; Billing is owner-visible Coming soon UI only.
+- Branch context: Feature 15 account planning is recorded on `zheng` without erasing the current Feature 4 storyboard/canvas context.
+- Verification run: Baseline `.\init.ps1` passed before artifact work and reran web tests: 9 files / 40 tests. After artifact narrowing, JSON validation passed for `feature_tasks/15.json`, `git diff --check` passed with CRLF warnings only, and final `.\init.ps1` passed with 9 files / 40 tests.
+- Known risk or unresolved issue: `.env.example` currently carries real local provider configuration; the user explicitly said this is not part of the current cleanup scope.
 
 ### Session 040
 

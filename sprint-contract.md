@@ -1,77 +1,80 @@
-# Sprint Contract - Feature 3 Script Provider Truth
+# Sprint Contract - Feature 15 Account Planning
 
 ## Sprint Overview
 
-**Sprint:** feature-3-script-provider-truth
-**Feature:** Feature 3, Script Node
+**Sprint:** feature-15-auth-account-001
+**Feature:** Feature 15, Production Auth And Workspace Management
 **Status:** in_progress
-**Goal:** Make Script node AI interactions prove and display the actual backend text provider/model used, so the product no longer presents a frontend model label as if it were a live LLM connection.
+**Goal:** Decompose the production account system into small, verifiable slices before writing auth code, while preserving the active Feature 4 storyboard/canvas context.
 
 ## Write Scope
 
-- `packages/shared-contracts/src/index.ts`
-- `services/api/xmeta_api/schemas.py`
-- `services/api/xmeta_api/store.py`
-- `services/api/xmeta_api/main.py`
-- `services/api/tests/test_script_node.py`
-- `apps/web/src/lib/script-node/api.ts`
-- `apps/web/src/components/xmeta/workflow-canvas/workflow-canvas-workspace.tsx`
-- `apps/web/src/components/xmeta/workflow-canvas/workflow-canvas-workspace.test.tsx`
-- `docs/API.md`
-- `feature_tasks/3.json`
+- `feature_tasks/15.json`
 - `feature_list.json`
 - `sprint-contract.md`
 - `evaluator-rubric.md`
 - `progress.md`
 - `session-handoff.md`
-- `C:/Users/AI/.codex/skills/verify/SKILL.md`
 
-Protected existing edits:
+Protected scope:
 
-- Preserve unrelated pre-existing working tree changes including `.env.example`, `AGENTS.md`, `docs/PRODUCT.md`, `pnpm-workspace.yaml`, and untracked `scripts/`.
+- Do not edit application source code in `apps/`, `services/`, or `packages/` during `auth-account-001`.
+- Do not implement auth routes, database migrations, account UI, or RBAC in this slice.
+- Do not erase Feature 4 storyboard/canvas context while recording account-branch work.
+- Do not commit, push, or create a PR unless explicitly requested.
 
 ## In Scope
 
-- Add backend-returned `model` evidence to Script generation tasks and Script dialogue responses.
-- Keep the web app calling FastAPI only; no frontend model-provider calls.
-- Replace the misleading default `gpt-5.4-mini` frontend selector label with a server-configured label.
-- Display backend-confirmed provider/model in the Script response panel after chat or generation.
-- Show mock execution honestly when the backend falls back to the mock provider.
-- Add tests and Browser E2E evidence that validate the UI against backend-returned provider/model, not static frontend copy.
-- Update the verify skill with this rule for future AI/provider work.
+- Decompose Feature 15 into `auth-account-001` through `auth-account-007`.
+- Record the agreed account defaults:
+  - email/password registration is the first real login path.
+  - registration creates a default workspace and owner membership.
+  - roles are organization membership roles: owner, admin, editor, viewer.
+  - invited members default to editor.
+  - sessions use HttpOnly cookies.
+  - GitHub and Google OAuth are disabled UI placeholders first.
+  - invitation, verification, and password reset flows use a development outbox first.
+  - Billing is owner-visible Coming soon UI only.
+- Define verification expectations for backend, frontend, Browser E2E, JSON validation, git diff, and final startup.
+- Initialize evaluator rubric for the account planning slice.
 
 ## Out of Scope
 
-- Supplying real production credentials in this repo.
-- Streaming/SSE performance.
-- Durable chat persistence.
-- Full dialogue-history synthesis into the final generation prompt.
-- Media model execution.
-- Mobile UI polish.
+- Real auth API implementation.
+- PostgreSQL/Alembic migrations.
+- Login, registration, workspace selection, or account-center UI.
+- Real OAuth provider integration.
+- Real email provider integration.
+- Billing or payment provider integration.
+- Mobile-specific UI work.
+- Cleanup of `.env.example` real local provider values; this remains a recorded risk, not a blocker for this requested slice.
 
 ## Acceptance Criteria
 
-1. Script chat response includes `provider` and `model` from resolved backend settings.
-2. Script generation task status includes `provider` and `model` from resolved backend settings.
-3. The initial UI no longer claims `gpt-5.4-mini` as a frontend-selected model before backend confirmation.
-4. After Send or Generate, the response panel shows backend-confirmed provider/model; mock provider is visibly identified as mock backend execution.
-5. Tests cover backend response metadata, frontend rendering, and the absence of misleading static model claims.
-6. Browser E2E verifies the open `/workspace` product against the backend response path.
-7. `verify` skill records the new AI/provider verification rule.
+1. `feature_tasks/15.json` contains seven account-system small features with scope, acceptance criteria, and verification guidance.
+2. `feature_list.json` records `auth-account-001` as Feature 15 branch work and preserves Feature 4 context.
+3. `progress.md` and `session-handoff.md` record the account-system branch start on `zheng`.
+4. `evaluator-rubric.md` is initialized and then filled with evaluator evidence for this planning slice.
+5. Standard startup, JSON parsing, and `git diff --check` pass after artifact updates.
+6. Evaluator score is over 140 before this slice is accepted.
+
+## Verification Plan
+
+- Baseline: `.\init.ps1`
+- JSON validation:
+  - `Get-Content -Raw feature_list.json | ConvertFrom-Json | Out-Null`
+  - `Get-Content -Raw feature_tasks/15.json | ConvertFrom-Json | Out-Null`
+- Rubric initialization: `.\scripts\initialize-evaluator-rubric.ps1 -Updated 2026-07-07`
+- Diff hygiene: `git diff --check`
+- Final startup: `.\init.ps1`
 
 ## Sprint Log
 
 | Phase | Outcome |
 | --- | --- |
-| Baseline | Confirmed `D:\X-META-Video`, read startup docs, product, architecture, Feature 3 task state, recent commits, and verify skill. |
-| Startup | `.\init.ps1` passed before implementation and reran web tests: 9 files / 39 tests. |
-| Planning | User reported the product still looked like a frontend placeholder and was not visibly connected to their LLM. The missing piece was the AI modify reply content itself: the response panel needed to prove whether the assistant text came from mock or a live backend provider. User clarified `.env.example` is the current real local env file. |
-| Backend | Added `model` to Script dialogue responses and Script generation task state; changed mock defaults to `local-script-mock`; added process env, `.env`, `services/api/.env`, and `.env.example` reading for FastAPI provider config, with tests disabling dotenv loading to avoid accidental live calls. |
-| Frontend | The Script response panel now shows backend-confirmed provider/model beside AI modify replies and generated ScriptOutput. Mock replies use `AI修改 · mock backend`; live provider replies show `Backend: openai / gpt-5.4-mini`. |
-| Verify skill | Added an AI/provider verification rule requiring visible AI reply content to be checked against backend provider/model metadata and current config. |
-| Focused verification | `.\.venv\Scripts\python.exe -m pytest services\api\tests\test_script_node.py` passed: 23 tests. `.\.venv\Scripts\python.exe -m ruff check services\api` passed. `corepack pnpm --filter @xmeta/web test -- workflow-canvas-workspace.test.tsx` passed: 1 file / 16 tests. `corepack pnpm --filter @xmeta/web typecheck` passed. |
-| Full verification | `corepack pnpm --filter @xmeta/web test` passed: 9 files / 40 tests. `corepack pnpm --filter @xmeta/web build` passed and included `/workspace`. |
-| API preflight | Restarted the local FastAPI process and confirmed `POST /api/v1/projects/local-project/nodes/script-1/chat` reads `.env.example`, calls the live OpenAI-compatible provider, and returns assistant content with `provider: openai` and `model: gpt-5.4-mini`. |
-| Browser E2E | Passed on the user's already-open in-app browser tab at `http://localhost:3000/workspace`: initial UI had no static `gpt-5.4-mini` claim; AI modify opened conversation mode with backend waiting state; Send produced a natural-language assistant reply with `Backend: openai / gpt-5.4-mini`; no `Script AI turn` mock text or mock backend label appeared; console warn/error logs were empty. |
-| Evaluation | Main evaluation accepts `script-node-009` at 150 / 150 after live provider preflight and Browser E2E. |
-| Final startup | Final `.\init.ps1` passed after artifact updates and reran web tests: 9 files / 40 tests. |
+| Baseline | Confirmed `D:\xmeta video\X-META-Video`, branch `zheng`, and read AGENTS, product, architecture, feature list, progress, and recent commits. |
+| Startup | `.\init.ps1` passed before artifact work and reran web tests: 9 files / 40 tests. |
+| Planning | Feature 15 account system scope was decomposed into account planning, persistence, auth APIs, RBAC integration, auth UI, account center, and closure slices. |
+| Branch context | Feature 15 branch work is recorded on `zheng` while Feature 4 remains active in the shared storyboard/canvas context. |
+| Risk | `.env.example` currently carries real local provider configuration; user explicitly said not to handle it in this slice. |
+| Final verification | JSON validation passed for `feature_tasks/15.json`; `git diff --check` passed with CRLF warnings only; final `.\init.ps1` passed after artifact narrowing and reran web tests: 9 files / 40 tests. |
