@@ -21,10 +21,21 @@ Record major decisions and progress each session. Keep the current verified stat
 - Current Script Node direct-output revision: Feature 3 `script-node-010` adds `mode: "direct_output"` to the Script chat API so Generate asks for plain editable natural text instead of structured JSON, then renders that returned text inside a deterministic editable `Script outcome` node on the canvas.
 - Current Script Node reusable-output revision: Workflow nodes now distinguish source nodes from outcome nodes and carry reusable output metadata (`sourceNodeId`, `dataType`, `provider`, `model`, `editable`) for later image, video, audio, and export node renderers.
 - Current Script Node loading/env revision: Generate now shows a button spinner plus running-node loading bar while direct-output generation is pending. Real text-provider credentials live in gitignored `.env`; `.env.example` keeps `TEXT_MODEL_API_KEY` empty.
+- Current workflow node visual revision: Node cards no longer show duplicate floating icon/type labels above the card, and Script outcome content is flattened to one editable text frame with provider evidence in the node header.
 - Current Storyboard browser-comment revision: `/workspace` now shows confirmed Script output in the Script node preview after generation; the Storyboard AI response/history panel is fixed-height, scrollable, width-aligned with the composer, hideable/restorable, and keeps stable 820px/288px geometry at 50% canvas zoom; the composer dropdown is a model selector; errors render inside the Storyboard AI panel; and nodes can be dragged to negative x positions without a far-left invisible wall.
 - Current blocker: none.
 
 ## Session Log
+
+### Session 044
+
+- Date: 2026-07-07
+- Goal: Apply two browser comments across workflow nodes: remove repeated icon/type labels and reduce nested content frames, especially for Script outcome.
+- Baseline screenshot: Captured `/workspace` before implementation at 1674x1112; the baseline had 3 floating node labels above cards and no Script outcome in the fresh page state.
+- Completed: Removed the floating icon/type label above every `WorkflowNodeCard`; moved Script outcome provider evidence into the node header subtitle; flattened Script outcome content to a transparent editable textarea; and removed inner bordered content frames from standard node previews so the outer node card is the single visual frame.
+- Verification run: Focused workspace test passed 1 file / 18 tests. Full web tests passed 9 files / 43 tests. Web typecheck passed. Web build passed and included `/workspace`. Final `.\init.ps1` passed after artifact updates and reran web tests: 9 files / 43 tests.
+- Browser QA: Passed on `http://localhost:3000/workspace` after implementation at 1674x1112: floating label count was 0 before and after Generate; Generate created one Script outcome node; the outcome textarea used `border-0`, `bg-transparent`, and `p-0`; provider evidence remained visible as `Backend: openai / gpt-5.4-mini`; Storyboard output port still extended outside the card; console warn/error logs and failed requests were empty.
+- Known risk or unresolved issue: None for this visual simplification.
 
 ### Session 043
 

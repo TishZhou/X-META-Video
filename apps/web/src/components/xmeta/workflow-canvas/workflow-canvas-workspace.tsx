@@ -160,7 +160,6 @@ const SCRIPT_CONVERSATION_GUIDE =
 const SCRIPT_OUTCOME_TITLE = "Script outcome";
 const SCRIPT_OUTCOME_DESCRIPTION =
   "Editable direct text generated from the Script node.";
-const SCRIPT_OUTCOME_LOCAL_EDIT_LABEL = "Local editable output";
 const SCRIPT_OUTCOME_PORTS = [
   {
     key: "script-out",
@@ -2025,42 +2024,23 @@ export function ScriptOutcomeNodeEditor({
   onTextChange,
 }: ScriptOutcomeNodeEditorProps) {
   const outputText = text ?? "";
-  const backendLabel = formatWorkflowOutputExecutionLabel(node.output);
 
   return (
-    <section
-      className="flex flex-col gap-2 rounded-md border border-neutral-200 bg-neutral-50 p-3 text-xs leading-5 text-neutral-700"
-      data-script-outcome-node="true"
-    >
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <p className="truncate font-semibold text-neutral-950">{node.title}</p>
-          <p
-            className="truncate text-[11px] text-neutral-500"
-            data-script-outcome-provider="true"
-          >
-            {backendLabel}
-          </p>
-        </div>
-        <Badge className="shrink-0 border-neutral-200 bg-white text-neutral-600">
-          {SCRIPT_OUTCOME_LOCAL_EDIT_LABEL}
-        </Badge>
-      </div>
-
+    <div data-script-outcome-node="true">
       <label htmlFor={`${node.id}-text`} className="sr-only">
         Script direct output
       </label>
       <Textarea
         id={`${node.id}-text`}
         aria-label="Script direct output"
-        className="min-h-40 resize-none border-neutral-200 bg-white text-xs leading-5 shadow-none focus-visible:ring-neutral-950/20"
+        className="min-h-40 resize-none border-0 bg-transparent p-0 text-xs leading-5 text-neutral-800 shadow-none focus-visible:ring-0"
         data-script-outcome-textarea="true"
         onChange={(event) => onTextChange(event.target.value)}
         onKeyDown={(event) => event.stopPropagation()}
         placeholder="Generate direct Script text to edit it here."
         value={outputText}
       />
-    </section>
+    </div>
   );
 }
 
@@ -2107,7 +2087,9 @@ export function WorkflowNodeCard({
   const inputs = node.ports.filter((port) => port.direction === "input");
   const outputs = node.ports.filter((port) => port.direction === "output");
   const scriptPreview = formatScriptNodePreview(scriptInput, null);
-  const nodeKindLabel = node.output?.label ?? nodeTitles[node.type];
+  const nodeSubtitle = node.output?.provider
+    ? formatWorkflowOutputExecutionLabel(node.output)
+    : node.id;
   const running = node.status === "running";
 
   return (
@@ -2128,11 +2110,6 @@ export function WorkflowNodeCard({
         minHeight: NODE_HEIGHT,
       }}
     >
-      <div className="absolute -top-7 left-0 flex items-center gap-1 text-xs font-medium text-neutral-500">
-        <Icon aria-hidden="true" />
-        <span>{nodeKindLabel}</span>
-      </div>
-
       <button
         type="button"
         className="flex w-full cursor-grab items-start gap-3 rounded-t-lg px-4 py-4 text-left active:cursor-grabbing"
@@ -2150,8 +2127,13 @@ export function WorkflowNodeCard({
           <span className="block truncate text-sm font-semibold">
             {node.title}
           </span>
-          <span className="block truncate text-xs text-neutral-500">
-            {node.id}
+          <span
+            className="block truncate text-xs text-neutral-500"
+            data-script-outcome-provider={
+              node.output?.dataType === "script" ? "true" : undefined
+            }
+          >
+            {nodeSubtitle}
           </span>
         </span>
         <Badge className="border-neutral-200 bg-neutral-50 text-neutral-700">
@@ -2177,14 +2159,14 @@ export function WorkflowNodeCard({
             onTextChange={(value) => onScriptOutcomeTextChange(node.id, value)}
           />
         ) : node.type === "script" ? (
-          <div className="max-h-28 overflow-hidden rounded-md border border-neutral-200 bg-neutral-50 p-3 text-xs leading-5 text-neutral-700">
+          <div className="max-h-28 overflow-hidden text-xs leading-5 text-neutral-700">
             <p className="font-semibold text-neutral-950">
               {scriptPreview.heading}
             </p>
             <p>{scriptPreview.body}</p>
           </div>
         ) : node.type === "storyboard" ? (
-          <div className="rounded-md border border-neutral-200 bg-neutral-50 p-3">
+          <div>
             <div className="mb-3 flex items-center justify-center">
               <div className="flex flex-col gap-1.5">
                 <span className="block h-1 w-8 rounded bg-neutral-400" />
@@ -2201,11 +2183,11 @@ export function WorkflowNodeCard({
             </div>
           </div>
         ) : node.type === "composition" || node.type === "video" ? (
-          <div className="flex h-24 items-center justify-center rounded-md border border-neutral-200 bg-neutral-50">
+          <div className="flex h-24 items-center justify-center">
             <Film aria-hidden="true" className="text-neutral-500" />
           </div>
         ) : (
-          <div className="flex h-24 items-center justify-center rounded-md border border-neutral-200 bg-neutral-50">
+          <div className="flex h-24 items-center justify-center">
             <Image aria-hidden="true" className="text-neutral-500" />
           </div>
         )}

@@ -142,6 +142,7 @@ describe("WorkflowCanvasWorkspace", () => {
     expect(html).toContain('data-workflow-node="script"');
     expect(html).toContain('data-workflow-node="storyboard"');
     expect(html).toContain('data-workflow-node="composition"');
+    expect(html).not.toContain("-top-7");
     expect(html).toContain("Workflow connections");
     expect(html).toContain("World view");
     expect(html).toContain(
@@ -291,7 +292,7 @@ describe("WorkflowCanvasWorkspace", () => {
     ).toContain("Do not return JSON");
   });
 
-  it("renders editable direct text Script outcome nodes with backend evidence", () => {
+  it("renders editable direct text Script outcome nodes as one text frame", () => {
     const nodeId = createWorkflowOutputNodeId("script-1", "script");
     const node = {
       id: nodeId,
@@ -312,10 +313,16 @@ describe("WorkflowCanvasWorkspace", () => {
       },
     } satisfies WorkflowNode;
     const html = renderToStaticMarkup(
-      <ScriptOutcomeNodeEditor
+      <WorkflowNodeCard
         node={node}
-        text="A direct editable script result without JSON."
-        onTextChange={() => undefined}
+        scriptInput={null}
+        scriptOutcomeText="A direct editable script result without JSON."
+        selected={true}
+        pendingPort={null}
+        onScriptOutcomeTextChange={() => undefined}
+        onDragStart={() => undefined}
+        onSelect={() => undefined}
+        onPortConnectionStart={() => undefined}
       />,
     );
 
@@ -325,8 +332,9 @@ describe("WorkflowCanvasWorkspace", () => {
     expect(html).toContain('data-script-outcome-node="true"');
     expect(html).toContain('data-script-outcome-textarea="true"');
     expect(html).toContain("A direct editable script result without JSON.");
-    expect(html).toContain("Local editable output");
     expect(html).toContain("Backend: openai-compatible / test-model");
+    expect(html).not.toContain("Local editable output");
+    expect(html).toContain("border-0 bg-transparent p-0");
   });
 
   it("renders a loading animation on the Script node while generation runs", () => {

@@ -17,6 +17,8 @@
 - The product provider path now supports `openai` and `openai-compatible`; automated tests inject internal test fakes instead of exposing a fallback provider option to users.
 - Real text-provider credentials are stored in gitignored `.env`; `.env.example` keeps `TEXT_MODEL_API_KEY` empty.
 - Generate now shows `生成中` with a spinner on the button and a running spinner/progress bar on the Script node while the direct-output request is pending.
+- Workflow node cards no longer show duplicate floating icon/type labels above the card.
+- Script outcome content is flattened to a single editable text frame; backend provider/model evidence remains in the node header subtitle.
 
 ## Verification Evidence
 
@@ -42,6 +44,7 @@
 - Follow-up final `.\init.ps1` passed after artifact updates and reran web tests: 9 files / 43 tests.
 - Browser-comment follow-up restored workflow node connection points by removing node-card root clipping. Browser QA at 1674x1112 confirmed Storyboard node overflow is visible, left/right ports extend outside the card, and there were no console errors or failed requests.
 - Browser-comment follow-up final `.\init.ps1` passed after artifact updates and reran web tests: 9 files / 43 tests.
+- Browser-comment visual simplification captured a baseline screenshot before implementation, then verified after implementation that floating node labels were 0, Script outcome content used one transparent text frame, provider evidence remained visible in the node header, ports still extended outside cards, and no console errors or failed requests occurred. Follow-up tests passed: focused workspace 1 file / 18 tests, full web 9 files / 43 tests, typecheck, build, and final `.\init.ps1`.
 
 ## Boundaries
 

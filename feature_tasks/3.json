@@ -225,7 +225,7 @@
                                "id":  "script-node-010",
                                "title":  "Complete AI chatbox and direct text outcome node",
                                "status":  "passing",
-                               "user_visible_behavior":  "When the user clicks Generate, the Script node shows a loading animation, creates or updates an editable Script outcome node on the canvas, and renders direct natural text there instead of placing generated output in the AI chatbox history. If AI modify mode is active, Generate uses the conversation history as context; otherwise it uses the current world description directly. The current product path uses configured live providers only.",
+                               "user_visible_behavior":  "When the user clicks Generate, the Script node shows a loading animation, creates or updates an editable Script outcome node on the canvas, and renders direct natural text there instead of placing generated output in the AI chatbox history. Node cards avoid repeated floating icon labels, and Script outcome content is a single editable text frame. If AI modify mode is active, Generate uses the conversation history as context; otherwise it uses the current world description directly. The current product path uses configured live providers only.",
                                "acceptance_criteria":  [
                                                            "Generate calls the backend direct text path instead of asking the model for structured JSON text.",
                                                            "Generate creates or updates one deterministic Script outcome node on the canvas.",
@@ -234,7 +234,9 @@
                                                            "AI modify and Send remain conversational, and Generate uses dialogue history only when AI modify mode is active.",
                                                            "The UI and provider configuration expose only configured live provider paths, with automated tests using internal fake providers instead of product fallback providers.",
                                                            "The shared workflow output-node metadata can be reused for later AI nodes with different payload renderers.",
-                                                           "Generate shows a visible loading animation while the backend direct-output request is running."
+                                                           "Generate shows a visible loading animation while the backend direct-output request is running.",
+                                                           "Workflow nodes do not repeat the same icon in a floating label above the card.",
+                                                           "Script outcome content uses a single editable text frame without nested metadata boxes."
                                                        ],
                                "verification":  [
                                                     "2026-07-07 baseline .\\init.ps1 passed before implementation and reran web tests: 9 files / 40 tests.",
@@ -255,7 +257,14 @@
                                                     "2026-07-07 follow-up corepack pnpm --filter @xmeta/web test -- workflow-canvas-workspace.test.tsx passed: 1 file / 18 tests.",
                                                     "2026-07-07 follow-up corepack pnpm --filter @xmeta/web test passed: 9 files / 43 tests.",
                                                     "2026-07-07 follow-up corepack pnpm --filter @xmeta/web typecheck passed.",
-                                                    "2026-07-07 follow-up corepack pnpm --filter @xmeta/web build passed and included /workspace."
+                                                    "2026-07-07 follow-up corepack pnpm --filter @xmeta/web build passed and included /workspace.",
+                                                    "2026-07-07 browser-comment baseline screenshot captured before implementation: /workspace had 3 floating node labels before simplification.",
+                                                    "2026-07-07 browser-comment follow-up removed repeated floating node labels and flattened Script outcome content into a single transparent editable text frame.",
+                                                    "2026-07-07 browser-comment Browser E2E passed on http://localhost:3000/workspace: floating node labels were 0 before and after Generate, Script outcome provider remained visible in the node header, outcome textarea used border-0/bg-transparent/p-0, Storyboard output port still extended outside the card, and no console errors or failed requests were recorded.",
+                                                    "2026-07-07 browser-comment corepack pnpm --filter @xmeta/web test -- workflow-canvas-workspace.test.tsx passed: 1 file / 18 tests.",
+                                                    "2026-07-07 browser-comment corepack pnpm --filter @xmeta/web test passed: 9 files / 43 tests.",
+                                                    "2026-07-07 browser-comment corepack pnpm --filter @xmeta/web typecheck passed.",
+                                                    "2026-07-07 browser-comment corepack pnpm --filter @xmeta/web build passed and included /workspace."
                                                 ]
                            }
                        ]
