@@ -44,9 +44,10 @@
 - Evaluation subagent initially scored 82/100, then source behavior re-scored at 96/100 with no open P1/P2 findings after invalid-env and unsupported-provider fixes.
 - Final rubric score after artifact closure is recorded as 98/100.
 - 2026-07-07 Feature 3 closure verification: baseline `.\init.ps1` passed with web tests 9 files / 37 tests; `.\\.venv\\Scripts\\python.exe -m pytest services\\api\\tests` passed 20 tests with Starlette TestClient and pytest cache warnings; `.\\.venv\\Scripts\\python.exe -m ruff check services\\api` passed; focused workspace test passed 1 file / 14 tests; full web tests passed 9 files / 38 tests; web typecheck passed; JSON validation passed for `feature_list.json` and `feature_tasks/3.json`; HTTP route smoke for `http://127.0.0.1:3000/workspace` returned 200.
-- Browser plugin setup succeeded for rendered QA, but Browser use URL policy blocked navigation to `localhost:3000`; no alternate browser workaround was attempted.
+- Initial Browser plugin E2E was blocked because direct tool navigation to `localhost:3000` hit Browser use URL policy; no alternate browser workaround was attempted.
+- Follow-up Browser E2E passed on the user's already-open in-app browser tab at `http://localhost:3000/workspace`: page identity matched Workspace Canvas, Script AI boundary was visible, old `AI disabled` copy was absent, `AI淇敼` accepted a new prompt, the response panel showed revise mode and generated mock Script reply, the Script node stayed ready, no framework overlay appeared, and no new warn/error logs were recorded.
 - `corepack pnpm --filter @xmeta/web build` passed and included `/workspace`.
-- Evaluator subagent accepted Feature 3 closure at 143 / 150.
+- Evaluator subagent accepted Feature 3 closure at 143 / 150; after successful main follow-up Browser E2E, final recorded rubric score is 147 / 150.
 - Final `.\init.ps1` passed after artifact updates and reran web tests: 9 files / 38 tests.
 
 ## Boundaries
