@@ -4,7 +4,7 @@
     "title": "Script Node",
     "status": "passing"
   },
-  "planning_status": "script_node_openai_text_provider_passing",
+  "planning_status": "script_node_ai_dialogue_generation_closure_passing",
   "notes": [
     "Feature 3 implements the Script Node MV world-description input/output interaction and API contract only.",
     "The current Script Node input is a single AI chat-style world-view description.",
@@ -13,7 +13,8 @@
     "Prompt wording is intentionally centralized and adjustable later without changing route or UI contracts.",
     "Real provider credentials are supplied through environment variables; mock provider remains the default verification path.",
     "Storyboards as a separate editable node remain Feature 4.",
-    "2026-07-06 provider optimization scope adds OpenAI text execution for Script Node while keeping image, video, and music as agent-layer configuration slots only."
+    "2026-07-06 provider optimization scope adds OpenAI text execution for Script Node while keeping image, video, and music as agent-layer configuration slots only.",
+    "2026-07-07 closure confirms Feature 3 includes both the canvas Script node and its AI dialogue path for generating full ScriptOutput from the composer."
   ],
   "small_features": [
     {
@@ -102,6 +103,34 @@
         "2026-07-06 JSON validation passed for feature_list.json and feature_tasks/3.json.",
         "2026-07-06 git diff --check passed with LF/CRLF warnings only.",
         "2026-07-06 final .\\init.ps1 passed after artifact updates and reran web tests: 9 files / 33 tests."
+      ]
+    },
+    {
+      "id": "script-node-006",
+      "title": "Close Script Node AI dialogue generation behavior",
+      "status": "passing",
+      "user_visible_behavior": "The selected Script node has an inline AI dialogue composer where both AI modify and Generate run Script generation, show the assistant-style response history, and keep downstream media and persistence gaps clearly deferred.",
+      "acceptance_criteria": [
+        "Feature 3 task coverage explicitly includes the canvas Script node plus the AI dialogue script-generation path.",
+        "AI modify and Generate both use the Script generation runner; AI modify preserves revise response mode and Generate preserves generation response mode.",
+        "The workspace boundary label says Script AI is enabled while media AI and production persistence remain deferred.",
+        "Backend Script generation resolves saved node provider, model, and temperature settings before falling back to server env defaults.",
+        "Mock remains the default local verification provider and OpenAI/openai-compatible still fail clearly when credentials are missing.",
+        "Browser E2E is attempted through the required Browser plugin path; if blocked by Browser policy, the blocker is recorded instead of bypassed."
+      ],
+      "verification": [
+        "2026-07-07 baseline .\\init.ps1 passed before closure work and reran web tests: 9 files / 37 tests.",
+        "2026-07-07 .\\.venv\\Scripts\\python.exe -m pytest services\\api\\tests passed: 20 tests with Starlette TestClient and pytest cache warnings.",
+        "2026-07-07 corepack pnpm --filter @xmeta/web test -- workflow-canvas-workspace.test.tsx passed: 1 file / 14 tests.",
+        "2026-07-07 corepack pnpm --filter @xmeta/web test passed: 9 files / 38 tests.",
+        "2026-07-07 corepack pnpm --filter @xmeta/web typecheck passed.",
+        "2026-07-07 .\\.venv\\Scripts\\python.exe -m ruff check services\\api passed.",
+        "2026-07-07 JSON validation passed for feature_list.json and feature_tasks/3.json.",
+        "2026-07-07 HTTP route smoke check passed for http://127.0.0.1:3000/workspace with status 200.",
+        "2026-07-07 Browser plugin E2E navigation to localhost:3000 was blocked by Browser use URL policy, so no alternate browser workaround was attempted.",
+        "2026-07-07 corepack pnpm --filter @xmeta/web build passed and included /workspace.",
+        "2026-07-07 evaluator subagent accepted Feature 3 closure at 143 / 150.",
+        "2026-07-07 final .\\init.ps1 passed after artifact updates and reran web tests: 9 files / 38 tests."
       ]
     }
   ]

@@ -6,13 +6,13 @@ import httpx
 import pytest
 from fastapi.testclient import TestClient
 
-from xmeta_api.main import app
+from xmeta_api.main import _resolve_script_provider_settings, app
 from xmeta_api.providers import (
     OpenAICompatibleScriptProvider,
     ProviderExecutionError,
     ScriptProviderSettings,
 )
-from xmeta_api.schemas import ScriptInput
+from xmeta_api.schemas import ScriptInput, ScriptSettings
 from xmeta_api.store import store
 
 
@@ -53,10 +53,17 @@ def script_payload(**overrides: object) -> dict[str, object]:
     return payload
 
 
-def save_node(project_id: str = "project-1", node_id: str = "script-1") -> dict[str, object]:
+def save_node(
+    project_id: str = "project-1",
+    node_id: str = "script-1",
+    settings: dict[str, object] | None = None,
+) -> dict[str, object]:
     response = client.patch(
         f"/api/v1/projects/{project_id}/nodes/{node_id}",
-        json={"input": script_payload(), "settings": {"provider": "mock"}},
+        json={
+            "input": script_payload(),
+            "settings": {"provider": "mock"} if settings is None else settings,
+        },
     )
     assert response.status_code == 200
     return response.json()
@@ -137,6 +144,46 @@ def test_task_result_returns_deterministic_mock_script_output() -> None:
     assert result["missing_inputs"] == []
 
 
+def test_saved_mock_provider_settings_override_env_openai_without_credentials(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("TEXT_MODEL_PROVIDER", "openai")
+    monkeypatch.setenv("TEXT_MODEL_NAME", "gpt-env")
+    saved = save_node(settings={"provider": "mock", "model": "local-script-mock"})
+
+    response = client.post("/api/v1/projects/project-1/nodes/script-1/run")
+
+    assert response.status_code == 202
+    task = response.json()
+    assert task["status"] == "succeeded"
+    assert task["provider"] == "mock"
+    assert task["input_version"] == saved["version"]
+
+
+def test_node_provider_settings_override_env_model_and_temperature(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("TEXT_MODEL_PROVIDER", "mock")
+    monkeypatch.setenv("TEXT_MODEL_BASE_URL", "https://text-model.test/v1")
+    monkeypatch.setenv("TEXT_MODEL_API_KEY", "server-key")
+    monkeypatch.setenv("TEXT_MODEL_NAME", "env-model")
+    monkeypatch.setenv("TEXT_MODEL_TEMPERATURE", "0.1")
+    monkeypatch.setenv("TEXT_MODEL_TIMEOUT_SECONDS", "42")
+    monkeypatch.setenv("TEXT_MODEL_MAX_RETRIES", "3")
+
+    settings = _resolve_script_provider_settings(
+        ScriptSettings(provider="OpenAI", model="node-model", temperature=0.7)
+    )
+
+    assert settings.provider == "openai"
+    assert settings.model == "node-model"
+    assert settings.temperature == 0.7
+    assert settings.base_url == "https://text-model.test/v1"
+    assert settings.api_key == "server-key"
+    assert settings.timeout_seconds == 42
+    assert settings.max_retries == 3
+
+
 def test_text_model_config_defaults_to_mock() -> None:
     settings = ScriptProviderSettings.from_env()
 
@@ -182,8 +229,7 @@ def test_text_model_config_supports_legacy_script_model_env(
 def test_text_model_provider_fails_clearly_when_config_is_missing(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    save_node()
-    monkeypatch.setenv("TEXT_MODEL_PROVIDER", "openai")
+    save_node(settings={"provider": "openai"})
 
     response = client.post("/api/v1/projects/project-1/nodes/script-1/run")
 
@@ -196,7 +242,7 @@ def test_text_model_provider_fails_clearly_when_config_is_missing(
 def test_text_model_provider_fails_clearly_for_invalid_numeric_env(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    save_node()
+    save_node(settings={})
     monkeypatch.setenv("TEXT_MODEL_PROVIDER", "openai")
     monkeypatch.setenv("OPENAI_API_KEY", "test-key")
     monkeypatch.setenv("TEXT_MODEL_TIMEOUT_SECONDS", "slow")
@@ -210,7 +256,7 @@ def test_text_model_provider_fails_clearly_for_invalid_numeric_env(
 def test_text_model_provider_rejects_unsupported_provider_name(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    save_node()
+    save_node(settings={})
     monkeypatch.setenv("TEXT_MODEL_PROVIDER", "seedance")
     monkeypatch.setenv("OPENAI_API_KEY", "test-key")
 

@@ -7,7 +7,14 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .providers import ProviderConfigurationError, ScriptProviderSettings, get_script_provider
 from .runner import run_script_task_sync
-from .schemas import ScriptNodeSaveRequest, ScriptNodeState, TaskResult, TaskState, TaskStatus
+from .schemas import (
+    ScriptNodeSaveRequest,
+    ScriptNodeState,
+    ScriptSettings,
+    TaskResult,
+    TaskState,
+    TaskStatus,
+)
 from .store import store
 
 
@@ -57,7 +64,7 @@ def run_script_node(project_id: str, node_id: str) -> TaskState:
         )
 
     try:
-        settings = ScriptProviderSettings.from_env()
+        settings = _resolve_script_provider_settings(node.settings)
         provider = get_script_provider(settings)
     except ProviderConfigurationError as exc:
         raise HTTPException(
@@ -72,6 +79,36 @@ def run_script_node(project_id: str, node_id: str) -> TaskState:
         provider=settings.provider,
     )
     return run_script_task_sync(store=store, provider=provider, task=task, node=node)
+
+
+def _resolve_script_provider_settings(
+    node_settings: ScriptSettings,
+) -> ScriptProviderSettings:
+    env_settings = ScriptProviderSettings.from_env()
+    provider = (
+        node_settings.provider.strip().lower()
+        if node_settings.provider and node_settings.provider.strip()
+        else env_settings.provider
+    )
+    model = (
+        node_settings.model.strip()
+        if node_settings.model and node_settings.model.strip()
+        else env_settings.model
+    )
+
+    return ScriptProviderSettings(
+        provider=provider,
+        base_url=env_settings.base_url,
+        api_key=env_settings.api_key,
+        model=model,
+        temperature=(
+            node_settings.temperature
+            if node_settings.temperature is not None
+            else env_settings.temperature
+        ),
+        timeout_seconds=env_settings.timeout_seconds,
+        max_retries=env_settings.max_retries,
+    )
 
 
 @app.get("/api/v1/tasks/{task_id}", response_model=TaskState)

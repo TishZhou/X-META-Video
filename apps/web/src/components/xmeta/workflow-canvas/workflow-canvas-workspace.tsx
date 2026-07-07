@@ -162,6 +162,7 @@ const emptyScriptTask: ScriptTaskStatusResponse = {
 
 type ScriptModelSelection = "mock" | "configured";
 type ScriptResponseMode = "generation" | "revise";
+type ScriptGenerationAction = "generate" | "revise";
 type ImageEditorFrame = {
   x: number;
   y: number;
@@ -202,6 +203,12 @@ function findScriptModelOption(id: ScriptModelSelection) {
   return (
     scriptModelOptions.find((model) => model.id === id) ?? scriptModelOptions[0]
   );
+}
+
+export function getScriptResponseModeForAction(
+  action: ScriptGenerationAction,
+): ScriptResponseMode {
+  return action === "revise" ? "revise" : "generation";
 }
 
 export function calculateDraggedNodePosition(
@@ -743,7 +750,7 @@ export function WorkflowCanvasWorkspace({
             className="pointer-events-none absolute left-4 top-16 z-30 max-w-[calc(100vw-2rem)] rounded-lg border border-neutral-200 bg-white/90 px-3 py-1.5 text-xs text-neutral-600 shadow-sm backdrop-blur"
             data-workspace-boundary-label="true"
           >
-            Local only / FastAPI deferred / AI disabled
+            Local workflow only / Script AI enabled / media AI and persistence deferred
           </div>
 
           <div
@@ -821,15 +828,14 @@ export function WorkflowCanvasWorkspace({
                   model={scriptModel}
                   task={scriptTask}
                   viewportZoom={state.viewport.zoom}
-                  onGenerate={() => {
-                    setScriptResponseMode("generation");
+                  onGenerate={(responseMode) => {
+                    setScriptResponseMode(responseMode);
                     setScriptHistoryOpen(true);
                     void generateScriptNode();
                   }}
                   onHistoryOpenChange={setScriptHistoryOpen}
                   onInputChange={updateScriptInput}
                   onModelChange={setScriptModel}
-                  onResponseModeChange={setScriptResponseMode}
                 />
               ) : null}
             </div>
@@ -1189,14 +1195,13 @@ type ScriptNodeInlineEditorProps = {
   output: ScriptNodeOutput | null;
   task: ScriptTaskStatusResponse;
   viewportZoom: number;
-  onGenerate: () => void;
+  onGenerate: (responseMode: ScriptResponseMode) => void;
   onHistoryOpenChange: (open: boolean) => void;
   onInputChange: <Field extends keyof ScriptNodeInput>(
     field: Field,
     value: ScriptNodeInput[Field],
   ) => void;
   onModelChange: (model: ScriptModelSelection) => void;
-  onResponseModeChange: (mode: ScriptResponseMode) => void;
 };
 
 function ScriptNodeInlineEditor({
@@ -1214,15 +1219,13 @@ function ScriptNodeInlineEditor({
   onHistoryOpenChange,
   onInputChange,
   onModelChange,
-  onResponseModeChange,
 }: ScriptNodeInlineEditorProps) {
   const promptReady = input.world_description.trim().length > 0;
   const left = node.position.x - (SCRIPT_INLINE_EDITOR_WIDTH - NODE_WIDTH) / 2;
   const top = node.position.y + NODE_HEIGHT + SCRIPT_INLINE_EDITOR_GAP;
 
   function handleAiRevise() {
-    onResponseModeChange("revise");
-    onHistoryOpenChange(true);
+    onGenerate(getScriptResponseModeForAction("revise"));
   }
 
   return (
@@ -1311,7 +1314,9 @@ function ScriptNodeInlineEditor({
               aria-label="Generate Script node"
               className="h-9 rounded-lg px-4 text-xs"
               disabled={busy || !promptReady}
-              onClick={onGenerate}
+              onClick={() =>
+                onGenerate(getScriptResponseModeForAction("generate"))
+              }
               type="button"
             >
               {busy ? SCRIPT_GENERATING_LABEL : SCRIPT_GENERATE_LABEL}

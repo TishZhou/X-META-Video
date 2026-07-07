@@ -18,34 +18,8 @@
                          "id":  1,
                          "title":  "Web Design",
                          "status":  "passing",
-                         "verification":  [
-                                              "Read feature_tasks/1.json completely before working on this feature.",
-                                              "Run .\\init.ps1 and record evidence before marking this feature passing."
-                                          ],
                          "current_task":  "web-design-004",
                          "current_task_status":  "passing",
-                         "current_task_evidence":  [
-                                                       "apps/web/src/app/page.tsx implements the light English landing prototype with TriplD GlowyWavesHero, DynamicTagCloud hero tags, smooth Launch Studio scroll, feature preview slider, and two creation entry cards.",
-                                                       "apps/web/src/components/xmeta/app-top-bar.tsx provides the reusable top bar mounted from apps/web/src/app/layout.tsx.",
-                                                       "apps/web/src/components/uitripled/image-slider-card-shadcnui.tsx exposes reusable slide data and compact accessible controls for Fast, Assets Library, and Block-Based Pipeline.",
-                                                       "apps/web/src/components/uitripled/preview-details-card-shadcnui.tsx supports reusable hover/focus details and animated start buttons for Comic Drama Creation and MV Creation.",
-                                                       "apps/web/src/components/uitripled/preview-details-card-shadcnui.tsx now uses TriplD NativeStartNow for animated entry buttons.",
-                                                       "corepack pnpm --filter @xmeta/web test passed: 5 test files / 15 tests.",
-                                                       "corepack pnpm --filter @xmeta/web typecheck passed.",
-                                                       "Hero Fast, Assets Library, and Block-Based Pipeline tags now render through TriplD DynamicTagCloud instead of static hero pills; DynamicTagCloud uses stable offsets for SSR-safe rendering.",
-                                                       "Browser QA passed on desktop and 390x844 mobile: reusable top bar, English-only root copy, TriplD wave hero canvas, visible first-frame hero content, no Prototype boundary copy, smooth Launch Studio scroll target, compact slider controls, entry-card focus reveal, console health, and no horizontal overflow.",
-                                                       "Evaluator subagent using uiux-design-evaluator recorded 100/100 with no open P1/P2/P3 findings for the requested light verification scope after the TriplD wave hero revision.",
-                                                       "web-design-004 started on 2026-06-26 to complete the app foundation, global shell/container setup, and wider desktop layout pass while preserving TriplD visible components.",
-                                                       "web-design-004 added reusable AppShell, PageContainer, and PageSection primitives; mounted the shell globally from apps/web/src/app/layout.tsx; aligned AppTopBar and root sections to the shared max-w-[88rem] desktop container; and kept the root page faithful to the existing TriplD hero, slider, preview-card, and animated-entry patterns.",
-                                                       "corepack pnpm --filter @xmeta/web test passed: 6 test files / 19 tests.",
-                                                       "corepack pnpm --filter @xmeta/web typecheck passed.",
-                                                       "corepack pnpm --filter @xmeta/web build passed with routes /, /_not-found, /icon.svg, and /tripled-test.",
-                                                       "git diff --check passed after trailing whitespace cleanup; output had only LF/CRLF warnings.",
-                                                       "Final .\\init.ps1 passed and reran web tests: 6 test files / 19 tests.",
-                                                       "Browser QA on http://localhost:3000 passed for desktop root rendering, global top bar, TriplD hero canvas, nonblank content, no framework overlay, no console warn/error logs, no old prototype copy, Launch Studio scrolling to #creation-entries, and no horizontal overflow.",
-                                                       "Wide desktop Browser QA at 1600x900 measured a 1408px top bar/page-section inner width from the shared max-w-[88rem] container, with viewport/client width equal to scrollWidth.",
-                                                       "Evaluator subagent using uiux-design-evaluator recorded 100/100 with no open P1/P2/P3 findings and concluded the widened 88rem desktop layout is not too narrow for this scope."
-                                                   ],
                          "user_visible_behavior":  "Users get a light landing page prototype with a hero, three-slide feature preview, and clear creation entries for comic drama and MV workflows.",
                          "task_file":  "feature_tasks/1.json"
                      },
@@ -53,35 +27,8 @@
                          "id":  2,
                          "title":  "Workflow Canvas Foundation",
                          "status":  "passing",
-                         "verification":  [
-                                              "Read feature_tasks/2.json completely before working on this feature.",
-                                              "Run .\\init.ps1 and record evidence before marking this feature passing."
-                                          ],
                          "current_task":  "workflow-canvas-008",
                          "current_task_status":  "passing",
-                         "current_task_evidence":  [
-                                                       "apps/web/src/app/workspace/page.tsx implements the /workspace route for the Workflow Canvas Foundation.",
-                                                       "apps/web/src/components/xmeta/workflow-canvas/workflow-canvas-workspace.tsx implements the dark canvas work surface with floating project/status controls, one bottom Add node entry, state-driven SVG edges, selectable graph items, compact in-canvas status, local-only status, and deferred backend/AI labels.",
-                                                       "apps/web/src/lib/workflow-canvas/graph.ts and apps/web/src/lib/workflow-canvas/types.ts define typed graph records for nodes, ports, edges, selection, viewport, draft status, and structured snapshots.",
-                                                       "apps/web/src/lib/workflow-canvas/graph.test.ts verifies deterministic add, move, select, delete, compatible connection, invalid/duplicate rejection, and snapshot round-trip behavior without DOM HTML persistence.",
-                                                       "apps/web/src/components/ui/tooltip.tsx, tabs.tsx, and separator.tsx were added through the shadcn CLI using direct pnpm after corepack pnpm dlx hit a pnpm version mismatch.",
-                                                       "corepack pnpm --filter @xmeta/web test passed after evaluator fixes: 9 test files / 26 tests.",
-                                                       "corepack pnpm --filter @xmeta/web typecheck passed.",
-                                                       "corepack pnpm --filter @xmeta/web build passed and includes the /workspace route.",
-                                                       "Browser QA on http://localhost:3000/workspace desktop passed: route title correct, nonblank dark canvas, global top bar hidden, floating workspace top bar present, bottom toolbar present, no duplicated Node palette, no Inspector/right monitoring panel, no Quick add duplicate list, console warn/error logs empty, and no document overflow.",
-                                                       "Bottom Add node interaction QA passed before final visual closure: Add node opened the menu, Add Audio node changed rendered nodes from 3 to 4, and the menu closed after creation.",
-                                                       "Final .\\init.ps1 passed after artifact updates and reran web tests: 9 test files / 26 tests.",
-                                                       "2026-06-29 Feature 2 tailoring kept /workspace open in the in-app browser, moved the default three-node graph into a fully visible desktop-safe frame, added calculated initial/Fit view framing, and kept the single bottom Add node entry.",
-                                                       "2026-06-29 /workspace now shows a persistent boundary label: Local only / FastAPI deferred / AI disabled.",
-                                                       "2026-06-29 Add node interaction QA passed: Add Audio node changed rendered nodes from 3 to 4, closed the menu, and placed the new Audio node below the default graph without overlapping Script, Storyboard, or Composition.",
-                                                       "2026-06-29 verification passed: focused workflow canvas tests 2 files / 8 tests, full web tests 9 files / 27 tests, typecheck, build, fresh Browser QA with no warn/error logs during the QA window, JSON validation, git diff --check, and final .\\init.ps1 rerunning 9 files / 27 tests.",
-                                                       "2026-06-29 browser-comment tailoring removed the Select/Move/Fit view toolbar cluster, made blank-canvas drag pan the viewport, merged zoom into one Canvas zoom slider, simplified Add node into a node-name list, and changed connection creation to drag-line from output port to compatible input port.",
-                                                       "2026-06-29 browser-comment QA: Browser interaction pass verified Add node list-only menu, blank-canvas panning, and output-to-input drag connection changing edges 2 -> 3 before Browser drag automation became unstable on zoom; final Browser health check after code changes verified /workspace rendered with Canvas zoom slider DOM, removed toolbar labels absent, no framework overlay, and no warn/error logs.",
-                                                       "2026-06-29 browser-comment final verification passed: JSON validation, git diff --check with line-ending warnings only, and final .\\init.ps1 rerunning 9 files / 27 tests.",
-                                                       "2026-06-29 follow-up browser-comment implementation changed Canvas zoom into a toolbar-inline native range slider with 50%-140% free percentage selection and changed Add node labels to explicit Input -> Output flows.",
-                                                       "2026-06-29 follow-up browser-comment Browser QA verified the zoom range as input[type=range] min 50 max 140 step 1, changed canvas stage scale to 0.56, showed a visible 56% zoom state, and confirmed Add node menu labels include Audio: Input Dialogue -> Output Audio and Video: Input Image + Audio -> Output Video with no bare Audio item.",
-                                                       "2026-06-29 follow-up browser-comment final verification passed: focused workspace tests 1 file / 4 tests, full web tests 9 files / 28 tests, typecheck, build, JSON validation, git diff --check with line-ending warnings only, and final .\\init.ps1 rerunning 9 files / 29 tests."
-                                                   ],
                          "user_visible_behavior":  "Users can work on a Figma-like white canvas with nodes, edges, drag, free-percentage zoom, selection, a single bottom add entry with explicit input/output node flow labels, and restorable layout state.",
                          "task_file":  "feature_tasks/2.json"
                      },
@@ -89,67 +36,17 @@
                          "id":  3,
                          "title":  "Script Node",
                          "status":  "passing",
-                         "verification":  [
-                                              "Read feature_tasks/3.json completely before working on this feature.",
-                                              "Run .\\init.ps1 and record evidence before marking this feature passing."
-                                          ],
-                         "current_task":  "script-node-005",
+                         "current_task":  "script-node-006",
                          "current_task_status":  "passing",
-                         "current_task_evidence":  [
-                                                       "2026-06-29 baseline .\\init.ps1 passed before Feature 3 implementation and reran web tests: 9 test files / 29 tests.",
-                                                       "packages/shared-contracts/src/index.ts defines revised Script Node world_description input, storyboard direction, character profile, scene description, settings, task, and default input contracts.",
-                                                       "services/api/xmeta_api implements FastAPI Script Node PATCH/run/task/result routes, revised Pydantic schemas, in-memory dev state, centralized prompt builder, mock MV world provider, and SCRIPT_MODEL_* provider config validation.",
-                                                       ".env.example documents SCRIPT_MODEL_PROVIDER, SCRIPT_MODEL_BASE_URL, SCRIPT_MODEL_API_KEY, SCRIPT_MODEL_NAME, SCRIPT_MODEL_TIMEOUT_SECONDS, and SCRIPT_MODEL_MAX_RETRIES.",
-                                                       "apps/web/src/components/uitripled/ai-chat-interface-shadcnui.tsx now supports controlled Script Node usage and a compact chat variant while preserving default standalone behavior.",
-                                                       "apps/web/src/components/xmeta/workflow-canvas/workflow-canvas-workspace.tsx exposes the selected Script node editor with one AI chat-style MV world description input, saves/runs through FastAPI, renders selectable Storyboard/Characters/Scene response targets, and changes the Script node to ready only after output exists.",
-                                                       "Browser-comment UI revision changed /workspace to a white Figma-like dotted canvas, stacked Script Node input/output vertically, labeled Scene as composed from Storyboard + Characters, and changed the Script node card preview to show only the entered world view.",
-                                                       "Follow-up browser-comment UI revision moved Storyboard/Characters/Scene selection into the Generate-row dropdown with names only, removed the separate Choose output card, placed the Script Agent response above the MV world input, reused TriplD response typing for empty/running response state, and added drag/resize/close/reopen behavior to the Script editor.",
-                                                       "Inline-composer browser-comment UI revision removed the detached Script editor, bound one MV world input composer directly under the selected Script node, kept Storyboard/Characters/Scene selection in the composer footer, and made AI修改 reveal or create response history between the node and input.",
-                                                       "Backend verification passed: bundled Python pytest services/api/tests reported 5 passed with one upstream Starlette TestClient deprecation warning.",
-                                                       "Frontend verification passed: focused workspace tests 2 files / 10 tests, full web tests 9 files / 29 tests, typecheck, and build.",
-                                                       "Revised MV workflow verification passed: backend pytest 5 tests, backend ruff, focused workspace test 1 file / 5 tests, full web tests 9 files / 29 tests, typecheck, and build.",
-                                                       "Browser-comment verification passed: baseline .\\init.ps1, focused workspace plus TriplD chat tests 2 files / 9 tests, backend pytest 5 tests, backend ruff, full web tests 9 files / 29 tests, typecheck, and build.",
-                                                       "Browser-comment QA on http://127.0.0.1:3000/workspace passed: white canvas and editor backgrounds measured, vertical input/response flow confirmed, Storyboard/Characters/Scene output buttons worked, Script node preview contained only the submitted world view, endpoint sequence returned 200/202/200/200, console errors empty, failed requests empty, and no horizontal overflow.",
-                                                       "Follow-up browser-comment verification passed: baseline .\\init.ps1, focused workspace plus TriplD chat tests 2 files / 9 tests, full web tests 9 files / 29 tests, typecheck, build, bundled Python backend pytest 5 tests, and bundled Python ruff.",
-                                                       "Follow-up Browser QA on http://localhost:3002/workspace passed: Choose output absent, output dropdown options exactly Storyboard/Characters/Scene, Characters selection updated response title, response stayed above input, drag/resize changed editor geometry, close removed the editor, clicking Script reopened it, generation returned 200 PATCH / 202 POST / 200 task / 200 result, Script node became ready, console errors empty, failed requests empty, and no horizontal overflow.",
-                                                       "Inline-composer verification passed: baseline .\\init.ps1, focused workspace test 1 file / 5 tests, full web tests 9 files / 29 tests, typecheck after build regenerated .next/types, build, bundled Python backend pytest 5 tests, and bundled Python ruff.",
-                                                       "Inline-composer Browser QA on http://localhost:3002/workspace passed: no floating Script editor, inline composer below the selected Script node, history initially hidden, AI修改 generated response history between node and input, Characters output persisted, endpoint sequence returned 200 PATCH / 202 POST / 200 task / 200 result, Script node became ready, console errors empty, failed requests empty, and no horizontal overflow.",
-                                                       "Production Browser QA on http://127.0.0.1:3000/workspace passed for the revised MV workflow: AI chat-style world description input visible, input-to-output flow called PATCH/run/task/result endpoints with 200/202/200/200, Script node became ready, selectable Storyboard/Characters/Scene response targets rendered, no console errors, no failed requests, no document overflow, and no misleading video generation claim.",
-                                                       "Final closure passed: feature_list.json and feature_tasks/3.json JSON validation, git diff --check with line-ending warnings only, and final .\\init.ps1 rerunning web tests: 9 files / 29 tests.",
-                                                       "2026-07-06 script-node-005 replaced the non-executing OpenAI-compatible provider stub with a real server-side OpenAI-compatible text provider that posts to /responses, parses output_text or output content text, strips fenced JSON, and validates ScriptOutput.",
-                                                       "2026-07-06 .env.example and docs/API.md now document text, image, video, and music model categories; only text execution is implemented for Feature 3, while image/video/music remain honest configuration slots for later nodes.",
-                                                       "2026-07-06 provider env supports TEXT_MODEL_* with OPENAI_API_KEY fallback and legacy SCRIPT_MODEL_* compatibility; default text model is gpt-5.4-mini when OpenAI is selected.",
-                                                       "2026-07-06 backend pytest passed through .venv-api: 17 tests with one upstream Starlette TestClient deprecation warning.",
-                                                       "2026-07-06 backend ruff passed for services/api.",
-                                                       "2026-07-06 frontend safety test passed: corepack pnpm --filter @xmeta/web test reported 9 files / 33 tests.",
-                                                       "2026-07-06 evaluator subagent re-scored source behavior at 96/100 with no open P1/P2 findings after invalid env and unsupported-provider fixes."
-                                                   ],
-                         "user_visible_behavior":  "Users can enter one MV world-view description in an input composer directly under the Script node, choose Storyboard, Characters, or Scene from the composer footer, click AI修改 to show or create response history between the node and input, and generate structured storyboard direction, character profiles, and concrete scene descriptions through a backend API.",
+                         "user_visible_behavior":  "Users can use the selected Script node inline composer on the workflow canvas, enter one MV world prompt, and run either AI modify or Generate to produce an assistant-style script response plus structured ScriptOutput for downstream nodes.",
                          "task_file":  "feature_tasks/3.json"
                      },
                      {
                          "id":  4,
                          "title":  "Storyboard Node",
                          "status":  "in_progress",
-                         "verification":  [
-                                              "Read feature_tasks/4.json completely before working on this feature.",
-                                              "Run .\\init.ps1 and record evidence before marking this feature passing."
-                                          ],
                          "current_task":  "storyboard-node-001",
                          "current_task_status":  "passing",
-                         "current_task_evidence":  [
-                                                       "2026-06-29 browser-comment pass updated /workspace Storyboard inline response/composer behavior while keeping full editable Storyboard Node implementation deferred.",
-                                                       "apps/web/src/components/xmeta/workflow-canvas/workflow-canvas-workspace.tsx now renders confirmed Script output in the Script node preview after successful generation.",
-                                                       "Storyboard AI response/history is width-aligned with the composer, fixed-height, scrollable, chatbox-like, hideable, and restorable from AI修改.",
-                                                       "The inline response/composer compensates for canvas zoom; Browser QA measured panel/composer at 820px wide and panel height 288px while Canvas zoom was 50%.",
-                                                       "Node drag no longer has a far-left invisible wall; Browser QA dragged the Script node to a negative canvas left position.",
-                                                       "The composer selector is now a model selector, the redundant output-target badge near Generate is removed, and errors render inside the Storyboard AI response/status panel instead of a detached strip.",
-                                                       "Focused workspace component test passed: 1 file / 9 tests.",
-                                                       "Full web tests passed: 9 files / 33 tests; typecheck passed; build passed and included /workspace.",
-                                                       "Browser QA click-by-click on http://localhost:3000/workspace passed for AI修改 open, Hide close, model selection, configured-model error placement, mock Ready success path, confirmed Script preview, 50% zoom stability, and far-left node dragging.",
-                                                       "JSON validation passed for feature_list.json and feature_tasks/4.json; git diff --check passed with line-ending warnings only.",
-                                                       "Final .\\init.ps1 passed after artifact updates and reran web tests: 9 files / 33 tests."
-                                                   ],
                          "user_visible_behavior":  "Users can convert script output into an editable shot list with scene, character, action, dialogue, camera, duration, and prompt fields.",
                          "task_file":  "feature_tasks/4.json"
                      },
@@ -157,10 +54,6 @@
                          "id":  5,
                          "title":  "Character Image Node",
                          "status":  "not_started",
-                         "verification":  [
-                                              "Read feature_tasks/5.json completely before working on this feature.",
-                                              "Run .\\init.ps1 and record evidence before marking this feature passing."
-                                          ],
                          "user_visible_behavior":  "Users can generate character images from character profiles and receive reusable character asset references.",
                          "task_file":  "feature_tasks/5.json"
                      },
@@ -168,10 +61,6 @@
                          "id":  6,
                          "title":  "Scene Image Node",
                          "status":  "not_started",
-                         "verification":  [
-                                              "Read feature_tasks/6.json completely before working on this feature.",
-                                              "Run .\\init.ps1 and record evidence before marking this feature passing."
-                                          ],
                          "user_visible_behavior":  "Users can generate scene or background images from storyboard scene descriptions and receive reusable scene asset references.",
                          "task_file":  "feature_tasks/6.json"
                      },
@@ -179,10 +68,6 @@
                          "id":  7,
                          "title":  "Image Composition Node",
                          "status":  "not_started",
-                         "verification":  [
-                                              "Read feature_tasks/7.json completely before working on this feature.",
-                                              "Run .\\init.ps1 and record evidence before marking this feature passing."
-                                          ],
                          "user_visible_behavior":  "Users can combine character assets, scene assets, and shot data into a composed shot image or keyframe.",
                          "task_file":  "feature_tasks/7.json"
                      },
@@ -190,10 +75,6 @@
                          "id":  8,
                          "title":  "Audio Node",
                          "status":  "not_started",
-                         "verification":  [
-                                              "Read feature_tasks/8.json completely before working on this feature.",
-                                              "Run .\\init.ps1 and record evidence before marking this feature passing."
-                                          ],
                          "user_visible_behavior":  "Users can generate voice, singing, or narration audio from dialogue, lyrics, or narration text.",
                          "task_file":  "feature_tasks/8.json"
                      },
@@ -201,10 +82,6 @@
                          "id":  9,
                          "title":  "Video Node",
                          "status":  "not_started",
-                         "verification":  [
-                                              "Read feature_tasks/9.json completely before working on this feature.",
-                                              "Run .\\init.ps1 and record evidence before marking this feature passing."
-                                          ],
                          "user_visible_behavior":  "Users can generate short video clips from image or keyframe input, optional audio, and duration settings.",
                          "task_file":  "feature_tasks/9.json"
                      },
@@ -212,10 +89,6 @@
                          "id":  10,
                          "title":  "Export Node",
                          "status":  "not_started",
-                         "verification":  [
-                                              "Read feature_tasks/10.json completely before working on this feature.",
-                                              "Run .\\init.ps1 and record evidence before marking this feature passing."
-                                          ],
                          "user_visible_behavior":  "Users can assemble selected clips, audio, and export settings into a final comic drama, MV, or short-form video artifact.",
                          "task_file":  "feature_tasks/10.json"
                      },
@@ -223,10 +96,6 @@
                          "id":  11,
                          "title":  "Minimal Task Status And Retry",
                          "status":  "not_started",
-                         "verification":  [
-                                              "Read feature_tasks/11.json completely before working on this feature.",
-                                              "Run .\\init.ps1 and record evidence before marking this feature passing."
-                                          ],
                          "user_visible_behavior":  "Users can see generation task status, recover from failures, retry failed work, and look up generated results consistently across AI nodes.",
                          "task_file":  "feature_tasks/11.json"
                      },
@@ -234,10 +103,6 @@
                          "id":  12,
                          "title":  "Asset Library MVP",
                          "status":  "not_started",
-                         "verification":  [
-                                              "Read feature_tasks/12.json completely before working on this feature.",
-                                              "Run .\\init.ps1 and record evidence before marking this feature passing."
-                                          ],
                          "user_visible_behavior":  "Users can browse, inspect, select, and reuse generated character, scene, image, audio, video, and export assets.",
                          "task_file":  "feature_tasks/12.json"
                      },
@@ -245,10 +110,6 @@
                          "id":  13,
                          "title":  "Generation History And Version Timeline",
                          "status":  "not_started",
-                         "verification":  [
-                                              "Read feature_tasks/13.json completely before working on this feature.",
-                                              "Run .\\init.ps1 and record evidence before marking this feature passing."
-                                          ],
                          "user_visible_behavior":  "Users can review generation attempts, prompt/model metadata, asset versions, selected outputs, and recoverable timeline events.",
                          "task_file":  "feature_tasks/13.json"
                      },
@@ -256,10 +117,6 @@
                          "id":  14,
                          "title":  "9-Grid Storyboard Node",
                          "status":  "not_started",
-                         "verification":  [
-                                              "Read feature_tasks/14.json completely before working on this feature.",
-                                              "Run .\\init.ps1 and record evidence before marking this feature passing."
-                                          ],
                          "user_visible_behavior":  "Users can generate a 9-grid storyboard from selected shots, compositions, or keyframes.",
                          "task_file":  "feature_tasks/14.json"
                      },
@@ -267,10 +124,6 @@
                          "id":  15,
                          "title":  "Production Auth And Workspace Management",
                          "status":  "not_started",
-                         "verification":  [
-                                              "Read feature_tasks/15.json completely before working on this feature.",
-                                              "Run .\\init.ps1 and record evidence before marking this feature passing."
-                                          ],
                          "user_visible_behavior":  "Users can log in, select a workspace, and access projects, assets, tasks, and history through production account and role boundaries.",
                          "task_file":  "feature_tasks/15.json"
                      }

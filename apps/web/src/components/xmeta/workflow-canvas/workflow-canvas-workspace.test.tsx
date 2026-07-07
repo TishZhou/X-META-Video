@@ -17,6 +17,7 @@ import {
   formatScriptNodePreview,
   formatTemplateIoLabel,
   getInlineEditorCompensationScale,
+  getScriptResponseModeForAction,
   getScriptResponseStatusLabel,
   ImageNodeFloatingEditor,
   isEditableKeyboardTarget,
@@ -79,9 +80,10 @@ describe("WorkflowCanvasWorkspace", () => {
     expect(html).toContain('data-workflow-canvas="viewport"');
     expect(html).toContain('data-workspace-bottom-toolbar="true"');
     expect(html).toContain('data-workspace-boundary-label="true"');
-    expect(html).toContain("Local only");
-    expect(html).toContain("FastAPI deferred");
-    expect(html).toContain("AI disabled");
+    expect(html).toContain("Local workflow only");
+    expect(html).toContain("Script AI enabled");
+    expect(html).toContain("media AI and persistence deferred");
+    expect(html).not.toContain("AI disabled");
     expect(html).not.toContain("Node palette");
     expect(html).not.toContain("Inspector");
   });
@@ -159,6 +161,11 @@ describe("WorkflowCanvasWorkspace", () => {
     expect(html).not.toContain('aria-label="Close Script node editor"');
     expect(html).not.toContain("Choose output");
     expect(html).not.toContain("Storyboard + characters composed together");
+  });
+
+  it("maps Script AI modify and Generate actions to distinct response modes", () => {
+    expect(getScriptResponseModeForAction("revise")).toBe("revise");
+    expect(getScriptResponseModeForAction("generate")).toBe("generation");
   });
 
   it("renders the previous floating editor behavior for image-class nodes", () => {
