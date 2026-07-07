@@ -6,8 +6,13 @@ import json
 import httpx
 import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.pool import StaticPool
 
+from xmeta_api.account_models import AccountBase
 from xmeta_api.main import _resolve_script_provider_settings, app
+from xmeta_api.main import get_account_db
 from xmeta_api.providers import (
     OpenAICompatibleScriptProvider,
     ProviderExecutionError,
@@ -16,9 +21,6 @@ from xmeta_api.providers import (
 )
 from xmeta_api.schemas import ScriptDialogueMessage, ScriptInput, ScriptSettings
 from xmeta_api.store import store
-
-
-client = TestClient(app)
 
 
 @pytest.fixture(autouse=True)
@@ -51,6 +53,40 @@ def clean_store_and_provider_env(
     _load_dotenv_values.cache_clear()
 
 
+@pytest.fixture()
+def db_session() -> Generator[Session, None, None]:
+    engine = create_engine(
+        "sqlite+pysqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    AccountBase.metadata.create_all(engine)
+    SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
+    with SessionLocal() as session:
+        yield session
+
+
+@pytest.fixture()
+def client(db_session: Session) -> Generator[TestClient, None, None]:
+    def override_db() -> Generator[Session, None, None]:
+        yield db_session
+
+    app.dependency_overrides[get_account_db] = override_db
+    with TestClient(app) as test_client:
+        register = test_client.post(
+            "/api/v1/auth/register",
+            json={
+                "email": "script-owner@example.com",
+                "password": "correct horse battery staple",
+                "name": "Script Owner",
+                "workspace_name": "Script Workspace",
+            },
+        )
+        assert register.status_code == 201
+        yield test_client
+    app.dependency_overrides.clear()
+
+
 def script_payload(**overrides: object) -> dict[str, object]:
     payload: dict[str, object] = {
         "world_description": (
@@ -62,6 +98,7 @@ def script_payload(**overrides: object) -> dict[str, object]:
 
 
 def save_node(
+    client: TestClient,
     project_id: str = "project-1",
     node_id: str = "script-1",
     settings: dict[str, object] | None = None,
@@ -77,7 +114,7 @@ def save_node(
     return response.json()
 
 
-def test_patch_script_node_validates_required_world_description() -> None:
+def test_patch_script_node_validates_required_world_description(client: TestClient) -> None:
     response = client.patch(
         "/api/v1/projects/project-1/nodes/script-1",
         json={"input": script_payload(world_description="")},
@@ -86,8 +123,8 @@ def test_patch_script_node_validates_required_world_description() -> None:
     assert response.status_code == 422
 
 
-def test_patch_script_node_saves_input_and_versions_updates() -> None:
-    first = save_node()
+def test_patch_script_node_saves_input_and_versions_updates(client: TestClient) -> None:
+    first = save_node(client)
     second_response = client.patch(
         "/api/v1/projects/project-1/nodes/script-1",
         json={
@@ -107,8 +144,8 @@ def test_patch_script_node_saves_input_and_versions_updates() -> None:
     )
 
 
-def test_run_script_node_creates_succeeded_task_and_task_lookup() -> None:
-    saved = save_node()
+def test_run_script_node_creates_succeeded_task_and_task_lookup(client: TestClient) -> None:
+    saved = save_node(client)
 
     run_response = client.post("/api/v1/projects/project-1/nodes/script-1/run")
 
@@ -127,8 +164,8 @@ def test_run_script_node_creates_succeeded_task_and_task_lookup() -> None:
     assert lookup_response.json() == task
 
 
-def test_task_result_returns_deterministic_mock_script_output() -> None:
-    save_node()
+def test_task_result_returns_deterministic_mock_script_output(client: TestClient) -> None:
+    save_node(client)
     task = client.post("/api/v1/projects/project-1/nodes/script-1/run").json()
 
     result_response = client.get(f"/api/v1/tasks/{task['task_id']}/result")
@@ -153,7 +190,7 @@ def test_task_result_returns_deterministic_mock_script_output() -> None:
     assert result["missing_inputs"] == []
 
 
-def test_script_node_chat_returns_backend_dialogue_history() -> None:
+def test_script_node_chat_returns_backend_dialogue_history(client: TestClient) -> None:
     response = client.post(
         "/api/v1/projects/project-1/nodes/script-1/chat",
         json={
@@ -184,7 +221,7 @@ def test_script_node_chat_returns_backend_dialogue_history() -> None:
     assert body["history"][-1] == body["message"]
 
 
-def test_script_node_chat_validates_required_user_message() -> None:
+def test_script_node_chat_validates_required_user_message(client: TestClient) -> None:
     response = client.post(
         "/api/v1/projects/project-1/nodes/script-1/chat",
         json={
@@ -198,11 +235,12 @@ def test_script_node_chat_validates_required_user_message() -> None:
 
 
 def test_saved_mock_provider_settings_override_env_openai_without_credentials(
+    client: TestClient,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setenv("TEXT_MODEL_PROVIDER", "openai")
     monkeypatch.setenv("TEXT_MODEL_NAME", "gpt-env")
-    saved = save_node(settings={"provider": "mock", "model": "local-script-mock"})
+    saved = save_node(client, settings={"provider": "mock", "model": "local-script-mock"})
 
     response = client.post("/api/v1/projects/project-1/nodes/script-1/run")
 
@@ -281,9 +319,10 @@ def test_text_model_config_supports_legacy_script_model_env(
 
 
 def test_text_model_provider_fails_clearly_when_config_is_missing(
+    client: TestClient,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    save_node(settings={"provider": "openai"})
+    save_node(client, settings={"provider": "openai"})
 
     response = client.post("/api/v1/projects/project-1/nodes/script-1/run")
 
@@ -294,9 +333,10 @@ def test_text_model_provider_fails_clearly_when_config_is_missing(
 
 
 def test_text_model_provider_fails_clearly_for_invalid_numeric_env(
+    client: TestClient,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    save_node(settings={})
+    save_node(client, settings={})
     monkeypatch.setenv("TEXT_MODEL_PROVIDER", "openai")
     monkeypatch.setenv("OPENAI_API_KEY", "test-key")
     monkeypatch.setenv("TEXT_MODEL_TIMEOUT_SECONDS", "slow")
@@ -308,9 +348,10 @@ def test_text_model_provider_fails_clearly_for_invalid_numeric_env(
 
 
 def test_text_model_provider_rejects_unsupported_provider_name(
+    client: TestClient,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    save_node(settings={})
+    save_node(client, settings={})
     monkeypatch.setenv("TEXT_MODEL_PROVIDER", "seedance")
     monkeypatch.setenv("OPENAI_API_KEY", "test-key")
 

@@ -15,12 +15,24 @@ class InMemoryScriptStore:
         self._nodes: dict[tuple[str, str], ScriptNodeState] = {}
         self._tasks: dict[str, TaskState] = {}
         self._results: dict[str, ScriptOutput] = {}
+        self._project_orgs: dict[str, str] = {}
 
     def reset(self) -> None:
         with self._lock:
             self._nodes.clear()
             self._tasks.clear()
             self._results.clear()
+            self._project_orgs.clear()
+
+    def bind_project(self, project_id: str, organization_id: str) -> None:
+        with self._lock:
+            existing = self._project_orgs.get(project_id)
+            if existing is None:
+                self._project_orgs[project_id] = organization_id
+
+    def get_project_organization(self, project_id: str) -> str | None:
+        with self._lock:
+            return self._project_orgs.get(project_id)
 
     def save_node(
         self,
@@ -56,9 +68,11 @@ class InMemoryScriptStore:
         node_id: str,
         input_version: int,
         provider: str,
+        organization_id: str,
         model: str | None = None,
     ) -> TaskState:
         with self._lock:
+            self._project_orgs.setdefault(project_id, organization_id)
             now = datetime.now(UTC)
             task = TaskState(
                 task_id=str(uuid4()),
@@ -112,6 +126,13 @@ class InMemoryScriptStore:
     def get_task(self, task_id: str) -> TaskState | None:
         with self._lock:
             return self._tasks.get(task_id)
+
+    def get_task_organization(self, task_id: str) -> str | None:
+        with self._lock:
+            task = self._tasks.get(task_id)
+            if task is None:
+                return None
+            return self._project_orgs.get(task.project_id)
 
     def get_result(self, task_id: str) -> ScriptOutput | None:
         with self._lock:

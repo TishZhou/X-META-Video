@@ -5,7 +5,7 @@
 - Repository root: `D:\xmeta video\X-META-Video`
 - Feature 1 `Web Design`, Feature 2 `Workflow Canvas Foundation`, and Feature 3 `Script Node` are recorded as `passing`.
 - Feature 3 current task is `script-node-009`, recorded as `passing`.
-- Current active feature on branch `zheng` is Feature 15 `Production Auth And Workspace Management`; `auth-account-002` and `auth-account-003` are recorded as `passing`.
+- Current active feature on branch `zheng` is Feature 15 `Production Auth And Workspace Management`; `auth-account-002`, `auth-account-003`, and `auth-account-004` are recorded as `passing`.
 - Feature 4 `Storyboard Node` is paused for branch coordination and should resume in its own workstream.
 - Pre-existing unrelated working tree edits were preserved: `.env.example`, `AGENTS.md`, `docs/PRODUCT.md`, `pnpm-workspace.yaml`, and untracked `scripts/`.
 
@@ -26,7 +26,10 @@
 - Added `POST /api/v1/auth/register`, `POST /api/v1/auth/login`, `POST /api/v1/auth/refresh`, `POST /api/v1/auth/logout`, `GET /api/v1/auth/me`, `GET /api/v1/accounts`, and `POST /api/v1/accounts/active`.
 - Registration creates a default workspace and owner membership. Sessions use the HttpOnly `xmeta_session` cookie and auth responses do not expose access or refresh tokens.
 - Membership roles are durable lowercase values: owner, admin, editor, viewer. Development outbox invite tokens default to editor.
-- Account UI, OAuth provider routes, production email delivery, Billing, and applying RBAC to existing Script/Task APIs remain future slices.
+- `auth-account-004` adds backend actor context and RBAC for existing Script Node and Task APIs.
+- Script Node save/chat/run now require owner/admin/editor. Viewer can read same-workspace task status/result but cannot write or generate.
+- MVP in-memory project/task state is bound to the active organization on first write so another workspace cannot access a guessed project ID or task ID.
+- Account UI, OAuth provider routes, production email delivery, Billing, durable project persistence, and task retry/cancel routes remain future slices.
 
 ## Verification Evidence
 
@@ -41,6 +44,8 @@
 - Browser E2E passed on the user's in-app browser tab at `http://localhost:3000/workspace`: initial UI had no static `gpt-5.4-mini` claim; `AI modify` opened backend-waiting conversation state; Send produced a natural-language assistant reply with `Backend: openai / gpt-5.4-mini`; no `Script AI turn` mock text, mock backend label, or console warn/error logs.
 - Feature 15 backend verification: `.\.venv\Scripts\python.exe -m pytest tests` passed 31 tests with one StarletteDeprecationWarning; `.\.venv\Scripts\python.exe -m ruff check xmeta_api tests` passed; Alembic upgrade smoke passed with SQLite in-memory `DATABASE_URL`; JSON validation passed for `feature_list.json` and `feature_tasks/15.json`; `corepack pnpm --filter @xmeta/web test` passed 9 files / 40 tests; `corepack pnpm --filter @xmeta/web build` passed and included `/workspace`; `apps/web` direct `corepack pnpm exec tsc --noEmit` passed; `git diff --check` passed with CRLF warnings only; final `.\init.ps1` passed with 9 web files / 40 tests.
 - Feature 15 evaluator round 2 accepted the backend slice at 145 / 150.
+- Feature 15 RBAC verification: `.\.venv\Scripts\python.exe -m pytest tests\test_script_node_auth.py tests\test_script_node.py -q` passed 29 tests; `.\.venv\Scripts\python.exe -m pytest tests -q` passed 37 tests with one StarletteDeprecationWarning; `.\.venv\Scripts\python.exe -m ruff check xmeta_api tests` passed; Alembic smoke, JSON validation, git diff hygiene, web tests, web build, web typecheck, and final `.\init.ps1` passed.
+- Feature 15 evaluator accepted `auth-account-004` at 145 / 150.
 
 ## Boundaries
 
@@ -48,7 +53,7 @@
 - Current dialogue remains request/response from the UI perspective, not SSE/WebSocket streaming.
 - Conversation history is not yet automatically summarized into the generation prompt; users can refine the main prompt before Generate.
 - Durable chat persistence, queue workers, task event streaming, object storage, asset lineage, generated media, and export remain later feature scope.
-- Feature 15 remaining slices: `auth-account-004` actor context/RBAC for existing APIs, `auth-account-005` auth/workspace UI, `auth-account-006` full account center MVP, and `auth-account-007` closure evidence.
+- Feature 15 remaining slices: `auth-account-005` auth/workspace UI, `auth-account-006` full account center MVP, and `auth-account-007` closure evidence.
 
 ## Next Commands
 

@@ -222,6 +222,8 @@ The web app must display the returned `provider` and `model` beside Script AI re
 
 The dialogue endpoint is a request/response backend AI chat path for Feature 3. It does not create downstream-ready `ScriptOutput`; users run `/run` when the dialogue should be converted into structured output for later nodes.
 
+Feature 15 `auth-account-004` protects the MVP Script Node routes with active-workspace actor context. `PATCH /projects/{project_id}/nodes/{node_id}`, `/chat`, and `/run` require `owner`, `admin`, or `editor`; `viewer` is read-only. Until durable project persistence lands, the in-memory Script Node store binds a project ID to the active organization on first write and uses that binding for Script/Task access checks.
+
 ### Script Node Output
 Script generation task results return structured JSON under `output`, not assistant prose:
 

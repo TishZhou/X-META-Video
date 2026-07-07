@@ -2,13 +2,14 @@ from __future__ import annotations
 
 import os
 from collections.abc import Generator
+from dataclasses import dataclass
 
 from fastapi import Cookie, Depends, FastAPI, HTTPException, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
 from .account_database import iter_account_db
-from .account_models import Membership, Organization, RefreshSession, User
+from .account_models import Membership, MembershipRole, Organization, RefreshSession, User
 from .account_service import (
     AccountConflictError,
     AccountService,
@@ -65,6 +66,15 @@ app.add_middleware(
 )
 
 SESSION_COOKIE_NAME = "xmeta_session"
+EDITOR_ROLES = {MembershipRole.OWNER, MembershipRole.ADMIN, MembershipRole.EDITOR}
+
+
+@dataclass(frozen=True)
+class ActorContext:
+    user_id: str
+    organization_id: str
+    role: MembershipRole
+    membership: Membership
 
 
 def get_account_db() -> Generator[Session, None, None]:
@@ -144,6 +154,46 @@ def _current_session(
             detail="Authentication required.",
         )
     return service, refresh_session, user, membership
+
+
+def get_actor_context(
+    db: Session = Depends(get_account_db),
+    session_token: str | None = Cookie(default=None, alias=SESSION_COOKIE_NAME),
+) -> ActorContext:
+    _service, _refresh_session, user, membership = _current_session(db, session_token)
+    return ActorContext(
+        user_id=user.id,
+        organization_id=membership.organization_id,
+        role=membership.role,
+        membership=membership,
+    )
+
+
+def _require_project_membership(project_id: str, actor: ActorContext) -> None:
+    project_org = store.get_project_organization(project_id)
+    if project_org is not None and project_org != actor.organization_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have access to this project.",
+        )
+
+
+def _require_project_editor(project_id: str, actor: ActorContext) -> None:
+    _require_project_membership(project_id, actor)
+    if actor.role not in EDITOR_ROLES:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Editor role or higher is required.",
+        )
+
+
+def _require_task_membership(task_id: str, actor: ActorContext) -> None:
+    task_org = store.get_task_organization(task_id)
+    if task_org is not None and task_org != actor.organization_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have access to this task.",
+        )
 
 
 @app.post(
@@ -274,7 +324,10 @@ def save_script_node(
     project_id: str,
     node_id: str,
     request: ScriptNodeSaveRequest,
+    actor: ActorContext = Depends(get_actor_context),
 ) -> ScriptNodeState:
+    _require_project_editor(project_id, actor)
+    store.bind_project(project_id, actor.organization_id)
     return store.save_node(project_id, node_id, request.input, request.settings)
 
 
@@ -283,7 +336,12 @@ def save_script_node(
     response_model=TaskState,
     status_code=status.HTTP_202_ACCEPTED,
 )
-def run_script_node(project_id: str, node_id: str) -> TaskState:
+def run_script_node(
+    project_id: str,
+    node_id: str,
+    actor: ActorContext = Depends(get_actor_context),
+) -> TaskState:
+    _require_project_editor(project_id, actor)
     node = store.get_node(project_id, node_id)
     if node is None:
         raise HTTPException(
@@ -305,6 +363,7 @@ def run_script_node(project_id: str, node_id: str) -> TaskState:
         node_id=node_id,
         input_version=node.version,
         provider=settings.provider,
+        organization_id=actor.organization_id,
         model=settings.model,
     )
     return run_script_task_sync(store=store, provider=provider, task=task, node=node)
@@ -318,7 +377,10 @@ def chat_script_node(
     project_id: str,
     node_id: str,
     request: ScriptDialogueRequest,
+    actor: ActorContext = Depends(get_actor_context),
 ) -> ScriptDialogueResponse:
+    _require_project_editor(project_id, actor)
+    store.bind_project(project_id, actor.organization_id)
     node = store.save_node(project_id, node_id, request.input, request.settings)
     user_message = ScriptDialogueMessage(
         role=ScriptDialogueRole.USER,
@@ -395,18 +457,26 @@ def _resolve_script_provider_settings(
 
 
 @app.get("/api/v1/tasks/{task_id}", response_model=TaskState)
-def get_task(task_id: str) -> TaskState:
+def get_task(
+    task_id: str,
+    actor: ActorContext = Depends(get_actor_context),
+) -> TaskState:
     task = store.get_task(task_id)
     if task is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found.")
+    _require_task_membership(task_id, actor)
     return task
 
 
 @app.get("/api/v1/tasks/{task_id}/result", response_model=TaskResult)
-def get_task_result(task_id: str) -> TaskResult:
+def get_task_result(
+    task_id: str,
+    actor: ActorContext = Depends(get_actor_context),
+) -> TaskResult:
     task = store.get_task(task_id)
     if task is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found.")
+    _require_task_membership(task_id, actor)
 
     result = store.get_result(task_id)
     if task.status == TaskStatus.FAILED:

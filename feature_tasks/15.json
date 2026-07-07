@@ -4,7 +4,7 @@
     "title": "Production Auth And Workspace Management",
     "status": "in_progress"
   },
-  "planning_status": "auth_account_003_passing",
+  "planning_status": "auth_account_004_passing",
   "notes": [
     "Keep this file focused on Production Auth And Workspace Management only.",
     "Feature 15 work is starting on branch zheng while Feature 4 canvas/storyboard work remains active in the shared project context.",
@@ -115,7 +115,7 @@
     {
       "id": "auth-account-004",
       "title": "Apply actor context and RBAC to existing APIs",
-      "status": "not_started",
+      "status": "passing",
       "user_visible_behavior": "Existing project and generation APIs honor login, active workspace, and role permissions while staying usable in local development.",
       "scope": [
         "Create backend actor context resolution for user_id, org_id, role, request_id, and optional project_id.",
@@ -133,6 +133,14 @@
         "Run backend pytest for auth plus Script/Task API authorization.",
         "Run existing Script Node backend tests.",
         "Run web workspace tests and typecheck."
+      ],
+      "evidence": [
+        "Added request actor context for authenticated user, active organization, and membership role.",
+        "Protected Script Node save, chat, and run routes with editor-or-higher checks.",
+        "Protected Task read/result routes with authenticated organization membership checks.",
+        "Bound MVP in-memory project/task state to the first writer's active organization to prevent cross-workspace ID guessing.",
+        "Added RBAC tests covering unauthenticated access, editor writes, viewer read-only behavior, and cross-workspace denial.",
+        "Script Node provider/model regression tests now use authenticated fixtures and still preserve provider truth assertions."
       ]
     },
     {

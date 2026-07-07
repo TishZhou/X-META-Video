@@ -8,7 +8,7 @@ Record major decisions and progress each session. Keep the current verified stat
 - Standard startup path: `.\init.ps1`
 - Standard web verification path: `corepack pnpm --filter @xmeta/web test`
 - Current highest-priority unfinished feature on branch `zheng`: Feature 15, Production Auth And Workspace Management.
-- Current active feature on branch `zheng`: Feature 15; current small tasks `auth-account-002` and `auth-account-003` are `passing`, while the full account system remains `in_progress`.
+- Current active feature on branch `zheng`: Feature 15; current small tasks `auth-account-002`, `auth-account-003`, and `auth-account-004` are `passing`, while the full account system remains `in_progress`.
 - Account-system branch note: branch `zheng` now contains Feature 15 backend account foundation work. Feature 4 storyboard/canvas context is paused for branch coordination and should resume on its own branch/workstream.
 - Current reset status: Feature 2 and Feature 3 have been removed from the active plan, their task files have been deleted, old web implementation files have been cleared while preserving minimal app structure, and the remaining feature plan has now been renumbered so old Features 4-17 are new Features 2-15.
 - Current feature numbering: Feature 1 remains Web Design and is now recorded as `passing`; Feature 2 is Workflow Canvas Foundation and is now `passing`; old Features 5-17 shifted to new Features 3-15.
@@ -38,6 +38,16 @@ Record major decisions and progress each session. Keep the current verified stat
 - Verification run: Backend full pytest passed 31 tests with one StarletteDeprecationWarning; backend ruff passed; Alembic upgrade smoke passed with SQLite in-memory `DATABASE_URL`; JSON validation passed for `feature_list.json` and `feature_tasks/15.json`; web tests passed 9 files / 40 tests; web build passed and included `/workspace`; `apps/web` direct `corepack pnpm exec tsc --noEmit` passed; `git diff --check` passed with CRLF warnings only; final `.\init.ps1` passed with 9 web files / 40 tests.
 - Evaluation: First evaluator round scored 136 / 150 and required DB default alignment, lowercase durable enum values, refresh/active route test coverage, and final evidence freshness. After fixes, evaluator round 2 accepted at 145 / 150.
 - Known risk or unresolved issue: Account UI, Script/Task RBAC, OAuth providers, production email delivery, Billing, and Browser account E2E remain later Feature 15 slices. `.env.example` currently carries real local provider configuration; the user explicitly said this is not part of the current cleanup scope.
+
+### Session 042
+
+- Date: 2026-07-07
+- Goal: Continue Feature 15 with `auth-account-004`, applying actor context and RBAC to existing Script Node and Task APIs.
+- Completed: Added backend actor context resolution for authenticated user, active organization, and membership role; protected Script Node save/chat/run routes with editor-or-higher checks; protected Task read/result routes with authenticated organization membership checks; and bound the MVP in-memory project/task state to the active organization on first write to prevent cross-workspace ID guessing until durable project persistence exists.
+- Test coverage added: `tests/test_script_node_auth.py` covers unauthenticated 401 responses, owner/editor write flow, viewer read-only behavior, and cross-workspace task/project denial. Existing Script Node provider/model tests now use authenticated fixtures without weakening provider truth assertions.
+- Verification run: Focused RBAC plus Script Node regression passed: 29 tests after explicit admin/editor coverage was added. Backend full pytest passed 37 tests with one StarletteDeprecationWarning. Backend ruff passed. Alembic smoke, JSON validation, git diff hygiene, web tests, web build, web typecheck, and final `.\init.ps1` passed.
+- Evaluation: Evaluator accepted `auth-account-004` at 145 / 150 after rubric evidence was filled and explicit admin/editor tests were added.
+- Known risk or unresolved issue: Account UI, Browser account E2E, durable project persistence, project membership tables, retry/cancel task routes, OAuth providers, production email delivery, and Billing remain later Feature 15 slices.
 
 ### Session 040
 
