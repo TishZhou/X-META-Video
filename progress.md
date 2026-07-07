@@ -26,6 +26,15 @@ Record major decisions and progress each session. Keep the current verified stat
 
 ## Session Log
 
+### Session 043
+
+- Date: 2026-07-07
+- Goal: Fix the browser-comment regression where workflow node connection points were clipped at the node card edges.
+- Completed: Removed card-level `overflow-hidden` from `WorkflowNodeCard`; kept loading-progress clipping scoped to the progress bar itself; added a regression assertion that the node card root does not include `overflow-hidden`.
+- Verification run: Baseline `.\init.ps1` passed before the fix and reran web tests: 9 files / 43 tests. Focused workspace test passed 1 file / 18 tests. Full web tests passed 9 files / 43 tests. Web typecheck passed. Web build passed and included `/workspace`. Final `.\init.ps1` passed after artifact updates and reran web tests: 9 files / 43 tests.
+- Browser QA: Passed on `http://localhost:3000/workspace` at a 1674x1112 viewport: Storyboard node card computed `overflow: visible`; its input port extended left of the card and output port extended right of the card; screenshot showed the node connection points restored with no console errors or failed requests.
+- Known risk or unresolved issue: None for this visual regression.
+
 ### Session 042
 
 - Date: 2026-07-07

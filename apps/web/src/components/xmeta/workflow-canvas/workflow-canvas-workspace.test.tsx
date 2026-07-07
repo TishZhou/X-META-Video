@@ -348,10 +348,12 @@ describe("WorkflowCanvasWorkspace", () => {
         onPortConnectionStart={() => undefined}
       />,
     );
+    const articleClass = html.match(/<article[^>]*class="([^"]*)"/)?.[1] ?? "";
 
     expect(html).toContain('data-workflow-node-running="true"');
     expect(html).toContain('data-workflow-node-loading="true"');
     expect(html).toContain("animate-spin");
+    expect(articleClass).not.toContain("overflow-hidden");
   });
 
   it("renders direct Generate button loading state only for direct output generation", () => {

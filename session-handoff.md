@@ -40,6 +40,8 @@
 - Follow-up API preflight after `.env` migration returned `provider=openai`, `model=gpt-5.4-mini`, and non-empty direct-output content.
 - Follow-up Browser E2E passed on `http://localhost:3000/workspace`: Generate showed button/node loading animation, posted to `/chat` with `mode: "direct_output"`, rendered one outcome node with `Backend: openai / gpt-5.4-mini`, and recorded no console errors or failed requests.
 - Follow-up final `.\init.ps1` passed after artifact updates and reran web tests: 9 files / 43 tests.
+- Browser-comment follow-up restored workflow node connection points by removing node-card root clipping. Browser QA at 1674x1112 confirmed Storyboard node overflow is visible, left/right ports extend outside the card, and there were no console errors or failed requests.
+- Browser-comment follow-up final `.\init.ps1` passed after artifact updates and reran web tests: 9 files / 43 tests.
 
 ## Boundaries
 

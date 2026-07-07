@@ -2113,7 +2113,7 @@ export function WorkflowNodeCard({
   return (
     <article
       className={cn(
-        "absolute overflow-hidden rounded-lg border bg-white text-neutral-950 shadow-[0_18px_50px_rgba(15,23,42,0.12)] transition",
+        "absolute rounded-lg border bg-white text-neutral-950 shadow-[0_18px_50px_rgba(15,23,42,0.12)] transition",
         selected
           ? "border-neutral-950/70"
           : "border-neutral-200 hover:border-neutral-300",
