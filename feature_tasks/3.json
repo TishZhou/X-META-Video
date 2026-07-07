@@ -225,7 +225,7 @@
                                "id":  "script-node-010",
                                "title":  "Complete AI chatbox and direct text outcome node",
                                "status":  "passing",
-                               "user_visible_behavior":  "When the user clicks Generate, the Script node creates or updates an editable Script outcome node on the canvas and renders direct natural text there instead of placing generated output in the AI chatbox history. If AI modify mode is active, Generate uses the conversation history as context; otherwise it uses the current world description directly. The current product path uses configured live providers only.",
+                               "user_visible_behavior":  "When the user clicks Generate, the Script node shows a loading animation, creates or updates an editable Script outcome node on the canvas, and renders direct natural text there instead of placing generated output in the AI chatbox history. If AI modify mode is active, Generate uses the conversation history as context; otherwise it uses the current world description directly. The current product path uses configured live providers only.",
                                "acceptance_criteria":  [
                                                            "Generate calls the backend direct text path instead of asking the model for structured JSON text.",
                                                            "Generate creates or updates one deterministic Script outcome node on the canvas.",
@@ -233,7 +233,8 @@
                                                            "Generated output does not appear as an assistant reply in the AI chatbox history.",
                                                            "AI modify and Send remain conversational, and Generate uses dialogue history only when AI modify mode is active.",
                                                            "The UI and provider configuration expose only configured live provider paths, with automated tests using internal fake providers instead of product fallback providers.",
-                                                           "The shared workflow output-node metadata can be reused for later AI nodes with different payload renderers."
+                                                           "The shared workflow output-node metadata can be reused for later AI nodes with different payload renderers.",
+                                                           "Generate shows a visible loading animation while the backend direct-output request is running."
                                                        ],
                                "verification":  [
                                                     "2026-07-07 baseline .\\init.ps1 passed before implementation and reran web tests: 9 files / 40 tests.",
@@ -248,7 +249,13 @@
                                                     "2026-07-07 scoped provider-cleanup search over product code/docs/task artifacts returned no legacy fallback-provider matches.",
                                                     "2026-07-07 .env.example TEXT_MODEL_API_KEY is empty after secret cleanup.",
                                                     "2026-07-07 Browser E2E passed on http://localhost:3000/workspace with FastAPI on localhost:8000: Generate posted to /chat with mode direct_output, created one Script outcome node, rendered 768 characters of editable natural text, displayed Backend: openai / gpt-5.4-mini, and recorded no console errors or failed requests.",
-                                                    "2026-07-07 final .\\init.ps1 passed at session close and reran web tests: 9 files / 41 tests."
+                                                    "2026-07-07 final .\\init.ps1 passed at session close and reran web tests: 9 files / 41 tests.",
+                                                    "2026-07-07 follow-up moved the real TEXT_MODEL_API_KEY from .env.example into gitignored .env, left .env.example empty, restarted FastAPI, and verified POST /chat direct_output returned provider openai, model gpt-5.4-mini, and contentLength 402.",
+                                                    "2026-07-07 follow-up Browser E2E passed on http://localhost:3000/workspace: Generate displayed button and node loading animation, posted to /chat with mode direct_output, created one Script outcome node, displayed Backend: openai / gpt-5.4-mini, rendered 687 characters of editable natural text, and recorded no console errors or failed requests.",
+                                                    "2026-07-07 follow-up corepack pnpm --filter @xmeta/web test -- workflow-canvas-workspace.test.tsx passed: 1 file / 18 tests.",
+                                                    "2026-07-07 follow-up corepack pnpm --filter @xmeta/web test passed: 9 files / 43 tests.",
+                                                    "2026-07-07 follow-up corepack pnpm --filter @xmeta/web typecheck passed.",
+                                                    "2026-07-07 follow-up corepack pnpm --filter @xmeta/web build passed and included /workspace."
                                                 ]
                            }
                        ]

@@ -4,7 +4,7 @@
 
 - Repository root: `D:\X-META-Video`
 - Feature 1 `Web Design` and Feature 2 `Workflow Canvas Foundation` are recorded as `passing`.
-- Feature 3 current task is `script-node-010`; it implements the first reusable AI node pattern: chat stays conversational, while Generate renders an editable direct-text outcome node on the canvas.
+- Feature 3 current task is `script-node-010`; it implements the first reusable AI node pattern: chat stays conversational, while Generate shows loading feedback and renders an editable direct-text outcome node on the canvas.
 - The next broader unfinished feature remains Feature 4 `Storyboard Node`; full editable shot-list schema, shot editing, durable persistence, queue workers, and generated storyboard assets remain future work.
 
 ## Feature 3 Task10 State
@@ -15,6 +15,8 @@
 - The Script outcome node displays backend-confirmed provider/model evidence such as `Backend: openai / gpt-5.4-mini` and labels the text as locally editable because durable persistence is deferred.
 - The shared workflow graph now has reusable source/outcome roles and output-node metadata so later image/video/audio nodes can reuse the same node lifecycle with different renderers.
 - The product provider path now supports `openai` and `openai-compatible`; automated tests inject internal test fakes instead of exposing a fallback provider option to users.
+- Real text-provider credentials are stored in gitignored `.env`; `.env.example` keeps `TEXT_MODEL_API_KEY` empty.
+- Generate now shows `生成中` with a spinner on the button and a running spinner/progress bar on the Script node while the direct-output request is pending.
 
 ## Verification Evidence
 
@@ -31,6 +33,13 @@
 - `.env.example` leaves `TEXT_MODEL_API_KEY` empty after cleanup; no secret value was printed.
 - Browser E2E passed on `http://localhost:3000/workspace`: Generate called `/chat` with `mode: "direct_output"`, created one Script outcome node, rendered an editable textarea with 768 characters of natural text, displayed `Backend: openai / gpt-5.4-mini`, and recorded no console errors or failed requests.
 - Final `.\init.ps1` passed at session close and reran web tests: 9 files / 41 tests.
+- Follow-up `corepack pnpm --filter @xmeta/web test -- workflow-canvas-workspace.test.tsx` passed: 1 file / 18 tests.
+- Follow-up `corepack pnpm --filter @xmeta/web test` passed: 9 files / 43 tests.
+- Follow-up `corepack pnpm --filter @xmeta/web typecheck` passed.
+- Follow-up `corepack pnpm --filter @xmeta/web build` passed and included `/workspace`.
+- Follow-up API preflight after `.env` migration returned `provider=openai`, `model=gpt-5.4-mini`, and non-empty direct-output content.
+- Follow-up Browser E2E passed on `http://localhost:3000/workspace`: Generate showed button/node loading animation, posted to `/chat` with `mode: "direct_output"`, rendered one outcome node with `Backend: openai / gpt-5.4-mini`, and recorded no console errors or failed requests.
+- Follow-up final `.\init.ps1` passed after artifact updates and reran web tests: 9 files / 43 tests.
 
 ## Boundaries
 

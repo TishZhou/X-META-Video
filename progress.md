@@ -20,10 +20,21 @@ Record major decisions and progress each session. Keep the current verified stat
 - Current Script Node provider revision: Feature 3 product provider paths are `openai` and `openai-compatible`, defaulting to `openai` / `gpt-5.4-mini`; automated tests inject internal test fakes without exposing a fallback provider option in the UI or provider config.
 - Current Script Node direct-output revision: Feature 3 `script-node-010` adds `mode: "direct_output"` to the Script chat API so Generate asks for plain editable natural text instead of structured JSON, then renders that returned text inside a deterministic editable `Script outcome` node on the canvas.
 - Current Script Node reusable-output revision: Workflow nodes now distinguish source nodes from outcome nodes and carry reusable output metadata (`sourceNodeId`, `dataType`, `provider`, `model`, `editable`) for later image, video, audio, and export node renderers.
+- Current Script Node loading/env revision: Generate now shows a button spinner plus running-node loading bar while direct-output generation is pending. Real text-provider credentials live in gitignored `.env`; `.env.example` keeps `TEXT_MODEL_API_KEY` empty.
 - Current Storyboard browser-comment revision: `/workspace` now shows confirmed Script output in the Script node preview after generation; the Storyboard AI response/history panel is fixed-height, scrollable, width-aligned with the composer, hideable/restorable, and keeps stable 820px/288px geometry at 50% canvas zoom; the composer dropdown is a model selector; errors render inside the Storyboard AI panel; and nodes can be dragged to negative x positions without a far-left invisible wall.
 - Current blocker: none.
 
 ## Session Log
+
+### Session 042
+
+- Date: 2026-07-07
+- Goal: Move the user-supplied text model API key into `.env` and add a visible loading animation when Script Generate is clicked.
+- Completed: Migrated text-model provider settings from `.env.example` to gitignored `.env` without printing secret values; cleared `TEXT_MODEL_API_KEY` from `.env.example`; added a `Loader2` spinner to the direct Generate button during `direct-output-pending`; added a running-state spinner/progress bar to workflow nodes; and added focused tests for both loading states.
+- Verification run: Baseline `.\init.ps1` passed before changes and reran web tests: 9 files / 41 tests. Focused workspace test passed 1 file / 18 tests. Full web tests passed 9 files / 43 tests. Web typecheck passed. Web build passed and included `/workspace`. `.env.example` key check confirmed `TEXT_MODEL_API_KEY` is empty. Final `.\init.ps1` passed after artifact updates and reran web tests: 9 files / 43 tests.
+- API preflight: Restarted FastAPI after `.env` migration and confirmed `POST /api/v1/projects/local-project/nodes/script-1/chat` with `mode: "direct_output"` returned `provider=openai`, `model=gpt-5.4-mini`, and non-empty content length without printing generated content or secrets.
+- Browser QA: Passed on `http://localhost:3000/workspace`: clicking Generate showed `生成中` with a spinner on the button and a running spinner/progress bar on the Script node; the request posted to `/chat` with `mode: "direct_output"`; the Script outcome node rendered with `Backend: openai / gpt-5.4-mini`; console warn/error logs and failed requests were empty.
+- Known risk or unresolved issue: Direct outcome text remains locally editable only; durable persistence, queue workers, auth, streaming, media generation, and export remain later feature scope.
 
 ### Session 041
 

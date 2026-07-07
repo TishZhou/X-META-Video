@@ -60,3 +60,8 @@ Current score: 146 / 150
 ## Verdict
 
 Accepted for Feature 3 task10 at 146 / 150 after main-agent cleanup. Functional acceptance is above threshold.
+
+## Post-Acceptance Follow-Up
+
+- 2026-07-07: User supplied a live API key. Main agent moved text-model credentials into gitignored `.env`, cleared `TEXT_MODEL_API_KEY` from `.env.example`, restarted FastAPI, and verified direct-output `/chat` returned `provider=openai`, `model=gpt-5.4-mini`, and non-empty content.
+- 2026-07-07: Added visible Generate loading feedback: button spinner/text plus running-node spinner/progress bar. Focused workspace tests passed 1 file / 18 tests; full web tests passed 9 files / 43 tests; typecheck and build passed; Browser E2E confirmed the loading state and final outcome node with no console errors or failed requests.

@@ -10,6 +10,7 @@ import {
   HelpCircle,
   Image,
   Layers3,
+  Loader2,
   Mic2,
   Plus,
   Save,
@@ -1470,7 +1471,7 @@ type ScriptNodeInlineEditorProps = {
   onSendMessage: () => void;
 };
 
-function ScriptNodeInlineEditor({
+export function ScriptNodeInlineEditor({
   backendExecution,
   busy,
   conversationMode,
@@ -1491,6 +1492,8 @@ function ScriptNodeInlineEditor({
   onSendMessage,
 }: ScriptNodeInlineEditorProps) {
   const promptReady = input.world_description.trim().length > 0;
+  const directOutputPending =
+    busy && task.status === "running" && task.task_id === "direct-output-pending";
   const left = node.position.x - (SCRIPT_INLINE_EDITOR_WIDTH - NODE_WIDTH) / 2;
   const top = node.position.y + NODE_HEIGHT + SCRIPT_INLINE_EDITOR_GAP;
 
@@ -1599,12 +1602,17 @@ function ScriptNodeInlineEditor({
             <Button
               aria-label="Generate Script node"
               className="h-9 rounded-lg px-4 text-xs"
+              data-script-generate-loading={directOutputPending ? "true" : undefined}
               disabled={busy || !promptReady}
               onClick={onGenerate}
               type="button"
             >
-              {busy ? SCRIPT_GENERATING_LABEL : SCRIPT_GENERATE_LABEL}
-              <Sparkles aria-hidden="true" className="size-4" />
+              {directOutputPending ? SCRIPT_GENERATING_LABEL : SCRIPT_GENERATE_LABEL}
+              {directOutputPending ? (
+                <Loader2 aria-hidden="true" className="size-4 animate-spin" />
+              ) : (
+                <Sparkles aria-hidden="true" className="size-4" />
+              )}
             </Button>
           </div>
         </div>
@@ -2084,7 +2092,7 @@ type WorkflowNodeCardProps = {
   ) => void;
 };
 
-function WorkflowNodeCard({
+export function WorkflowNodeCard({
   node,
   scriptInput,
   scriptOutcomeText,
@@ -2100,16 +2108,19 @@ function WorkflowNodeCard({
   const outputs = node.ports.filter((port) => port.direction === "output");
   const scriptPreview = formatScriptNodePreview(scriptInput, null);
   const nodeKindLabel = node.output?.label ?? nodeTitles[node.type];
+  const running = node.status === "running";
 
   return (
     <article
       className={cn(
-        "absolute rounded-lg border bg-white text-neutral-950 shadow-[0_18px_50px_rgba(15,23,42,0.12)] transition",
+        "absolute overflow-hidden rounded-lg border bg-white text-neutral-950 shadow-[0_18px_50px_rgba(15,23,42,0.12)] transition",
         selected
           ? "border-neutral-950/70"
           : "border-neutral-200 hover:border-neutral-300",
+        running && "ring-2 ring-neutral-950/10",
       )}
       data-workflow-node={node.type}
+      data-workflow-node-running={running ? "true" : undefined}
       style={{
         left: node.position.x,
         top: node.position.y,
@@ -2129,7 +2140,11 @@ function WorkflowNodeCard({
         onClick={() => onSelect({ kind: "node", id: node.id })}
       >
         <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-neutral-100 text-neutral-700">
-          <Icon aria-hidden="true" />
+          {running ? (
+            <Loader2 aria-hidden="true" className="size-4 animate-spin" />
+          ) : (
+            <Icon aria-hidden="true" />
+          )}
         </span>
         <span className="min-w-0 flex-1">
           <span className="block truncate text-sm font-semibold">
@@ -2145,6 +2160,16 @@ function WorkflowNodeCard({
       </button>
 
       <div className="px-4 pb-4">
+        {running ? (
+          <div
+            aria-label={`${node.title} generation is running`}
+            className="mb-3 overflow-hidden rounded-full bg-neutral-100"
+            data-workflow-node-loading="true"
+          >
+            <span className="block h-1.5 w-1/2 animate-pulse rounded-full bg-neutral-950" />
+          </div>
+        ) : null}
+
         {node.output?.dataType === "script" ? (
           <ScriptOutcomeNodeEditor
             node={node}

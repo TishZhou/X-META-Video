@@ -29,7 +29,9 @@ import {
   isEditableKeyboardTarget,
   isFloatingImageEditorNodeType,
   ScriptOutcomeNodeEditor,
+  ScriptNodeInlineEditor,
   ScriptOutputTabs,
+  WorkflowNodeCard,
   WorkflowCanvasWorkspace,
 } from "./workflow-canvas-workspace";
 
@@ -325,6 +327,72 @@ describe("WorkflowCanvasWorkspace", () => {
     expect(html).toContain("A direct editable script result without JSON.");
     expect(html).toContain("Local editable output");
     expect(html).toContain("Backend: openai-compatible / test-model");
+  });
+
+  it("renders a loading animation on the Script node while generation runs", () => {
+    const graph = createInitialWorkflowGraphState();
+    const scriptNode = graph.nodes.find((candidate) => candidate.type === "script");
+
+    expect(scriptNode).toBeDefined();
+
+    const html = renderToStaticMarkup(
+      <WorkflowNodeCard
+        node={{ ...scriptNode!, status: "running" }}
+        scriptInput={{ world_description: "A snow MV world" }}
+        scriptOutcomeText={null}
+        selected={true}
+        pendingPort={null}
+        onScriptOutcomeTextChange={() => undefined}
+        onDragStart={() => undefined}
+        onSelect={() => undefined}
+        onPortConnectionStart={() => undefined}
+      />,
+    );
+
+    expect(html).toContain('data-workflow-node-running="true"');
+    expect(html).toContain('data-workflow-node-loading="true"');
+    expect(html).toContain("animate-spin");
+  });
+
+  it("renders direct Generate button loading state only for direct output generation", () => {
+    const graph = createInitialWorkflowGraphState();
+    const scriptNode = graph.nodes.find((candidate) => candidate.type === "script");
+    const task: ScriptTaskStatusResponse = {
+      task_id: "direct-output-pending",
+      project_id: "local-project",
+      node_id: "script-1",
+      status: "running",
+      error: null,
+    };
+
+    expect(scriptNode).toBeDefined();
+
+    const html = renderToStaticMarkup(
+      <ScriptNodeInlineEditor
+        backendExecution={null}
+        busy={true}
+        conversationMode={false}
+        error={null}
+        historyOpen={false}
+        input={{ world_description: "A snow MV world" }}
+        messages={[]}
+        responseMode="generation"
+        model="configured"
+        node={scriptNode!}
+        task={task}
+        viewportZoom={1}
+        onGenerate={() => undefined}
+        onHistoryOpenChange={() => undefined}
+        onInputChange={() => undefined}
+        onModelChange={() => undefined}
+        onRevise={() => undefined}
+        onSendMessage={() => undefined}
+      />,
+    );
+
+    expect(html).toContain('data-script-generate-loading="true"');
+    expect(html).toContain("\u751f\u6210\u4e2d");
+    expect(html).toContain("animate-spin");
   });
 
   it("shows generation errors in the response panel status area", () => {
