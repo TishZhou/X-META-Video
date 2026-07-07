@@ -109,16 +109,6 @@ Each asset stores its source prompt, model, parameters, version, generation time
 - Image + audio to short video clip.
 - Task status, retry, and result tracking.
 
-## Constraints
-
-- AI generation must run asynchronously.
-- Motion and visual feedback must support usability. They should communicate state changes, selection, hierarchy, loading, progress, and recovery; they must respect reduced-motion preferences and must not replace text status labels.
-- Feature 1 must select the component approach before detailed page implementation. Do not restore deleted prototype components as the new baseline without an explicit task decision.
-- External model quality and speed affect output.
-- Character consistency is a key quality risk.
-- Existing 9-grid capability should be reused first.
-- Asset source and usage rights must be recorded.
-- Auto-editing, subtitles, transitions, and audio-video alignment are future features.
 
 ## Success Criteria
 

@@ -12,17 +12,19 @@ Before writing code:
 4. **Read `docs/ARCHITECTURE.md`** understand the Layer Boundries and data flow.
 5. **Run `.\init.ps1`** to verify environment is healthy
 6. **Read `feature_list.json`** to see current feature state
-7. **Read `progress.md`** to see verified status, blockers, and next step
-8. **update `sprint-contract.md`** update scope, criteria and verication plan based on desired feature plan
-9. **Initialize `evaluator-rubric.md`**  score.
+8. **update `sprint-contract.md`** update scope, criteria based on desired feature plan
+9. **Run `.\scripts\initialize-evaluator-rubric.ps1`** to Initialize `evaluator-rubric.md`.
 10. **Review recent commits** with `git log --oneline -5` and make sure everything was commited with short description and pushed
 
 If baseline verification is failing, repair that first before adding new scope. If docs and code diverge, treat docs as target behavior and current code as implementation reality.
 
+## Agent Loop
+- **Main Agent + 2 Subagents**: Main Agent to do planning and write `sprint-contract.md`, then coding subagent should follow the plan. At the end, evaluator subagent will use verify skill first then should fill out the `evaluator-rubric.md` and hand it to the Main agent. Then Main agent start a new round in our loop, give solution plan to the coding agent and run `.\scripts\initialize-evaluator-rubric.ps1`. We keep this loop until evaluator accepts over 140. 5 rounds is a limit.
+
 ## Working Rules
-- **Use 3 Subagents**: to do planning, acting and evaluation seperately and do not invade each others' work. I f the work is planning, then don't use the first agent. Evaluation should based on rubric and sprint contract. After evaluation recorded in artifacts, actting agent should fix the problem following the solution suggestion by evaluator untill get a higher score in rubric.
+- **Mark every button/fucntion that is not done** For every button/function showed in the fronted, it should be either done with completed backend or have a pop up window told you that is not done yet.
 - **One feature at a time**: Pick exactly one unfinished feature from `feature_list.json` 
-- **Verification required**: Don't claim done without running verification commands
+- **Verification required**: Don't claim done without running verification commands and always do End to End test.
 - **Stay in scope**: Don't modify files unrelated to the current feature
 - **Leave clean state**: clean all the temporary tests or ducments.
 - **Respect boundaries**: Shared capabilities belong in the platform base; vertical-specific behavior belongs in the relevant agent module
@@ -30,7 +32,7 @@ If baseline verification is failing, repair that first before adding new scope. 
 - **Label missing capabilities honestly**: If backend, connector, orchestration, audit, or persistence layers are missing, mark them clearly instead of implying they exist
 - **Maintainess and Concise Code**: When we build, we should make the code clean and reusable, don't write repeated content.
 - **Use shadcn skill and uiux-pro max skill** to use tripld UI components in our repo, if we need to use components like toolbar that we don't have in our tripld UI component, then use shadcn interactive components. make it interactive as much as possible.
-
+- **Don't pay attention to Mobiel end UI**
 
 ## Required Artifacts
 - `docs/ARCHITECTURE.md`: layer boundaries and data flow
