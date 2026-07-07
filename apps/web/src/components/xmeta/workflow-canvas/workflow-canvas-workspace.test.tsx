@@ -8,16 +8,19 @@ import type {
 
 import {
   createInitialWorkflowGraphState,
+  createWorkflowOutputNodeId,
   workflowNodeTemplates,
 } from "@/lib/workflow-canvas/graph";
+import type { WorkflowNode } from "@/lib/workflow-canvas/types";
 
 import {
+  buildScriptDirectOutputMessage,
   calculateDraggedNodePosition,
   clampImageEditorFrame,
   createScriptBackendExecution,
   formatScriptBackendExecutionLabel,
-  formatScriptOutputConversationReply,
   formatScriptNodePreview,
+  formatWorkflowOutputExecutionLabel,
   formatTemplateIoLabel,
   getInlineEditorCompensationScale,
   getScriptResponseModeForAction,
@@ -25,13 +28,14 @@ import {
   ImageNodeFloatingEditor,
   isEditableKeyboardTarget,
   isFloatingImageEditorNodeType,
+  ScriptOutcomeNodeEditor,
   ScriptOutputTabs,
   WorkflowCanvasWorkspace,
 } from "./workflow-canvas-workspace";
 
 function makeScriptOutput(): ScriptNodeOutput {
   return {
-    title: "Mock Script Title",
+    title: "Sample Script Title",
     agent_output: "Agent generated answer for the chat history.",
     world_overview: "A structured MV world summary.",
     storyboard_direction: {
@@ -146,7 +150,6 @@ describe("WorkflowCanvasWorkspace", () => {
     expect(html).toContain('data-script-node-input-composer="true"');
     expect(html).toContain('data-script-model-select="true"');
     expect(html).toContain("Server configured model");
-    expect(html).toContain("Mock backend model");
     expect(html).not.toContain("gpt-5.4-mini");
     expect(html).toContain('data-script-ai-revise="true"');
     expect(html).toContain(
@@ -156,8 +159,7 @@ describe("WorkflowCanvasWorkspace", () => {
     expect(html).toContain("\u751f\u6210");
     expect(html).not.toContain('data-script-dialogue-send="true"');
     expect(html).toContain("Storyboard");
-    expect(html).not.toContain("Mock storyboard model");
-    expect(html).not.toContain("Configured model");
+    expect(html).not.toContain("Configured storyboard model");
     expect(html).not.toContain('data-script-output-select="true"');
     expect(html).not.toContain("Script output target");
     expect(html).not.toContain('data-script-node-history="true"');
@@ -179,9 +181,9 @@ describe("WorkflowCanvasWorkspace", () => {
     );
     expect(
       formatScriptBackendExecutionLabel(
-        createScriptBackendExecution("mock", "local-script-mock"),
+        createScriptBackendExecution("openai-compatible", "test-model"),
       ),
-    ).toBe("Mock backend: mock / local-script-mock");
+    ).toBe("Backend: openai-compatible / test-model");
     expect(
       formatScriptBackendExecutionLabel(
         createScriptBackendExecution("openai", "gpt-live"),
@@ -227,12 +229,12 @@ describe("WorkflowCanvasWorkspace", () => {
     expect(html).toContain('data-image-model-select="true"');
     expect(html).toContain('data-image-ai-revise="true"');
     expect(html).toContain('aria-label="Resize Image node editor"');
-    expect(html).toContain("Mock image model");
+    expect(html).toContain("Configured image model");
     expect(html).toContain("Image Agent");
     expect(html).toContain("A neon jeep frame");
   });
 
-  it("renders selectable structured Script output responses", () => {
+  it("keeps generated direct output out of the Script chat panel", () => {
     const task: ScriptTaskStatusResponse = {
       task_id: "task-1",
       project_id: "local-project",
@@ -240,14 +242,12 @@ describe("WorkflowCanvasWorkspace", () => {
       status: "succeeded",
       error: null,
     };
-    const output = makeScriptOutput();
     const html = renderToStaticMarkup(
       <ScriptOutputTabs
         backendExecution={createScriptBackendExecution("openai", "gpt-live")}
         conversationMode={false}
         input={{ world_description: "A generated snow MV world" }}
         messages={[]}
-        output={output}
         responseMode="generation"
         task={task}
       />,
@@ -257,7 +257,7 @@ describe("WorkflowCanvasWorkspace", () => {
     expect(html).toContain("Ready");
     expect(html).toContain("Backend: openai / gpt-live");
     expect(html).toContain('data-script-node-output-scroll="true"');
-    expect(html).toContain("Agent generated answer for the chat history.");
+    expect(html).not.toContain("Agent generated answer for the chat history.");
     expect(html).not.toContain("A structured MV world summary.");
     expect(html).not.toContain("soft opening, travel beat, neon performance payoff");
     expect(html).not.toContain("Shot 1");
@@ -268,18 +268,63 @@ describe("WorkflowCanvasWorkspace", () => {
     expect(html).not.toContain("Choose output");
   });
 
-  it("formats Script output as an AI conversation reply from returned data", () => {
-    expect(formatScriptOutputConversationReply(makeScriptOutput())).toBe(
-      "Agent generated answer for the chat history.",
-    );
+  it("builds direct text generation prompts without asking for structured output", () => {
+    expect(
+      buildScriptDirectOutputMessage(
+        { world_description: "A snow MV world" },
+        true,
+      ),
+    ).toContain("Use the AI conversation history as context");
+    expect(
+      buildScriptDirectOutputMessage(
+        { world_description: "A snow MV world" },
+        false,
+      ),
+    ).toContain("Use only the current MV world description");
+    expect(
+      buildScriptDirectOutputMessage(
+        { world_description: "A snow MV world" },
+        false,
+      ),
+    ).toContain("Do not return JSON");
   });
 
-  it("falls back to a readable Script output reply when agent output is absent", () => {
-    const { agent_output: _agentOutput, ...output } = makeScriptOutput();
-
-    expect(formatScriptOutputConversationReply(output)).toBe(
-      "Mock Script Title\n\nA structured MV world summary.\n\nthird-person cinematic POV\n\nsoft opening, travel beat, neon performance payoff\n\n\u89d2\u8272\uff1aLead\n\n\u573a\u666f\uff1adesert jeep",
+  it("renders editable direct text Script outcome nodes with backend evidence", () => {
+    const nodeId = createWorkflowOutputNodeId("script-1", "script");
+    const node = {
+      id: nodeId,
+      type: "script",
+      role: "outcome",
+      title: "Script outcome",
+      description: "Editable direct text generated from the Script node.",
+      status: "ready",
+      position: { x: 520, y: 120 },
+      ports: [],
+      output: {
+        sourceNodeId: "script-1",
+        dataType: "script",
+        label: "Script output",
+        provider: "openai-compatible",
+        model: "test-model",
+        editable: true,
+      },
+    } satisfies WorkflowNode;
+    const html = renderToStaticMarkup(
+      <ScriptOutcomeNodeEditor
+        node={node}
+        text="A direct editable script result without JSON."
+        onTextChange={() => undefined}
+      />,
     );
+
+    expect(formatWorkflowOutputExecutionLabel(node.output)).toBe(
+      "Backend: openai-compatible / test-model",
+    );
+    expect(html).toContain('data-script-outcome-node="true"');
+    expect(html).toContain('data-script-outcome-textarea="true"');
+    expect(html).toContain("A direct editable script result without JSON.");
+    expect(html).toContain("Local editable output");
+    expect(html).toContain("Backend: openai-compatible / test-model");
   });
 
   it("shows generation errors in the response panel status area", () => {
@@ -296,7 +341,6 @@ describe("WorkflowCanvasWorkspace", () => {
         error="Provider unavailable"
         input={{ world_description: "A generated snow MV world" }}
         messages={[]}
-        output={null}
         responseMode="generation"
         task={task}
         onHide={() => undefined}
@@ -325,31 +369,29 @@ describe("WorkflowCanvasWorkspace", () => {
       },
       {
         role: "assistant",
-        content:
-          "Script AI turn 1: I would add conflict before the chorus payoff.",
+        content: "Provider reply: I would add conflict before the chorus payoff.",
       },
     ];
     const html = renderToStaticMarkup(
       <ScriptOutputTabs
         backendExecution={createScriptBackendExecution(
-          "mock",
-          "storyboard-browser-polish",
+          "openai-compatible",
+          "test-model",
         )}
         conversationMode={true}
         input={{ world_description: "A generated snow MV world" }}
         messages={messages}
-        output={makeScriptOutput()}
         responseMode="revise"
         task={task}
       />,
     );
 
     expect(html).toContain("AI\u5bf9\u8bdd");
-    expect(html).toContain("AI\u4fee\u6539 · mock backend");
-    expect(html).toContain("Mock backend: mock / storyboard-browser-polish");
+    expect(html).toContain("AI\u4fee\u6539");
+    expect(html).toContain("Backend: openai-compatible / test-model");
     expect(html).toContain("Make the two leads argue before the chorus.");
     expect(html).toContain(
-      "Script AI turn 1: I would add conflict before the chorus payoff.",
+      "Provider reply: I would add conflict before the chorus payoff.",
     );
     expect(html).not.toContain("Agent generated answer for the chat history.");
     expect(html).not.toContain("Shot 1");
@@ -369,7 +411,6 @@ describe("WorkflowCanvasWorkspace", () => {
         conversationMode={true}
         input={{ world_description: "A generated snow MV world" }}
         messages={[]}
-        output={null}
         responseMode="revise"
         task={task}
       />,
@@ -378,7 +419,7 @@ describe("WorkflowCanvasWorkspace", () => {
     expect(html).toContain("AI\u5bf9\u8bdd");
     expect(html).toContain("AI\u4fee\u6539");
     expect(html).toContain("\u6545\u4e8b\u6838\u5fc3");
-    expect(html).not.toContain("Script AI turn");
+    expect(html).not.toContain("Provider reply:");
   });
 
   it("keeps inline composer usable under zoom and permits far-left node dragging", () => {
@@ -410,7 +451,7 @@ describe("WorkflowCanvasWorkspace", () => {
       ),
     ).toEqual({
       heading: "Confirmed Script",
-      body: "Mock Script Title: A structured MV world summary. 1 storyboard shots ready.",
+      body: "Sample Script Title: A structured MV world summary. 1 storyboard shots ready.",
     });
   });
 });

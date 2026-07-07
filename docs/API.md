@@ -34,8 +34,8 @@ Global rules:
   "project_id": "project_123",
   "node_id": "node_script_1",
   "status": "queued",
-  "provider": "mock",
-  "model": "local-script-mock"
+  "provider": "openai-compatible",
+  "model": "gpt-5.4-mini"
 }
 ```
 
@@ -147,14 +147,15 @@ For `node_type=script`, the chat endpoint accepts the current input, optional te
     "world_description": "A sweet summer MV world with two girls, a desert jeep, and a neon stage."
   },
   "settings": {
-    "provider": "mock",
-    "model": "local-script-mock"
+    "provider": "openai-compatible",
+    "model": "gpt-5.4-mini"
   },
   "history": [
     { "role": "user", "content": "Make the chorus feel more dramatic." },
     { "role": "assistant", "content": "Add a conflict beat before the chorus payoff." }
   ],
-  "message": "Make the two leads argue before the chorus."
+  "message": "Make the two leads argue before the chorus.",
+  "mode": "dialogue"
 }
 ```
 
@@ -164,8 +165,8 @@ Response:
 {
   "project_id": "project_123",
   "node_id": "node_script_1",
-  "provider": "mock",
-  "model": "local-script-mock",
+  "provider": "openai-compatible",
+  "model": "gpt-5.4-mini",
   "message": {
     "role": "assistant",
     "content": "Natural-language assistant reply."
@@ -179,12 +180,35 @@ Response:
 }
 ```
 
-The web app must display the returned `provider` and `model` beside Script AI replies and generation output. A frontend model selector label is not proof of live LLM execution; `mock` replies must be visibly identified as mock backend replies.
+The web app must display the returned `provider` and `model` beside Script AI replies and generated direct-text output. A frontend model selector label is not proof of live LLM execution.
 
-The dialogue endpoint is a request/response backend AI chat path for Feature 3. It does not create downstream-ready `ScriptOutput`; users run `/run` when the dialogue should be converted into structured output for later nodes.
+The dialogue endpoint is a request/response backend AI chat path for Feature 3. Use `mode=dialogue` for normal AI modify turns and `mode=direct_output` when Generate should produce editable natural text for a canvas outcome node. It does not ask the model for JSON in direct-output mode.
 
-### Script Node Output
-Script generation task results return structured JSON under `output`, not assistant prose:
+### Script Node Direct Text Outcome
+The current web Generate action uses `POST /chat` with `mode=direct_output` and renders the returned assistant message as editable natural text in a canvas outcome node. The direct-output path must not ask the model for JSON or a fixed schema.
+
+Direct-output request:
+
+```json
+{
+  "input": {
+    "world_description": "A sweet summer MV world with two girls, a desert jeep, and a neon stage."
+  },
+  "settings": {
+    "provider": "openai-compatible",
+    "model": "gpt-5.4-mini"
+  },
+  "history": [
+    { "role": "user", "content": "Make the chorus feel more dramatic." },
+    { "role": "assistant", "content": "Add a conflict beat before the chorus payoff." }
+  ],
+  "message": "Directly write the Script node result as editable natural text. Do not return JSON.",
+  "mode": "direct_output"
+}
+```
+
+### Script Node Structured Output Contract
+The older `/run` task path still returns structured JSON under `output` for compatibility and backend tests, but the current task10 web Generate flow does not use this path because direct text avoids JSON truncation risk:
 
 ```json
 {
@@ -236,7 +260,7 @@ Script provider configuration is server-only:
 OPENAI_API_KEY=
 OPENAI_BASE_URL=https://api.openai.com/v1
 
-TEXT_MODEL_PROVIDER=mock
+TEXT_MODEL_PROVIDER=openai
 TEXT_MODEL_BASE_URL=https://api.openai.com/v1
 TEXT_MODEL_API_KEY=
 TEXT_MODEL_NAME=
@@ -244,24 +268,24 @@ TEXT_MODEL_TEMPERATURE=
 TEXT_MODEL_TIMEOUT_SECONDS=60
 TEXT_MODEL_MAX_RETRIES=1
 
-IMAGE_MODEL_PROVIDER=mock
+IMAGE_MODEL_PROVIDER=openai-compatible
 IMAGE_MODEL_BASE_URL=https://api.openai.com/v1
 IMAGE_MODEL_API_KEY=
 IMAGE_MODEL_NAME=gpt-image-1-mini
 
-VIDEO_MODEL_PROVIDER=mock
+VIDEO_MODEL_PROVIDER=openai-compatible
 VIDEO_MODEL_BASE_URL=https://api.openai.com/v1
 VIDEO_MODEL_API_KEY=
 VIDEO_MODEL_NAME=sora-2
 
-MUSIC_MODEL_PROVIDER=mock
+MUSIC_MODEL_PROVIDER=openai-compatible
 MUSIC_MODEL_BASE_URL=https://api.openai.com/v1
 MUSIC_MODEL_API_KEY=
 MUSIC_MODEL_NAME=
 MUSIC_MODEL_IMPLEMENTATION_STATUS=config_only_no_openai_dedicated_music_endpoint
 ```
 
-`mock` is the default development provider and reports `local-script-mock` when no text model name is configured. For Feature 3, only the text category is executed: set `TEXT_MODEL_PROVIDER=openai` or `TEXT_MODEL_PROVIDER=openai-compatible`, provide `OPENAI_API_KEY` or `TEXT_MODEL_API_KEY`, and the Script Node will call the configured OpenAI-compatible `/responses` endpoint. `TEXT_MODEL_BASE_URL` defaults to OpenAI's API base URL; live OpenAI-compatible providers default `TEXT_MODEL_NAME` to the low-cost `gpt-5.4-mini` model when no model name is supplied. Legacy `SCRIPT_MODEL_*` names remain a compatibility fallback for the Script Node only.
+For Feature 3, only the text category is executed: set `TEXT_MODEL_PROVIDER=openai` or `TEXT_MODEL_PROVIDER=openai-compatible`, provide `OPENAI_API_KEY` or `TEXT_MODEL_API_KEY`, and the Script Node will call the configured OpenAI-compatible `/responses` endpoint. `TEXT_MODEL_BASE_URL` defaults to OpenAI's API base URL; live OpenAI-compatible providers default `TEXT_MODEL_NAME` to the low-cost `gpt-5.4-mini` model when no model name is supplied. Legacy `SCRIPT_MODEL_*` names remain a compatibility fallback for the Script Node only.
 
 Provider config is read from process environment first, then local `.env`, then `services/api/.env`, then `.env.example` for this repository's current local workflow. Tests disable dotenv loading so unit tests do not accidentally call a live provider.
 

@@ -24,6 +24,7 @@ export type WorkflowDataType =
 export type WorkflowPortDirection = "input" | "output";
 
 export type WorkflowNodeStatus = "placeholder" | "running" | "ready" | "blocked";
+export type WorkflowNodeRole = "source" | "outcome";
 
 export type WorkflowPoint = {
   x: number;
@@ -46,11 +47,22 @@ export type WorkflowPort = WorkflowPortDefinition & {
 export type WorkflowNode = {
   id: string;
   type: WorkflowNodeType;
+  role: WorkflowNodeRole;
   title: string;
   description: string;
   status: WorkflowNodeStatus;
   position: WorkflowPoint;
   ports: WorkflowPort[];
+  output?: WorkflowNodeOutput;
+};
+
+export type WorkflowNodeOutput = {
+  sourceNodeId: string;
+  dataType: WorkflowDataType;
+  label: string;
+  provider?: string | null;
+  model?: string | null;
+  editable: boolean;
 };
 
 export type WorkflowEdgeStatus = "valid" | "selected" | "invalid" | "disabled";

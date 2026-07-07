@@ -56,6 +56,7 @@ import {
 import {
   connectionDataTypeLabel,
   createInitialWorkflowGraphState,
+  createWorkflowOutputNodeId,
   findEdge,
   findNode,
   findPort,
@@ -65,12 +66,13 @@ import {
 import type {
   WorkflowGraphState,
   WorkflowNode,
+  WorkflowNodeOutput,
   WorkflowNodeType,
   WorkflowPoint,
   WorkflowPort,
   WorkflowSelection,
 } from "@/lib/workflow-canvas/types";
-import { runScriptDialogue, runScriptGeneration } from "@/lib/script-node/api";
+import { runScriptDialogue, runScriptDirectOutput } from "@/lib/script-node/api";
 import { cn } from "@/lib/utils";
 
 const NODE_WIDTH = 288;
@@ -137,7 +139,8 @@ type ConnectionDragState = {
 } | null;
 
 type ScriptDialogueRunner = typeof runScriptDialogue;
-type ScriptGenerationRunner = typeof runScriptGeneration;
+type ScriptGenerationRunner = typeof runScriptDirectOutput;
+type ScriptOutcomeMap = Record<string, string>;
 
 const DEFAULT_SCRIPT_WORLD_DESCRIPTION =
   "\u751f\u6210\u4e00\u4e2a\u51b0\u96ea\u76f8\u5173\u7684mv\u7684\u4e16\u754c\u89c2";
@@ -153,6 +156,24 @@ const SCRIPT_GENERATE_LABEL = "\u751f\u6210";
 const SCRIPT_GENERATING_LABEL = "\u751f\u6210\u4e2d";
 const SCRIPT_CONVERSATION_GUIDE =
   "\u6211\u4f1a\u5148\u5e2e\u4f60\u628a\u6545\u4e8b\u6838\u5fc3\u3001\u89d2\u8272\u5173\u7cfb\u548c\u60c5\u7eea\u8f6c\u6298\u95ee\u6e05\u695a\u3002\u5148\u544a\u8bc9\u6211\u4f60\u60f3\u5f3a\u5316\u54ea\u4e00\u90e8\u5206\uff1a\u4e16\u754c\u89c2\u3001\u4eba\u7269\u51b2\u7a81\u3001\u5206\u955c\u8282\u594f\uff0c\u8fd8\u662f\u7ed3\u5c3e\u60c5\u7eea\uff1f";
+const SCRIPT_OUTCOME_TITLE = "Script outcome";
+const SCRIPT_OUTCOME_DESCRIPTION =
+  "Editable direct text generated from the Script node.";
+const SCRIPT_OUTCOME_LOCAL_EDIT_LABEL = "Local editable output";
+const SCRIPT_OUTCOME_PORTS = [
+  {
+    key: "script-out",
+    label: "Script",
+    direction: "output",
+    dataType: "script",
+  },
+  {
+    key: "profiles-out",
+    label: "Characters",
+    direction: "output",
+    dataType: "character",
+  },
+] as const;
 
 const defaultScriptInput: ScriptNodeInput = {
   ...DEFAULT_SCRIPT_NODE_INPUT,
@@ -167,7 +188,7 @@ const emptyScriptTask: ScriptTaskStatusResponse = {
   error: null,
 };
 
-type ScriptModelSelection = "mock" | "configured";
+type ScriptModelSelection = "configured";
 type ScriptResponseMode = "generation" | "revise";
 type ScriptGenerationAction = "generate" | "revise";
 type ScriptBackendExecution = {
@@ -198,11 +219,6 @@ const scriptModelOptions = [
     id: "configured",
     label: "Server configured model",
     settings: {},
-  },
-  {
-    id: "mock",
-    label: "Mock backend model",
-    settings: { provider: "mock", model: "storyboard-browser-polish" },
   },
 ] as const satisfies Array<{
   id: ScriptModelSelection;
@@ -248,10 +264,6 @@ export function formatScriptBackendExecutionLabel(
   }
 
   const model = execution.model ?? "server default";
-
-  if (execution.provider === "mock") {
-    return `Mock backend: ${execution.provider} / ${model}`;
-  }
 
   return `Backend: ${execution.provider} / ${model}`;
 }
@@ -392,6 +404,19 @@ export function formatScriptOutputConversationReply(output: ScriptNodeOutput) {
     .join("\n\n");
 }
 
+export function buildScriptDirectOutputMessage(
+  input: ScriptNodeInput,
+  usesConversationHistory: boolean,
+) {
+  return [
+    "Directly write the Script node result as editable natural text. Do not return JSON, markdown fences, or a fixed section template.",
+    usesConversationHistory
+      ? "Use the AI conversation history as context and resolve it into one coherent output."
+      : "Use only the current MV world description and expand it into one coherent output.",
+    `MV world description: ${input.world_description.trim()}`,
+  ].join("\n");
+}
+
 export function calculateInitialCanvasViewport(
   viewportWidth: number,
   viewportHeight: number,
@@ -424,7 +449,7 @@ export function calculateInitialCanvasViewport(
 
 export function WorkflowCanvasWorkspace({
   scriptDialogueRunner = runScriptDialogue,
-  scriptGenerationRunner = runScriptGeneration,
+  scriptGenerationRunner = runScriptDirectOutput,
 }: {
   scriptDialogueRunner?: ScriptDialogueRunner;
   scriptGenerationRunner?: ScriptGenerationRunner;
@@ -442,9 +467,7 @@ export function WorkflowCanvasWorkspace({
     useState<ConnectionDragState>(null);
   const [scriptInput, setScriptInput] =
     useState<ScriptNodeInput>(defaultScriptInput);
-  const [scriptOutput, setScriptOutput] = useState<ScriptNodeOutput | null>(
-    null,
-  );
+  const [scriptOutcomes, setScriptOutcomes] = useState<ScriptOutcomeMap>({});
   const [scriptDialogueMessages, setScriptDialogueMessages] = useState<
     ScriptDialogueMessage[]
   >([]);
@@ -478,7 +501,9 @@ export function WorkflowCanvasWorkspace({
       ? findEdge(state.edges, state.selection.id)
       : null;
   const selectedScriptNode =
-    selectedNode?.type === "script" ? selectedNode : null;
+    selectedNode?.type === "script" && selectedNode.role === "source"
+      ? selectedNode
+      : null;
   const selectedImageEditorNode =
     selectedNode && isFloatingImageEditorNodeType(selectedNode.type)
       ? selectedNode
@@ -494,6 +519,7 @@ export function WorkflowCanvasWorkspace({
       return null;
     }
   }, [connectionDrag, state.nodes]);
+  const hasScriptOutcome = Object.keys(scriptOutcomes).length > 0;
 
   useEffect(() => {
     function applyResponsiveViewport() {
@@ -715,12 +741,18 @@ export function WorkflowCanvasWorkspace({
       return;
     }
 
+    const conversationHistory = scriptConversationMode ? scriptDialogueMessages : [];
+    const directOutputMessage = buildScriptDirectOutputMessage(
+      scriptInput,
+      conversationHistory.length > 0,
+    );
+
     setScriptBusy(true);
-    setScriptConversationMode(false);
     setScriptError(null);
     setScriptBackendExecution(null);
+    setScriptHistoryOpen(scriptConversationMode && scriptDialogueMessages.length > 0);
     setScriptTask({
-      task_id: "pending",
+      task_id: "direct-output-pending",
       project_id: state.projectId,
       node_id: selectedScriptNode.id,
       status: "running",
@@ -739,20 +771,60 @@ export function WorkflowCanvasWorkspace({
         nodeId: selectedScriptNode.id,
         input: scriptInput,
         settings: findScriptModelOption(scriptModel).settings,
+        history: conversationHistory,
+        message: directOutputMessage,
       });
-
-      setScriptTask(result.task);
-      setScriptBackendExecution(
-        createScriptBackendExecution(result.task.provider, result.task.model),
+      const backendExecution = createScriptBackendExecution(
+        result.provider,
+        result.model,
       );
-      setScriptOutput(result.output);
-      setScriptHistoryOpen(true);
+      const outcomeNodeId = createWorkflowOutputNodeId(
+        selectedScriptNode.id,
+        "script",
+      );
+
+      setScriptTask({
+        task_id: "direct-output-succeeded",
+        project_id: result.project_id,
+        node_id: result.node_id,
+        status: "succeeded",
+        error: null,
+        provider: result.provider,
+        model: result.model,
+      });
+      setScriptBackendExecution(backendExecution);
+      setScriptOutcomes((current) => ({
+        ...current,
+        [outcomeNodeId]: result.message.content,
+      }));
       dispatch({
         type: "setNodeStatus",
         nodeId: selectedScriptNode.id,
         status: "ready",
         notice:
-          "Script output is ready. Downstream media nodes remain deferred.",
+          "Script direct output is ready as an editable canvas node.",
+      });
+      dispatch({
+        type: "upsertOutputNode",
+        sourceNodeId: selectedScriptNode.id,
+        nodeType: "script",
+        title: SCRIPT_OUTCOME_TITLE,
+        description: SCRIPT_OUTCOME_DESCRIPTION,
+        position: {
+          x: selectedScriptNode.position.x + 360,
+          y: Math.max(80, selectedScriptNode.position.y - 96),
+        },
+        output: {
+          sourceNodeId: selectedScriptNode.id,
+          dataType: "script",
+          label: "Script output",
+          provider: backendExecution?.provider ?? result.provider,
+          model: backendExecution?.model ?? result.model,
+          editable: true,
+        },
+        ports: SCRIPT_OUTCOME_PORTS.map((port) => ({ ...port })),
+        notice:
+          "Script direct output node updated. Local edits are not persisted yet.",
       });
     } catch (error) {
       const message =
@@ -848,9 +920,9 @@ export function WorkflowCanvasWorkspace({
       dispatch({
         type: "setNodeStatus",
         nodeId: selectedScriptNode.id,
-        status: scriptOutput ? "ready" : "placeholder",
+        status: hasScriptOutcome ? "ready" : "placeholder",
         notice:
-          "Script AI dialogue reply received. Use Generate for structured ScriptOutput.",
+          "Script AI dialogue reply received. Use Generate for direct text output.",
       });
     } catch (error) {
       const message =
@@ -962,13 +1034,32 @@ export function WorkflowCanvasWorkspace({
                 <WorkflowNodeCard
                   key={node.id}
                   node={node}
-                  scriptInput={node.type === "script" ? scriptInput : null}
-                  scriptOutput={node.type === "script" ? scriptOutput : null}
+                  scriptInput={
+                    node.type === "script" && node.role === "source"
+                      ? scriptInput
+                      : null
+                  }
+                  scriptOutcomeText={
+                    node.output?.dataType === "script"
+                      ? scriptOutcomes[node.id] ?? null
+                      : null
+                  }
                   selected={
                     state.selection.kind === "node" &&
                     state.selection.id === node.id
                   }
                   pendingPort={pendingPort}
+                  onScriptOutcomeTextChange={(nodeId, value) => {
+                    setScriptOutcomes((current) => ({
+                      ...current,
+                      [nodeId]: value,
+                    }));
+                    dispatch({
+                      type: "setNotice",
+                      notice:
+                        "Script direct output edited locally. Durable persistence is deferred.",
+                    });
+                  }}
                   onDragStart={startNodeDrag}
                   onSelect={(selection) => {
                     dispatch({ type: "select", selection });
@@ -993,14 +1084,11 @@ export function WorkflowCanvasWorkspace({
                   backendExecution={scriptBackendExecution}
                   responseMode={scriptResponseMode}
                   node={selectedScriptNode}
-                  output={scriptOutput}
                   model={scriptModel}
                   task={scriptTask}
                   viewportZoom={state.viewport.zoom}
                   onGenerate={() => {
-                    setScriptConversationMode(false);
                     setScriptResponseMode("generation");
-                    setScriptHistoryOpen(true);
                     void generateScriptNode();
                   }}
                   onHistoryOpenChange={setScriptHistoryOpen}
@@ -1369,7 +1457,6 @@ type ScriptNodeInlineEditorProps = {
   responseMode: ScriptResponseMode;
   model: ScriptModelSelection;
   node: WorkflowNode;
-  output: ScriptNodeOutput | null;
   task: ScriptTaskStatusResponse;
   viewportZoom: number;
   onGenerate: () => void;
@@ -1394,7 +1481,6 @@ function ScriptNodeInlineEditor({
   responseMode,
   model,
   node,
-  output,
   task,
   viewportZoom,
   onGenerate,
@@ -1434,7 +1520,6 @@ function ScriptNodeInlineEditor({
             error={error}
             input={input}
             messages={messages}
-            output={output}
             responseMode={responseMode}
             task={task}
             onHide={() => onHistoryOpenChange(false)}
@@ -1701,10 +1786,9 @@ export function ImageNodeFloatingEditor({
                 aria-label="Image model"
                 className="h-9 rounded-lg border border-neutral-200 bg-white px-3 text-xs font-medium text-neutral-700 shadow-sm"
                 data-image-model-select="true"
-                defaultValue="mock"
+                defaultValue="configured"
               >
-                <option value="mock">Mock image model</option>
-                <option value="configured">Configured model</option>
+                <option value="configured">Configured image model</option>
               </select>
               <Button
                 className="h-9 rounded-lg px-3 text-xs"
@@ -1749,7 +1833,6 @@ type ScriptOutputTabsProps = {
   error?: string | null;
   input: ScriptNodeInput;
   messages: ScriptDialogueMessage[];
-  output: ScriptNodeOutput | null;
   responseMode: ScriptResponseMode;
   task: ScriptTaskStatusResponse;
   onHide?: () => void;
@@ -1761,7 +1844,6 @@ export function ScriptOutputTabs({
   error,
   input,
   messages,
-  output,
   responseMode,
   task,
   onHide,
@@ -1773,13 +1855,10 @@ export function ScriptOutputTabs({
       ? SCRIPT_REVISE_STATUS_LABEL
       : responseMode === "revise" && !error && (conversationMode || hasDialogueMessages)
         ? SCRIPT_DIALOGUE_READY_LABEL
-        : getScriptResponseStatusLabel(task, output, error);
+        : getScriptResponseStatusLabel(task, null, error);
   const statusDetail = error ?? task.error ?? null;
   const backendExecutionLabel = formatScriptBackendExecutionLabel(backendExecution);
-  const assistantTitle =
-    backendExecution?.provider === "mock"
-      ? `${SCRIPT_REVISE_LABEL} · mock backend`
-      : SCRIPT_REVISE_LABEL;
+  const assistantTitle = SCRIPT_REVISE_LABEL;
 
   return (
     <section
@@ -1879,16 +1958,6 @@ export function ScriptOutputTabs({
           </AssistantResponseBubble>
         ) : null}
 
-        {output &&
-        task.status !== "running" &&
-        !statusDetail &&
-        responseMode === "generation" ? (
-          <AssistantResponseBubble title="AI" subtitle={backendExecutionLabel}>
-            <p className="whitespace-pre-line">
-              {formatScriptOutputConversationReply(output)}
-            </p>
-          </AssistantResponseBubble>
-        ) : null}
       </div>
     </section>
   );
@@ -1936,12 +2005,74 @@ function Checklist({ items }: { items: string[] }) {
   );
 }
 
+type ScriptOutcomeNodeEditorProps = {
+  node: WorkflowNode;
+  text: string | null;
+  onTextChange: (value: string) => void;
+};
+
+export function ScriptOutcomeNodeEditor({
+  node,
+  text,
+  onTextChange,
+}: ScriptOutcomeNodeEditorProps) {
+  const outputText = text ?? "";
+  const backendLabel = formatWorkflowOutputExecutionLabel(node.output);
+
+  return (
+    <section
+      className="flex flex-col gap-2 rounded-md border border-neutral-200 bg-neutral-50 p-3 text-xs leading-5 text-neutral-700"
+      data-script-outcome-node="true"
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <p className="truncate font-semibold text-neutral-950">{node.title}</p>
+          <p
+            className="truncate text-[11px] text-neutral-500"
+            data-script-outcome-provider="true"
+          >
+            {backendLabel}
+          </p>
+        </div>
+        <Badge className="shrink-0 border-neutral-200 bg-white text-neutral-600">
+          {SCRIPT_OUTCOME_LOCAL_EDIT_LABEL}
+        </Badge>
+      </div>
+
+      <label htmlFor={`${node.id}-text`} className="sr-only">
+        Script direct output
+      </label>
+      <Textarea
+        id={`${node.id}-text`}
+        aria-label="Script direct output"
+        className="min-h-40 resize-none border-neutral-200 bg-white text-xs leading-5 shadow-none focus-visible:ring-neutral-950/20"
+        data-script-outcome-textarea="true"
+        onChange={(event) => onTextChange(event.target.value)}
+        onKeyDown={(event) => event.stopPropagation()}
+        placeholder="Generate direct Script text to edit it here."
+        value={outputText}
+      />
+    </section>
+  );
+}
+
+export function formatWorkflowOutputExecutionLabel(output?: WorkflowNodeOutput) {
+  if (!output?.provider) {
+    return "Backend: waiting for server confirmation";
+  }
+
+  const model = output.model ?? "server default";
+
+  return `Backend: ${output.provider} / ${model}`;
+}
+
 type WorkflowNodeCardProps = {
   node: WorkflowNode;
   scriptInput: ScriptNodeInput | null;
-  scriptOutput: ScriptNodeOutput | null;
+  scriptOutcomeText: string | null;
   selected: boolean;
   pendingPort: WorkflowPort | null;
+  onScriptOutcomeTextChange: (nodeId: string, value: string) => void;
   onDragStart: (
     event: ReactPointerEvent<HTMLButtonElement>,
     node: WorkflowNode,
@@ -1956,9 +2087,10 @@ type WorkflowNodeCardProps = {
 function WorkflowNodeCard({
   node,
   scriptInput,
-  scriptOutput,
+  scriptOutcomeText,
   selected,
   pendingPort,
+  onScriptOutcomeTextChange,
   onDragStart,
   onSelect,
   onPortConnectionStart,
@@ -1966,7 +2098,8 @@ function WorkflowNodeCard({
   const Icon = nodeIcons[node.type];
   const inputs = node.ports.filter((port) => port.direction === "input");
   const outputs = node.ports.filter((port) => port.direction === "output");
-  const scriptPreview = formatScriptNodePreview(scriptInput, scriptOutput);
+  const scriptPreview = formatScriptNodePreview(scriptInput, null);
+  const nodeKindLabel = node.output?.label ?? nodeTitles[node.type];
 
   return (
     <article
@@ -1986,7 +2119,7 @@ function WorkflowNodeCard({
     >
       <div className="absolute -top-7 left-0 flex items-center gap-1 text-xs font-medium text-neutral-500">
         <Icon aria-hidden="true" />
-        <span>{nodeTitles[node.type]}</span>
+        <span>{nodeKindLabel}</span>
       </div>
 
       <button
@@ -2012,7 +2145,13 @@ function WorkflowNodeCard({
       </button>
 
       <div className="px-4 pb-4">
-        {node.type === "script" ? (
+        {node.output?.dataType === "script" ? (
+          <ScriptOutcomeNodeEditor
+            node={node}
+            text={scriptOutcomeText}
+            onTextChange={(value) => onScriptOutcomeTextChange(node.id, value)}
+          />
+        ) : node.type === "script" ? (
           <div className="max-h-28 overflow-hidden rounded-md border border-neutral-200 bg-neutral-50 p-3 text-xs leading-5 text-neutral-700">
             <p className="font-semibold text-neutral-950">
               {scriptPreview.heading}

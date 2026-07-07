@@ -4,6 +4,7 @@ import type {
   WorkflowEdge,
   WorkflowGraphState,
   WorkflowNode,
+  WorkflowNodeOutput,
   WorkflowNodeStatus,
   WorkflowNodeType,
   WorkflowPoint,
@@ -164,6 +165,17 @@ const nodeTemplateByType = new Map(
 
 export type WorkflowGraphAction =
   | { type: "addNode"; nodeType: WorkflowNodeType; position: WorkflowPoint }
+  | {
+      type: "upsertOutputNode";
+      sourceNodeId: string;
+      nodeType: WorkflowNodeType;
+      title: string;
+      description: string;
+      position: WorkflowPoint;
+      output: WorkflowNodeOutput;
+      ports: WorkflowPortDefinition[];
+      notice?: string;
+    }
   | { type: "moveNode"; nodeId: string; position: WorkflowPoint }
   | { type: "select"; selection: WorkflowSelection }
   | { type: "deleteSelection" }
@@ -191,6 +203,7 @@ export function createWorkflowNode(
   return {
     id: nodeId,
     type: template.type,
+    role: "source",
     title: template.title,
     description: template.description,
     status: "placeholder",
@@ -269,6 +282,43 @@ export function workflowGraphReducer(
         draftStatus: "dirty",
         notice: `${node.title} placeholder added. Generation is deferred to later features.`,
         nextNodeIndex: state.nextNodeIndex + 1,
+      };
+    }
+
+    case "upsertOutputNode": {
+      const outputNodeId = createWorkflowOutputNodeId(
+        action.sourceNodeId,
+        action.output.dataType,
+      );
+      const existing = state.nodes.find((node) => node.id === outputNodeId);
+      const outputNode: WorkflowNode = {
+        id: outputNodeId,
+        type: action.nodeType,
+        role: "outcome",
+        title: action.title,
+        description: action.description,
+        status: "ready",
+        position: existing?.position ?? action.position,
+        output: action.output,
+        ports: action.ports.map((port) => ({
+          ...port,
+          id: `${outputNodeId}:${port.key}`,
+          nodeId: outputNodeId,
+        })),
+      };
+
+      return {
+        ...state,
+        nodes: existing
+          ? state.nodes.map((node) =>
+              node.id === outputNodeId ? outputNode : node,
+            )
+          : [...state.nodes, outputNode],
+        selection: { kind: "node", id: outputNodeId },
+        draftStatus: "dirty",
+        notice:
+          action.notice ??
+          `${action.title} is ready as a local editable output node.`,
       };
     }
 
@@ -498,6 +548,13 @@ export function findEdge(edges: WorkflowEdge[], edgeId: string) {
 
 export function connectionDataTypeLabel(dataType: WorkflowDataType) {
   return dataType.replace("-", " ");
+}
+
+export function createWorkflowOutputNodeId(
+  sourceNodeId: string,
+  dataType: WorkflowDataType,
+) {
+  return `${sourceNodeId}:${dataType}-outcome`;
 }
 
 function makeEdge(

@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   connectPorts,
   createInitialWorkflowGraphState,
+  createWorkflowOutputNodeId,
   createWorkflowSnapshot,
   workflowGraphReducer,
 } from "./graph";
@@ -107,6 +108,92 @@ describe("workflow graph state", () => {
       dataType: "character",
     });
     expect(connected.notice).toContain("No generation task was started");
+  });
+
+  it("upserts reusable output nodes with editable output metadata", () => {
+    const state = createInitialWorkflowGraphState();
+    const outputNodeId = createWorkflowOutputNodeId("script-1", "script");
+    const withOutput = workflowGraphReducer(state, {
+      type: "upsertOutputNode",
+      sourceNodeId: "script-1",
+      nodeType: "script",
+      title: "Script outcome",
+      description: "Editable structured script generated from the Script node.",
+      position: { x: 500, y: 120 },
+      output: {
+        sourceNodeId: "script-1",
+        dataType: "script",
+        label: "Script output",
+        provider: "openai",
+        model: "gpt-live",
+        editable: true,
+      },
+      ports: [
+        {
+          key: "script-out",
+          label: "Script",
+          direction: "output",
+          dataType: "script",
+        },
+      ],
+    });
+
+    expect(withOutput.nodes).toHaveLength(state.nodes.length + 1);
+    expect(withOutput.selection).toEqual({ kind: "node", id: outputNodeId });
+    expect(withOutput.nodes.find((node) => node.id === outputNodeId)).toMatchObject({
+      role: "outcome",
+      title: "Script outcome",
+      output: {
+        sourceNodeId: "script-1",
+        dataType: "script",
+        provider: "openai",
+        model: "gpt-live",
+        editable: true,
+      },
+      ports: [
+        {
+          id: `${outputNodeId}:script-out`,
+          nodeId: outputNodeId,
+          dataType: "script",
+          direction: "output",
+        },
+      ],
+    });
+
+    const updated = workflowGraphReducer(withOutput, {
+      type: "upsertOutputNode",
+      sourceNodeId: "script-1",
+      nodeType: "script",
+      title: "Updated Script outcome",
+      description: "Updated structured script output.",
+      position: { x: 999, y: 999 },
+      output: {
+        sourceNodeId: "script-1",
+        dataType: "script",
+        label: "Script output",
+        provider: "openai-compatible",
+        model: "gpt-5.4-mini",
+        editable: true,
+      },
+      ports: [
+        {
+          key: "script-out",
+          label: "Script",
+          direction: "output",
+          dataType: "script",
+        },
+      ],
+    });
+
+    expect(updated.nodes).toHaveLength(withOutput.nodes.length);
+    expect(updated.nodes.find((node) => node.id === outputNodeId)).toMatchObject({
+      title: "Updated Script outcome",
+      position: { x: 500, y: 120 },
+      output: {
+        provider: "openai-compatible",
+        model: "gpt-5.4-mini",
+      },
+    });
   });
 
   it("rejects stale connection requests that reference missing ports", () => {

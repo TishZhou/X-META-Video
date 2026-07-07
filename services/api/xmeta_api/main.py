@@ -114,6 +114,7 @@ def chat_script_node(
             script_input=node.input,
             history=request.history,
             user_message=request.message,
+            mode=request.mode,
         )
         assistant_text = provider.chat(
             script_input=node.input,

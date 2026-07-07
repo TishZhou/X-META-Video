@@ -42,6 +42,11 @@ class ScriptDialogueRole(StrEnum):
     ASSISTANT = "assistant"
 
 
+class ScriptDialogueMode(StrEnum):
+    DIALOGUE = "dialogue"
+    DIRECT_OUTPUT = "direct_output"
+
+
 class ScriptDialogueMessage(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
@@ -56,6 +61,7 @@ class ScriptDialogueRequest(BaseModel):
     settings: ScriptSettings = Field(default_factory=ScriptSettings)
     history: list[ScriptDialogueMessage] = Field(default_factory=list, max_length=40)
     message: str = Field(..., min_length=1)
+    mode: ScriptDialogueMode = ScriptDialogueMode.DIALOGUE
 
 
 class ScriptDialogueResponse(BaseModel):

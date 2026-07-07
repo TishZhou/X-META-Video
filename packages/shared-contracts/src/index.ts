@@ -79,6 +79,7 @@ export type ScriptNodeOutput = {
 };
 
 export type ScriptDialogueRole = "user" | "assistant";
+export type ScriptDialogueMode = "dialogue" | "direct_output";
 
 export type ScriptDialogueMessage = {
   role: ScriptDialogueRole;
@@ -90,6 +91,7 @@ export type ScriptDialogueRequest = {
   settings?: ScriptNodeSettings;
   history?: ScriptDialogueMessage[];
   message: string;
+  mode?: ScriptDialogueMode;
 };
 
 export type ScriptDialogueResponse = {

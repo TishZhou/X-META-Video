@@ -11,13 +11,9 @@ import httpx
 from pydantic import ValidationError
 
 from .schemas import (
-    CharacterProfile,
-    SceneDescription,
     ScriptDialogueMessage,
     ScriptInput,
     ScriptOutput,
-    StoryboardDirection,
-    StoryboardShot,
 )
 
 
@@ -45,12 +41,12 @@ class ScriptProvider(Protocol):
         raise NotImplementedError
 
 
-SUPPORTED_TEXT_PROVIDERS = {"mock", "openai", "openai-compatible"}
+SUPPORTED_TEXT_PROVIDERS = {"openai", "openai-compatible"}
 
 
 @dataclass(frozen=True)
 class ScriptProviderSettings:
-    provider: str = "mock"
+    provider: str = "openai"
     base_url: str | None = None
     api_key: str | None = None
     model: str | None = None
@@ -60,9 +56,9 @@ class ScriptProviderSettings:
 
     @classmethod
     def from_env(cls) -> "ScriptProviderSettings":
-        provider = _first_env("TEXT_MODEL_PROVIDER", "SCRIPT_MODEL_PROVIDER", default="mock")
-        normalized_provider = provider.strip().lower() or "mock"
-        default_model = "local-script-mock" if normalized_provider == "mock" else "gpt-5.4-mini"
+        provider = _first_env("TEXT_MODEL_PROVIDER", "SCRIPT_MODEL_PROVIDER", default="openai")
+        normalized_provider = provider.strip().lower() or "openai"
+        default_model = "gpt-5.4-mini"
         temperature = _first_env("TEXT_MODEL_TEMPERATURE", "SCRIPT_MODEL_TEMPERATURE")
         return cls(
             provider=normalized_provider,
@@ -98,9 +94,6 @@ class ScriptProviderSettings:
                 f"Allowed providers: {allowed}."
             )
 
-        if self.provider == "mock":
-            return
-
         missing = [
             env_name
             for env_name, value in (
@@ -115,184 +108,6 @@ class ScriptProviderSettings:
             raise ProviderConfigurationError(
                 f"Text model provider '{self.provider}' requires missing config: {joined}."
             )
-
-
-class MockScriptProvider:
-    name = "mock"
-
-    def generate(self, script_input: ScriptInput, prompt: str) -> ScriptOutput:
-        del prompt
-        description = script_input.world_description.rstrip(".")
-        title_seed = description[:48]
-
-        return ScriptOutput(
-            title=f"MV World: {title_seed}",
-            agent_output=(
-                f"MV World: {title_seed}\n\n"
-                f"{description} can become a road-movie MV world with two idol "
-                "characters moving from a wide environment into intimate inserts, "
-                "then resolving on a luminous performance scene.\n\n"
-                "The output is ready for storyboard, character reference, and scene "
-                "image nodes."
-            ),
-            world_overview=(
-                f"The MV world-view description expands from: {description}. It is "
-                "organized for downstream storyboard, character image, and scene "
-                "image nodes."
-            ),
-            storyboard_direction=StoryboardDirection(
-                pov=(
-                    "third-person cinematic POV with occasional first-person inserts "
-                    "when emotion peaks"
-                ),
-                visual_rhythm=(
-                    "soft opening, kinetic travel beat, then a luminous performance "
-                    "payoff"
-                ),
-                shots=[
-                    StoryboardShot(
-                        shot_number=1,
-                        pov="third-person observer",
-                        framing="wide establishing frame",
-                        action=(
-                            "Introduce the world, the main characters, and the emotional "
-                            "distance between them."
-                        ),
-                        camera_movement="slow push-in from environment to faces",
-                        duration_seconds=8,
-                    ),
-                    StoryboardShot(
-                        shot_number=2,
-                        pov="first-person insert",
-                        framing="handheld close-up sequence",
-                        action=(
-                            "Show a tactile object or gesture that reveals what the "
-                            "characters are searching for."
-                        ),
-                        camera_movement="quick inserts with a gentle whip transition",
-                        duration_seconds=10,
-                    ),
-                    StoryboardShot(
-                        shot_number=3,
-                        pov="third-person performance POV",
-                        framing="medium-to-wide chorus staging",
-                        action=(
-                            "Resolve the search into a synchronized visual hook that can "
-                            "feed scene and composition nodes."
-                        ),
-                        camera_movement="orbit move ending on a locked hero frame",
-                        duration_seconds=12,
-                    ),
-                ],
-            ),
-            characters=[
-                CharacterProfile(
-                    name="Lead Girl",
-                    overview="Sweet visual direction with a lonely, determined core.",
-                    style="soft idol MV styling with clean silhouettes",
-                    clothing=(
-                        "white cropped jacket, pale pink layered skirt, silver hair "
-                        "clips, travel-worn boots"
-                    ),
-                    height="about 165 cm",
-                    appearance=(
-                        "bright eyes, shoulder-length dark hair, delicate makeup, "
-                        "expressive but restrained posture"
-                    ),
-                    personality="gentle on the surface, stubborn when the goal is threatened",
-                    visual_prompt=(
-                        "sweet idol heroine, white jacket, pale pink skirt, desert wind, "
-                        "clean full-body character reference"
-                    ),
-                ),
-                CharacterProfile(
-                    name="Second Girl",
-                    overview="Contrasting cool sweetness, protective and quietly bold.",
-                    style="retro road-trip styling with neon stage accents",
-                    clothing=(
-                        "denim vest, cream tank top, black shorts, red scarf, chunky "
-                        "bracelets"
-                    ),
-                    height="about 170 cm",
-                    appearance=(
-                        "long wavy hair, sharper eyeliner, athletic stance, confident "
-                        "half-smile"
-                    ),
-                    personality="playful under pressure, loyal, and visually assertive",
-                    visual_prompt=(
-                        "cool sweet idol heroine, denim vest, red scarf, road-trip look, "
-                        "full-body character reference"
-                    ),
-                ),
-            ],
-            scene_descriptions=[
-                SceneDescription(
-                    scene_number=1,
-                    shot_reference=1,
-                    characters=["Lead Girl", "Second Girl"],
-                    location="desert highway beside a vintage jeep",
-                    description=(
-                        "The two girls stand near a sun-faded jeep on an open desert "
-                        "road, letting the world-view description become a concrete "
-                        "travel scene."
-                    ),
-                    visual_prompt=(
-                        f"{description}, two sweet idol girls, desert highway, vintage "
-                        "jeep, warm sunlight, production-ready scene prompt"
-                    ),
-                ),
-                SceneDescription(
-                    scene_number=2,
-                    shot_reference=2,
-                    characters=["Lead Girl"],
-                    location="inside the moving jeep",
-                    description=(
-                        "A close interior scene catches the lead gripping a small "
-                        "keepsake while wind and reflected light imply motion."
-                    ),
-                    visual_prompt=(
-                        "inside a desert jeep, close-up emotional insert, sweet idol MV, "
-                        "dusty window reflections"
-                    ),
-                ),
-                SceneDescription(
-                    scene_number=3,
-                    shot_reference=3,
-                    characters=["Lead Girl", "Second Girl"],
-                    location="night neon performance stage",
-                    description=(
-                        "The road world transforms into a neon stage where both "
-                        "characters perform the final visual hook."
-                    ),
-                    visual_prompt=(
-                        "night neon stage, two idol characters, synchronized chorus pose, "
-                        "cinematic MV scene"
-                    ),
-                ),
-            ],
-            missing_inputs=[],
-        )
-
-    def chat(
-        self,
-        script_input: ScriptInput,
-        history: list[ScriptDialogueMessage],
-        user_message: str,
-        prompt: str,
-    ) -> str:
-        del prompt
-        description = script_input.world_description.rstrip(".")
-        prior_turns = len([message for message in history if message.role == "user"]) + 1
-        trimmed_message = user_message.strip()
-
-        return (
-            f"Script AI turn {prior_turns}: I read your latest direction, "
-            f"'{trimmed_message}'. For the world '{description}', I would revise "
-            "the script conversation by making the emotional goal clearer, then "
-            "carry that choice into the next storyboard beat. Use Generate when "
-            "you want me to turn this dialogue into structured ScriptOutput for "
-            "downstream nodes."
-        )
 
 
 class OpenAICompatibleScriptProvider:
@@ -475,6 +290,4 @@ def _extract_response_text(response_data: dict[str, Any]) -> str:
 def get_script_provider(settings: ScriptProviderSettings | None = None) -> ScriptProvider:
     resolved = settings or ScriptProviderSettings.from_env()
     resolved.validate()
-    if resolved.provider == "mock":
-        return MockScriptProvider()
     return OpenAICompatibleScriptProvider(resolved)

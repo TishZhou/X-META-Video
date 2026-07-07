@@ -1,20 +1,24 @@
-# Sprint Contract - Feature 3 Script Provider Truth
+# Sprint Contract - Feature 3 Script Outcome Node
 
 ## Sprint Overview
 
-**Sprint:** feature-3-script-provider-truth
+**Sprint:** feature-3-script-outcome-node
 **Feature:** Feature 3, Script Node
-**Status:** in_progress
-**Goal:** Make Script node AI interactions prove and display the actual backend text provider/model used, so the product no longer presents a frontend model label as if it were a live LLM connection.
+**Task:** script-node-010
+**Status:** passing
+**Goal:** Complete the first reusable AI node pattern: Script node chat stays conversational, while Generate creates an editable direct-text Script outcome node on the canvas. When AI conversation mode is active, Generate includes the dialogue history as context. Structured JSON output is intentionally deferred to avoid truncation issues.
 
 ## Write Scope
 
 - `packages/shared-contracts/src/index.ts`
 - `services/api/xmeta_api/schemas.py`
-- `services/api/xmeta_api/store.py`
+- `services/api/xmeta_api/prompt.py`
 - `services/api/xmeta_api/main.py`
 - `services/api/tests/test_script_node.py`
 - `apps/web/src/lib/script-node/api.ts`
+- `apps/web/src/lib/workflow-canvas/types.ts`
+- `apps/web/src/lib/workflow-canvas/graph.ts`
+- `apps/web/src/lib/workflow-canvas/graph.test.ts`
 - `apps/web/src/components/xmeta/workflow-canvas/workflow-canvas-workspace.tsx`
 - `apps/web/src/components/xmeta/workflow-canvas/workflow-canvas-workspace.test.tsx`
 - `docs/API.md`
@@ -24,54 +28,53 @@
 - `evaluator-rubric.md`
 - `progress.md`
 - `session-handoff.md`
-- `C:/Users/AI/.codex/skills/verify/SKILL.md`
 
 Protected existing edits:
 
-- Preserve unrelated pre-existing working tree changes including `.env.example`, `AGENTS.md`, `docs/PRODUCT.md`, `pnpm-workspace.yaml`, and untracked `scripts/`.
+- Preserve the pre-existing uncommitted `feature_tasks/3.json` task10 draft and build on it.
+- Preserve unrelated working tree changes unless they directly block this task.
 
 ## In Scope
 
-- Add backend-returned `model` evidence to Script generation tasks and Script dialogue responses.
-- Keep the web app calling FastAPI only; no frontend model-provider calls.
-- Replace the misleading default `gpt-5.4-mini` frontend selector label with a server-configured label.
-- Display backend-confirmed provider/model in the Script response panel after chat or generation.
-- Show mock execution honestly when the backend falls back to the mock provider.
-- Add tests and Browser E2E evidence that validate the UI against backend-returned provider/model, not static frontend copy.
-- Update the verify skill with this rule for future AI/provider work.
+- Add reusable workflow node output metadata so generated outputs can live on canvas nodes, not inside chat history.
+- Add a direct-text generation path that can use optional dialogue history without asking the model for JSON.
+- Update the backend Script prompt so direct text generation can use prior AI conversation context when supplied.
+- On Generate success, create or update one editable Script outcome node on the canvas with direct text output.
+- Keep AI modify / Send as conversational chat only; chat history should not show the generated direct text output reply.
+- Make the Script outcome node editable enough for MVP: the generated text can be changed locally and reflected in the node preview.
+- Keep backend/provider truth visible and remove non-live fallback provider options from this path.
+- Keep implementation reusable for later image/video/audio nodes by separating common node-output behavior from Script-specific output rendering.
 
 ## Out of Scope
 
-- Supplying real production credentials in this repo.
-- Streaming/SSE performance.
-- Durable chat persistence.
-- Full dialogue-history synthesis into the final generation prompt.
-- Media model execution.
+- Durable workflow persistence, production auth, queue workers, SSE/WebSocket streaming, object storage, and asset lineage.
+- Full Storyboard Node editing, image generation, audio generation, video generation, or export rendering.
 - Mobile UI polish.
+- Replacing the existing canvas engine or broad visual redesign.
 
 ## Acceptance Criteria
 
-1. Script chat response includes `provider` and `model` from resolved backend settings.
-2. Script generation task status includes `provider` and `model` from resolved backend settings.
-3. The initial UI no longer claims `gpt-5.4-mini` as a frontend-selected model before backend confirmation.
-4. After Send or Generate, the response panel shows backend-confirmed provider/model; mock provider is visibly identified as mock backend execution.
-5. Tests cover backend response metadata, frontend rendering, and the absence of misleading static model claims.
-6. Browser E2E verifies the open `/workspace` product against the backend response path.
-7. `verify` skill records the new AI/provider verification rule.
+1. `script-node-010` is the only active Feature 3 task and has concrete criteria/evidence recorded.
+2. Direct Generate from the Script composer creates a new editable direct-text Script outcome node on the canvas instead of showing generated output as an AI chat-history reply.
+3. If AI conversation mode is active, Generate sends dialogue history to the backend direct-output path and generation is based on that context.
+4. If AI conversation mode is not active, Generate uses the current world description directly and does not require chat history.
+5. The Script chat panel still opens for AI modify, Send appends backend dialogue turns, and the panel no longer renders generated output after generation.
+6. The Script outcome node shows backend-confirmed provider/model metadata and honest local persistence boundaries.
+7. The common output-node model can be reused by later image/video/audio nodes with different input/output payloads.
+8. Tests cover backend direct-output prompt history, frontend generation request payload, output-node creation/update, local editing, and absence of generated output in chat history.
+9. End-to-end browser verification proves Generate creates/updates the outcome node and AI modify history can feed generation.
 
 ## Sprint Log
 
 | Phase | Outcome |
 | --- | --- |
-| Baseline | Confirmed `D:\X-META-Video`, read startup docs, product, architecture, Feature 3 task state, recent commits, and verify skill. |
-| Startup | `.\init.ps1` passed before implementation and reran web tests: 9 files / 39 tests. |
-| Planning | User reported the product still looked like a frontend placeholder and was not visibly connected to their LLM. The missing piece was the AI modify reply content itself: the response panel needed to prove whether the assistant text came from mock or a live backend provider. User clarified `.env.example` is the current real local env file. |
-| Backend | Added `model` to Script dialogue responses and Script generation task state; changed mock defaults to `local-script-mock`; added process env, `.env`, `services/api/.env`, and `.env.example` reading for FastAPI provider config, with tests disabling dotenv loading to avoid accidental live calls. |
-| Frontend | The Script response panel now shows backend-confirmed provider/model beside AI modify replies and generated ScriptOutput. Mock replies use `AI修改 · mock backend`; live provider replies show `Backend: openai / gpt-5.4-mini`. |
-| Verify skill | Added an AI/provider verification rule requiring visible AI reply content to be checked against backend provider/model metadata and current config. |
-| Focused verification | `.\.venv\Scripts\python.exe -m pytest services\api\tests\test_script_node.py` passed: 23 tests. `.\.venv\Scripts\python.exe -m ruff check services\api` passed. `corepack pnpm --filter @xmeta/web test -- workflow-canvas-workspace.test.tsx` passed: 1 file / 16 tests. `corepack pnpm --filter @xmeta/web typecheck` passed. |
-| Full verification | `corepack pnpm --filter @xmeta/web test` passed: 9 files / 40 tests. `corepack pnpm --filter @xmeta/web build` passed and included `/workspace`. |
-| API preflight | Restarted the local FastAPI process and confirmed `POST /api/v1/projects/local-project/nodes/script-1/chat` reads `.env.example`, calls the live OpenAI-compatible provider, and returns assistant content with `provider: openai` and `model: gpt-5.4-mini`. |
-| Browser E2E | Passed on the user's already-open in-app browser tab at `http://localhost:3000/workspace`: initial UI had no static `gpt-5.4-mini` claim; AI modify opened conversation mode with backend waiting state; Send produced a natural-language assistant reply with `Backend: openai / gpt-5.4-mini`; no `Script AI turn` mock text or mock backend label appeared; console warn/error logs were empty. |
-| Evaluation | Main evaluation accepts `script-node-009` at 150 / 150 after live provider preflight and Browser E2E. |
-| Final startup | Final `.\init.ps1` passed after artifact updates and reran web tests: 9 files / 40 tests. |
+| Baseline | Confirmed `D:\X-META-Video`, read `AGENTS.md`, `docs/PRODUCT.md`, `docs/ARCHITECTURE.md`, `feature_list.json`, `feature_tasks/3.json`, existing handoff/progress, and recent commits. |
+| Startup | `.\init.ps1` passed before implementation and reran web tests: 9 files / 40 tests. |
+| Git review | Recent commits were short and pushed on `main...origin/main`; the only pre-existing working-tree change was `feature_tasks/3.json` with the user task10 draft. |
+| Planning | Task10 scope is the reusable first AI-node pattern: chat is conversational, Generate produces a separate editable direct-text outcome node, and conversation history feeds direct text generation only when AI modify mode is active. Structured JSON output is deferred because the user flagged JSON truncation risk. |
+| Implementation | Added Script chat `mode: "direct_output"`, plain-text direct-output prompt guidance, reusable workflow source/outcome node metadata, deterministic Script outcome node creation/update, editable outcome rendering, and product provider support limited to configured live providers. |
+| Backend verification | `.\.venv\Scripts\python.exe -m pytest services\api\tests\test_script_node.py` passed: 25 tests. `.\.venv\Scripts\python.exe -m pytest services\api\tests` passed: 25 tests. `.\.venv\Scripts\python.exe -m ruff check services\api` passed. |
+| Frontend verification | `corepack pnpm --filter @xmeta/web test -- workflow-canvas-workspace.test.tsx` passed: 1 file / 16 tests. `corepack pnpm --filter @xmeta/web test` passed: 9 files / 41 tests. `corepack pnpm --filter @xmeta/web typecheck` passed. `corepack pnpm --filter @xmeta/web build` passed and included `/workspace`. |
+| Browser QA | Playwright/Chrome E2E against `http://localhost:3000/workspace` and FastAPI on `localhost:8000` passed: Generate sent `/chat` with `mode: "direct_output"`, created one Script outcome node, rendered 768 characters of editable direct text, showed `Backend: openai / gpt-5.4-mini`, and had no console errors or failed requests. |
+| Artifact verification | JSON validation passed for `feature_list.json`, `feature_tasks/3.json`, and `feature_tasks/4.json`. Scoped provider-cleanup search over product code/docs/task artifacts returned no legacy fallback-provider matches. `.env.example` has an empty `TEXT_MODEL_API_KEY`. Current state was recorded in `progress.md`, `session-handoff.md`, `feature_list.json`, `feature_tasks/3.json`, and `evaluator-rubric.md`. |
+| Final startup | Final `.\init.ps1` passed at session close and reran web tests: 9 files / 41 tests. |

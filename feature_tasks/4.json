@@ -35,7 +35,7 @@
                                                 "The composer selector is now a model selector, the redundant output-target badge near Generate was removed, and generation errors render inside the Storyboard AI panel status area.",
                                                 "Focused workspace component test passed: 1 file / 9 tests.",
                                                 "Full web tests passed: 9 files / 33 tests; typecheck passed; build passed with /workspace.",
-                                                "Browser QA on http://localhost:3000/workspace passed: AI修改 opened the panel, Hide removed only the panel, model selector changed to configured, Failed to fetch appeared inside the panel with no detached red strip, mock generation returned Ready and confirmed Script preview, 50% zoom kept panel/composer 820px wide and panel 288px high, and Script node dragged to negative left position.",
+                                                "Browser QA on http://localhost:3000/workspace passed: AI修改 opened the panel, Hide removed only the panel, model selector changed to configured, Failed to fetch appeared inside the panel with no detached red strip, test fake generation returned Ready and confirmed Script preview, 50% zoom kept panel/composer 820px wide and panel 288px high, and Script node dragged to negative left position.",
                                                 "JSON validation passed for feature_list.json and feature_tasks/4.json; git diff --check passed with line-ending warnings only.",
                                                 "Final .\\init.ps1 passed after artifact updates and reran web tests: 9 files / 33 tests."
                                               ]

@@ -93,6 +93,7 @@ export type RunScriptDialogueOptions = {
   settings?: ScriptNodeSettings;
   history: ScriptDialogueMessage[];
   message: string;
+  mode?: ScriptDialogueRequest["mode"];
 };
 
 export async function runScriptDialogue({
@@ -102,12 +103,14 @@ export async function runScriptDialogue({
   settings,
   history,
   message,
+  mode,
 }: RunScriptDialogueOptions): Promise<ScriptDialogueResponse> {
   const payload: ScriptDialogueRequest = {
     input,
     settings,
     history,
     message,
+    mode,
   };
 
   return requestJson<ScriptDialogueResponse>(
@@ -117,6 +120,20 @@ export async function runScriptDialogue({
       body: JSON.stringify(payload),
     },
   );
+}
+
+export type RunScriptDirectOutputOptions = Omit<
+  RunScriptDialogueOptions,
+  "mode"
+>;
+
+export async function runScriptDirectOutput(
+  options: RunScriptDirectOutputOptions,
+): Promise<ScriptDialogueResponse> {
+  return runScriptDialogue({
+    ...options,
+    mode: "direct_output",
+  });
 }
 
 export type RunScriptGenerationOptions = {

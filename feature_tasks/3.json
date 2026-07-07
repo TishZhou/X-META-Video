@@ -1,223 +1,255 @@
 {
-  "parent_feature": {
-    "id": 3,
-    "title": "Script Node",
-    "status": "passing"
-  },
-  "planning_status": "script_node_dual_mode_passing",
-  "notes": [
-    "Feature 3 implements the Script Node MV world-description input/output interaction and API contract only.",
-    "The current Script Node input is a single AI chat-style world-view description.",
-    "The Script Node output expands that description into storyboard direction, character profiles, and concrete scene descriptions.",
-    "The current Script Node interaction binds one input composer under the selected Script node, and the AI response history appears between the node and input after AI修改 or generation.",
-    "Prompt wording is intentionally centralized and adjustable later without changing route or UI contracts.",
-    "Real provider credentials are supplied through environment variables; mock provider remains the default verification path.",
-    "Storyboards as a separate editable node remain Feature 4.",
-    "2026-07-06 provider optimization scope adds OpenAI text execution for Script Node while keeping image, video, and music as agent-layer configuration slots only.",
-    "2026-07-07 closure confirms Feature 3 includes both the canvas Script node and its AI dialogue path for generating full ScriptOutput from the composer.",
-    "2026-07-07 realtime dialogue follow-up adds backend-connected multi-turn Script AI chat, while Generate remains the structured ScriptOutput path.",
-    "2026-07-07 dual-mode follow-up clarifies that AI modify is a conversation-mode entry, not the chat send action."
-  ],
-  "small_features": [
-    {
-      "id": "script-node-001",
-      "title": "Define shared Script Node contracts",
-      "status": "passing",
-      "user_visible_behavior": "The Script Node has stable typed world-description input, structured output, task, and status shapes used by frontend and backend-facing code.",
-      "acceptance_criteria": [
-        "Script input includes only world_description for the first MV world-view prompt.",
-        "Script output includes title, world_overview, storyboard_direction with POV and shots, characters with visual/wardrobe/body details, scene_descriptions, and missing_inputs.",
-        "Task status values remain compatible with the repository API contract."
-      ],
-      "verification": [
-        "Run frontend typecheck.",
-        "Run shared/web tests that consume Script Node contracts."
-      ]
-    },
-    {
-      "id": "script-node-002",
-      "title": "Implement FastAPI Script Node API and mock provider",
-      "status": "passing",
-      "user_visible_behavior": "The Script Node can save input, create a generation task, and retrieve structured output through backend API routes.",
-      "acceptance_criteria": [
-        "PATCH /api/v1/projects/{project_id}/nodes/{node_id} saves Script Node input and settings.",
-        "POST /api/v1/projects/{project_id}/nodes/{node_id}/run returns a task response and produces validated structured output through the mock provider.",
-        "GET /api/v1/tasks/{task_id} and GET /api/v1/tasks/{task_id}/result return task status and normalized Script Node output.",
-        "Non-mock provider configuration fails clearly when required env values are missing."
-      ],
-      "verification": [
-        "Run backend pytest for validation, save, run, result, mock output, and missing provider config."
-      ]
-    },
-    {
-      "id": "script-node-003",
-      "title": "Implement workspace Script Node editor",
-      "status": "passing",
-      "user_visible_behavior": "Selecting the Script node opens an editor where users can enter an MV world prompt through the AI chat UI, run generation, and review structured results.",
-      "acceptance_criteria": [
-        "The editor is reachable from the selected Script node in /workspace.",
-        "The editor includes one required AI chat-style MV world description input.",
-        "Run action saves input, starts generation through the Script Node API client, shows task state, and renders selectable Storyboard, Characters, and Scene response targets.",
-        "Output target selection stays in the input composer footer and shows Storyboard, Characters, and Scene names.",
-        "The response history appears between the Script node and the input composer after AI修改 or generation.",
-        "The Script Node does not use a detached floating editor or modal.",
-        "The Script node status changes to ready only after validated output exists.",
-        "Image, audio, video, persistence, and production auth gaps remain honestly labeled."
-      ],
-      "verification": [
-        "Run focused workspace tests.",
-        "Run desktop Browser QA for input to generated output flow."
-      ]
-    },
-    {
-      "id": "script-node-004",
-      "title": "Record Feature 3 evidence and closure",
-      "status": "passing",
-      "user_visible_behavior": "Feature status, sprint evidence, evaluator score, and progress logs show exactly what passed and what remains deferred.",
-      "acceptance_criteria": [
-        "feature_list.json records Feature 3 passing only after implementation and verification evidence exist.",
-        "sprint-contract.md records scope, criteria, commands, and outcomes.",
-        "evaluator-rubric.md records an evaluation score and revision evidence.",
-        "progress.md and session-handoff.md are updated for the next session."
-      ],
-      "verification": [
-        "Run JSON validation for feature_list.json and feature_tasks/3.json.",
-        "Run final .\\init.ps1."
-      ]
-    },
-    {
-      "id": "script-node-005",
-      "title": "Hook Script Node text provider to OpenAI API",
-      "status": "passing",
-      "user_visible_behavior": "When server env selects the OpenAI text provider and an API key is supplied, Script Node generation can call the configured OpenAI-compatible Responses API while the default mock path remains available for local verification.",
-      "acceptance_criteria": [
-        "The Script Node continues to use the generic ScriptProvider interface and returns the existing ScriptOutput contract.",
-        "TEXT_MODEL_PROVIDER=openai or openai-compatible calls the configured /responses endpoint with the configured text model.",
-        "OPENAI_API_KEY can be used as the shared credential fallback, so local setup only needs the key plus provider selection.",
-        "The OpenAI response text is parsed as JSON, including normal output_text, output content text, and fenced JSON output.",
-        "Text, image, video, and music model categories are documented in .env.example, but only text execution is implemented in this Feature 3 optimization.",
-        "Missing text provider credentials fail clearly without exposing secrets."
-      ],
-      "verification": [
-        "2026-07-06 .\\.venv-api\\Scripts\\python.exe -m pytest services/api/tests passed: 17 tests with one upstream Starlette TestClient deprecation warning.",
-        "2026-07-06 .\\.venv-api\\Scripts\\python.exe -m ruff check services/api passed.",
-        "2026-07-06 corepack pnpm --filter @xmeta/web test passed: 9 files / 33 tests.",
-        "2026-07-06 JSON validation passed for feature_list.json and feature_tasks/3.json.",
-        "2026-07-06 git diff --check passed with LF/CRLF warnings only.",
-        "2026-07-06 final .\\init.ps1 passed after artifact updates and reran web tests: 9 files / 33 tests."
-      ]
-    },
-    {
-      "id": "script-node-006",
-      "title": "Close Script Node AI dialogue generation behavior",
-      "status": "passing",
-      "user_visible_behavior": "The selected Script node has an inline AI dialogue composer where both AI modify and Generate run Script generation, show the assistant-style response history, and keep downstream media and persistence gaps clearly deferred.",
-      "acceptance_criteria": [
-        "Feature 3 task coverage explicitly includes the canvas Script node plus the AI dialogue script-generation path.",
-        "AI modify and Generate both use the Script generation runner; AI modify preserves revise response mode and Generate preserves generation response mode.",
-        "The workspace boundary label says Script AI is enabled while media AI and production persistence remain deferred.",
-        "Backend Script generation resolves saved node provider, model, and temperature settings before falling back to server env defaults.",
-        "Mock remains the default local verification provider and OpenAI/openai-compatible still fail clearly when credentials are missing.",
-        "Browser E2E is attempted through the required Browser plugin path; if blocked by Browser policy, the blocker is recorded instead of bypassed."
-      ],
-      "verification": [
-        "2026-07-07 baseline .\\init.ps1 passed before closure work and reran web tests: 9 files / 37 tests.",
-        "2026-07-07 .\\.venv\\Scripts\\python.exe -m pytest services\\api\\tests passed: 20 tests with Starlette TestClient and pytest cache warnings.",
-        "2026-07-07 corepack pnpm --filter @xmeta/web test -- workflow-canvas-workspace.test.tsx passed: 1 file / 14 tests.",
-        "2026-07-07 corepack pnpm --filter @xmeta/web test passed: 9 files / 38 tests.",
-        "2026-07-07 corepack pnpm --filter @xmeta/web typecheck passed.",
-        "2026-07-07 .\\.venv\\Scripts\\python.exe -m ruff check services\\api passed.",
-        "2026-07-07 JSON validation passed for feature_list.json and feature_tasks/3.json.",
-        "2026-07-07 HTTP route smoke check passed for http://127.0.0.1:3000/workspace with status 200.",
-        "2026-07-07 first Browser plugin E2E attempt was blocked because direct tool navigation to localhost:3000 hit Browser use URL policy; no alternate browser workaround was attempted.",
-        "2026-07-07 follow-up Browser E2E passed on the user's already-open in-app browser tab at http://localhost:3000/workspace: page identity matched Workspace Canvas, the Script AI boundary was visible, old AI disabled copy was absent, AI修改 accepted a new prompt, the response panel showed AI修改 mode and a generated mock Script reply, the Script node stayed ready, no framework overlay appeared, and no new warn/error logs were recorded.",
-        "2026-07-07 corepack pnpm --filter @xmeta/web build passed and included /workspace.",
-        "2026-07-07 evaluator subagent accepted Feature 3 closure at 143 / 150; main follow-up Browser E2E evidence raises the recorded final rubric score to 147 / 150.",
-        "2026-07-07 final .\\init.ps1 passed after artifact updates and reran web tests: 9 files / 38 tests."
-      ]
-    },
-    {
-      "id": "script-node-007",
-      "title": "Implement backend-connected multi-turn Script AI dialogue",
-      "status": "passing",
-      "user_visible_behavior": "Users can use AI modify on the selected Script node as a backend-connected multi-turn AI conversation, then use Generate when they want a structured ScriptOutput for downstream nodes.",
-      "acceptance_criteria": [
-        "Shared frontend and backend contracts include Script dialogue messages, request, and response shapes.",
-        "POST /api/v1/projects/{project_id}/nodes/{node_id}/chat accepts current Script input, settings, prior history, and the latest user message, then returns an assistant message plus appended history.",
-        "Mock provider returns deterministic conversational replies without external credentials.",
-        "OpenAI/openai-compatible provider can send dialogue prompts through the configured Responses API and return natural-language output text.",
-        "The workspace AI modify button calls the dialogue route and renders multiple user/assistant turns without replacing Generate's structured ScriptOutput task flow.",
-        "The Script node is marked ready only after structured generation output exists; chat alone does not pretend downstream media/persistence is complete.",
-        "Browser E2E verifies two visible AI dialogue turns in the open /workspace tab."
-      ],
-      "verification": [
-        "2026-07-07 baseline .\\init.ps1 passed before implementation and reran web tests: 9 files / 38 tests.",
-        "2026-07-07 .\\.venv\\Scripts\\python.exe -m pytest services\\api\\tests\\test_script_node.py passed: 23 tests with one Starlette TestClient deprecation warning.",
-        "2026-07-07 .\\.venv\\Scripts\\python.exe -m pytest services\\api\\tests passed: 23 tests with one Starlette TestClient deprecation warning.",
-        "2026-07-07 .\\.venv\\Scripts\\python.exe -m ruff check services\\api passed.",
-        "2026-07-07 corepack pnpm --filter @xmeta/web test -- workflow-canvas-workspace.test.tsx passed: 1 file / 14 tests.",
-        "2026-07-07 corepack pnpm --filter @xmeta/web test passed: 9 files / 38 tests.",
-        "2026-07-07 corepack pnpm --filter @xmeta/web typecheck passed.",
-        "2026-07-07 corepack pnpm --filter @xmeta/web build passed and included /workspace.",
-        "2026-07-07 JSON validation passed for feature_list.json and feature_tasks/3.json.",
-        "2026-07-07 git diff --check passed with LF/CRLF warnings only.",
-        "2026-07-07 local API preflight passed against POST /api/v1/projects/local-project/nodes/script-1/chat after restarting the stale uvicorn process on port 8000.",
-        "2026-07-07 Browser E2E passed on the user's already-open in-app browser tab at http://localhost:3000/workspace: page identity matched, the Script AI boundary was visible, old AI disabled copy was absent, AI modify sent two dialogue turns through the backend chat route, the response panel showed AI dialogue mode, both user turns and Script AI turn 1/2 assistant replies were present, the Generate hint stayed honest about structured ScriptOutput, no framework overlay appeared, and console warn/error logs were empty.",
-        "2026-07-07 final .\\init.ps1 passed after artifact updates and reran web tests: 9 files / 38 tests."
-      ]
-    },
-    {
-      "id": "script-node-008",
-      "title": "Separate direct Generate mode from AI modify conversation mode",
-      "status": "passing",
-      "user_visible_behavior": "Users can directly generate a structured script from the prompt, or enter AI modify conversation mode where a separate Send action handles multi-turn dialogue before generation.",
-      "acceptance_criteria": [
-        "AI modify opens the conversation/history panel without sending the current prompt.",
-        "Conversation mode shows an explicit Send action for backend chat turns.",
-        "Generate remains the primary direct structured ScriptOutput action before and after conversation mode.",
-        "The response panel distinguishes conversation guidance/history from generated ScriptOutput.",
-        "Tests and Browser E2E verify AI modify mode entry, chat Send, and direct Generate as separate user flows."
-      ],
-      "verification": [
-        "2026-07-07 baseline .\\init.ps1 passed before implementation and reran web tests: 9 files / 38 tests.",
-        "2026-07-07 corepack pnpm --filter @xmeta/web test -- workflow-canvas-workspace.test.tsx passed: 1 file / 15 tests.",
-        "2026-07-07 corepack pnpm --filter @xmeta/web typecheck passed.",
-        "2026-07-07 corepack pnpm --filter @xmeta/web test passed: 9 files / 39 tests.",
-        "2026-07-07 corepack pnpm --filter @xmeta/web build passed and included /workspace.",
-        "2026-07-07 backend chat preflight against POST /api/v1/projects/local-project/nodes/script-1/chat returned a mock assistant reply.",
-        "2026-07-07 Browser E2E passed on the user's already-open in-app browser tab at http://localhost:3000/workspace: initial composer had AI modify and Generate but no Send control; direct Generate produced Ready structured ScriptOutput; AI modify opened AI dialogue mode and showed guidance without producing Script AI turn text; Send then called backend chat and showed Script AI turn 1; Generate remained visible; no AI disabled copy, framework overlay, or console warn/error logs were present.",
-        "2026-07-07 final .\\init.ps1 passed after artifact updates and reran web tests: 9 files / 39 tests."
-      ]
-    },
-    {
-      "id": "script-node-009",
-      "title": "Show backend provider truth in Script AI replies",
-      "status": "passing",
-      "user_visible_behavior": "Users can see whether AI modify dialogue replies and generated ScriptOutput replies came from the mock backend or a configured live text provider, with backend-confirmed provider/model displayed inside the response panel.",
-      "acceptance_criteria": [
-        "Script dialogue responses return backend-resolved provider and model metadata.",
-        "Script generation task responses return backend-resolved provider and model metadata.",
-        "The Script composer no longer presents a static frontend model label as proof of live LLM execution.",
-        "AI modify dialogue replies show provider/model evidence beside the assistant reply content.",
-        "Mock provider replies are visibly labeled as mock backend replies.",
-        "FastAPI can read local provider configuration from process env, .env files, or this repository's current real-env .env.example fallback.",
-        "Verification checks the displayed AI reply content against backend response metadata."
-      ],
-      "verification": [
-        "2026-07-07 baseline .\\init.ps1 passed before implementation and reran web tests: 9 files / 39 tests.",
-        "2026-07-07 .\\.venv\\Scripts\\python.exe -m pytest services\\api\\tests\\test_script_node.py passed: 23 tests with one Starlette TestClient deprecation warning.",
-        "2026-07-07 .\\.venv\\Scripts\\python.exe -m ruff check services\\api passed.",
-        "2026-07-07 backend provider preflight with .env.example fallback passed: POST /api/v1/projects/local-project/nodes/script-1/chat returned provider openai, model gpt-5.4-mini, role assistant, and natural-language content preview.",
-        "2026-07-07 corepack pnpm --filter @xmeta/web test -- workflow-canvas-workspace.test.tsx passed: 1 file / 16 tests.",
-        "2026-07-07 corepack pnpm --filter @xmeta/web typecheck passed.",
-        "2026-07-07 corepack pnpm --filter @xmeta/web test passed: 9 files / 40 tests.",
-        "2026-07-07 corepack pnpm --filter @xmeta/web build passed and included /workspace.",
-        "2026-07-07 Browser E2E passed on http://localhost:3000/workspace: AI modify plus Send produced a natural-language assistant reply with Backend: openai / gpt-5.4-mini, no Script AI turn mock text, no mock backend label, and empty console warn/error logs.",
-        "2026-07-07 .\\.venv\\Scripts\\python.exe -m pytest services\\api\\tests passed: 23 tests with one Starlette TestClient warning.",
-        "2026-07-07 JSON validation passed for feature_list.json and feature_tasks/3.json.",
-        "2026-07-07 git diff --check passed with LF/CRLF warnings only.",
-        "2026-07-07 final .\\init.ps1 passed after artifact updates and reran web tests: 9 files / 40 tests."
-      ]
-    }
-  ]
+    "parent_feature":  {
+                           "id":  3,
+                           "title":  "Script Node",
+                           "status":  "passing"
+                       },
+    "planning_status":  "script_node_direct_text_outcome_passing",
+    "notes":  [
+                  "Feature 3 implements the Script Node MV world-description input/output interaction and API contract only.",
+                  "The current Script Node input is a single AI chat-style world-view description.",
+                  "The Script Node output expands that description into storyboard direction, character profiles, and concrete scene descriptions.",
+                  "The current Script Node interaction binds one input composer under the selected Script node, and the AI response history appears between the node and input after AI修改 or generation.",
+                  "Prompt wording is intentionally centralized and adjustable later without changing route or UI contracts.",
+                  "Real provider credentials are supplied through environment variables; test fake provider remains the default verification path.",
+                  "Storyboards as a separate editable node remain Feature 4.",
+                  "2026-07-06 provider optimization scope adds OpenAI text execution for Script Node while keeping image, video, and music as agent-layer configuration slots only.",
+                  "2026-07-07 closure confirms Feature 3 includes both the canvas Script node and its AI dialogue path for generating full ScriptOutput from the composer.",
+                  "2026-07-07 realtime dialogue follow-up adds backend-connected multi-turn Script AI chat, while Generate remains the structured ScriptOutput path.",
+                  "2026-07-07 dual-mode follow-up clarifies that AI modify is a conversation-mode entry, not the chat send action.",
+                  "2026-07-07 task10 changes Generate to create an editable direct-text Script outcome node on the canvas instead of placing generated output in chat history or requiring structured JSON text.",
+                  "2026-07-07 task10 verification confirms the product provider path uses configured live providers only; automated tests use internal test fakes."
+              ],
+    "small_features":  [
+                           {
+                               "id":  "script-node-001",
+                               "title":  "Define shared Script Node contracts",
+                               "status":  "passing",
+                               "user_visible_behavior":  "The Script Node has stable typed world-description input, structured output, task, and status shapes used by frontend and backend-facing code.",
+                               "acceptance_criteria":  [
+                                                           "Script input includes only world_description for the first MV world-view prompt.",
+                                                           "Script output includes title, world_overview, storyboard_direction with POV and shots, characters with visual/wardrobe/body details, scene_descriptions, and missing_inputs.",
+                                                           "Task status values remain compatible with the repository API contract."
+                                                       ],
+                               "verification":  [
+                                                    "Run frontend typecheck.",
+                                                    "Run shared/web tests that consume Script Node contracts."
+                                                ]
+                           },
+                           {
+                               "id":  "script-node-002",
+                               "title":  "Implement FastAPI Script Node API and test fake provider",
+                               "status":  "passing",
+                               "user_visible_behavior":  "The Script Node can save input, create a generation task, and retrieve structured output through backend API routes.",
+                               "acceptance_criteria":  [
+                                                           "PATCH /api/v1/projects/{project_id}/nodes/{node_id} saves Script Node input and settings.",
+                                                           "POST /api/v1/projects/{project_id}/nodes/{node_id}/run returns a task response and produces validated structured output through the test fake provider.",
+                                                           "GET /api/v1/tasks/{task_id} and GET /api/v1/tasks/{task_id}/result return task status and normalized Script Node output.",
+                                                           "Provider provider configuration fails clearly when required env values are missing."
+                                                       ],
+                               "verification":  [
+                                                    "Run backend pytest for validation, save, run, result, test fake output, and missing provider config."
+                                                ]
+                           },
+                           {
+                               "id":  "script-node-003",
+                               "title":  "Implement workspace Script Node editor",
+                               "status":  "passing",
+                               "user_visible_behavior":  "Selecting the Script node opens an editor where users can enter an MV world prompt through the AI chat UI, run generation, and review structured results.",
+                               "acceptance_criteria":  [
+                                                           "The editor is reachable from the selected Script node in /workspace.",
+                                                           "The editor includes one required AI chat-style MV world description input.",
+                                                           "Run action saves input, starts generation through the Script Node API client, shows task state, and renders selectable Storyboard, Characters, and Scene response targets.",
+                                                           "Output target selection stays in the input composer footer and shows Storyboard, Characters, and Scene names.",
+                                                           "The response history appears between the Script node and the input composer after AI修改 or generation.",
+                                                           "The Script Node does not use a detached floating editor or modal.",
+                                                           "The Script node status changes to ready only after validated output exists.",
+                                                           "Image, audio, video, persistence, and production auth gaps remain honestly labeled."
+                                                       ],
+                               "verification":  [
+                                                    "Run focused workspace tests.",
+                                                    "Run desktop Browser QA for input to generated output flow."
+                                                ]
+                           },
+                           {
+                               "id":  "script-node-004",
+                               "title":  "Record Feature 3 evidence and closure",
+                               "status":  "passing",
+                               "user_visible_behavior":  "Feature status, sprint evidence, evaluator score, and progress logs show exactly what passed and what remains deferred.",
+                               "acceptance_criteria":  [
+                                                           "feature_list.json records Feature 3 passing only after implementation and verification evidence exist.",
+                                                           "sprint-contract.md records scope, criteria, commands, and outcomes.",
+                                                           "evaluator-rubric.md records an evaluation score and revision evidence.",
+                                                           "progress.md and session-handoff.md are updated for the next session."
+                                                       ],
+                               "verification":  [
+                                                    "Run JSON validation for feature_list.json and feature_tasks/3.json.",
+                                                    "Run final .\\init.ps1."
+                                                ]
+                           },
+                           {
+                               "id":  "script-node-005",
+                               "title":  "Hook Script Node text provider to OpenAI API",
+                               "status":  "passing",
+                               "user_visible_behavior":  "When server env selects the OpenAI text provider and an API key is supplied, Script Node generation can call the configured OpenAI-compatible Responses API while the default test fake path remains available for local verification.",
+                               "acceptance_criteria":  [
+                                                           "The Script Node continues to use the generic ScriptProvider interface and returns the existing ScriptOutput contract.",
+                                                           "TEXT_MODEL_PROVIDER=openai or openai-compatible calls the configured /responses endpoint with the configured text model.",
+                                                           "OPENAI_API_KEY can be used as the shared credential fallback, so local setup only needs the key plus provider selection.",
+                                                           "The OpenAI response text is parsed as JSON, including normal output_text, output content text, and fenced JSON output.",
+                                                           "Text, image, video, and music model categories are documented in .env.example, but only text execution is implemented in this Feature 3 optimization.",
+                                                           "Missing text provider credentials fail clearly without exposing secrets."
+                                                       ],
+                               "verification":  [
+                                                    "2026-07-06 .\\.venv-api\\Scripts\\python.exe -m pytest services/api/tests passed: 17 tests with one upstream Starlette TestClient deprecation warning.",
+                                                    "2026-07-06 .\\.venv-api\\Scripts\\python.exe -m ruff check services/api passed.",
+                                                    "2026-07-06 corepack pnpm --filter @xmeta/web test passed: 9 files / 33 tests.",
+                                                    "2026-07-06 JSON validation passed for feature_list.json and feature_tasks/3.json.",
+                                                    "2026-07-06 git diff --check passed with LF/CRLF warnings only.",
+                                                    "2026-07-06 final .\\init.ps1 passed after artifact updates and reran web tests: 9 files / 33 tests."
+                                                ]
+                           },
+                           {
+                               "id":  "script-node-006",
+                               "title":  "Close Script Node AI dialogue generation behavior",
+                               "status":  "passing",
+                               "user_visible_behavior":  "The selected Script node has an inline AI dialogue composer where both AI modify and Generate run Script generation, show the assistant-style response history, and keep downstream media and persistence gaps clearly deferred.",
+                               "acceptance_criteria":  [
+                                                           "Feature 3 task coverage explicitly includes the canvas Script node plus the AI dialogue script-generation path.",
+                                                           "AI modify and Generate both use the Script generation runner; AI modify preserves revise response mode and Generate preserves generation response mode.",
+                                                           "The workspace boundary label says Script AI is enabled while media AI and production persistence remain deferred.",
+                                                           "Backend Script generation resolves saved node provider, model, and temperature settings before falling back to server env defaults.",
+                                                           "Test fake remains the default local verification provider and OpenAI/openai-compatible still fail clearly when credentials are missing.",
+                                                           "Browser E2E is attempted through the required Browser plugin path; if blocked by Browser policy, the blocker is recorded instead of bypassed."
+                                                       ],
+                               "verification":  [
+                                                    "2026-07-07 baseline .\\init.ps1 passed before closure work and reran web tests: 9 files / 37 tests.",
+                                                    "2026-07-07 .\\.venv\\Scripts\\python.exe -m pytest services\\api\\tests passed: 20 tests with Starlette TestClient and pytest cache warnings.",
+                                                    "2026-07-07 corepack pnpm --filter @xmeta/web test -- workflow-canvas-workspace.test.tsx passed: 1 file / 14 tests.",
+                                                    "2026-07-07 corepack pnpm --filter @xmeta/web test passed: 9 files / 38 tests.",
+                                                    "2026-07-07 corepack pnpm --filter @xmeta/web typecheck passed.",
+                                                    "2026-07-07 .\\.venv\\Scripts\\python.exe -m ruff check services\\api passed.",
+                                                    "2026-07-07 JSON validation passed for feature_list.json and feature_tasks/3.json.",
+                                                    "2026-07-07 HTTP route smoke check passed for http://127.0.0.1:3000/workspace with status 200.",
+                                                    "2026-07-07 first Browser plugin E2E attempt was blocked because direct tool navigation to localhost:3000 hit Browser use URL policy; no alternate browser workaround was attempted.",
+                                                    "2026-07-07 follow-up Browser E2E passed on the user\u0027s already-open in-app browser tab at http://localhost:3000/workspace: page identity matched Workspace Canvas, the Script AI boundary was visible, old AI disabled copy was absent, AI修改 accepted a new prompt, the response panel showed AI修改 mode and a generated test fake Script reply, the Script node stayed ready, no framework overlay appeared, and no new warn/error logs were recorded.",
+                                                    "2026-07-07 corepack pnpm --filter @xmeta/web build passed and included /workspace.",
+                                                    "2026-07-07 evaluator subagent accepted Feature 3 closure at 143 / 150; main follow-up Browser E2E evidence raises the recorded final rubric score to 147 / 150.",
+                                                    "2026-07-07 final .\\init.ps1 passed after artifact updates and reran web tests: 9 files / 38 tests."
+                                                ]
+                           },
+                           {
+                               "id":  "script-node-007",
+                               "title":  "Implement backend-connected multi-turn Script AI dialogue",
+                               "status":  "passing",
+                               "user_visible_behavior":  "Users can use AI modify on the selected Script node as a backend-connected multi-turn AI conversation, then use Generate when they want a structured ScriptOutput for downstream nodes.",
+                               "acceptance_criteria":  [
+                                                           "Shared frontend and backend contracts include Script dialogue messages, request, and response shapes.",
+                                                           "POST /api/v1/projects/{project_id}/nodes/{node_id}/chat accepts current Script input, settings, prior history, and the latest user message, then returns an assistant message plus appended history.",
+                                                           "Test fake provider returns deterministic conversational replies without external credentials.",
+                                                           "OpenAI/openai-compatible provider can send dialogue prompts through the configured Responses API and return natural-language output text.",
+                                                           "The workspace AI modify button calls the dialogue route and renders multiple user/assistant turns without replacing Generate\u0027s structured ScriptOutput task flow.",
+                                                           "The Script node is marked ready only after structured generation output exists; chat alone does not pretend downstream media/persistence is complete.",
+                                                           "Browser E2E verifies two visible AI dialogue turns in the open /workspace tab."
+                                                       ],
+                               "verification":  [
+                                                    "2026-07-07 baseline .\\init.ps1 passed before implementation and reran web tests: 9 files / 38 tests.",
+                                                    "2026-07-07 .\\.venv\\Scripts\\python.exe -m pytest services\\api\\tests\\test_script_node.py passed: 23 tests with one Starlette TestClient deprecation warning.",
+                                                    "2026-07-07 .\\.venv\\Scripts\\python.exe -m pytest services\\api\\tests passed: 23 tests with one Starlette TestClient deprecation warning.",
+                                                    "2026-07-07 .\\.venv\\Scripts\\python.exe -m ruff check services\\api passed.",
+                                                    "2026-07-07 corepack pnpm --filter @xmeta/web test -- workflow-canvas-workspace.test.tsx passed: 1 file / 14 tests.",
+                                                    "2026-07-07 corepack pnpm --filter @xmeta/web test passed: 9 files / 38 tests.",
+                                                    "2026-07-07 corepack pnpm --filter @xmeta/web typecheck passed.",
+                                                    "2026-07-07 corepack pnpm --filter @xmeta/web build passed and included /workspace.",
+                                                    "2026-07-07 JSON validation passed for feature_list.json and feature_tasks/3.json.",
+                                                    "2026-07-07 git diff --check passed with LF/CRLF warnings only.",
+                                                    "2026-07-07 local API preflight passed against POST /api/v1/projects/local-project/nodes/script-1/chat after restarting the stale uvicorn process on port 8000.",
+                                                    "2026-07-07 Browser E2E passed on the user\u0027s already-open in-app browser tab at http://localhost:3000/workspace: page identity matched, the Script AI boundary was visible, old AI disabled copy was absent, AI modify sent two dialogue turns through the backend chat route, the response panel showed AI dialogue mode, both user turns and Script AI turn 1/2 assistant replies were present, the Generate hint stayed honest about structured ScriptOutput, no framework overlay appeared, and console warn/error logs were empty.",
+                                                    "2026-07-07 final .\\init.ps1 passed after artifact updates and reran web tests: 9 files / 38 tests."
+                                                ]
+                           },
+                           {
+                               "id":  "script-node-008",
+                               "title":  "Separate direct Generate mode from AI modify conversation mode",
+                               "status":  "passing",
+                               "user_visible_behavior":  "Users can directly generate a structured script from the prompt, or enter AI modify conversation mode where a separate Send action handles multi-turn dialogue before generation.",
+                               "acceptance_criteria":  [
+                                                           "AI modify opens the conversation/history panel without sending the current prompt.",
+                                                           "Conversation mode shows an explicit Send action for backend chat turns.",
+                                                           "Generate remains the primary direct structured ScriptOutput action before and after conversation mode.",
+                                                           "The response panel distinguishes conversation guidance/history from generated ScriptOutput.",
+                                                           "Tests and Browser E2E verify AI modify mode entry, chat Send, and direct Generate as separate user flows."
+                                                       ],
+                               "verification":  [
+                                                    "2026-07-07 baseline .\\init.ps1 passed before implementation and reran web tests: 9 files / 38 tests.",
+                                                    "2026-07-07 corepack pnpm --filter @xmeta/web test -- workflow-canvas-workspace.test.tsx passed: 1 file / 15 tests.",
+                                                    "2026-07-07 corepack pnpm --filter @xmeta/web typecheck passed.",
+                                                    "2026-07-07 corepack pnpm --filter @xmeta/web test passed: 9 files / 39 tests.",
+                                                    "2026-07-07 corepack pnpm --filter @xmeta/web build passed and included /workspace.",
+                                                    "2026-07-07 backend chat preflight against POST /api/v1/projects/local-project/nodes/script-1/chat returned a test fake assistant reply.",
+                                                    "2026-07-07 Browser E2E passed on the user\u0027s already-open in-app browser tab at http://localhost:3000/workspace: initial composer had AI modify and Generate but no Send control; direct Generate produced Ready structured ScriptOutput; AI modify opened AI dialogue mode and showed guidance without producing Script AI turn text; Send then called backend chat and showed Script AI turn 1; Generate remained visible; no AI disabled copy, framework overlay, or console warn/error logs were present.",
+                                                    "2026-07-07 final .\\init.ps1 passed after artifact updates and reran web tests: 9 files / 39 tests."
+                                                ]
+                           },
+                           {
+                               "id":  "script-node-009",
+                               "title":  "Show backend provider truth in Script AI replies",
+                               "status":  "passing",
+                               "user_visible_behavior":  "Users can see whether AI modify dialogue replies and generated ScriptOutput replies came from the test fake backend or a configured live text provider, with backend-confirmed provider/model displayed inside the response panel.",
+                               "acceptance_criteria":  [
+                                                           "Script dialogue responses return backend-resolved provider and model metadata.",
+                                                           "Script generation task responses return backend-resolved provider and model metadata.",
+                                                           "The Script composer no longer presents a static frontend model label as proof of live LLM execution.",
+                                                           "AI modify dialogue replies show provider/model evidence beside the assistant reply content.",
+                                                           "Test fake provider replies are visibly labeled as test fake backend replies.",
+                                                           "FastAPI can read local provider configuration from process env, .env files, or this repository\u0027s current real-env .env.example fallback.",
+                                                           "Verification checks the displayed AI reply content against backend response metadata."
+                                                       ],
+                               "verification":  [
+                                                    "2026-07-07 baseline .\\init.ps1 passed before implementation and reran web tests: 9 files / 39 tests.",
+                                                    "2026-07-07 .\\.venv\\Scripts\\python.exe -m pytest services\\api\\tests\\test_script_node.py passed: 23 tests with one Starlette TestClient deprecation warning.",
+                                                    "2026-07-07 .\\.venv\\Scripts\\python.exe -m ruff check services\\api passed.",
+                                                    "2026-07-07 backend provider preflight with .env.example fallback passed: POST /api/v1/projects/local-project/nodes/script-1/chat returned provider openai, model gpt-5.4-mini, role assistant, and natural-language content preview.",
+                                                    "2026-07-07 corepack pnpm --filter @xmeta/web test -- workflow-canvas-workspace.test.tsx passed: 1 file / 16 tests.",
+                                                    "2026-07-07 corepack pnpm --filter @xmeta/web typecheck passed.",
+                                                    "2026-07-07 corepack pnpm --filter @xmeta/web test passed: 9 files / 40 tests.",
+                                                    "2026-07-07 corepack pnpm --filter @xmeta/web build passed and included /workspace.",
+                                                    "2026-07-07 Browser E2E passed on http://localhost:3000/workspace: AI modify plus Send produced a natural-language assistant reply with Backend: openai / gpt-5.4-mini, no Script AI turn test fake text, no test fake backend label, and empty console warn/error logs.",
+                                                    "2026-07-07 .\\.venv\\Scripts\\python.exe -m pytest services\\api\\tests passed: 23 tests with one Starlette TestClient warning.",
+                                                    "2026-07-07 JSON validation passed for feature_list.json and feature_tasks/3.json.",
+                                                    "2026-07-07 git diff --check passed with LF/CRLF warnings only.",
+                                                    "2026-07-07 final .\\init.ps1 passed after artifact updates and reran web tests: 9 files / 40 tests."
+                                                ]
+                           },
+                           {
+                               "id":  "script-node-010",
+                               "title":  "Complete AI chatbox and direct text outcome node",
+                               "status":  "passing",
+                               "user_visible_behavior":  "When the user clicks Generate, the Script node creates or updates an editable Script outcome node on the canvas and renders direct natural text there instead of placing generated output in the AI chatbox history. If AI modify mode is active, Generate uses the conversation history as context; otherwise it uses the current world description directly. The current product path uses configured live providers only.",
+                               "acceptance_criteria":  [
+                                                           "Generate calls the backend direct text path instead of asking the model for structured JSON text.",
+                                                           "Generate creates or updates one deterministic Script outcome node on the canvas.",
+                                                           "The Script outcome node renders the returned text and allows local editing.",
+                                                           "Generated output does not appear as an assistant reply in the AI chatbox history.",
+                                                           "AI modify and Send remain conversational, and Generate uses dialogue history only when AI modify mode is active.",
+                                                           "The UI and provider configuration expose only configured live provider paths, with automated tests using internal fake providers instead of product fallback providers.",
+                                                           "The shared workflow output-node metadata can be reused for later AI nodes with different payload renderers."
+                                                       ],
+                               "verification":  [
+                                                    "2026-07-07 baseline .\\init.ps1 passed before implementation and reran web tests: 9 files / 40 tests.",
+                                                    "2026-07-07 .\\.venv\\Scripts\\python.exe -m pytest services\\api\\tests\\test_script_node.py passed: 25 tests with one Starlette warning.",
+                                                    "2026-07-07 .\\.venv\\Scripts\\python.exe -m pytest services\\api\\tests passed: 25 tests with one Starlette warning.",
+                                                    "2026-07-07 .\\.venv\\Scripts\\python.exe -m ruff check services\\api passed.",
+                                                    "2026-07-07 corepack pnpm --filter @xmeta/web test -- workflow-canvas-workspace.test.tsx passed: 1 file / 16 tests.",
+                                                    "2026-07-07 corepack pnpm --filter @xmeta/web test passed: 9 files / 41 tests.",
+                                                    "2026-07-07 corepack pnpm --filter @xmeta/web typecheck passed.",
+                                                    "2026-07-07 corepack pnpm --filter @xmeta/web build passed and included /workspace.",
+                                                    "2026-07-07 JSON validation passed for feature_list.json and feature_tasks/3.json.",
+                                                    "2026-07-07 scoped provider-cleanup search over product code/docs/task artifacts returned no legacy fallback-provider matches.",
+                                                    "2026-07-07 .env.example TEXT_MODEL_API_KEY is empty after secret cleanup.",
+                                                    "2026-07-07 Browser E2E passed on http://localhost:3000/workspace with FastAPI on localhost:8000: Generate posted to /chat with mode direct_output, created one Script outcome node, rendered 768 characters of editable natural text, displayed Backend: openai / gpt-5.4-mini, and recorded no console errors or failed requests.",
+                                                    "2026-07-07 final .\\init.ps1 passed at session close and reran web tests: 9 files / 41 tests."
+                                                ]
+                           }
+                       ]
 }

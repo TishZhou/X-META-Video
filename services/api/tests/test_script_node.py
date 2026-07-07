@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Generator
+from collections.abc import Callable, Generator
 import json
 
 import httpx
@@ -14,11 +14,65 @@ from xmeta_api.providers import (
     ScriptProviderSettings,
     _load_dotenv_values,
 )
-from xmeta_api.schemas import ScriptDialogueMessage, ScriptInput, ScriptSettings
+from xmeta_api.schemas import (
+    ScriptDialogueMessage,
+    ScriptInput,
+    ScriptOutput,
+    ScriptSettings,
+)
 from xmeta_api.store import store
 
 
 client = TestClient(app)
+
+
+class ScriptProviderTestTransport(httpx.BaseTransport):
+    def __init__(self, handler: Callable[[httpx.Request], httpx.Response]) -> None:
+        self._handler = handler
+
+    def handle_request(self, request: httpx.Request) -> httpx.Response:
+        response = self._handler(request)
+        return httpx.Response(
+            status_code=response.status_code,
+            headers=response.headers,
+            content=response.content,
+            request=request,
+            extensions=response.extensions,
+        )
+
+
+class FakeScriptProvider:
+    name = "test-provider"
+
+    def __init__(self) -> None:
+        self.prompts: list[str] = []
+
+    def generate(self, script_input: ScriptInput, prompt: str) -> ScriptOutput:
+        del script_input
+        self.prompts.append(prompt)
+        return ScriptOutput.model_validate_json(valid_script_output_json())
+
+    def chat(
+        self,
+        script_input: ScriptInput,
+        history: list[ScriptDialogueMessage],
+        user_message: str,
+        prompt: str,
+    ) -> str:
+        self.prompts.append(prompt)
+        if "Direct Script outcome request:" in prompt:
+            return (
+                f"{script_input.world_description} becomes a natural editable script "
+                f"draft that responds to {user_message} without JSON."
+            )
+        turn = len([message for message in history if message.role == "user"]) + 1
+        return f"Provider reply {turn}: {user_message}"
+
+
+def install_fake_script_provider(monkeypatch: pytest.MonkeyPatch) -> FakeScriptProvider:
+    provider = FakeScriptProvider()
+    monkeypatch.setattr("xmeta_api.main.get_script_provider", lambda settings: provider)
+    return provider
 
 
 @pytest.fixture(autouse=True)
@@ -70,7 +124,11 @@ def save_node(
         f"/api/v1/projects/{project_id}/nodes/{node_id}",
         json={
             "input": script_payload(),
-            "settings": {"provider": "mock"} if settings is None else settings,
+            "settings": (
+                {"provider": "openai-compatible", "model": "test-text-model"}
+                if settings is None
+                else settings
+            ),
         },
     )
     assert response.status_code == 200
@@ -107,7 +165,10 @@ def test_patch_script_node_saves_input_and_versions_updates() -> None:
     )
 
 
-def test_run_script_node_creates_succeeded_task_and_task_lookup() -> None:
+def test_run_script_node_creates_succeeded_task_and_task_lookup(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    install_fake_script_provider(monkeypatch)
     saved = save_node()
 
     run_response = client.post("/api/v1/projects/project-1/nodes/script-1/run")
@@ -119,15 +180,18 @@ def test_run_script_node_creates_succeeded_task_and_task_lookup() -> None:
     assert task["task_type"] == "script_node"
     assert task["status"] == "succeeded"
     assert task["input_version"] == saved["version"]
-    assert task["provider"] == "mock"
-    assert task["model"] == "local-script-mock"
+    assert task["provider"] == "openai-compatible"
+    assert task["model"] == "test-text-model"
 
     lookup_response = client.get(f"/api/v1/tasks/{task['task_id']}")
     assert lookup_response.status_code == 200
     assert lookup_response.json() == task
 
 
-def test_task_result_returns_deterministic_mock_script_output() -> None:
+def test_task_result_returns_provider_script_output(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    install_fake_script_provider(monkeypatch)
     save_node()
     task = client.post("/api/v1/projects/project-1/nodes/script-1/run").json()
 
@@ -137,28 +201,25 @@ def test_task_result_returns_deterministic_mock_script_output() -> None:
     result_body = result_response.json()
     result = result_body["output"]
     assert result_body["status"] == "succeeded"
-    assert result["title"] == "MV World: A sweet summer MV world with two girls, a desert"
-    assert "road-movie MV world" in result["agent_output"]
-    assert "world-view description" in result["world_overview"]
-    assert "third-person cinematic POV" in result["storyboard_direction"]["pov"]
+    assert result["title"] == "Generated MV"
+    assert result["agent_output"] == "This is the agent answer shown in chat history."
+    assert result["world_overview"] == "A validated generated world overview."
+    assert result["storyboard_direction"]["pov"] == "third-person cinematic"
     assert result["storyboard_direction"]["shots"][0]["shot_number"] == 1
-    assert result["characters"][0]["name"] == "Lead Girl"
-    assert result["characters"][0]["overview"] == (
-        "Sweet visual direction with a lonely, determined core."
-    )
-    assert result["scene_descriptions"][0]["location"] == (
-        "desert highway beside a vintage jeep"
-    )
-    assert "desert jeep" in result["scene_descriptions"][0]["visual_prompt"]
+    assert result["characters"][0]["name"] == "Lead"
+    assert result["scene_descriptions"][0]["location"] == "desert road"
     assert result["missing_inputs"] == []
 
 
-def test_script_node_chat_returns_backend_dialogue_history() -> None:
+def test_script_node_chat_returns_backend_dialogue_history(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    install_fake_script_provider(monkeypatch)
     response = client.post(
         "/api/v1/projects/project-1/nodes/script-1/chat",
         json={
             "input": script_payload(),
-            "settings": {"provider": "mock"},
+            "settings": {"provider": "openai-compatible", "model": "test-text-model"},
             "history": [
                 {
                     "role": "assistant",
@@ -173,8 +234,8 @@ def test_script_node_chat_returns_backend_dialogue_history() -> None:
     body = response.json()
     assert body["project_id"] == "project-1"
     assert body["node_id"] == "script-1"
-    assert body["provider"] == "mock"
-    assert body["model"] == "local-script-mock"
+    assert body["provider"] == "openai-compatible"
+    assert body["model"] == "test-text-model"
     assert body["message"]["role"] == "assistant"
     assert "Make the two leads argue before the chorus." in body["message"]["content"]
     assert body["history"][-2] == {
@@ -184,12 +245,52 @@ def test_script_node_chat_returns_backend_dialogue_history() -> None:
     assert body["history"][-1] == body["message"]
 
 
+def test_script_node_chat_direct_output_mode_returns_plain_text_outcome(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    provider = install_fake_script_provider(monkeypatch)
+    response = client.post(
+        "/api/v1/projects/project-1/nodes/script-1/chat",
+        json={
+            "input": script_payload(),
+            "settings": {"provider": "openai-compatible", "model": "test-text-model"},
+            "history": [
+                {
+                    "role": "user",
+                    "content": "Make the chorus conflict sharper.",
+                },
+                {
+                    "role": "assistant",
+                    "content": "We can make the second lead resist the plan.",
+                },
+            ],
+            "message": "Generate the editable direct Script output.",
+            "mode": "direct_output",
+        },
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    content = body["message"]["content"]
+    assert body["provider"] == "openai-compatible"
+    assert body["model"] == "test-text-model"
+    assert body["message"]["role"] == "assistant"
+    assert content.startswith("A sweet summer MV world")
+    assert "Generate the editable direct Script output." in content
+    assert "Script AI turn" not in content
+    assert "```" not in content
+    assert "Do not return JSON" in provider.prompts[-1]
+    assert "fixed section template" in provider.prompts[-1]
+    assert body["history"][-2]["content"] == "Generate the editable direct Script output."
+    assert body["history"][-1] == body["message"]
+
+
 def test_script_node_chat_validates_required_user_message() -> None:
     response = client.post(
         "/api/v1/projects/project-1/nodes/script-1/chat",
         json={
             "input": script_payload(),
-            "settings": {"provider": "mock"},
+            "settings": {"provider": "openai-compatible", "model": "test-text-model"},
             "message": "",
         },
     )
@@ -197,27 +298,42 @@ def test_script_node_chat_validates_required_user_message() -> None:
     assert response.status_code == 422
 
 
-def test_saved_mock_provider_settings_override_env_openai_without_credentials(
+def test_script_node_chat_rejects_invalid_mode() -> None:
+    response = client.post(
+        "/api/v1/projects/project-1/nodes/script-1/chat",
+        json={
+            "input": script_payload(),
+            "settings": {"provider": "openai-compatible", "model": "test-text-model"},
+            "message": "Generate text.",
+            "mode": "json_output",
+        },
+    )
+
+    assert response.status_code == 422
+
+
+def test_saved_provider_settings_override_env_model(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    install_fake_script_provider(monkeypatch)
     monkeypatch.setenv("TEXT_MODEL_PROVIDER", "openai")
     monkeypatch.setenv("TEXT_MODEL_NAME", "gpt-env")
-    saved = save_node(settings={"provider": "mock", "model": "local-script-mock"})
+    saved = save_node(settings={"provider": "openai-compatible", "model": "node-model"})
 
     response = client.post("/api/v1/projects/project-1/nodes/script-1/run")
 
     assert response.status_code == 202
     task = response.json()
     assert task["status"] == "succeeded"
-    assert task["provider"] == "mock"
-    assert task["model"] == "local-script-mock"
+    assert task["provider"] == "openai-compatible"
+    assert task["model"] == "node-model"
     assert task["input_version"] == saved["version"]
 
 
 def test_node_provider_settings_override_env_model_and_temperature(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setenv("TEXT_MODEL_PROVIDER", "mock")
+    monkeypatch.setenv("TEXT_MODEL_PROVIDER", "openai-compatible")
     monkeypatch.setenv("TEXT_MODEL_BASE_URL", "https://text-model.test/v1")
     monkeypatch.setenv("TEXT_MODEL_API_KEY", "server-key")
     monkeypatch.setenv("TEXT_MODEL_NAME", "env-model")
@@ -238,13 +354,13 @@ def test_node_provider_settings_override_env_model_and_temperature(
     assert settings.max_retries == 3
 
 
-def test_text_model_config_defaults_to_mock() -> None:
+def test_text_model_config_defaults_to_openai_without_key() -> None:
     settings = ScriptProviderSettings.from_env()
 
-    assert settings.provider == "mock"
+    assert settings.provider == "openai"
     assert settings.base_url == "https://api.openai.com/v1"
     assert settings.api_key is None
-    assert settings.model == "local-script-mock"
+    assert settings.model == "gpt-5.4-mini"
     assert settings.temperature is None
     assert settings.timeout_seconds == 60
     assert settings.max_retries == 1
@@ -386,7 +502,7 @@ def test_openai_compatible_provider_posts_responses_api_and_reads_output_text() 
             model="gpt-test",
             temperature=0.4,
         ),
-        client=httpx.Client(transport=httpx.MockTransport(handler)),
+        client=httpx.Client(transport=ScriptProviderTestTransport(handler)),
     )
 
     result = provider.generate(ScriptInput(**script_payload()), "Return ScriptOutput JSON.")
@@ -420,7 +536,7 @@ def test_openai_compatible_provider_posts_chat_prompt_and_reads_output_text() ->
             model="gpt-test",
             temperature=0.4,
         ),
-        client=httpx.Client(transport=httpx.MockTransport(handler)),
+        client=httpx.Client(transport=ScriptProviderTestTransport(handler)),
     )
 
     result = provider.chat(
@@ -471,7 +587,7 @@ def test_openai_compatible_provider_falls_back_to_output_content_text() -> None:
             api_key="test-key",
             model="gpt-test",
         ),
-        client=httpx.Client(transport=httpx.MockTransport(handler)),
+        client=httpx.Client(transport=ScriptProviderTestTransport(handler)),
     )
 
     result = provider.generate(ScriptInput(**script_payload()), "Return ScriptOutput JSON.")
@@ -495,7 +611,7 @@ def test_openai_compatible_provider_uses_raw_text_when_agent_output_is_missing()
             api_key="test-key",
             model="gpt-test",
         ),
-        client=httpx.Client(transport=httpx.MockTransport(handler)),
+        client=httpx.Client(transport=ScriptProviderTestTransport(handler)),
     )
 
     result = provider.generate(ScriptInput(**script_payload()), "Return ScriptOutput JSON.")
@@ -518,7 +634,7 @@ def test_openai_compatible_provider_accepts_fenced_json_output() -> None:
             api_key="test-key",
             model="gpt-test",
         ),
-        client=httpx.Client(transport=httpx.MockTransport(handler)),
+        client=httpx.Client(transport=ScriptProviderTestTransport(handler)),
     )
 
     result = provider.generate(ScriptInput(**script_payload()), "Return ScriptOutput JSON.")
@@ -538,7 +654,7 @@ def test_openai_compatible_provider_rejects_missing_output_text() -> None:
             api_key="test-key",
             model="gpt-test",
         ),
-        client=httpx.Client(transport=httpx.MockTransport(handler)),
+        client=httpx.Client(transport=ScriptProviderTestTransport(handler)),
     )
 
     with pytest.raises(ProviderExecutionError, match="did not include output text"):
@@ -557,7 +673,7 @@ def test_openai_compatible_provider_rejects_invalid_json() -> None:
             api_key="test-key",
             model="gpt-test",
         ),
-        client=httpx.Client(transport=httpx.MockTransport(handler)),
+        client=httpx.Client(transport=ScriptProviderTestTransport(handler)),
     )
 
     with pytest.raises(ProviderExecutionError, match="invalid JSON"):
@@ -576,7 +692,7 @@ def test_openai_compatible_provider_rejects_schema_invalid_json() -> None:
             api_key="test-key",
             model="gpt-test",
         ),
-        client=httpx.Client(transport=httpx.MockTransport(handler)),
+        client=httpx.Client(transport=ScriptProviderTestTransport(handler)),
     )
 
     with pytest.raises(ProviderExecutionError, match="does not match ScriptOutput"):
@@ -596,7 +712,7 @@ def test_openai_compatible_provider_reports_http_failure() -> None:
             model="gpt-test",
             max_retries=0,
         ),
-        client=httpx.Client(transport=httpx.MockTransport(handler)),
+        client=httpx.Client(transport=ScriptProviderTestTransport(handler)),
     )
 
     with pytest.raises(ProviderExecutionError, match="Text model request failed"):

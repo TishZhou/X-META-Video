@@ -6,7 +6,7 @@
 - Turn AI generation into modular, reusable production workflows.
 - Connect the full pipeline: text → image → audio → video.
 - Store generated assets for reuse across projects.
-- Deliver a polished creative workspace, not a static mockup. The production UI component approach is selected in Feature 1 Web Design before detailed page implementation starts.
+- Deliver a polished creative workspace, not a static prototype. The production UI component approach is selected in Feature 1 Web Design before detailed page implementation starts.
 - Treat deleted static pages and deleted copied-component experiments as historical scaffolding only. New app-shell work should rebuild the interface deliberately from the selected component system.
 
 ## Core Workflow
