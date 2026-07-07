@@ -1,6 +1,7 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import type {
+  ScriptDialogueMessage,
   ScriptNodeOutput,
   ScriptTaskStatusResponse,
 } from "@xmeta/shared-contracts";
@@ -223,6 +224,7 @@ describe("WorkflowCanvasWorkspace", () => {
     const html = renderToStaticMarkup(
       <ScriptOutputTabs
         input={{ world_description: "A generated snow MV world" }}
+        messages={[]}
         output={output}
         responseMode="generation"
         task={task}
@@ -269,6 +271,7 @@ describe("WorkflowCanvasWorkspace", () => {
       <ScriptOutputTabs
         error="Provider unavailable"
         input={{ world_description: "A generated snow MV world" }}
+        messages={[]}
         output={null}
         responseMode="generation"
         task={task}
@@ -283,7 +286,7 @@ describe("WorkflowCanvasWorkspace", () => {
     expect(getScriptResponseStatusLabel(task, null, task.error)).toBe("Error");
   });
 
-  it("marks the opened response panel as AI revise mode without structured shots", () => {
+  it("renders backend AI dialogue turns without structured shots", () => {
     const task: ScriptTaskStatusResponse = {
       task_id: "task-1",
       project_id: "local-project",
@@ -291,17 +294,34 @@ describe("WorkflowCanvasWorkspace", () => {
       status: "succeeded",
       error: null,
     };
+    const messages: ScriptDialogueMessage[] = [
+      {
+        role: "user",
+        content: "Make the two leads argue before the chorus.",
+      },
+      {
+        role: "assistant",
+        content:
+          "Script AI turn 1: I would add conflict before the chorus payoff.",
+      },
+    ];
     const html = renderToStaticMarkup(
       <ScriptOutputTabs
         input={{ world_description: "A generated snow MV world" }}
+        messages={messages}
         output={makeScriptOutput()}
         responseMode="revise"
         task={task}
       />,
     );
 
-    expect(html).toContain("AI\u4fee\u6539\u4e2d");
+    expect(html).toContain("AI\u5bf9\u8bdd");
     expect(html).toContain("AI\u4fee\u6539");
+    expect(html).toContain("Make the two leads argue before the chorus.");
+    expect(html).toContain(
+      "Script AI turn 1: I would add conflict before the chorus payoff.",
+    );
+    expect(html).not.toContain("Agent generated answer for the chat history.");
     expect(html).not.toContain("Shot 1");
     expect(html).not.toContain("Direction");
   });

@@ -5,9 +5,19 @@ import os
 from fastapi import FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 
-from .providers import ProviderConfigurationError, ScriptProviderSettings, get_script_provider
+from .prompt import build_script_dialogue_prompt
+from .providers import (
+    ProviderConfigurationError,
+    ProviderExecutionError,
+    ScriptProviderSettings,
+    get_script_provider,
+)
 from .runner import run_script_task_sync
 from .schemas import (
+    ScriptDialogueMessage,
+    ScriptDialogueRequest,
+    ScriptDialogueResponse,
+    ScriptDialogueRole,
     ScriptNodeSaveRequest,
     ScriptNodeState,
     ScriptSettings,
@@ -79,6 +89,59 @@ def run_script_node(project_id: str, node_id: str) -> TaskState:
         provider=settings.provider,
     )
     return run_script_task_sync(store=store, provider=provider, task=task, node=node)
+
+
+@app.post(
+    "/api/v1/projects/{project_id}/nodes/{node_id}/chat",
+    response_model=ScriptDialogueResponse,
+)
+def chat_script_node(
+    project_id: str,
+    node_id: str,
+    request: ScriptDialogueRequest,
+) -> ScriptDialogueResponse:
+    node = store.save_node(project_id, node_id, request.input, request.settings)
+    user_message = ScriptDialogueMessage(
+        role=ScriptDialogueRole.USER,
+        content=request.message,
+    )
+
+    try:
+        settings = _resolve_script_provider_settings(node.settings)
+        provider = get_script_provider(settings)
+        prompt = build_script_dialogue_prompt(
+            script_input=node.input,
+            history=request.history,
+            user_message=request.message,
+        )
+        assistant_text = provider.chat(
+            script_input=node.input,
+            history=request.history,
+            user_message=request.message,
+            prompt=prompt,
+        )
+    except ProviderConfigurationError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=str(exc),
+        ) from exc
+    except ProviderExecutionError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=str(exc),
+        ) from exc
+
+    assistant_message = ScriptDialogueMessage(
+        role=ScriptDialogueRole.ASSISTANT,
+        content=assistant_text,
+    )
+    return ScriptDialogueResponse(
+        project_id=project_id,
+        node_id=node_id,
+        provider=settings.provider,
+        message=assistant_message,
+        history=[*request.history, user_message, assistant_message],
+    )
 
 
 def _resolve_script_provider_settings(

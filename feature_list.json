@@ -1,6 +1,6 @@
 ﻿{
     "project":  "X-META Video",
-    "last_updated":  "2026-07-06",
+    "last_updated":  "2026-07-07",
     "rules":  {
                   "single_active_feature":  true,
                   "passing_requires_evidence":  true,
@@ -36,9 +36,9 @@
                          "id":  3,
                          "title":  "Script Node",
                          "status":  "passing",
-                         "current_task":  "script-node-006",
+                         "current_task":  "script-node-007",
                          "current_task_status":  "passing",
-                         "user_visible_behavior":  "Users can use the selected Script node inline composer on the workflow canvas, enter one MV world prompt, and run either AI modify or Generate to produce an assistant-style script response plus structured ScriptOutput for downstream nodes.",
+                         "user_visible_behavior":  "Users can use the selected Script node inline composer on the workflow canvas for backend-connected multi-turn AI dialogue, then run Generate to produce structured ScriptOutput for downstream nodes.",
                          "task_file":  "feature_tasks/3.json"
                      },
                      {

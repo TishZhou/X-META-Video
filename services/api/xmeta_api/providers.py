@@ -11,6 +11,7 @@ from pydantic import ValidationError
 from .schemas import (
     CharacterProfile,
     SceneDescription,
+    ScriptDialogueMessage,
     ScriptInput,
     ScriptOutput,
     StoryboardDirection,
@@ -30,6 +31,15 @@ class ScriptProvider(Protocol):
     name: str
 
     def generate(self, script_input: ScriptInput, prompt: str) -> ScriptOutput:
+        raise NotImplementedError
+
+    def chat(
+        self,
+        script_input: ScriptInput,
+        history: list[ScriptDialogueMessage],
+        user_message: str,
+        prompt: str,
+    ) -> str:
         raise NotImplementedError
 
 
@@ -259,6 +269,27 @@ class MockScriptProvider:
             missing_inputs=[],
         )
 
+    def chat(
+        self,
+        script_input: ScriptInput,
+        history: list[ScriptDialogueMessage],
+        user_message: str,
+        prompt: str,
+    ) -> str:
+        del prompt
+        description = script_input.world_description.rstrip(".")
+        prior_turns = len([message for message in history if message.role == "user"]) + 1
+        trimmed_message = user_message.strip()
+
+        return (
+            f"Script AI turn {prior_turns}: I read your latest direction, "
+            f"'{trimmed_message}'. For the world '{description}', I would revise "
+            "the script conversation by making the emotional goal clearer, then "
+            "carry that choice into the next storyboard beat. Use Generate when "
+            "you want me to turn this dialogue into structured ScriptOutput for "
+            "downstream nodes."
+        )
+
 
 class OpenAICompatibleScriptProvider:
     def __init__(
@@ -294,6 +325,25 @@ class OpenAICompatibleScriptProvider:
             raise ProviderExecutionError(
                 "Text model returned JSON that does not match ScriptOutput."
             ) from exc
+
+    def chat(
+        self,
+        script_input: ScriptInput,
+        history: list[ScriptDialogueMessage],
+        user_message: str,
+        prompt: str,
+    ) -> str:
+        del script_input, history, user_message
+        self._settings.validate()
+
+        payload: dict[str, object] = {
+            "model": self._settings.model,
+            "input": prompt,
+        }
+        if self._settings.temperature is not None:
+            payload["temperature"] = self._settings.temperature
+
+        return _extract_response_text(self._post_response(payload)).strip()
 
     def _post_response(self, payload: dict[str, object]) -> dict[str, Any]:
         assert self._settings.base_url is not None

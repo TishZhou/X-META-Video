@@ -1,49 +1,48 @@
-# Evaluator Rubric - Feature 3 Script Node AI Dialogue Closure
+# Evaluator Rubric - Feature 3 Script Node Realtime AI Dialogue
 
 Updated: 2026-07-07
 
 ## Evaluation Scope
 
-- Role: Evaluation subagent for Feature 3 `script-node-006`.
-- Scope reviewed: `sprint-contract.md` acceptance criteria, `feature_tasks/3.json`, `feature_list.json`, `progress.md`, `session-handoff.md`, and changed frontend/backend/test surfaces for the Script node AI dialogue closure.
-- Verification posture: reviewed the main-agent verification evidence and source diffs with the verify-skill checklist. I did not edit source files or rerun the full command suite.
+- Role: Main-agent evaluator for Feature 3 `script-node-007`.
+- Scope reviewed: backend chat route, provider boundary, shared contracts, frontend Script composer behavior, workspace tests, API docs, and Feature 3 artifacts.
+- Verification posture: applied the verify-skill checklist with backend tests, frontend tests, typecheck, build, API preflight, and Browser end-to-end on the open `/workspace` tab.
 
 ## Scorecard
 
 | Criterion | Points | Current | Evidence |
 | --- | ---: | ---: | --- |
-| Explicit Requirements | 30 | 30 | `feature_tasks/3.json` now records `script-node-006`; the canvas boundary label says Script AI is enabled while media AI and persistence remain deferred; AI modify and Generate both call the Script generation path with distinct response modes; backend run resolves saved provider/model/temperature before env fallback. |
-| Implicit Requirements | 20 | 19 | The implementation preserves the web/API/provider boundary, keeps mock as the default local path, avoids media-generation claims, and keeps durable persistence/auth/queue/media work out of scope. |
-| Regression Checks | 25 | 25 | Main evidence shows baseline `.\init.ps1`, backend pytest, API ruff, focused workspace tests, full web tests, web typecheck, JSON validation, `/workspace` route smoke, and follow-up Browser E2E on the user's already-open in-app browser tab all passed. |
-| Edge Cases | 20 | 18 | Tests cover saved mock settings overriding env OpenAI, saved provider/model/temperature resolution, missing credentials, invalid numeric env, unsupported providers, and OpenAI-compatible output parsing through mocked HTTP responses. No live provider key was available. |
-| Time/Space complexity | 15 | 15 | The closure adds a small pure response-mode mapper and a simple provider-settings resolver; no expensive rendering, polling, or data-structure changes were introduced. |
-| Program Format | 20 | 20 | Changes are narrowly scoped and covered by tests. Artifact evidence is recorded across task, sprint, progress, handoff, and this rubric. Main follow-up corrected the current-state `progress.md` boundary label and added successful Browser E2E evidence after evaluator review; older historical session notes still preserve prior labels as history. |
-| Visual Design (if applicable) | 20 | 20 | The visible boundary copy now accurately distinguishes Script AI from deferred media/persistence, and focused workspace tests assert the new copy and absence of the old "AI disabled" claim. |
+| Explicit Requirements | 30 | 29 | User asked for backend-connected AI dialogue. `POST /chat` now exists, `AI modify` calls it, and Browser E2E proved two turns. One point reserved because transport is request/response, not SSE/WebSocket streaming. |
+| Implicit Requirements | 20 | 19 | Generate remains structured ScriptOutput for downstream nodes; chat does not falsely mark downstream media/persistence done. |
+| Regression Checks | 25 | 25 | Backend tests, full web tests, typecheck, build, JSON validation, and diff check passed. |
+| Edge Cases | 20 | 18 | Empty chat message validates; mock and OpenAI-compatible chat paths are tested. Durable chat persistence and auth remain later scope. |
+| Time/Space Complexity | 15 | 15 | Chat history is bounded in backend schema and prompt builder reads only recent turns. |
+| Program Format | 20 | 20 | Contracts are typed in shared TS and Pydantic; provider separation remains intact; docs and artifacts updated. |
+| Visual Design (if applicable) | 20 | 20 | Existing compact canvas composer is preserved; multi-turn messages render in the response panel with visible user/assistant grouping and no console errors. |
 
-Current score: 147 / 150
+Current score: 146 / 150
 
 ## Findings
 
-- No blocking source findings.
-- Resolved after evaluator review: Browser-click E2E for AI modify/Generate passed on the user's already-open in-app browser tab at `http://localhost:3000/workspace`. The earlier blocker was specific to direct Browser tool navigation to `localhost:3000`, which hit Browser use URL policy and was not bypassed.
-- Residual risk: no live OpenAI request was run because no API key was supplied. The OpenAI-compatible path is covered by mocked HTTP tests plus missing-credential failure tests.
-- Main follow-up resolved the current-state artifact polish issue by updating `progress.md` to the new Script AI boundary label. Older historical session entries still mention the previous label as past-session history, not current behavior.
+- No P1/P2 findings.
+- P3: The dialogue is realtime from the user's interaction perspective through immediate backend request/response, but it is not an SSE/WebSocket streaming transport. This matches current architecture deferral for production realtime events.
 
 ## Verification Evidence
 
-- Reviewed main evidence: baseline `.\init.ps1` passed and reran web tests, 9 files / 37 tests.
-- Reviewed main evidence: `.\\.venv\\Scripts\\python.exe -m pytest services\\api\\tests` passed, 20 tests, with Starlette TestClient and pytest cache warnings.
-- Reviewed main evidence: `.\\.venv\\Scripts\\python.exe -m ruff check services\\api` passed.
-- Reviewed main evidence: `corepack pnpm --filter @xmeta/web test -- workflow-canvas-workspace.test.tsx` passed, 1 file / 14 tests.
-- Reviewed main evidence: `corepack pnpm --filter @xmeta/web test` passed, 9 files / 38 tests.
-- Reviewed main evidence: `corepack pnpm --filter @xmeta/web typecheck` passed.
-- Reviewed main evidence: `corepack pnpm --filter @xmeta/web build` passed and included `/workspace`.
-- Reviewed main evidence: JSON validation passed for `feature_list.json` and `feature_tasks/3.json`.
-- Reviewed main evidence: `Invoke-WebRequest` route smoke for `http://127.0.0.1:3000/workspace` returned 200.
-- Reviewed blocker evidence: first Browser attempt hit Browser URL policy on direct navigation to `localhost:3000`; no alternate browser workaround was attempted.
-- Reviewed follow-up evidence: Browser E2E passed on the user's already-open in-app browser tab. The test verified page identity, Script AI boundary visibility, absence of old `AI disabled` copy, `AI修改` prompt submission, revise-mode response panel, generated mock Script reply, ready Script node state, no framework overlay, and no new warn/error logs.
-- Reviewed main follow-up evidence: final `.\init.ps1` passed after artifact updates and reran web tests, 9 files / 38 tests.
+- `.\init.ps1` baseline passed before implementation: web tests 9 files / 38 tests.
+- `.\\.venv\\Scripts\\python.exe -m pytest services\\api\\tests\\test_script_node.py` passed: 23 tests.
+- `.\\.venv\\Scripts\\python.exe -m pytest services\\api\\tests` passed: 23 tests.
+- `.\\.venv\\Scripts\\python.exe -m ruff check services\\api` passed.
+- `corepack pnpm --filter @xmeta/web test -- workflow-canvas-workspace.test.tsx` passed: 1 file / 14 tests.
+- `corepack pnpm --filter @xmeta/web test` passed: 9 files / 38 tests.
+- `corepack pnpm --filter @xmeta/web typecheck` passed.
+- `corepack pnpm --filter @xmeta/web build` passed and included `/workspace`.
+- JSON validation passed for `feature_list.json` and `feature_tasks/3.json`.
+- `git diff --check` passed with LF/CRLF warnings only.
+- Local API preflight passed against `POST /api/v1/projects/local-project/nodes/script-1/chat` after restarting the stale uvicorn process on port 8000.
+- Browser E2E passed on the user's in-app browser tab at `http://localhost:3000/workspace`: two `AI modify` turns showed both user messages and `Script AI turn 1` / `Script AI turn 2`, `AI disabled` copy was absent, no framework overlay appeared, and console warn/error logs were empty.
+- Final `.\init.ps1` passed after artifact updates and reran web tests: 9 files / 38 tests.
 
 ## Verdict
 
-Accepted for Feature 3 closure at 147 / 150 after main follow-up Browser E2E. The implementation satisfies the sprint acceptance criteria with documented residual risk around live OpenAI execution.
+Accepted. Feature 3 now satisfies the requirement that the Script node includes both the node UI and backend-connected AI dialogue behavior, with Generate still responsible for producing structured downstream ScriptOutput.

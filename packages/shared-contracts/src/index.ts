@@ -78,6 +78,28 @@ export type ScriptNodeOutput = {
   missing_inputs: string[];
 };
 
+export type ScriptDialogueRole = "user" | "assistant";
+
+export type ScriptDialogueMessage = {
+  role: ScriptDialogueRole;
+  content: string;
+};
+
+export type ScriptDialogueRequest = {
+  input: ScriptNodeInput;
+  settings?: ScriptNodeSettings;
+  history?: ScriptDialogueMessage[];
+  message: string;
+};
+
+export type ScriptDialogueResponse = {
+  project_id: string;
+  node_id: string;
+  provider: string;
+  message: ScriptDialogueMessage;
+  history: ScriptDialogueMessage[];
+};
+
 export type ScriptNodeSaveRequest = {
   input: ScriptNodeInput;
   settings?: ScriptNodeSettings;

@@ -1,19 +1,24 @@
-# Sprint Contract - Feature 3 Script Node AI Dialogue Closure
+# Sprint Contract - Feature 3 Script Node Realtime AI Dialogue
 
 ## Sprint Overview
 
-**Sprint:** feature-3-ai-dialogue-script-closure
+**Sprint:** feature-3-realtime-ai-dialogue-backend
 **Feature:** Feature 3, Script Node
 **Status:** passing
-**Goal:** Verify that Feature 3 task coverage matches the current requirement and close the remaining implementation gaps for a Script node that can generate a full script through the AI dialogue composer.
+**Goal:** Complete the user-reported gap where the Script node composer could generate one-shot output but could not hold a backend-connected multi-turn AI dialogue.
 
 ## Write Scope
 
+- `packages/shared-contracts/src/index.ts`
 - `apps/web/src/components/xmeta/workflow-canvas/workflow-canvas-workspace.tsx`
 - `apps/web/src/components/xmeta/workflow-canvas/workflow-canvas-workspace.test.tsx`
+- `apps/web/src/lib/script-node/api.ts`
 - `services/api/xmeta_api/main.py`
+- `services/api/xmeta_api/prompt.py`
 - `services/api/xmeta_api/providers.py`
+- `services/api/xmeta_api/schemas.py`
 - `services/api/tests/test_script_node.py`
+- `docs/API.md`
 - `feature_tasks/3.json`
 - `feature_list.json`
 - `sprint-contract.md`
@@ -23,48 +28,46 @@
 
 Protected existing edits:
 
-- Preserve unrelated pre-existing working tree changes, including `AGENTS.md`, `pnpm-workspace.yaml`, and any user-authored artifact edits not required by this Feature 3 closure.
+- Preserved unrelated pre-existing working tree changes, including `.env.example`, `AGENTS.md`, `docs/PRODUCT.md`, `pnpm-workspace.yaml`, and untracked `scripts/` content.
 
 ## In Scope
 
-- Check `feature_tasks/3.json` against the current Feature 3 requirement: the feature must include both the canvas Script node and the AI dialogue flow that generates script output.
-- Keep the selected Script node as the inline canvas composer, not a detached modal or floating editor.
-- Keep a single MV world-view prompt as the Script node input.
-- Make `AI modify` open the conversation panel and run the same Script generation path as the Generate action.
-- Ensure generated output appears as an assistant-style dialogue reply while the structured `ScriptOutput` remains available for downstream nodes.
-- Ensure server-side Script generation can honor saved Script node settings for provider/model/temperature while still defaulting safely to env/mock configuration.
-- Remove misleading global UI copy that says all AI is disabled now that Feature 3 has a real Script AI path; keep deferred media/backend boundaries honest.
-- Add focused tests for the settings/provider behavior and the visible boundary text.
+- Add a backend Script-node dialogue contract and route for multi-turn user/assistant messages.
+- Connect the canvas Script composer `AI modify` action to that backend dialogue route instead of only revealing a local/generated single response.
+- Keep Generate available for full structured ScriptOutput generation.
+- Render visible multi-turn user and assistant messages in the selected Script node response area.
+- Keep the mock provider deterministic for local verification while preserving OpenAI-compatible provider behavior.
+- Record the new task and evidence in the required Feature 3 artifacts.
+- Run backend, frontend, and Browser end-to-end verification.
 
 ## Out of Scope
 
-- Durable PostgreSQL persistence, queue workers, object storage, auth, asset lineage, and multi-user permission boundaries.
-- Storyboard node editing, image generation, audio generation, video generation, export rendering, and asset library behavior.
-- Live provider execution with a real API key.
+- Durable PostgreSQL chat persistence, queue workers, auth, asset lineage, media generation, storyboard editing, and production SSE/WebSocket infrastructure.
 - Mobile UI polish.
+- Live OpenAI execution without user-supplied credentials.
 
 ## Acceptance Criteria
 
-1. `feature_tasks/3.json` explicitly records the Script node plus AI dialogue script-generation requirement.
-2. `/workspace` shows Feature 3 honestly: Script AI can generate a response, while media AI and production persistence remain deferred.
-3. `AI modify` and Generate both route through the Script generation flow and reveal the conversation history panel.
-4. Backend generation uses the saved Script node provider/model/temperature settings when present, with env defaults as fallback.
-5. Mock remains the default verification provider and succeeds without external credentials.
-6. OpenAI/openai-compatible still require server-side credentials and fail clearly without leaking secrets.
-7. Focused frontend and backend tests cover the closure.
-8. Final evidence is recorded in `feature_list.json`, `feature_tasks/3.json`, `sprint-contract.md`, `evaluator-rubric.md`, `progress.md`, and `session-handoff.md`.
+1. Feature 3 task coverage explicitly includes backend-connected multi-turn AI dialogue for the Script node.
+2. The backend exposes a typed Script dialogue route that accepts history plus a new user message and returns an assistant message.
+3. `AI modify` sends the user's text to the backend dialogue route, appends the user turn, appends the assistant turn, and can repeat for another turn without losing prior context.
+4. Generate still runs the structured Script generation task/result flow for downstream nodes.
+5. Local mock mode succeeds without external credentials and does not pretend media/persistence features exist.
+6. Focused backend and frontend tests cover the chat route and UI state.
+7. Browser E2E verifies the open `/workspace` tab can complete two AI dialogue turns through the UI with no relevant console errors.
+8. Evidence is recorded in `feature_list.json`, `feature_tasks/3.json`, `sprint-contract.md`, `evaluator-rubric.md`, `progress.md`, and `session-handoff.md`.
 
 ## Sprint Log
 
 | Phase | Outcome |
 | --- | --- |
-| Baseline | Confirmed working directory `D:\X-META-Video`; read `AGENTS.md`, `docs/PRODUCT.md`, `docs/ARCHITECTURE.md`, `feature_list.json`, `feature_tasks/3.json`, `progress.md`, `session-handoff.md`, `sprint-contract.md`, and recent commits. |
-| Startup | `.\init.ps1` passed before implementation and reran web tests: 9 files / 37 tests. |
-| Task audit | `feature_tasks/3.json` already covers the canvas Script node, inline AI composer, AI response history, structured script output, and OpenAI text provider hookup, but the implementation still had two closure gaps: misleading `AI disabled` boundary copy and backend run behavior ignoring saved node settings. |
-| Frontend closure | `AI修改` now calls the same Script generation handler as Generate while preserving `revise` response mode; Generate preserves `generation` response mode. The workspace boundary label now says `Local workflow only / Script AI enabled / media AI and persistence deferred`. |
-| Backend closure | `run_script_node` resolves saved Script node provider/model/temperature settings before creating the provider, with server env supplying base URL, credentials, timeout, and retry defaults. |
-| Verification | Backend pytest passed with `.\\.venv\\Scripts\\python.exe -m pytest services\\api\\tests`: 20 tests. Focused workspace test passed: 1 file / 14 tests. Full web test passed: 9 files / 38 tests. Web typecheck passed. API ruff passed. JSON validation passed for `feature_list.json` and `feature_tasks/3.json`. |
-| Rendered QA | HTTP route smoke for `http://127.0.0.1:3000/workspace` returned 200. The first Browser attempt was blocked because direct tool navigation to `localhost:3000` hit Browser use URL policy. Follow-up Browser E2E passed on the user's already-open in-app browser tab at `http://localhost:3000/workspace`: page identity matched, Script AI boundary was visible, old `AI disabled` copy was absent, `AI修改` accepted a new prompt, the response panel showed revise mode and generated mock Script reply, the Script node stayed ready, no framework overlay appeared, and no new warn/error logs were recorded. |
-| Build | `corepack pnpm --filter @xmeta/web build` passed and included `/workspace`. |
-| Evaluation | Evaluation subagent accepted Feature 3 closure at 143 / 150. Main follow-up corrected the current-state progress boundary label and added successful Browser E2E evidence; final recorded rubric score is 147 / 150. |
+| Baseline | Confirmed working directory `D:\X-META-Video`; read startup docs, architecture, product, API, Feature 3 task file, current sprint/progress, and recent commits. |
+| Startup | `.\init.ps1` passed before implementation and reran web tests: 9 files / 38 tests. |
+| Planning | User browser evidence showed the selected Script composer still lacked real conversation behavior. Scope was set to backend-connected request/response multi-turn dialogue; durable streaming/SSE remains a later platform realtime feature. |
+| Backend | Added Script dialogue message/request/response schemas, `build_script_dialogue_prompt`, `ScriptProvider.chat`, deterministic mock chat replies, OpenAI-compatible chat output_text handling, and `POST /api/v1/projects/{project_id}/nodes/{node_id}/chat`. |
+| Frontend | Added shared dialogue contracts and `runScriptDialogue`; changed `AI modify` to send backend chat turns and render multi-turn user/assistant history; kept Generate on the existing structured ScriptOutput task flow. |
+| Focused verification | Backend focused pytest passed: 23 tests. API ruff passed. Focused workspace test passed: 1 file / 14 tests. Full web test passed: 9 files / 38 tests. Web typecheck passed. |
+| Rendered QA | Restarted stale local uvicorn on port 8000 after `/chat` returned 404, then preflighted `/chat` successfully. Browser E2E passed on the user's current in-app browser tab at `http://localhost:3000/workspace`: two `AI modify` turns returned `Script AI turn 1` and `Script AI turn 2`, both user messages remained in history, `AI disabled` copy was absent, no framework overlay appeared, and console warn/error logs were empty. Browser `domSnapshot()` still hit the known `incrementalAriaSnapshot` runtime issue, so page state was verified with targeted locators/evaluate plus screenshot evidence. |
+| Build and static checks | `corepack pnpm --filter @xmeta/web build` passed and included `/workspace`; JSON validation passed for `feature_list.json` and `feature_tasks/3.json`; `git diff --check` passed with LF/CRLF warnings only. |
+| Evaluation | Main evaluation records 146 / 150: the requested backend-connected multi-turn dialogue is implemented and verified; remaining gap is that realtime transport is request/response rather than SSE/WebSocket, which is intentionally deferred by architecture. |
 | Final startup | Final `.\init.ps1` passed after artifact updates and reran web tests: 9 files / 38 tests. |

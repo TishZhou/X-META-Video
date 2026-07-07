@@ -97,6 +97,7 @@ Workflow APIs support the canvas-based node editor.
 | `PUT` | `/projects/{project_id}/workflow` | Save graph layout, edges, and node order | editor |
 | `GET` | `/projects/{project_id}/nodes/{node_id}` | Load node input/output state | member |
 | `PATCH` | `/projects/{project_id}/nodes/{node_id}` | Save node input, settings, or selected output | editor |
+| `POST` | `/projects/{project_id}/nodes/{node_id}/chat` | Send one backend-connected Script node AI dialogue turn | editor |
 | `POST` | `/projects/{project_id}/nodes/{node_id}/run` | Create generation task for one node | editor |
 
 Node types:
@@ -134,6 +135,48 @@ For `node_type=script`, `input` uses this shape:
 ```
 
 The MVP Script Node intentionally accepts one world-view description from the AI chat input. The backend prompt builder expands that single input into downstream-ready structure.
+
+### Script Node Dialogue
+For `node_type=script`, the chat endpoint accepts the current input, optional text-provider settings, prior dialogue history, and the latest user message:
+
+```json
+{
+  "input": {
+    "world_description": "A sweet summer MV world with two girls, a desert jeep, and a neon stage."
+  },
+  "settings": {
+    "provider": "mock",
+    "model": "local-script-mock"
+  },
+  "history": [
+    { "role": "user", "content": "Make the chorus feel more dramatic." },
+    { "role": "assistant", "content": "Add a conflict beat before the chorus payoff." }
+  ],
+  "message": "Make the two leads argue before the chorus."
+}
+```
+
+Response:
+
+```json
+{
+  "project_id": "project_123",
+  "node_id": "node_script_1",
+  "provider": "mock",
+  "message": {
+    "role": "assistant",
+    "content": "Natural-language assistant reply."
+  },
+  "history": [
+    { "role": "user", "content": "Make the chorus feel more dramatic." },
+    { "role": "assistant", "content": "Add a conflict beat before the chorus payoff." },
+    { "role": "user", "content": "Make the two leads argue before the chorus." },
+    { "role": "assistant", "content": "Natural-language assistant reply." }
+  ]
+}
+```
+
+The dialogue endpoint is a request/response backend AI chat path for Feature 3. It does not create downstream-ready `ScriptOutput`; users run `/run` when the dialogue should be converted into structured output for later nodes.
 
 ### Script Node Output
 Script generation task results return structured JSON under `output`, not assistant prose:

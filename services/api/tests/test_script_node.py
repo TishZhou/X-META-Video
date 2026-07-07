@@ -12,7 +12,7 @@ from xmeta_api.providers import (
     ProviderExecutionError,
     ScriptProviderSettings,
 )
-from xmeta_api.schemas import ScriptInput, ScriptSettings
+from xmeta_api.schemas import ScriptDialogueMessage, ScriptInput, ScriptSettings
 from xmeta_api.store import store
 
 
@@ -142,6 +142,49 @@ def test_task_result_returns_deterministic_mock_script_output() -> None:
     )
     assert "desert jeep" in result["scene_descriptions"][0]["visual_prompt"]
     assert result["missing_inputs"] == []
+
+
+def test_script_node_chat_returns_backend_dialogue_history() -> None:
+    response = client.post(
+        "/api/v1/projects/project-1/nodes/script-1/chat",
+        json={
+            "input": script_payload(),
+            "settings": {"provider": "mock"},
+            "history": [
+                {
+                    "role": "assistant",
+                    "content": "Previous script suggestion.",
+                }
+            ],
+            "message": "Make the two leads argue before the chorus.",
+        },
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["project_id"] == "project-1"
+    assert body["node_id"] == "script-1"
+    assert body["provider"] == "mock"
+    assert body["message"]["role"] == "assistant"
+    assert "Make the two leads argue before the chorus." in body["message"]["content"]
+    assert body["history"][-2] == {
+        "role": "user",
+        "content": "Make the two leads argue before the chorus.",
+    }
+    assert body["history"][-1] == body["message"]
+
+
+def test_script_node_chat_validates_required_user_message() -> None:
+    response = client.post(
+        "/api/v1/projects/project-1/nodes/script-1/chat",
+        json={
+            "input": script_payload(),
+            "settings": {"provider": "mock"},
+            "message": "",
+        },
+    )
+
+    assert response.status_code == 422
 
 
 def test_saved_mock_provider_settings_override_env_openai_without_credentials(
@@ -347,6 +390,48 @@ def test_openai_compatible_provider_posts_responses_api_and_reads_output_text() 
     assert result.title == "Generated MV"
     assert result.characters[0].name == "Lead"
     assert result.agent_output == "This is the agent answer shown in chat history."
+
+
+def test_openai_compatible_provider_posts_chat_prompt_and_reads_output_text() -> None:
+    seen: dict[str, object] = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen["url"] = str(request.url)
+        seen["authorization"] = request.headers["authorization"]
+        seen["payload"] = json.loads(request.content)
+        return httpx.Response(200, json={"output_text": "AI chat reply from provider."})
+
+    provider = OpenAICompatibleScriptProvider(
+        ScriptProviderSettings(
+            provider="openai-compatible",
+            base_url="https://api.openai.test/v1/",
+            api_key="test-key",
+            model="gpt-test",
+            temperature=0.4,
+        ),
+        client=httpx.Client(transport=httpx.MockTransport(handler)),
+    )
+
+    result = provider.chat(
+        ScriptInput(**script_payload()),
+        [
+            ScriptDialogueMessage(
+                role="assistant",
+                content="Previous answer.",
+            )
+        ],
+        "Add more tension.",
+        "Script dialogue prompt.",
+    )
+
+    assert seen["url"] == "https://api.openai.test/v1/responses"
+    assert seen["authorization"] == "Bearer test-key"
+    assert seen["payload"] == {
+        "model": "gpt-test",
+        "input": "Script dialogue prompt.",
+        "temperature": 0.4,
+    }
+    assert result == "AI chat reply from provider."
 
 
 def test_openai_compatible_provider_falls_back_to_output_content_text() -> None:

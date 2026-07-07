@@ -37,6 +37,35 @@ class ScriptNodeSaveRequest(BaseModel):
     base_version: int | None = None
 
 
+class ScriptDialogueRole(StrEnum):
+    USER = "user"
+    ASSISTANT = "assistant"
+
+
+class ScriptDialogueMessage(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    role: ScriptDialogueRole
+    content: str = Field(..., min_length=1)
+
+
+class ScriptDialogueRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    input: ScriptInput
+    settings: ScriptSettings = Field(default_factory=ScriptSettings)
+    history: list[ScriptDialogueMessage] = Field(default_factory=list, max_length=40)
+    message: str = Field(..., min_length=1)
+
+
+class ScriptDialogueResponse(BaseModel):
+    project_id: str
+    node_id: str
+    provider: str
+    message: ScriptDialogueMessage
+    history: list[ScriptDialogueMessage]
+
+
 class CharacterProfile(BaseModel):
     name: str
     overview: str

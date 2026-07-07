@@ -1,4 +1,7 @@
 import type {
+  ScriptDialogueMessage,
+  ScriptDialogueRequest,
+  ScriptDialogueResponse,
   ScriptNodeInput,
   ScriptNodeOutput,
   ScriptNodeSaveRequest,
@@ -81,6 +84,39 @@ export async function getScriptTaskStatus(taskId: string) {
 
 export async function getScriptTaskResult(taskId: string) {
   return requestJson<ScriptTaskResultResponse>(`/tasks/${taskId}/result`);
+}
+
+export type RunScriptDialogueOptions = {
+  projectId: string;
+  nodeId: string;
+  input: ScriptNodeInput;
+  settings?: ScriptNodeSettings;
+  history: ScriptDialogueMessage[];
+  message: string;
+};
+
+export async function runScriptDialogue({
+  projectId,
+  nodeId,
+  input,
+  settings,
+  history,
+  message,
+}: RunScriptDialogueOptions): Promise<ScriptDialogueResponse> {
+  const payload: ScriptDialogueRequest = {
+    input,
+    settings,
+    history,
+    message,
+  };
+
+  return requestJson<ScriptDialogueResponse>(
+    `/projects/${projectId}/nodes/${nodeId}/chat`,
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    },
+  );
 }
 
 export type RunScriptGenerationOptions = {

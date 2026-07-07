@@ -4,64 +4,54 @@
 
 - Repository root: `D:\X-META-Video`
 - Feature 1 `Web Design`, Feature 2 `Workflow Canvas Foundation`, and Feature 3 `Script Node` are recorded as `passing`.
-- Feature 3 current task is `script-node-006`, recorded as `passing`.
+- Feature 3 current task is `script-node-007`, recorded as `passing`.
 - Current broader unfinished feature remains Feature 4 `Storyboard Node`; full editable shot-list schema, shot editing, durable persistence, queue workers, and generated storyboard assets remain future work.
-- `AGENTS.md` and `pnpm-workspace.yaml` had pre-existing edits and were not reverted.
+- Pre-existing unrelated working tree edits were preserved: `.env.example`, `AGENTS.md`, `docs/PRODUCT.md`, `pnpm-workspace.yaml`, and untracked `scripts/`.
 
-## Feature 3 AI Dialogue Closure
+## Feature 3 Realtime Dialogue State
 
-- `feature_tasks/3.json` now explicitly records that Feature 3 includes both the canvas Script node and the AI dialogue path that generates script output.
-- `/workspace` boundary copy now says `Local workflow only / Script AI enabled / media AI and persistence deferred`.
-- `AI淇敼` and Generate both route through the Script generation handler. `AI淇敼` uses revise response mode; Generate uses generation response mode.
-- Backend Script Node runs resolve saved node provider/model/temperature settings before falling back to server env defaults for base URL, credentials, timeout, and retries.
+- The selected Script node now supports backend-connected multi-turn AI dialogue through `POST /api/v1/projects/{project_id}/nodes/{node_id}/chat`.
+- `AI modify` sends the current Script prompt plus prior dialogue history to the backend, appends the user turn, appends the assistant turn, and keeps prior turns visible in the response panel.
+- Generate remains the structured ScriptOutput path for downstream nodes and still uses the existing save/run/task/result flow.
+- Chat alone does not mark downstream output as complete; the Script node is ready for downstream nodes only after structured generation output exists.
+- The response panel now shows `AI对话` for successful dialogue history and keeps media AI / production persistence deferred honestly.
 
-## Feature 3 Provider State
+## Backend State
 
-- Script Node still uses the generic `ScriptProvider.generate(script_input, prompt) -> ScriptOutput` boundary.
-- `mock` remains the default local verification provider.
-- `TEXT_MODEL_PROVIDER=openai` or `TEXT_MODEL_PROVIDER=openai-compatible` enables the OpenAI-compatible text provider.
-- Text provider credentials resolve from `TEXT_MODEL_API_KEY`, legacy `SCRIPT_MODEL_API_KEY`, or shared `OPENAI_API_KEY`.
-- `TEXT_MODEL_BASE_URL` defaults to `https://api.openai.com/v1`.
-- `TEXT_MODEL_NAME` defaults to `gpt-5.4-mini`.
-- The provider posts to `{base_url}/responses`, parses `output_text` first, falls back to nested output content text, strips fenced JSON, and validates the result into `ScriptOutput`.
-- Unsupported provider names and invalid numeric env values fail clearly as provider configuration errors.
+- Shared contracts define `ScriptDialogueMessage`, `ScriptDialogueRequest`, and `ScriptDialogueResponse`.
+- FastAPI schemas mirror those contracts and bound history length.
+- `build_script_dialogue_prompt` creates a natural-language chat prompt and explicitly avoids JSON/media/persistence claims.
+- `ScriptProvider.chat` is implemented for both mock and OpenAI-compatible providers.
+- Mock chat replies are deterministic and include `Script AI turn N`.
+- OpenAI-compatible chat uses the configured Responses API and reads `output_text`.
 
-## Model Category Env State
+## Verification Evidence
 
-- `.env.example` and `docs/API.md` now define text, image, video, and music model categories.
-- Text is implemented for Feature 3 Script Node only.
-- Image, video, and music are configuration slots only; no generation routes, queue workers, asset writes, or UI claims were added for them.
-- Music remains explicitly not claimed as a dedicated OpenAI music-generation endpoint. The checked official OpenAI docs cover audio/speech, not a dedicated music generation API.
-
-## Evidence
-
-- Baseline `.\init.ps1` passed before implementation and reran web tests: 9 files / 33 tests.
-- Backend verification passed: `.\\.venv-api\\Scripts\\python.exe -m pytest services/api/tests` reported 17 tests passed with one upstream Starlette TestClient deprecation warning.
-- Backend lint passed: `.\\.venv-api\\Scripts\\python.exe -m ruff check services/api`.
-- Frontend safety test passed: `corepack pnpm --filter @xmeta/web test` reported 9 files / 33 tests.
+- Baseline `.\init.ps1` passed before implementation and reran web tests: 9 files / 38 tests.
+- `.\\.venv\\Scripts\\python.exe -m pytest services\\api\\tests\\test_script_node.py` passed: 23 tests with one Starlette TestClient deprecation warning.
+- `.\\.venv\\Scripts\\python.exe -m pytest services\\api\\tests` passed: 23 tests with one Starlette TestClient deprecation warning.
+- `.\\.venv\\Scripts\\python.exe -m ruff check services\\api` passed.
+- `corepack pnpm --filter @xmeta/web test -- workflow-canvas-workspace.test.tsx` passed: 1 file / 14 tests.
+- `corepack pnpm --filter @xmeta/web test` passed: 9 files / 38 tests.
+- `corepack pnpm --filter @xmeta/web typecheck` passed.
+- `corepack pnpm --filter @xmeta/web build` passed and included `/workspace`.
 - JSON validation passed for `feature_list.json` and `feature_tasks/3.json`.
 - `git diff --check` passed with LF/CRLF warnings only.
-- Evaluation subagent initially scored 82/100, then source behavior re-scored at 96/100 with no open P1/P2 findings after invalid-env and unsupported-provider fixes.
-- Final rubric score after artifact closure is recorded as 98/100.
-- 2026-07-07 Feature 3 closure verification: baseline `.\init.ps1` passed with web tests 9 files / 37 tests; `.\\.venv\\Scripts\\python.exe -m pytest services\\api\\tests` passed 20 tests with Starlette TestClient and pytest cache warnings; `.\\.venv\\Scripts\\python.exe -m ruff check services\\api` passed; focused workspace test passed 1 file / 14 tests; full web tests passed 9 files / 38 tests; web typecheck passed; JSON validation passed for `feature_list.json` and `feature_tasks/3.json`; HTTP route smoke for `http://127.0.0.1:3000/workspace` returned 200.
-- Initial Browser plugin E2E was blocked because direct tool navigation to `localhost:3000` hit Browser use URL policy; no alternate browser workaround was attempted.
-- Follow-up Browser E2E passed on the user's already-open in-app browser tab at `http://localhost:3000/workspace`: page identity matched Workspace Canvas, Script AI boundary was visible, old `AI disabled` copy was absent, `AI淇敼` accepted a new prompt, the response panel showed revise mode and generated mock Script reply, the Script node stayed ready, no framework overlay appeared, and no new warn/error logs were recorded.
-- `corepack pnpm --filter @xmeta/web build` passed and included `/workspace`.
-- Evaluator subagent accepted Feature 3 closure at 143 / 150; after successful main follow-up Browser E2E, final recorded rubric score is 147 / 150.
+- Local API preflight passed against `POST /api/v1/projects/local-project/nodes/script-1/chat` after restarting the stale uvicorn process on port 8000.
+- Browser E2E passed on the user's in-app browser tab at `http://localhost:3000/workspace`: two `AI modify` turns showed both user messages and `Script AI turn 1` / `Script AI turn 2`, `AI disabled` copy was absent, no framework overlay appeared, and console warn/error logs were empty.
 - Final `.\init.ps1` passed after artifact updates and reran web tests: 9 files / 38 tests.
 
 ## Boundaries
 
-- No live OpenAI request was made because no API key was supplied; HTTP behavior is covered with `httpx.MockTransport`.
-- Production auth and multi-user workspace management remain Feature 15.
-- Durable PostgreSQL workflow/task/history persistence, queue workers, object storage, asset lineage, and generated media remain later features.
-- Character image, scene image, image composition, audio, video, export, asset library, and history features remain separate later features.
+- No live OpenAI request was made because no API key was supplied; OpenAI-compatible chat and generation are covered with mocked HTTP tests.
+- The current dialogue is realtime request/response from the UI perspective, not SSE/WebSocket streaming.
+- Durable chat persistence, production auth, queue workers, task event streaming, object storage, asset lineage, generated media, and export remain later feature scope.
 
 ## Next Commands
 
 - Startup: `.\init.ps1`
-- Backend tests: `.\\.venv-api\\Scripts\\python.exe -m pytest services/api/tests` after recreating/installing `.venv-api` if needed
-- Backend lint: `.\\.venv-api\\Scripts\\python.exe -m ruff check services/api`
+- Backend tests: `.\\.venv\\Scripts\\python.exe -m pytest services\\api\\tests`
+- Backend lint: `.\\.venv\\Scripts\\python.exe -m ruff check services\\api`
 - Web test: `corepack pnpm --filter @xmeta/web test`
 - Web typecheck: `corepack pnpm --filter @xmeta/web typecheck`
 - Web build: `corepack pnpm --filter @xmeta/web build`

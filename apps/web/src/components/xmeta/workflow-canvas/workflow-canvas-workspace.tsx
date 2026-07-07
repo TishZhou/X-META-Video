@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import {
   DEFAULT_SCRIPT_NODE_INPUT,
+  type ScriptDialogueMessage,
   type ScriptNodeInput,
   type ScriptNodeOutput,
   type ScriptTaskStatusResponse,
@@ -68,7 +69,7 @@ import type {
   WorkflowPort,
   WorkflowSelection,
 } from "@/lib/workflow-canvas/types";
-import { runScriptGeneration } from "@/lib/script-node/api";
+import { runScriptDialogue, runScriptGeneration } from "@/lib/script-node/api";
 import { cn } from "@/lib/utils";
 
 const NODE_WIDTH = 288;
@@ -134,6 +135,7 @@ type ConnectionDragState = {
   pointer: WorkflowPoint;
 } | null;
 
+type ScriptDialogueRunner = typeof runScriptDialogue;
 type ScriptGenerationRunner = typeof runScriptGeneration;
 
 const DEFAULT_SCRIPT_WORLD_DESCRIPTION =
@@ -143,6 +145,7 @@ const SCRIPT_WORLD_DESCRIPTION_PLACEHOLDER =
 const SCRIPT_WORLD_DESCRIPTION_LABEL =
   "\u5267\u60c5\u7247\u6bb5\u3001\u6545\u4e8b\u548c\u4e16\u754c\u89c2\u6784\u60f3";
 const SCRIPT_REVISE_STATUS_LABEL = "AI\u4fee\u6539\u4e2d";
+const SCRIPT_DIALOGUE_READY_LABEL = "AI\u5bf9\u8bdd";
 const SCRIPT_REVISE_LABEL = "AI\u4fee\u6539";
 const SCRIPT_GENERATE_LABEL = "\u751f\u6210";
 const SCRIPT_GENERATING_LABEL = "\u751f\u6210\u4e2d";
@@ -378,8 +381,10 @@ export function calculateInitialCanvasViewport(
 }
 
 export function WorkflowCanvasWorkspace({
+  scriptDialogueRunner = runScriptDialogue,
   scriptGenerationRunner = runScriptGeneration,
 }: {
+  scriptDialogueRunner?: ScriptDialogueRunner;
   scriptGenerationRunner?: ScriptGenerationRunner;
 } = {}) {
   const [state, dispatch] = useReducer(
@@ -398,6 +403,9 @@ export function WorkflowCanvasWorkspace({
   const [scriptOutput, setScriptOutput] = useState<ScriptNodeOutput | null>(
     null,
   );
+  const [scriptDialogueMessages, setScriptDialogueMessages] = useState<
+    ScriptDialogueMessage[]
+  >([]);
   const [scriptTask, setScriptTask] =
     useState<ScriptTaskStatusResponse>(emptyScriptTask);
   const [scriptError, setScriptError] = useState<string | null>(null);
@@ -719,6 +727,97 @@ export function WorkflowCanvasWorkspace({
     }
   }
 
+  async function sendScriptDialogueMessage() {
+    if (!selectedScriptNode) {
+      setScriptError("Select a Script node before starting AI dialogue.");
+      return;
+    }
+
+    const messageText = scriptInput.world_description.trim();
+    if (!messageText) {
+      setScriptError("MV world description is required before AI dialogue.");
+      dispatch({
+        type: "setNodeStatus",
+        nodeId: selectedScriptNode.id,
+        status: "blocked",
+        notice: "Script AI dialogue blocked: message is required.",
+      });
+      return;
+    }
+
+    const userMessage: ScriptDialogueMessage = {
+      role: "user",
+      content: messageText,
+    };
+    const pendingMessages = [...scriptDialogueMessages, userMessage];
+
+    setScriptBusy(true);
+    setScriptError(null);
+    setScriptHistoryOpen(true);
+    setScriptResponseMode("revise");
+    setScriptDialogueMessages(pendingMessages);
+    setScriptTask({
+      task_id: "dialogue-pending",
+      project_id: state.projectId,
+      node_id: selectedScriptNode.id,
+      status: "running",
+      error: null,
+    });
+    dispatch({
+      type: "setNodeStatus",
+      nodeId: selectedScriptNode.id,
+      status: "running",
+      notice: "Script AI dialogue request sent to FastAPI.",
+    });
+
+    try {
+      const result = await scriptDialogueRunner({
+        projectId: state.projectId,
+        nodeId: selectedScriptNode.id,
+        input: scriptInput,
+        settings: findScriptModelOption(scriptModel).settings,
+        history: scriptDialogueMessages,
+        message: messageText,
+      });
+
+      setScriptDialogueMessages(result.history);
+      setScriptTask({
+        task_id: "dialogue-succeeded",
+        project_id: result.project_id,
+        node_id: result.node_id,
+        status: "succeeded",
+        error: null,
+      });
+      dispatch({
+        type: "setNodeStatus",
+        nodeId: selectedScriptNode.id,
+        status: scriptOutput ? "ready" : "placeholder",
+        notice:
+          "Script AI dialogue reply received. Use Generate for structured ScriptOutput.",
+      });
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Script AI dialogue failed.";
+
+      setScriptTask({
+        task_id: "dialogue-failed",
+        project_id: state.projectId,
+        node_id: selectedScriptNode.id,
+        status: "failed",
+        error: message,
+      });
+      setScriptError(message);
+      dispatch({
+        type: "setNodeStatus",
+        nodeId: selectedScriptNode.id,
+        status: "blocked",
+        notice: message,
+      });
+    } finally {
+      setScriptBusy(false);
+    }
+  }
+
   return (
     <TooltipProvider>
       <ReactFlowProvider>
@@ -822,20 +921,26 @@ export function WorkflowCanvasWorkspace({
                   error={scriptError}
                   historyOpen={scriptHistoryOpen}
                   input={scriptInput}
+                  messages={scriptDialogueMessages}
                   responseMode={scriptResponseMode}
                   node={selectedScriptNode}
                   output={scriptOutput}
                   model={scriptModel}
                   task={scriptTask}
                   viewportZoom={state.viewport.zoom}
-                  onGenerate={(responseMode) => {
-                    setScriptResponseMode(responseMode);
+                  onGenerate={() => {
+                    setScriptResponseMode("generation");
                     setScriptHistoryOpen(true);
                     void generateScriptNode();
                   }}
                   onHistoryOpenChange={setScriptHistoryOpen}
                   onInputChange={updateScriptInput}
                   onModelChange={setScriptModel}
+                  onRevise={() => {
+                    setScriptResponseMode("revise");
+                    setScriptHistoryOpen(true);
+                    void sendScriptDialogueMessage();
+                  }}
                 />
               ) : null}
             </div>
@@ -1189,19 +1294,21 @@ type ScriptNodeInlineEditorProps = {
   error: string | null;
   historyOpen: boolean;
   input: ScriptNodeInput;
+  messages: ScriptDialogueMessage[];
   responseMode: ScriptResponseMode;
   model: ScriptModelSelection;
   node: WorkflowNode;
   output: ScriptNodeOutput | null;
   task: ScriptTaskStatusResponse;
   viewportZoom: number;
-  onGenerate: (responseMode: ScriptResponseMode) => void;
+  onGenerate: () => void;
   onHistoryOpenChange: (open: boolean) => void;
   onInputChange: <Field extends keyof ScriptNodeInput>(
     field: Field,
     value: ScriptNodeInput[Field],
   ) => void;
   onModelChange: (model: ScriptModelSelection) => void;
+  onRevise: () => void;
 };
 
 function ScriptNodeInlineEditor({
@@ -1209,6 +1316,7 @@ function ScriptNodeInlineEditor({
   error,
   historyOpen,
   input,
+  messages,
   responseMode,
   model,
   node,
@@ -1219,13 +1327,14 @@ function ScriptNodeInlineEditor({
   onHistoryOpenChange,
   onInputChange,
   onModelChange,
+  onRevise,
 }: ScriptNodeInlineEditorProps) {
   const promptReady = input.world_description.trim().length > 0;
   const left = node.position.x - (SCRIPT_INLINE_EDITOR_WIDTH - NODE_WIDTH) / 2;
   const top = node.position.y + NODE_HEIGHT + SCRIPT_INLINE_EDITOR_GAP;
 
   function handleAiRevise() {
-    onGenerate(getScriptResponseModeForAction("revise"));
+    onRevise();
   }
 
   return (
@@ -1247,6 +1356,7 @@ function ScriptNodeInlineEditor({
           <ScriptOutputTabs
             error={error}
             input={input}
+            messages={messages}
             output={output}
             responseMode={responseMode}
             task={task}
@@ -1314,9 +1424,7 @@ function ScriptNodeInlineEditor({
               aria-label="Generate Script node"
               className="h-9 rounded-lg px-4 text-xs"
               disabled={busy || !promptReady}
-              onClick={() =>
-                onGenerate(getScriptResponseModeForAction("generate"))
-              }
+              onClick={onGenerate}
               type="button"
             >
               {busy ? SCRIPT_GENERATING_LABEL : SCRIPT_GENERATE_LABEL}
@@ -1547,6 +1655,7 @@ export function ImageNodeFloatingEditor({
 type ScriptOutputTabsProps = {
   error?: string | null;
   input: ScriptNodeInput;
+  messages: ScriptDialogueMessage[];
   output: ScriptNodeOutput | null;
   responseMode: ScriptResponseMode;
   task: ScriptTaskStatusResponse;
@@ -1556,16 +1665,20 @@ type ScriptOutputTabsProps = {
 export function ScriptOutputTabs({
   error,
   input,
+  messages,
   output,
   responseMode,
   task,
   onHide,
 }: ScriptOutputTabsProps) {
   const promptText = input.world_description.trim();
+  const hasDialogueMessages = messages.length > 0;
   const statusLabel =
-    responseMode === "revise" && !error && task.status !== "running"
+    responseMode === "revise" && !error && task.status === "running"
       ? SCRIPT_REVISE_STATUS_LABEL
-      : getScriptResponseStatusLabel(task, output, error);
+      : responseMode === "revise" && !error && hasDialogueMessages
+        ? SCRIPT_DIALOGUE_READY_LABEL
+        : getScriptResponseStatusLabel(task, output, error);
   const statusDetail = error ?? task.error ?? null;
 
   return (
@@ -1584,6 +1697,8 @@ export function ScriptOutputTabs({
                 statusLabel === "Ready" &&
                   "border-emerald-200 bg-emerald-50 text-emerald-700",
                 statusLabel === SCRIPT_REVISE_STATUS_LABEL &&
+                  "border-sky-200 bg-sky-50 text-sky-700",
+                statusLabel === SCRIPT_DIALOGUE_READY_LABEL &&
                   "border-sky-200 bg-sky-50 text-sky-700",
                 statusLabel === "Error" &&
                   "border-red-200 bg-red-50 text-red-700",
@@ -1614,7 +1729,24 @@ export function ScriptOutputTabs({
         className="flex-1 overflow-y-auto p-4"
         data-script-node-output-scroll="true"
       >
-        {promptText ? <UserPromptBubble>{promptText}</UserPromptBubble> : null}
+        {hasDialogueMessages
+          ? messages.map((message, index) =>
+              message.role === "user" ? (
+                <UserPromptBubble key={`${message.role}-${index}`}>
+                  {message.content}
+                </UserPromptBubble>
+              ) : (
+                <AssistantResponseBubble
+                  key={`${message.role}-${index}`}
+                  title={SCRIPT_REVISE_LABEL}
+                >
+                  <p className="whitespace-pre-line">{message.content}</p>
+                </AssistantResponseBubble>
+              ),
+            )
+          : promptText ? (
+              <UserPromptBubble>{promptText}</UserPromptBubble>
+            ) : null}
 
         {statusLabel === "Error" && statusDetail ? (
           <AssistantResponseBubble title="AI">
@@ -1633,10 +1765,11 @@ export function ScriptOutputTabs({
           </AssistantResponseBubble>
         ) : null}
 
-        {output && task.status !== "running" && !statusDetail ? (
-          <AssistantResponseBubble
-            title={responseMode === "revise" ? SCRIPT_REVISE_LABEL : "AI"}
-          >
+        {output &&
+        task.status !== "running" &&
+        !statusDetail &&
+        responseMode === "generation" ? (
+          <AssistantResponseBubble title="AI">
             <p className="whitespace-pre-line">
               {formatScriptOutputConversationReply(output)}
             </p>
