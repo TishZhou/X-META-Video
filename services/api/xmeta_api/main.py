@@ -7,13 +7,25 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .prompt import build_script_dialogue_prompt
 from .providers import (
+    EvolinkVideoProviderSettings,
+    MiniMaxMusicProviderSettings,
     ProviderConfigurationError,
     ProviderExecutionError,
+    SeedDreamProviderSettings,
     ScriptProviderSettings,
     get_script_provider,
+    submitEvolinkVideoWithRetry,
+    submitMiniMaxMusicWithRetry,
+    submitSeedreamWithRetry,
 )
 from .runner import run_script_task_sync
 from .schemas import (
+    ImageGenerationRequest,
+    ImageGenerationResponse,
+    ImageGenerationSettings,
+    MusicGenerationRequest,
+    MusicGenerationResponse,
+    MusicGenerationSettings,
     ScriptDialogueMessage,
     ScriptDialogueRequest,
     ScriptDialogueResponse,
@@ -24,6 +36,9 @@ from .schemas import (
     TaskResult,
     TaskState,
     TaskStatus,
+    VideoGenerationRequest,
+    VideoGenerationResponse,
+    VideoGenerationSettings,
 )
 from .store import store
 
@@ -147,6 +162,133 @@ def chat_script_node(
     )
 
 
+@app.post(
+    "/api/v1/projects/{project_id}/nodes/{node_id}/generate-image",
+    response_model=ImageGenerationResponse,
+)
+def generate_image_node(
+    project_id: str,
+    node_id: str,
+    request: ImageGenerationRequest,
+) -> ImageGenerationResponse:
+    try:
+        settings = _resolve_seedream_provider_settings(request.settings)
+        image = submitSeedreamWithRetry(
+            settings=settings,
+            prompt=request.input.prompt,
+        )
+    except ProviderConfigurationError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=str(exc),
+        ) from exc
+    except ProviderExecutionError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=str(exc),
+        ) from exc
+
+    assert settings.model is not None
+    return ImageGenerationResponse(
+        project_id=project_id,
+        node_id=node_id,
+        node_type=request.node_type,
+        provider=settings.provider,
+        model=settings.model,
+        prompt=request.input.prompt,
+        image=image,
+        persisted=False,
+    )
+
+
+@app.post(
+    "/api/v1/projects/{project_id}/nodes/{node_id}/generate-audio",
+    response_model=MusicGenerationResponse,
+)
+def generate_audio_node(
+    project_id: str,
+    node_id: str,
+    request: MusicGenerationRequest,
+) -> MusicGenerationResponse:
+    try:
+        settings = _resolve_minimax_music_provider_settings(request.settings)
+        audio = submitMiniMaxMusicWithRetry(
+            settings=settings,
+            prompt=request.input.prompt,
+            lyrics=request.input.lyrics,
+        )
+    except ProviderConfigurationError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=str(exc),
+        ) from exc
+    except ProviderExecutionError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=str(exc),
+        ) from exc
+
+    assert settings.model is not None
+    return MusicGenerationResponse(
+        project_id=project_id,
+        node_id=node_id,
+        node_type=request.node_type,
+        provider=settings.provider,
+        model=settings.model,
+        prompt=request.input.prompt,
+        lyrics=request.input.lyrics,
+        audio=audio,
+        persisted=False,
+    )
+
+
+@app.post(
+    "/api/v1/projects/{project_id}/nodes/{node_id}/generate-video",
+    response_model=VideoGenerationResponse,
+)
+def generate_video_node(
+    project_id: str,
+    node_id: str,
+    request: VideoGenerationRequest,
+) -> VideoGenerationResponse:
+    try:
+        settings = _resolve_evolink_video_provider_settings(request.settings)
+        result = submitEvolinkVideoWithRetry(
+            settings=settings,
+            prompt=request.input.prompt,
+            image_urls=request.input.image_urls,
+            audio_urls=request.input.audio_urls,
+            duration_seconds=request.input.duration_seconds,
+        )
+    except ProviderConfigurationError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=str(exc),
+        ) from exc
+    except ProviderExecutionError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=str(exc),
+        ) from exc
+
+    return VideoGenerationResponse(
+        task_id=result.provider_task_id,
+        project_id=project_id,
+        node_id=node_id,
+        node_type=request.node_type,
+        provider=settings.provider,
+        model=settings.model_for_generation(has_images=bool(request.input.image_urls)),
+        prompt=request.input.prompt,
+        image_urls=request.input.image_urls,
+        audio_urls=request.input.audio_urls,
+        duration=request.input.duration_seconds,
+        duration_seconds=request.input.duration_seconds,
+        video=result.video,
+        provider_task_id=result.provider_task_id,
+        persisted=False,
+    )
+
+
 def _resolve_script_provider_settings(
     node_settings: ScriptSettings,
 ) -> ScriptProviderSettings:
@@ -175,6 +317,27 @@ def _resolve_script_provider_settings(
         timeout_seconds=env_settings.timeout_seconds,
         max_retries=env_settings.max_retries,
     )
+
+
+def _resolve_seedream_provider_settings(
+    node_settings: ImageGenerationSettings,
+) -> SeedDreamProviderSettings:
+    env_settings = SeedDreamProviderSettings.from_env()
+    return env_settings.with_overrides(node_settings)
+
+
+def _resolve_minimax_music_provider_settings(
+    node_settings: MusicGenerationSettings,
+) -> MiniMaxMusicProviderSettings:
+    env_settings = MiniMaxMusicProviderSettings.from_env()
+    return env_settings.with_overrides(node_settings)
+
+
+def _resolve_evolink_video_provider_settings(
+    node_settings: VideoGenerationSettings,
+) -> EvolinkVideoProviderSettings:
+    env_settings = EvolinkVideoProviderSettings.from_env()
+    return env_settings.with_overrides(node_settings)
 
 
 @app.get("/api/v1/tasks/{task_id}", response_model=TaskState)

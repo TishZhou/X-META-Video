@@ -61,7 +61,7 @@ export const workflowNodeTemplates = [
   {
     type: "character",
     title: "Character Image",
-    description: "Placeholder for consistent character generation and saved references.",
+    description: "Generates one character photo from a text character profile.",
     ports: [
       {
         key: "profile-in",
@@ -81,7 +81,7 @@ export const workflowNodeTemplates = [
   {
     type: "asset",
     title: "Prop / Asset",
-    description: "Placeholder for props, wardrobe, and reusable objects.",
+    description: "Generates one prop or object photo from a text description.",
     ports: [
       { key: "asset-brief-in", label: "Prompt", direction: "input", dataType: "brief" },
       { key: "asset-out", label: "Asset", direction: "output", dataType: "asset" },
@@ -90,7 +90,7 @@ export const workflowNodeTemplates = [
   {
     type: "scene",
     title: "Scene Image",
-    description: "Placeholder for background and location image generation.",
+    description: "Generates one background or location photo from a scene description.",
     ports: [
       {
         key: "storyboard-in",
@@ -121,11 +121,11 @@ export const workflowNodeTemplates = [
   {
     type: "audio",
     title: "Audio",
-    description: "Placeholder for dialogue, lyrics, voice, singing, and narration.",
+    description: "Generates one music track from lyrics and style text.",
     ports: [
       {
         key: "script-audio-in",
-        label: "Lines",
+        label: "Lyrics",
         direction: "input",
         dataType: "script",
         accepts: ["script", "storyboard"],
@@ -136,9 +136,22 @@ export const workflowNodeTemplates = [
   {
     type: "video",
     title: "Video",
-    description: "Placeholder for image plus optional audio to video clip generation.",
+    description: "Generates one video clip from prompt, images, and optional audio.",
     ports: [
-      { key: "image-in", label: "Image", direction: "input", dataType: "image" },
+      {
+        key: "prompt-in",
+        label: "Prompt",
+        direction: "input",
+        dataType: "script",
+        accepts: ["script", "storyboard", "brief"],
+      },
+      {
+        key: "image-in",
+        label: "Image",
+        direction: "input",
+        dataType: "image",
+        accepts: ["image", "character", "scene", "asset"],
+      },
       { key: "audio-in", label: "Audio", direction: "input", dataType: "audio" },
       { key: "video-out", label: "Clip", direction: "output", dataType: "video" },
     ],

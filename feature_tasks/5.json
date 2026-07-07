@@ -1,15 +1,52 @@
-﻿{
-    "parent_feature":  {
-                           "id":  5,
-                           "title":  "Character Image Node",
-                           "status":  "not_started"
-                       },
-    "planning_status":  "pending_decomposition",
-    "notes":  [
-                  "Small features must be added here before implementation starts.",
-                  "Keep this file focused on Character Image Node only."
-              ],
-    "small_features":  [
-
-                       ]
+{
+  "parent_feature": {
+    "id": 5,
+    "title": "Character Image Node",
+    "status": "passing"
+  },
+  "planning_status": "text_to_image_nodes_001_passing",
+  "notes": [
+    "Feature 5 owns the first image-generation node implementation because Character Image is the first product image asset node.",
+    "This task deliberately shares the foundation with Prop / Asset and Scene Image source nodes so the canvas does not get three duplicated text-to-image implementations.",
+    "Scene Image as a full feature remains not complete until reusable scene asset references and persistence are implemented.",
+    "Prop asset persistence and the full Asset Library remain later feature scope.",
+    "Image-to-video work is explicitly out of scope for this task."
+  ],
+  "small_features": [
+    {
+      "id": "text-to-image-nodes-001",
+      "title": "Implement SeedDream text-to-image graph foundation",
+      "status": "passing",
+      "user_visible_behavior": "Users can generate a single image outcome node from Character Image, Prop / Asset, or Scene Image text prompts, with backend-confirmed SeedDream provider/model evidence and honest no-persistence labeling.",
+      "acceptance_criteria": [
+        "Character Image, Prop / Asset, and Scene Image source nodes open the shared image editor with node-specific prompt defaults.",
+        "Generate posts to the local FastAPI backend and never exposes Doubao credentials in frontend code.",
+        "Backend SeedDream config uses DOUBAO_API_KEY, DOUBAO_BASE_URL, SEEDREAM_MODEL, and optional DOUBAO_HTTPS_PROXY.",
+        "Provider code exposes submitSeedreamWithRetry() and submitSeedreamGenerationOnce() wrappers.",
+        "A successful generation creates or updates one deterministic image outcome node on the canvas.",
+        "The image outcome node renders the returned image URL or image data and displays provider/model evidence.",
+        "AI modify or other unavailable image-node functions show a visible not-implemented message instead of silently pretending to work.",
+        "Verification covers backend provider/route tests, frontend tests, typecheck/build, and rendered interaction or E2E evidence."
+      ],
+      "verification": [
+        "2026-07-07 baseline .\\init.ps1 passed before implementation and reran web tests: 9 files / 43 tests.",
+        "2026-07-07 .\\.venv\\Scripts\\python.exe -m pytest services\\api\\tests\\test_image_node.py passed: 8 tests with one Starlette warning.",
+        "2026-07-07 .\\.venv\\Scripts\\python.exe -m pytest services\\api\\tests passed: 33 tests with one Starlette warning.",
+        "2026-07-07 .\\.venv\\Scripts\\python.exe -m ruff check services\\api passed.",
+        "2026-07-07 corepack pnpm --filter @xmeta/web test -- workflow-canvas-workspace.test.tsx passed after final UI boundary update: 1 file / 22 tests.",
+        "2026-07-07 corepack pnpm --filter @xmeta/web test passed during implementation: 9 files / 45 tests.",
+        "2026-07-07 corepack pnpm --filter @xmeta/web typecheck passed.",
+        "2026-07-07 corepack pnpm --filter @xmeta/web build passed and included /workspace.",
+        "2026-07-07 Browser E2E passed on http://127.0.0.1:3002/workspace with FastAPI on 8011 and a fake SeedDream provider on 8899: Add Scene Image, Generate, one image outcome node, one loaded image preview with naturalWidth 64, provider/model evidence visible, no asset-library persistence label visible, outcome selection did not reopen a source generation editor, and console warn/error logs were empty.",
+        "2026-07-07 final JSON validation passed for feature_list.json, feature_tasks/5.json, and feature_tasks/8.json.",
+        "2026-07-07 final .\\.venv\\Scripts\\python.exe -m pytest services\\api\\tests passed: 41 tests with one Starlette warning; this includes parallel Feature 8/music tests present in the dirty worktree.",
+        "2026-07-07 final .\\.venv\\Scripts\\python.exe -m ruff check services\\api passed.",
+        "2026-07-07 final corepack pnpm --filter @xmeta/web test passed: 9 files / 48 tests; this includes parallel Feature 8/music tests present in the dirty worktree.",
+        "2026-07-07 final corepack pnpm --filter @xmeta/web typecheck passed.",
+        "2026-07-07 final corepack pnpm --filter @xmeta/web build passed and included /workspace.",
+        "2026-07-07 final .\\init.ps1 passed after artifact updates and reran web tests: 9 files / 48 tests.",
+        "2026-07-07 follow-up UI alignment: Image node AI editor now uses the same below-node inline composer pattern as Script. Focused workspace test passed 1 file / 26 tests, full web tests passed 9 files / 51 tests, typecheck passed, build passed with /workspace, and Browser QA on http://127.0.0.1:3002/workspace confirmed the Image Composition editor renders inside the canvas stage below the selected node with no image drag/resize floating controls and no console warn/error logs."
+      ]
+    }
+  ]
 }

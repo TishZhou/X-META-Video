@@ -1,19 +1,26 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import type {
+  ImageGenerationResponse,
+  MusicGenerationResponse,
   ScriptDialogueMessage,
   ScriptNodeOutput,
   ScriptTaskStatusResponse,
+  VideoGenerationResponse,
 } from "@xmeta/shared-contracts";
 
 import {
   createInitialWorkflowGraphState,
   createWorkflowOutputNodeId,
+  workflowGraphReducer,
   workflowNodeTemplates,
 } from "@/lib/workflow-canvas/graph";
 import type { WorkflowNode } from "@/lib/workflow-canvas/types";
 
 import {
+  audioSourceFromGeneratedAudio,
+  audioSourceFromWorkflowOutput,
+  base64FromHexAudio,
   buildScriptDirectOutputMessage,
   calculateDraggedNodePosition,
   clampImageEditorFrame,
@@ -22,6 +29,11 @@ import {
   formatScriptNodePreview,
   formatWorkflowOutputExecutionLabel,
   formatTemplateIoLabel,
+  getConnectedAudioLyrics,
+  getConnectedVideoInputs,
+  getImageGenerationNodeType,
+  imageSourceFromGeneratedImage,
+  imageSourceFromWorkflowOutput,
   getInlineEditorCompensationScale,
   getScriptResponseModeForAction,
   getScriptResponseStatusLabel,
@@ -31,6 +43,10 @@ import {
   ScriptOutcomeNodeEditor,
   ScriptNodeInlineEditor,
   ScriptOutputTabs,
+  MusicNodeInlineEditor,
+  VideoNodeFloatingEditor,
+  videoSourceFromGeneratedVideo,
+  videoSourceFromWorkflowOutput,
   WorkflowNodeCard,
   WorkflowCanvasWorkspace,
 } from "./workflow-canvas-workspace";
@@ -129,10 +145,10 @@ describe("WorkflowCanvasWorkspace", () => {
     expect(audioTemplate).toBeDefined();
     expect(videoTemplate).toBeDefined();
     expect(formatTemplateIoLabel(audioTemplate!)).toBe(
-      "Audio: Input Dialogue -> Output Audio",
+      "Audio: Input Lyrics -> Output Audio",
     );
     expect(formatTemplateIoLabel(videoTemplate!)).toBe(
-      "Video: Input Image + Audio -> Output Video",
+      "Video: Input Prompt + Image + Audio -> Output Video",
     );
   });
 
@@ -194,17 +210,41 @@ describe("WorkflowCanvasWorkspace", () => {
     ).toBe("Backend: openai / gpt-live");
   });
 
-  it("renders the previous floating editor behavior for image-class nodes", () => {
+  it("renders the SeedDream image editor states for image-class nodes", () => {
     const graph = createInitialWorkflowGraphState();
     const imageNode = graph.nodes.find(
       (candidate) => candidate.type === "composition",
     );
+    const generation = {
+      project_id: "local-project",
+      node_id: "scene-4",
+      node_type: "scene_image",
+      provider: "doubao-seedream",
+      model: "doubao-seedream-5-0-260128",
+      prompt: "A neon jeep frame",
+      image: {
+        url: "https://image.example/scene.png",
+        b64_json: null,
+        mime_type: "image/png",
+        width: 1024,
+        height: 1024,
+      },
+      persisted: false,
+    } satisfies ImageGenerationResponse;
 
     expect(imageNode).toBeDefined();
     expect(isFloatingImageEditorNodeType("composition")).toBe(true);
+    expect(isFloatingImageEditorNodeType("asset")).toBe(true);
     expect(isFloatingImageEditorNodeType("scene")).toBe(true);
     expect(isFloatingImageEditorNodeType("character")).toBe(true);
     expect(isFloatingImageEditorNodeType("script")).toBe(false);
+    expect(getImageGenerationNodeType("character")).toBe("character_image");
+    expect(getImageGenerationNodeType("asset")).toBe("prop_asset");
+    expect(getImageGenerationNodeType("scene")).toBe("scene_image");
+    expect(getImageGenerationNodeType("composition")).toBeNull();
+    expect(imageSourceFromGeneratedImage(generation.image)).toBe(
+      "https://image.example/scene.png",
+    );
     expect(
       clampImageEditorFrame(
         { x: -200, y: -120, width: 100, height: 100 },
@@ -215,26 +255,409 @@ describe("WorkflowCanvasWorkspace", () => {
     const html = renderToStaticMarkup(
       <ImageNodeFloatingEditor
         frame={{ x: 880, y: 88, width: 430, height: 520 }}
+        busy={false}
+        error={null}
+        generation={generation}
         node={imageNode!}
         prompt="A neon jeep frame"
         responseOpen={true}
+        viewportZoom={1}
         onClose={() => undefined}
         onFrameChange={() => undefined}
+        onGenerate={() => undefined}
         onPromptChange={() => undefined}
         onResponseOpenChange={() => undefined}
+        onRevise={() => undefined}
       />,
     );
 
     expect(html).toContain('data-image-node-editor="true"');
-    expect(html).toContain('data-image-node-drag-handle="true"');
-    expect(html).toContain('aria-label="Close Image node editor"');
+    expect(html).toContain('data-image-node-inline-editor="true"');
+    expect(html).toContain('data-image-node-input-composer="true"');
     expect(html).toContain('data-image-node-response="true"');
     expect(html).toContain('data-image-model-select="true"');
     expect(html).toContain('data-image-ai-revise="true"');
-    expect(html).toContain('aria-label="Resize Image node editor"');
+    expect(html).not.toContain('data-image-node-drag-handle="true"');
+    expect(html).not.toContain('aria-label="Close Image node editor"');
+    expect(html).not.toContain('aria-label="Resize Image node editor"');
     expect(html).toContain("Configured image model");
-    expect(html).toContain("Image Agent");
-    expect(html).toContain("A neon jeep frame");
+    expect(html).toContain('data-generated-image-preview="true"');
+    expect(html).toContain("https://image.example/scene.png");
+    expect(html).toContain("Backend: doubao-seedream / doubao-seedream-5-0-260128");
+    expect(html).toContain("Asset persistence is not implemented yet");
+  });
+
+  it("reads connected Script outcome text as Audio node lyrics", () => {
+    const graph = createInitialWorkflowGraphState();
+    const withScriptOutcome = workflowGraphReducer(graph, {
+      type: "upsertOutputNode",
+      sourceNodeId: "script-1",
+      nodeType: "script",
+      title: "Script outcome",
+      description: "Editable direct text generated from the Script node.",
+      position: { x: 520, y: 120 },
+      output: {
+        sourceNodeId: "script-1",
+        dataType: "script",
+        label: "Script output",
+        provider: "openai",
+        model: "gpt-live",
+        editable: true,
+      },
+      ports: [
+        {
+          key: "script-out",
+          label: "Script",
+          direction: "output",
+          dataType: "script",
+        },
+      ],
+    });
+    const withAudio = workflowGraphReducer(withScriptOutcome, {
+      type: "addNode",
+      nodeType: "audio",
+      position: { x: 860, y: 120 },
+    });
+    const audioNode = withAudio.nodes.find((node) => node.type === "audio");
+    const scriptOutcomeNodeId = createWorkflowOutputNodeId("script-1", "script");
+
+    expect(audioNode).toBeDefined();
+
+    const connected = workflowGraphReducer(withAudio, {
+      type: "connect",
+      sourcePortId: `${scriptOutcomeNodeId}:script-out`,
+      targetPortId: `${audioNode!.id}:script-audio-in`,
+    });
+
+    expect(
+      getConnectedAudioLyrics(
+        audioNode!,
+        connected,
+        { world_description: "fallback script input" },
+        {
+          [scriptOutcomeNodeId]: "[Chorus]\nWe run into the glow",
+        },
+      ),
+    ).toBe("[Chorus]\nWe run into the glow");
+  });
+
+  it("renders the MiniMax music inline composer with connected lyrics and audio preview", () => {
+    const graph = workflowGraphReducer(createInitialWorkflowGraphState(), {
+      type: "addNode",
+      nodeType: "audio",
+      position: { x: 860, y: 120 },
+    });
+    const audioNode = graph.nodes.find((node) => node.type === "audio");
+    const generation = {
+      project_id: "local-project",
+      node_id: "audio-4",
+      node_type: "audio",
+      provider: "minimax",
+      model: "music-2.6-free",
+      prompt: "K-pop cinematic MV chorus",
+      lyrics: "[Chorus]\nWe run into the glow",
+      audio: {
+        url: "https://audio.example/generated.mp3",
+        hex: null,
+        b64_audio: null,
+        mime_type: "audio/mpeg",
+        duration_ms: 25364,
+        sample_rate: 44100,
+        channels: 2,
+        bitrate: 256000,
+        size_bytes: 813651,
+      },
+      persisted: false,
+    } satisfies MusicGenerationResponse;
+
+    expect(audioNode).toBeDefined();
+    expect(audioSourceFromGeneratedAudio(generation.audio)).toBe(
+      "https://audio.example/generated.mp3",
+    );
+    expect(base64FromHexAudio("4869")).toBe("SGk=");
+
+    const html = renderToStaticMarkup(
+      <MusicNodeInlineEditor
+        busy={false}
+        connectedLyrics="[Chorus]\nWe run into the glow"
+        error={null}
+        generation={generation}
+        lyrics="[Chorus]\nWe run into the glow"
+        node={audioNode!}
+        prompt="K-pop cinematic MV chorus"
+        responseOpen={true}
+        viewportZoom={1}
+        onGenerate={() => undefined}
+        onLyricsChange={() => undefined}
+        onPromptChange={() => undefined}
+        onResponseOpenChange={() => undefined}
+        onUseConnectedLyrics={() => undefined}
+      />,
+    );
+
+    expect(html).toContain('data-music-node-inline-editor="true"');
+    expect(html).toContain('data-music-node-input-composer="true"');
+    expect(html).toContain('data-music-node-output-panel="true"');
+    expect(html).toContain("MiniMax Music");
+    expect(html).toContain('data-music-use-connected-lyrics="true"');
+    expect(html).toContain('data-generated-audio-preview="true"');
+    expect(html).toContain("https://audio.example/generated.mp3");
+    expect(html).toContain("Backend: minimax / music-2.6-free");
+    expect(html).toContain("Audio persistence, signed URLs, and Audio Library save");
+    expect(html).not.toContain('data-music-node-drag-handle="true"');
+    expect(html).not.toContain('data-music-node-resize-handle="true"');
+  });
+
+  it("collects connected Script, image, and audio outputs for Video node inputs", () => {
+    const graph = createInitialWorkflowGraphState();
+    const withScriptOutcome = workflowGraphReducer(graph, {
+      type: "upsertOutputNode",
+      sourceNodeId: "script-1",
+      nodeType: "script",
+      title: "Script outcome",
+      description: "Editable direct text generated from the Script node.",
+      position: { x: 520, y: 120 },
+      output: {
+        sourceNodeId: "script-1",
+        dataType: "script",
+        label: "Script output",
+        provider: "openai",
+        model: "gpt-live",
+        editable: true,
+      },
+      ports: [
+        {
+          key: "script-out",
+          label: "Script",
+          direction: "output",
+          dataType: "script",
+        },
+      ],
+    });
+    const withImageOutcome = workflowGraphReducer(withScriptOutcome, {
+      type: "upsertOutputNode",
+      sourceNodeId: "scene-4",
+      nodeType: "scene",
+      title: "Scene Image outcome",
+      description: "SeedDream text-to-image result.",
+      position: { x: 620, y: 280 },
+      output: {
+        sourceNodeId: "scene-4",
+        dataType: "scene",
+        label: "Scene Image image",
+        provider: "doubao-seedream",
+        model: "doubao-seedream-5-0-260128",
+        editable: false,
+        media: {
+          kind: "image",
+          url: "https://image.example/scene.png",
+          mimeType: "image/png",
+          alt: "Scene image",
+        },
+      },
+      ports: [
+        {
+          key: "scene-out",
+          label: "Scene",
+          direction: "output",
+          dataType: "scene",
+        },
+      ],
+    });
+    const withAudioOutcome = workflowGraphReducer(withImageOutcome, {
+      type: "upsertOutputNode",
+      sourceNodeId: "audio-5",
+      nodeType: "audio",
+      title: "Audio outcome",
+      description: "MiniMax text-to-music result.",
+      position: { x: 620, y: 440 },
+      output: {
+        sourceNodeId: "audio-5",
+        dataType: "audio",
+        label: "Audio music",
+        provider: "minimax",
+        model: "music-2.6-free",
+        editable: false,
+        media: {
+          kind: "audio",
+          url: "https://audio.example/music.mp3",
+          mimeType: "audio/mpeg",
+          alt: "Audio music",
+        },
+      },
+      ports: [
+        {
+          key: "audio-out",
+          label: "Audio",
+          direction: "output",
+          dataType: "audio",
+        },
+      ],
+    });
+    const withVideo = workflowGraphReducer(withAudioOutcome, {
+      type: "addNode",
+      nodeType: "video",
+      position: { x: 980, y: 260 },
+    });
+    const videoNode = withVideo.nodes.find((node) => node.type === "video");
+    const scriptOutcomeNodeId = createWorkflowOutputNodeId("script-1", "script");
+    const sceneOutcomeNodeId = createWorkflowOutputNodeId("scene-4", "scene");
+    const audioOutcomeNodeId = createWorkflowOutputNodeId("audio-5", "audio");
+
+    expect(videoNode).toBeDefined();
+
+    const withPrompt = workflowGraphReducer(withVideo, {
+      type: "connect",
+      sourcePortId: `${scriptOutcomeNodeId}:script-out`,
+      targetPortId: `${videoNode!.id}:prompt-in`,
+    });
+    const withImage = workflowGraphReducer(withPrompt, {
+      type: "connect",
+      sourcePortId: `${sceneOutcomeNodeId}:scene-out`,
+      targetPortId: `${videoNode!.id}:image-in`,
+    });
+    const connected = workflowGraphReducer(withImage, {
+      type: "connect",
+      sourcePortId: `${audioOutcomeNodeId}:audio-out`,
+      targetPortId: `${videoNode!.id}:audio-in`,
+    });
+
+    expect(
+      getConnectedVideoInputs(
+        videoNode!,
+        connected,
+        { world_description: "fallback script input" },
+        {
+          [scriptOutcomeNodeId]: "Use this script as the video prompt",
+        },
+      ),
+    ).toEqual({
+      prompt: "Use this script as the video prompt",
+      imageUrls: ["https://image.example/scene.png"],
+      audioUrls: ["https://audio.example/music.mp3"],
+    });
+  });
+
+  it("renders the Evolink video editor with connected media and video preview", () => {
+    const graph = workflowGraphReducer(createInitialWorkflowGraphState(), {
+      type: "addNode",
+      nodeType: "video",
+      position: { x: 980, y: 120 },
+    });
+    const videoNode = graph.nodes.find((node) => node.type === "video");
+    const generation = {
+      task_id: "video-task-1",
+      provider_task_id: "evolink-task-1",
+      project_id: "local-project",
+      node_id: "video-4",
+      node_type: "video",
+      provider: "evolink",
+      model: "seedance-2.0-reference-to-video",
+      prompt: "Cinematic MV clip",
+      duration: 15,
+      image_urls: ["https://image.example/scene.png"],
+      audio_urls: ["https://audio.example/music.mp3"],
+      video: {
+        url: "https://video.example/generated.mp4",
+        mime_type: "video/mp4",
+        duration_ms: 15000,
+      },
+      persisted: false,
+    } satisfies VideoGenerationResponse;
+
+    expect(videoNode).toBeDefined();
+    expect(videoSourceFromGeneratedVideo(generation.video)).toBe(
+      "https://video.example/generated.mp4",
+    );
+
+    const html = renderToStaticMarkup(
+      <VideoNodeFloatingEditor
+        frame={{ x: 920, y: 128, width: 480, height: 560 }}
+        audioUrlCount={1}
+        busy={false}
+        connectedPrompt="Cinematic MV clip"
+        duration="15"
+        error={null}
+        generation={generation}
+        imageUrlCount={1}
+        node={videoNode!}
+        prompt="Cinematic MV clip"
+        responseOpen={true}
+        onClose={() => undefined}
+        onDurationChange={() => undefined}
+        onFrameChange={() => undefined}
+        onGenerate={() => undefined}
+        onPromptChange={() => undefined}
+        onResponseOpenChange={() => undefined}
+        onUseConnectedPrompt={() => undefined}
+      />,
+    );
+
+    expect(html).toContain('data-video-node-editor="true"');
+    expect(html).toContain("Evolink Seedance video");
+    expect(html).toContain('data-video-use-connected-prompt="true"');
+    expect(html).toContain('data-video-connected-images="true"');
+    expect(html).toContain('data-video-connected-audio="true"');
+    expect(html).toContain('data-generated-video-preview="true"');
+    expect(html).toContain("https://video.example/generated.mp4");
+    expect(html).toContain("Backend: evolink / seedance-2.0-reference-to-video");
+    expect(html).toContain("Video persistence, signed URLs, task polling");
+  });
+
+  it("labels task-id-only Video responses without implying playback is ready", () => {
+    const graph = workflowGraphReducer(createInitialWorkflowGraphState(), {
+      type: "addNode",
+      nodeType: "video",
+      position: { x: 980, y: 120 },
+    });
+    const videoNode = graph.nodes.find((node) => node.type === "video");
+    const generation = {
+      task_id: "video-task-queued",
+      provider_task_id: "evolink-task-queued",
+      project_id: "local-project",
+      node_id: "video-4",
+      node_type: "video",
+      provider: "evolink",
+      model: "seedance-2.0-text-to-video",
+      prompt: "Cinematic MV clip",
+      duration: 15,
+      image_urls: [],
+      audio_urls: [],
+      video: {
+        url: null,
+        mime_type: null,
+        duration_ms: null,
+      },
+      persisted: false,
+    } satisfies VideoGenerationResponse;
+
+    const html = renderToStaticMarkup(
+      <VideoNodeFloatingEditor
+        frame={{ x: 920, y: 128, width: 480, height: 560 }}
+        audioUrlCount={0}
+        busy={false}
+        connectedPrompt={null}
+        duration="15"
+        error={null}
+        generation={generation}
+        imageUrlCount={0}
+        node={videoNode!}
+        prompt="Cinematic MV clip"
+        responseOpen={true}
+        onClose={() => undefined}
+        onDurationChange={() => undefined}
+        onFrameChange={() => undefined}
+        onGenerate={() => undefined}
+        onPromptChange={() => undefined}
+        onResponseOpenChange={() => undefined}
+        onUseConnectedPrompt={() => undefined}
+      />,
+    );
+
+    expect(html).toContain('data-video-provider-task="true"');
+    expect(html).toContain("Provider task evolink-task-queued was accepted");
+    expect(html).toContain("Task polling is not implemented");
+    expect(html).not.toContain('data-generated-video-preview="true"');
   });
 
   it("keeps generated direct output out of the Script chat panel", () => {
@@ -335,6 +758,197 @@ describe("WorkflowCanvasWorkspace", () => {
     expect(html).toContain("Backend: openai-compatible / test-model");
     expect(html).not.toContain("Local editable output");
     expect(html).toContain("border-0 bg-transparent p-0");
+  });
+
+  it("renders image generation outcome nodes as canvas image previews", () => {
+    const nodeId = createWorkflowOutputNodeId("scene-4", "scene");
+    const node = {
+      id: nodeId,
+      type: "scene",
+      role: "outcome",
+      title: "Scene Image outcome",
+      description: "SeedDream text-to-image result.",
+      status: "ready",
+      position: { x: 520, y: 240 },
+      ports: [],
+      output: {
+        sourceNodeId: "scene-4",
+        dataType: "scene",
+        label: "Scene Image image",
+        provider: "doubao-seedream",
+        model: "doubao-seedream-5-0-260128",
+        editable: false,
+        media: {
+          kind: "image",
+          url: null,
+          b64Json: "iVBORw0KGgo=",
+          mimeType: "image/png",
+          alt: "Scene Image generated image",
+        },
+      },
+    } satisfies WorkflowNode;
+    const html = renderToStaticMarkup(
+      <WorkflowNodeCard
+        node={node}
+        scriptInput={null}
+        scriptOutcomeText={null}
+        selected={true}
+        pendingPort={null}
+        onScriptOutcomeTextChange={() => undefined}
+        onDragStart={() => undefined}
+        onSelect={() => undefined}
+        onPortConnectionStart={() => undefined}
+      />,
+    );
+
+    expect(formatWorkflowOutputExecutionLabel(node.output)).toBe(
+      "Backend: doubao-seedream / doubao-seedream-5-0-260128",
+    );
+    expect(imageSourceFromWorkflowOutput(node.output)).toBe(
+      "data:image/png;base64,iVBORw0KGgo=",
+    );
+    expect(html).toContain('data-image-outcome-node="true"');
+    expect(html).toContain('data-image-outcome-preview="true"');
+    expect(html).toContain("data:image/png;base64,iVBORw0KGgo=");
+    expect(html).toContain("Backend: doubao-seedream / doubao-seedream-5-0-260128");
+    expect(html).toContain("Local preview only; not saved to the asset library yet.");
+  });
+
+  it("renders playable Audio outcome nodes with backend evidence", () => {
+    const node = {
+      id: createWorkflowOutputNodeId("audio-4", "audio"),
+      type: "audio",
+      role: "outcome",
+      title: "Audio outcome",
+      description: "MiniMax text-to-music result.",
+      status: "ready",
+      position: { x: 900, y: 120 },
+      ports: [],
+      output: {
+        sourceNodeId: "audio-4",
+        dataType: "audio",
+        label: "Audio music",
+        provider: "minimax",
+        model: "music-2.6-free",
+        editable: false,
+        media: {
+          kind: "audio",
+          url: "https://audio.example/generated.mp3",
+          mimeType: "audio/mpeg",
+          alt: "Generated music",
+        },
+      },
+    } satisfies WorkflowNode;
+
+    expect(audioSourceFromWorkflowOutput(node.output)).toBe(
+      "https://audio.example/generated.mp3",
+    );
+
+    const html = renderToStaticMarkup(
+      <WorkflowNodeCard
+        node={node}
+        scriptInput={null}
+        scriptOutcomeText={null}
+        selected={true}
+        pendingPort={null}
+        onScriptOutcomeTextChange={() => undefined}
+        onDragStart={() => undefined}
+        onSelect={() => undefined}
+        onPortConnectionStart={() => undefined}
+      />,
+    );
+
+    expect(formatWorkflowOutputExecutionLabel(node.output)).toBe(
+      "Backend: minimax / music-2.6-free",
+    );
+    expect(html).toContain('data-audio-outcome-node="true"');
+    expect(html).toContain('data-audio-outcome-player="true"');
+    expect(html).toContain("https://audio.example/generated.mp3");
+    expect(html).toContain("Backend: minimax / music-2.6-free");
+    expect(html).toContain("Audio persistence, signed URLs, and Audio Library save");
+  });
+
+  it("renders playable Video outcome nodes with backend evidence", () => {
+    const node = {
+      id: createWorkflowOutputNodeId("video-4", "video"),
+      type: "video",
+      role: "outcome",
+      title: "Video outcome",
+      description: "Evolink Seedance video result.",
+      status: "ready",
+      position: { x: 900, y: 120 },
+      ports: [],
+      output: {
+        sourceNodeId: "video-4",
+        dataType: "video",
+        label: "Video clip",
+        provider: "evolink",
+        model: "seedance-2.0-reference-to-video",
+        editable: false,
+        media: {
+          kind: "video",
+          url: "https://video.example/generated.mp4",
+          mimeType: "video/mp4",
+          durationMs: 15000,
+          alt: "Generated video",
+        },
+      },
+    } satisfies WorkflowNode;
+
+    expect(videoSourceFromWorkflowOutput(node.output)).toBe(
+      "https://video.example/generated.mp4",
+    );
+
+    const html = renderToStaticMarkup(
+      <WorkflowNodeCard
+        node={node}
+        scriptInput={null}
+        scriptOutcomeText={null}
+        selected={true}
+        pendingPort={null}
+        onScriptOutcomeTextChange={() => undefined}
+        onDragStart={() => undefined}
+        onSelect={() => undefined}
+        onPortConnectionStart={() => undefined}
+      />,
+    );
+
+    expect(formatWorkflowOutputExecutionLabel(node.output)).toBe(
+      "Backend: evolink / seedance-2.0-reference-to-video",
+    );
+    expect(html).toContain('data-video-outcome-node="true"');
+    expect(html).toContain('data-video-outcome-player="true"');
+    expect(html).toContain("https://video.example/generated.mp4");
+    expect(html).toContain("Backend: evolink / seedance-2.0-reference-to-video");
+    expect(html).toContain("Video persistence, signed URLs, task polling");
+  });
+
+  it("renders unavailable image AI functions as visible messages", () => {
+    const graph = createInitialWorkflowGraphState();
+    const imageNode = graph.nodes.find(
+      (candidate) => candidate.type === "composition",
+    );
+    const html = renderToStaticMarkup(
+      <ImageNodeFloatingEditor
+        frame={{ x: 880, y: 88, width: 430, height: 520 }}
+        busy={false}
+        error="AI modify for image prompts is not implemented yet."
+        generation={null}
+        node={imageNode!}
+        prompt="A neon jeep frame"
+        responseOpen={true}
+        viewportZoom={1}
+        onClose={() => undefined}
+        onFrameChange={() => undefined}
+        onGenerate={() => undefined}
+        onPromptChange={() => undefined}
+        onResponseOpenChange={() => undefined}
+        onRevise={() => undefined}
+      />,
+    );
+
+    expect(html).toContain('data-image-node-error="true"');
+    expect(html).toContain("AI modify for image prompts is not implemented yet.");
   });
 
   it("renders a loading animation on the Script node while generation runs", () => {

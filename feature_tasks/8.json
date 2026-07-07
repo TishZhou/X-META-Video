@@ -1,15 +1,46 @@
-﻿{
-    "parent_feature":  {
-                           "id":  8,
-                           "title":  "Audio Node",
-                           "status":  "not_started"
-                       },
-    "planning_status":  "pending_decomposition",
-    "notes":  [
-                  "Small features must be added here before implementation starts.",
-                  "Keep this file focused on Audio Node only."
-              ],
-    "small_features":  [
-
-                       ]
+{
+  "parent_feature": {
+    "id": 8,
+    "title": "Audio Node",
+    "status": "passing"
+  },
+  "planning_status": "text_to_music_audio_node_001_passing",
+  "notes": [
+    "This task is limited to text or lyrics to music generation for the Audio node.",
+    "The frontend must call only the local FastAPI backend, never MiniMax directly.",
+    "Feature 5 text-to-image work is currently in progress in shared files; Audio changes must be additive and must not rename or remove SeedDream contracts, routes, or canvas behavior.",
+    "Durable asset persistence, object storage, queue workers, signed URLs, and Audio Library management remain later scope."
+  ],
+  "small_features": [
+    {
+      "id": "text-to-music-audio-node-001",
+      "title": "Implement MiniMax text-to-music Audio node",
+      "status": "passing",
+      "user_visible_behavior": "Users can turn lyrics or connected script text into one playable audio outcome node from a Script-style inline Audio composer on the canvas, with backend-confirmed MiniMax provider/model evidence and honest local-preview labeling.",
+      "acceptance_criteria": [
+        "Audio source nodes expose a Script-style inline composer for music style prompt and lyrics text under the selected Audio node.",
+        "Lyrics can be typed manually and can be seeded from connected upstream script/storyboard output when available.",
+        "Generate posts to the local FastAPI backend and never exposes MiniMax credentials in frontend code.",
+        "Backend MiniMax config uses MINIMAX_API_KEY, MINIMAX_BASE_URL, MINIMAX_MUSIC_MODEL, and optional MINIMAX_HTTPS_PROXY, defaulting the model to music-2.6-free.",
+        "Provider code posts to the MiniMax music_generation API with prompt, lyrics, output_format, audio_setting, lyrics_optimizer, and is_instrumental fields.",
+        "A successful generation creates or updates one deterministic audio outcome node on the canvas with a single audio output port.",
+        "The audio outcome node renders browser playback controls from a returned URL or hex/base64 audio data and displays provider/model evidence.",
+        "Unavailable Audio-node functions are explicitly labeled through visible not-implemented or no-persistence messages.",
+        "Verification covers backend provider/route tests, frontend tests, typecheck/build, and rendered interaction or E2E evidence."
+      ],
+      "verification": [
+        ".\\init.ps1 passed before implementation and reran web tests: 9 files / 43 tests.",
+        ".\\.venv\\Scripts\\python.exe -m ruff check services\\api passed.",
+        ".\\.venv\\Scripts\\python.exe -m pytest services\\api\\tests\\test_music_node.py passed: 8 tests.",
+        ".\\.venv\\Scripts\\python.exe -m pytest services\\api\\tests\\test_script_node.py services\\api\\tests\\test_image_node.py services\\api\\tests\\test_music_node.py passed: 41 tests.",
+        "corepack pnpm --filter @xmeta/web test -- workflow-canvas-workspace.test.tsx graph.test.ts passed: 2 files / 29 tests.",
+        "corepack pnpm --filter @xmeta/web test passed: 9 files / 48 tests.",
+        "corepack pnpm --filter @xmeta/web typecheck passed.",
+        "corepack pnpm --filter @xmeta/web build passed and included /workspace.",
+        "Browser E2E passed on http://localhost:3000/workspace with a temporary local fake backend on 8000: Add Audio, fill style/lyrics, Generate, one playable Audio outcome node, backend evidence minimax / music-2.6-free, no-persistence label, drag moved the outcome node, no console warn/error logs.",
+        "Final .\\init.ps1 passed after artifact updates and reran web tests: 9 files / 48 tests.",
+        "Audio inline composer follow-up passed: focused workflow tests 2 files / 32 tests, web typecheck, browser QA confirming the inline composer under the selected Audio node and no old floating editor, and final .\\init.ps1 rerunning 9 files / 51 tests."
+      ]
+    }
+  ]
 }

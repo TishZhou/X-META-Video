@@ -63,6 +63,18 @@ export type WorkflowNodeOutput = {
   provider?: string | null;
   model?: string | null;
   editable: boolean;
+  media?: WorkflowMediaOutput;
+};
+
+export type WorkflowMediaOutput = {
+  kind: "image" | "audio" | "video";
+  url?: string | null;
+  b64Json?: string | null;
+  b64Audio?: string | null;
+  hex?: string | null;
+  mimeType?: string | null;
+  durationMs?: number | null;
+  alt: string;
 };
 
 export type WorkflowEdgeStatus = "valid" | "selected" | "invalid" | "disabled";

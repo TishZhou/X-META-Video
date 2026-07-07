@@ -53,8 +53,10 @@
                      {
                          "id":  5,
                          "title":  "Character Image Node",
-                         "status":  "not_started",
-                         "user_visible_behavior":  "Users can generate character images from character profiles and receive reusable character asset references.",
+                         "status":  "passing",
+                         "current_task":  "text-to-image-nodes-001",
+                         "current_task_status":  "passing",
+                         "user_visible_behavior":  "Users can generate one image outcome node from Character Image, Prop / Asset, or Scene Image text prompts through the local SeedDream backend path; reusable persisted asset references remain later scope.",
                          "task_file":  "feature_tasks/5.json"
                      },
                      {
@@ -74,15 +76,19 @@
                      {
                          "id":  8,
                          "title":  "Audio Node",
-                         "status":  "not_started",
-                         "user_visible_behavior":  "Users can generate voice, singing, or narration audio from dialogue, lyrics, or narration text.",
+                         "status":  "passing",
+                         "current_task":  "text-to-music-audio-node-001",
+                         "current_task_status":  "passing",
+                         "user_visible_behavior":  "Users can generate one playable music outcome node from Audio node lyrics/style text through a Script-style inline composer and the local MiniMax backend path; connected script text can seed lyrics and durable audio persistence remains later scope.",
                          "task_file":  "feature_tasks/8.json"
                      },
                      {
                          "id":  9,
                          "title":  "Video Node",
-                         "status":  "not_started",
-                         "user_visible_behavior":  "Users can generate short video clips from image or keyframe input, optional audio, and duration settings.",
+                         "status":  "passing",
+                         "current_task":  "video-node-001",
+                         "current_task_status":  "passing",
+                         "user_visible_behavior":  "Users can generate one playable video outcome node from a Video node prompt and duration, with connected script/image/audio outputs feeding local FastAPI Evolink Seedance generation; durable video persistence and task polling remain later scope.",
                          "task_file":  "feature_tasks/9.json"
                      },
                      {

@@ -3,7 +3,14 @@ from __future__ import annotations
 from datetime import datetime
 from enum import StrEnum
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import (
+    AliasChoices,
+    BaseModel,
+    ConfigDict,
+    Field,
+    field_validator,
+    model_validator,
+)
 
 
 class TaskStatus(StrEnum):
@@ -71,6 +78,191 @@ class ScriptDialogueResponse(BaseModel):
     model: str | None = None
     message: ScriptDialogueMessage
     history: list[ScriptDialogueMessage]
+
+
+class ImageGenerationNodeType(StrEnum):
+    CHARACTER_IMAGE = "character_image"
+    PROP_ASSET = "prop_asset"
+    SCENE_IMAGE = "scene_image"
+
+
+class ImageGenerationInput(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    prompt: str = Field(..., min_length=1)
+
+
+class ImageGenerationSettings(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    provider: str | None = None
+    model: str | None = None
+    size: str | None = None
+    response_format: str | None = Field(default=None, pattern="^(url|b64_json)$")
+    watermark: bool | None = None
+
+
+class ImageGenerationRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    node_type: ImageGenerationNodeType
+    input: ImageGenerationInput
+    settings: ImageGenerationSettings = Field(default_factory=ImageGenerationSettings)
+
+
+class GeneratedImage(BaseModel):
+    url: str | None = None
+    b64_json: str | None = None
+    mime_type: str | None = None
+    width: int | None = None
+    height: int | None = None
+
+
+class ImageGenerationResponse(BaseModel):
+    project_id: str
+    node_id: str
+    node_type: ImageGenerationNodeType
+    provider: str
+    model: str
+    prompt: str
+    image: GeneratedImage
+    persisted: bool = False
+
+
+class MusicGenerationNodeType(StrEnum):
+    AUDIO = "audio"
+
+
+class MusicGenerationInput(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    prompt: str = Field(..., min_length=1, max_length=2000)
+    lyrics: str = Field(default="", max_length=3500)
+
+
+class MusicGenerationSettings(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    provider: str | None = None
+    model: str | None = None
+    output_format: str | None = Field(default=None, pattern="^(url|hex)$")
+    sample_rate: int | None = Field(default=None, gt=0)
+    bitrate: int | None = Field(default=None, gt=0)
+    format: str | None = Field(default=None, pattern="^(mp3|wav|flac)$")
+    lyrics_optimizer: bool | None = None
+    is_instrumental: bool | None = None
+
+
+class MusicGenerationRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    node_type: MusicGenerationNodeType
+    input: MusicGenerationInput
+    settings: MusicGenerationSettings = Field(default_factory=MusicGenerationSettings)
+
+
+class GeneratedAudio(BaseModel):
+    url: str | None = None
+    hex: str | None = None
+    b64_audio: str | None = None
+    mime_type: str | None = None
+    duration_ms: int | None = None
+    sample_rate: int | None = None
+    channels: int | None = None
+    bitrate: int | None = None
+    size_bytes: int | None = None
+
+
+class MusicGenerationResponse(BaseModel):
+    project_id: str
+    node_id: str
+    node_type: MusicGenerationNodeType
+    provider: str
+    model: str
+    prompt: str
+    lyrics: str
+    audio: GeneratedAudio
+    persisted: bool = False
+
+
+class VideoGenerationNodeType(StrEnum):
+    VIDEO = "video"
+
+
+class VideoGenerationInput(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    prompt: str = Field(..., min_length=1, max_length=4000)
+    image_urls: list[str] = Field(default_factory=list, max_length=9)
+    audio_urls: list[str] = Field(default_factory=list, max_length=3)
+    duration_seconds: int = Field(
+        default=5,
+        ge=1,
+        le=60,
+        validation_alias=AliasChoices("duration_seconds", "duration"),
+    )
+
+    @field_validator("image_urls", "audio_urls")
+    @classmethod
+    def strip_media_urls(cls, values: list[str]) -> list[str]:
+        cleaned: list[str] = []
+        for value in values:
+            stripped = value.strip()
+            if not stripped:
+                raise ValueError("Media URLs must not be empty.")
+            cleaned.append(stripped)
+        return cleaned
+
+    @model_validator(mode="after")
+    def validate_media_dependencies(self) -> "VideoGenerationInput":
+        if self.audio_urls and not self.image_urls:
+            raise ValueError("audio_urls require at least one image_url for video generation.")
+        return self
+
+
+class VideoGenerationSettings(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    provider: str | None = None
+    model: str | None = None
+    text_to_video_model: str | None = None
+    quality: str | None = None
+    aspect_ratio: str | None = None
+    generate_audio: bool | None = None
+
+
+class VideoGenerationRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    node_type: VideoGenerationNodeType
+    input: VideoGenerationInput
+    settings: VideoGenerationSettings = Field(default_factory=VideoGenerationSettings)
+
+
+class GeneratedVideo(BaseModel):
+    url: str | None = None
+    mime_type: str | None = None
+    duration_ms: int | None = None
+    width: int | None = None
+    height: int | None = None
+    thumbnail_url: str | None = None
+
+
+class VideoGenerationResponse(BaseModel):
+    task_id: str | None = None
+    project_id: str
+    node_id: str
+    node_type: VideoGenerationNodeType
+    provider: str
+    model: str
+    prompt: str
+    image_urls: list[str]
+    audio_urls: list[str]
+    duration: int
+    duration_seconds: int
+    video: GeneratedVideo
+    provider_task_id: str | None = None
+    persisted: bool = False
 
 
 class CharacterProfile(BaseModel):

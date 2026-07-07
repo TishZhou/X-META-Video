@@ -3,54 +3,71 @@
 ## Verified Now
 
 - Repository root: `D:\X-META-Video`
-- Feature 1 `Web Design` and Feature 2 `Workflow Canvas Foundation` are recorded as `passing`.
-- Feature 3 current task is `script-node-010`; it implements the first reusable AI node pattern: chat stays conversational, while Generate shows loading feedback and renders an editable direct-text outcome node on the canvas.
-- The next broader unfinished feature remains Feature 4 `Storyboard Node`; full editable shot-list schema, shot editing, durable persistence, queue workers, and generated storyboard assets remain future work.
+- Feature 1 Web Design, Feature 2 Workflow Canvas Foundation, Feature 3 Script Node, Feature 5 text-to-image nodes, Feature 8 Audio Node, and Feature 9 Video Node are recorded as `passing`.
+- Current active feature: none.
+- Next broader unfinished feature remains Feature 4 Storyboard Node unless the user selects another media/export task.
+- Feature 5 UI follow-up: the Image node AI editor now uses the Script below-node inline composer pattern and no longer uses the older right-side draggable/resizable floating image editor.
 
-## Feature 3 Task10 State
+## Feature 9 Video Node State
 
-- Direct mode: users type a world-view prompt and click Generate. The web app sends `POST /api/v1/projects/local-project/nodes/script-1/chat` with `mode: "direct_output"` and renders the assistant text into one deterministic `Script outcome` node.
-- Conversation mode: users click `AI modify` to open the AI dialogue panel. Send appends conversational user/assistant turns. Generate includes the dialogue history only when conversation mode is active.
-- Output text is plain editable natural text. The backend prompt explicitly avoids JSON, markdown fences, provider raw data, and fixed section templates for this direct-output mode.
-- The Script outcome node displays backend-confirmed provider/model evidence such as `Backend: openai / gpt-5.4-mini` and labels the text as locally editable because durable persistence is deferred.
-- The shared workflow graph now has reusable source/outcome roles and output-node metadata so later image/video/audio nodes can reuse the same node lifecycle with different renderers.
-- The product provider path now supports `openai` and `openai-compatible`; automated tests inject internal test fakes instead of exposing a fallback provider option to users.
-- Real text-provider credentials are stored in gitignored `.env`; `.env.example` keeps `TEXT_MODEL_API_KEY` empty.
-- Generate now shows `生成中` with a spinner on the button and a running spinner/progress bar on the Script node while the direct-output request is pending.
-- Workflow node cards no longer show duplicate floating icon/type labels above the card.
-- Script outcome content is flattened to a single editable text frame; backend provider/model evidence remains in the node header subtitle.
+- Video source nodes now have prompt, image, audio, and output ports. Prompt accepts connected `script`, `storyboard`, or `brief`; image accepts `image`, `character`, `scene`, or `asset`; audio accepts `audio`.
+- Selecting a Video source node opens the Video generation editor. Users can edit prompt and duration, then click Generate.
+- The web app calls only the local FastAPI route: `POST /api/v1/projects/{project_id}/nodes/{node_id}/generate-video`.
+- Frontend request body uses the local shape:
+
+```json
+{
+  "node_type": "video",
+  "input": {
+    "prompt": "Cinematic MV clip...",
+    "duration": 15,
+    "image_urls": ["https://image.example/keyframe.png"],
+    "audio_urls": ["https://audio.example/music.mp3"]
+  }
+}
+```
+
+- Backend validates duration, max 9 images, max 3 audio clips, and rejects audio without at least one image.
+- Backend provider path is Evolink Seedance:
+  - Image/reference path model: `seedance-2.0-reference-to-video`
+  - Prompt-only fallback model: `seedance-2.0-text-to-video`
+  - Provider request posts to `{EVOLINK_BASE_URL}/videos/generations`
+- Successful responses create/update one deterministic `Video outcome` node with one `video` output port, backend provider/model evidence, a `<video controls>` preview, and local-preview/no-persistence labeling.
+- If Evolink returns only a provider task ID and no playable URL, the UI labels task polling as not implemented instead of implying playback is ready.
+
+## Environment
+
+- `.env` and `.env.example` include non-secret Video settings:
+  - `VIDEO_MODEL_PROVIDER=evolink`
+  - `EVOLINK_BASE_URL=https://api.evolink.ai/v1`
+  - `EVOLINK_API_KEY=`
+  - `EVOLINK_VIDEO_MODEL=seedance-2.0-reference-to-video`
+  - `EVOLINK_TEXT_TO_VIDEO_MODEL=seedance-2.0-text-to-video`
+  - `EVOLINK_VIDEO_QUALITY=720p`
+  - `EVOLINK_VIDEO_ASPECT_RATIO=16:9`
+  - `EVOLINK_GENERATE_AUDIO=true`
+  - `EVOLINK_VIDEO_TIMEOUT_SECONDS`
+  - `EVOLINK_VIDEO_MAX_RETRIES`
+- Real provider secrets remain gitignored in `.env`; no secret values were printed.
 
 ## Verification Evidence
 
-- Baseline `.\init.ps1` passed before implementation and reran web tests: 9 files / 40 tests.
-- `.\.venv\Scripts\python.exe -m pytest services\api\tests\test_script_node.py` passed: 25 tests with one Starlette warning.
-- `.\.venv\Scripts\python.exe -m pytest services\api\tests` passed: 25 tests with one Starlette warning.
+- Baseline `.\init.ps1` passed before implementation and reran web tests: 9 files / 48 tests.
+- `.\.venv\Scripts\python.exe -m pytest services\api\tests\test_video_node.py` passed: 9 tests.
+- `.\.venv\Scripts\python.exe -m pytest services\api\tests` passed: 50 tests.
 - `.\.venv\Scripts\python.exe -m ruff check services\api` passed.
-- `corepack pnpm --filter @xmeta/web test -- workflow-canvas-workspace.test.tsx` passed: 1 file / 16 tests.
-- `corepack pnpm --filter @xmeta/web test` passed: 9 files / 41 tests.
+- `corepack pnpm --filter @xmeta/web test -- workflow-canvas-workspace.test.tsx` passed: 1 file / 26 tests.
+- `corepack pnpm --filter @xmeta/web test` passed: 9 files / 51 tests.
 - `corepack pnpm --filter @xmeta/web typecheck` passed.
 - `corepack pnpm --filter @xmeta/web build` passed and included `/workspace`.
-- JSON validation passed for `feature_list.json` and `feature_tasks/3.json`.
-- Scoped provider-cleanup search over product code/docs/task artifacts returned no legacy fallback-provider matches.
-- `.env.example` leaves `TEXT_MODEL_API_KEY` empty after cleanup; no secret value was printed.
-- Browser E2E passed on `http://localhost:3000/workspace`: Generate called `/chat` with `mode: "direct_output"`, created one Script outcome node, rendered an editable textarea with 768 characters of natural text, displayed `Backend: openai / gpt-5.4-mini`, and recorded no console errors or failed requests.
-- Final `.\init.ps1` passed at session close and reran web tests: 9 files / 41 tests.
-- Follow-up `corepack pnpm --filter @xmeta/web test -- workflow-canvas-workspace.test.tsx` passed: 1 file / 18 tests.
-- Follow-up `corepack pnpm --filter @xmeta/web test` passed: 9 files / 43 tests.
-- Follow-up `corepack pnpm --filter @xmeta/web typecheck` passed.
-- Follow-up `corepack pnpm --filter @xmeta/web build` passed and included `/workspace`.
-- Follow-up API preflight after `.env` migration returned `provider=openai`, `model=gpt-5.4-mini`, and non-empty direct-output content.
-- Follow-up Browser E2E passed on `http://localhost:3000/workspace`: Generate showed button/node loading animation, posted to `/chat` with `mode: "direct_output"`, rendered one outcome node with `Backend: openai / gpt-5.4-mini`, and recorded no console errors or failed requests.
-- Follow-up final `.\init.ps1` passed after artifact updates and reran web tests: 9 files / 43 tests.
-- Browser-comment follow-up restored workflow node connection points by removing node-card root clipping. Browser QA at 1674x1112 confirmed Storyboard node overflow is visible, left/right ports extend outside the card, and there were no console errors or failed requests.
-- Browser-comment follow-up final `.\init.ps1` passed after artifact updates and reran web tests: 9 files / 43 tests.
-- Browser-comment visual simplification captured a baseline screenshot before implementation, then verified after implementation that floating node labels were 0, Script outcome content used one transparent text frame, provider evidence remained visible in the node header, ports still extended outside cards, and no console errors or failed requests occurred. Follow-up tests passed: focused workspace 1 file / 18 tests, full web 9 files / 43 tests, typecheck, build, and final `.\init.ps1`.
+- Playwright Chrome E2E passed on `http://localhost:3000/workspace` with the video backend route intercepted: Add Video, Generate, one Video outcome, one video player, backend evidence, no-persistence label, and no console errors.
+- Image node UI follow-up passed: focused workspace test 1 file / 26 tests, full web tests 9 files / 51 tests, web typecheck, web build with `/workspace`, and Browser QA on `http://127.0.0.1:3002/workspace` confirmed the Image Composition editor renders below the selected node inside the canvas stage with no floating image drag/resize controls and no console warn/error logs.
 
 ## Boundaries
 
-- Current direct output is locally editable in the node; durable workflow persistence is deferred.
-- Current dialogue remains request/response from the UI perspective, not SSE/WebSocket streaming.
-- Production auth, queue workers, task event streaming, object storage, asset lineage, generated media, and export remain later feature scope.
+- Live Evolink execution was not attempted because `EVOLINK_API_KEY` is empty.
+- Durable workflow persistence, object storage, signed URLs, queue workers, provider task polling, Video Library, generation history, and export assembly remain later scope.
+- Feature 5 image and Feature 8 audio behavior are preserved and passing.
 
 ## Next Commands
 

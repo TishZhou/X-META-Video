@@ -27,10 +27,17 @@ import {
 } from "lucide-react";
 import {
   DEFAULT_SCRIPT_NODE_INPUT,
+  type GeneratedAudio,
+  type GeneratedImage,
+  type GeneratedVideo,
+  type ImageGenerationNodeType,
+  type ImageGenerationResponse,
+  type MusicGenerationResponse,
   type ScriptDialogueMessage,
   type ScriptNodeInput,
   type ScriptNodeOutput,
   type ScriptTaskStatusResponse,
+  type VideoGenerationResponse,
 } from "@xmeta/shared-contracts";
 import {
   type PointerEvent as ReactPointerEvent,
@@ -73,7 +80,10 @@ import type {
   WorkflowPort,
   WorkflowSelection,
 } from "@/lib/workflow-canvas/types";
+import { runImageGeneration } from "@/lib/image-node/api";
+import { runMusicGeneration } from "@/lib/music-node/api";
 import { runScriptDialogue, runScriptDirectOutput } from "@/lib/script-node/api";
+import { runVideoGeneration } from "@/lib/video-node/api";
 import { cn } from "@/lib/utils";
 
 const NODE_WIDTH = 288;
@@ -141,7 +151,16 @@ type ConnectionDragState = {
 
 type ScriptDialogueRunner = typeof runScriptDialogue;
 type ScriptGenerationRunner = typeof runScriptDirectOutput;
+type ImageGenerationRunner = typeof runImageGeneration;
+type MusicGenerationRunner = typeof runMusicGeneration;
+type VideoGenerationRunner = typeof runVideoGeneration;
 type ScriptOutcomeMap = Record<string, string>;
+type ImageGenerationMap = Record<string, ImageGenerationResponse>;
+type ImagePromptMap = Record<string, string>;
+type MusicGenerationMap = Record<string, MusicGenerationResponse>;
+type MusicInputMap = Record<string, string>;
+type VideoGenerationMap = Record<string, VideoGenerationResponse>;
+type VideoInputMap = Record<string, string>;
 
 const DEFAULT_SCRIPT_WORLD_DESCRIPTION =
   "\u751f\u6210\u4e00\u4e2a\u51b0\u96ea\u76f8\u5173\u7684mv\u7684\u4e16\u754c\u89c2";
@@ -213,6 +232,36 @@ const defaultImageEditorFrame: ImageEditorFrame = {
   width: 430,
   height: 520,
 };
+
+const defaultImagePrompts = {
+  character:
+    "Full-body cinematic character photo, front view, clear face, wardrobe, accessories, consistent MV styling.",
+  asset:
+    "Studio product photo of the prop, isolated object, clean lighting, visible shape and material details.",
+  scene:
+    "Wide cinematic background photo, location establishing shot, clear lighting, atmosphere, no main character.",
+  composition:
+    "Composition node image prompt rewriting is not implemented yet.",
+} satisfies Record<"character" | "asset" | "scene" | "composition", string>;
+
+const IMAGE_AI_MODIFY_NOT_IMPLEMENTED =
+  "AI modify for image prompts is not implemented yet. Edit the prompt and use Generate for the live SeedDream backend path.";
+const IMAGE_COMPOSITION_GENERATE_NOT_IMPLEMENTED =
+  "Image Composition generation is not implemented in this text-to-image pass. Use Character Image, Prop / Asset, or Scene Image nodes for SeedDream text-to-image.";
+
+const DEFAULT_MUSIC_PROMPT =
+  "K-pop cinematic MV theme, bright synths, emotional chorus, 120 BPM, polished female vocal production.";
+const DEFAULT_MUSIC_LYRICS =
+  "[Verse]\nSnow lights fall around me\nFootsteps echo through the glow\n[Chorus]\nWe run into the night\nSinging until the stars ignite";
+const MUSIC_NO_PERSISTENCE_LABEL =
+  "Local audio preview only. Audio persistence, signed URLs, and Audio Library save are not implemented yet.";
+const DEFAULT_VIDEO_PROMPT =
+  "Cinematic MV clip, smooth camera movement, use the connected visual references, polished short-form video pacing.";
+const DEFAULT_VIDEO_DURATION_SECONDS = 15;
+const MIN_VIDEO_DURATION_SECONDS = 1;
+const MAX_VIDEO_DURATION_SECONDS = 60;
+const VIDEO_NO_PERSISTENCE_LABEL =
+  "Local video preview only. Video persistence, signed URLs, task polling, and Video Library save are not implemented yet.";
 
 const scriptModelOptions = [
   {
@@ -301,7 +350,172 @@ export function isEditableKeyboardTarget(target: EventTarget | null) {
 }
 
 export function isFloatingImageEditorNodeType(type: WorkflowNodeType) {
-  return type === "character" || type === "scene" || type === "composition";
+  return (
+    type === "character" ||
+    type === "asset" ||
+    type === "scene" ||
+    type === "composition"
+  );
+}
+
+export function getImageGenerationNodeType(
+  type: WorkflowNodeType,
+): ImageGenerationNodeType | null {
+  if (type === "character") {
+    return "character_image";
+  }
+  if (type === "asset") {
+    return "prop_asset";
+  }
+  if (type === "scene") {
+    return "scene_image";
+  }
+  return null;
+}
+
+export function getImageOutputDataType(type: WorkflowNodeType) {
+  if (type === "character" || type === "asset" || type === "scene") {
+    return type;
+  }
+  return "image";
+}
+
+export function getDefaultImagePrompt(type: WorkflowNodeType) {
+  if (
+    type === "character" ||
+    type === "asset" ||
+    type === "scene" ||
+    type === "composition"
+  ) {
+    return defaultImagePrompts[type];
+  }
+  return "";
+}
+
+export function imageSourceFromGeneratedImage(image: GeneratedImage) {
+  if (image.url?.trim()) {
+    return image.url.trim();
+  }
+
+  const b64Json = image.b64_json?.trim();
+  if (!b64Json) {
+    return null;
+  }
+  if (b64Json.startsWith("data:image/")) {
+    return b64Json;
+  }
+
+  return `data:${image.mime_type ?? "image/png"};base64,${b64Json}`;
+}
+
+export function imageSourceFromWorkflowOutput(output?: WorkflowNodeOutput) {
+  if (output?.media?.kind !== "image") {
+    return null;
+  }
+
+  if (output.media.url?.trim()) {
+    return output.media.url.trim();
+  }
+
+  const b64Json = output.media.b64Json?.trim();
+  if (!b64Json) {
+    return null;
+  }
+  if (b64Json.startsWith("data:image/")) {
+    return b64Json;
+  }
+
+  return `data:${output.media.mimeType ?? "image/png"};base64,${b64Json}`;
+}
+
+export function audioSourceFromGeneratedAudio(audio: GeneratedAudio) {
+  if (audio.url?.trim()) {
+    return audio.url.trim();
+  }
+
+  const b64Audio = audio.b64_audio?.trim();
+  if (b64Audio) {
+    if (b64Audio.startsWith("data:audio/")) {
+      return b64Audio;
+    }
+    return `data:${audio.mime_type ?? "audio/mpeg"};base64,${b64Audio}`;
+  }
+
+  const hexAudio = audio.hex?.trim();
+  if (!hexAudio) {
+    return null;
+  }
+
+  const encoded = base64FromHexAudio(hexAudio);
+  if (!encoded) {
+    return null;
+  }
+
+  return `data:${audio.mime_type ?? "audio/mpeg"};base64,${encoded}`;
+}
+
+export function audioSourceFromWorkflowOutput(output?: WorkflowNodeOutput) {
+  if (output?.media?.kind !== "audio") {
+    return null;
+  }
+
+  if (output.media.url?.trim()) {
+    return output.media.url.trim();
+  }
+
+  const b64Audio = output.media.b64Audio?.trim();
+  if (b64Audio) {
+    if (b64Audio.startsWith("data:audio/")) {
+      return b64Audio;
+    }
+    return `data:${output.media.mimeType ?? "audio/mpeg"};base64,${b64Audio}`;
+  }
+
+  const hexAudio = output.media.hex?.trim();
+  if (!hexAudio) {
+    return null;
+  }
+
+  const encoded = base64FromHexAudio(hexAudio);
+  if (!encoded) {
+    return null;
+  }
+
+  return `data:${output.media.mimeType ?? "audio/mpeg"};base64,${encoded}`;
+}
+
+export function videoSourceFromGeneratedVideo(video: GeneratedVideo) {
+  return video.url?.trim() || null;
+}
+
+export function videoSourceFromWorkflowOutput(output?: WorkflowNodeOutput) {
+  if (output?.media?.kind !== "video") {
+    return null;
+  }
+
+  return output.media.url?.trim() || null;
+}
+
+export function base64FromHexAudio(hexAudio: string) {
+  const normalized = hexAudio.replace(/\s+/g, "");
+  if (
+    normalized.length < 2 ||
+    normalized.length % 2 !== 0 ||
+    /[^0-9a-f]/i.test(normalized)
+  ) {
+    return null;
+  }
+
+  let binary = "";
+  for (let index = 0; index < normalized.length; index += 2) {
+    binary += String.fromCharCode(
+      Number.parseInt(normalized.slice(index, index + 2), 16),
+    );
+  }
+
+  return typeof globalThis.btoa === "function"
+    ? globalThis.btoa(binary)
+    : null;
 }
 
 export function clampImageEditorFrame(
@@ -356,6 +570,132 @@ export function formatScriptNodePreview(
     heading: "World view",
     body: input?.world_description.trim() || "No world prompt yet.",
   };
+}
+
+export function getConnectedAudioLyrics(
+  node: WorkflowNode,
+  state: WorkflowGraphState,
+  scriptInput: ScriptNodeInput,
+  scriptOutcomes: ScriptOutcomeMap,
+) {
+  const incomingTextEdge = state.edges.find(
+    (edge) =>
+      edge.targetNodeId === node.id &&
+      (edge.dataType === "script" || edge.dataType === "storyboard"),
+  );
+
+  if (!incomingTextEdge) {
+    return null;
+  }
+
+  const sourceNode = findNode(state.nodes, incomingTextEdge.sourceNodeId);
+  if (!sourceNode) {
+    return null;
+  }
+
+  if (sourceNode.output?.dataType === "script") {
+    return scriptOutcomes[sourceNode.id]?.trim() || null;
+  }
+
+  if (sourceNode.type === "script") {
+    const scriptOutcomeNodeId = createWorkflowOutputNodeId(
+      sourceNode.id,
+      "script",
+    );
+    return (
+      scriptOutcomes[scriptOutcomeNodeId]?.trim() ||
+      scriptInput.world_description.trim() ||
+      null
+    );
+  }
+
+  if (sourceNode.output?.label) {
+    return sourceNode.output.label.trim() || null;
+  }
+
+  return null;
+}
+
+export function getConnectedVideoInputs(
+  node: WorkflowNode,
+  state: WorkflowGraphState,
+  scriptInput: ScriptNodeInput,
+  scriptOutcomes: ScriptOutcomeMap,
+) {
+  const promptEdge = state.edges.find(
+    (edge) =>
+      edge.targetNodeId === node.id &&
+      (edge.dataType === "script" ||
+        edge.dataType === "storyboard" ||
+        edge.dataType === "brief"),
+  );
+  const promptSourceNode = promptEdge
+    ? findNode(state.nodes, promptEdge.sourceNodeId)
+    : null;
+  const prompt = promptSourceNode
+    ? getConnectedTextFromNode(promptSourceNode, scriptInput, scriptOutcomes)
+    : null;
+  const imageUrls = new Set<string>();
+  const audioUrls = new Set<string>();
+
+  for (const edge of state.edges) {
+    if (edge.targetNodeId !== node.id) {
+      continue;
+    }
+
+    const sourceNode = findNode(state.nodes, edge.sourceNodeId);
+    if (!sourceNode?.output?.media) {
+      continue;
+    }
+
+    if (sourceNode.output.media.kind === "image") {
+      const imageUrl = imageSourceFromWorkflowOutput(sourceNode.output);
+      if (imageUrl) {
+        imageUrls.add(imageUrl);
+      }
+    }
+
+    if (sourceNode.output.media.kind === "audio") {
+      const audioUrl = audioSourceFromWorkflowOutput(sourceNode.output);
+      if (audioUrl) {
+        audioUrls.add(audioUrl);
+      }
+    }
+  }
+
+  return {
+    prompt,
+    imageUrls: Array.from(imageUrls).slice(0, 9),
+    audioUrls: Array.from(audioUrls).slice(0, 3),
+  };
+}
+
+function getConnectedTextFromNode(
+  sourceNode: WorkflowNode,
+  scriptInput: ScriptNodeInput,
+  scriptOutcomes: ScriptOutcomeMap,
+) {
+  if (sourceNode.output?.dataType === "script") {
+    return scriptOutcomes[sourceNode.id]?.trim() || null;
+  }
+
+  if (sourceNode.type === "script") {
+    const scriptOutcomeNodeId = createWorkflowOutputNodeId(
+      sourceNode.id,
+      "script",
+    );
+    return (
+      scriptOutcomes[scriptOutcomeNodeId]?.trim() ||
+      scriptInput.world_description.trim() ||
+      null
+    );
+  }
+
+  if (sourceNode.output?.label) {
+    return sourceNode.output.label.trim() || null;
+  }
+
+  return null;
 }
 
 export function getScriptResponseStatusLabel(
@@ -448,11 +788,17 @@ export function calculateInitialCanvasViewport(
 }
 
 export function WorkflowCanvasWorkspace({
+  imageGenerationRunner = runImageGeneration,
+  musicGenerationRunner = runMusicGeneration,
   scriptDialogueRunner = runScriptDialogue,
   scriptGenerationRunner = runScriptDirectOutput,
+  videoGenerationRunner = runVideoGeneration,
 }: {
+  imageGenerationRunner?: ImageGenerationRunner;
+  musicGenerationRunner?: MusicGenerationRunner;
   scriptDialogueRunner?: ScriptDialogueRunner;
   scriptGenerationRunner?: ScriptGenerationRunner;
+  videoGenerationRunner?: VideoGenerationRunner;
 } = {}) {
   const [state, dispatch] = useReducer(
     workflowGraphReducer,
@@ -487,10 +833,36 @@ export function WorkflowCanvasWorkspace({
   const [imageEditorFrame, setImageEditorFrame] = useState<ImageEditorFrame>(
     defaultImageEditorFrame,
   );
-  const [imagePrompt, setImagePrompt] = useState(
-    "A cinematic desert jeep frame with two summer MV leads and neon reflections.",
+  const [imagePrompts, setImagePrompts] = useState<ImagePromptMap>({});
+  const [imageGenerations, setImageGenerations] = useState<ImageGenerationMap>(
+    {},
   );
+  const [imageErrors, setImageErrors] = useState<Record<string, string>>({});
+  const [imageBusyNodeId, setImageBusyNodeId] = useState<string | null>(null);
   const [imageResponseOpen, setImageResponseOpen] = useState(false);
+  const [musicPrompts, setMusicPrompts] = useState<MusicInputMap>({});
+  const [musicLyrics, setMusicLyrics] = useState<MusicInputMap>({});
+  const [musicGenerations, setMusicGenerations] = useState<MusicGenerationMap>(
+    {},
+  );
+  const [musicErrors, setMusicErrors] = useState<Record<string, string>>({});
+  const [musicBusyNodeId, setMusicBusyNodeId] = useState<string | null>(null);
+  const [musicResponseOpen, setMusicResponseOpen] = useState(false);
+  const [videoEditorOpen, setVideoEditorOpen] = useState(false);
+  const [videoEditorFrame, setVideoEditorFrame] = useState<ImageEditorFrame>({
+    x: 920,
+    y: 128,
+    width: 480,
+    height: 560,
+  });
+  const [videoPrompts, setVideoPrompts] = useState<VideoInputMap>({});
+  const [videoDurations, setVideoDurations] = useState<VideoInputMap>({});
+  const [videoGenerations, setVideoGenerations] = useState<VideoGenerationMap>(
+    {},
+  );
+  const [videoErrors, setVideoErrors] = useState<Record<string, string>>({});
+  const [videoBusyNodeId, setVideoBusyNodeId] = useState<string | null>(null);
+  const [videoResponseOpen, setVideoResponseOpen] = useState(false);
   const canvasRef = useRef<HTMLDivElement>(null);
   const selectedNode =
     state.selection.kind === "node"
@@ -505,9 +877,81 @@ export function WorkflowCanvasWorkspace({
       ? selectedNode
       : null;
   const selectedImageEditorNode =
-    selectedNode && isFloatingImageEditorNodeType(selectedNode.type)
+    selectedNode?.role === "source" && isFloatingImageEditorNodeType(selectedNode.type)
       ? selectedNode
       : null;
+  const selectedImagePrompt = selectedImageEditorNode
+    ? (imagePrompts[selectedImageEditorNode.id] ??
+      getDefaultImagePrompt(selectedImageEditorNode.type))
+    : "";
+  const selectedImageGeneration = selectedImageEditorNode
+    ? (imageGenerations[selectedImageEditorNode.id] ?? null)
+    : null;
+  const selectedImageError = selectedImageEditorNode
+    ? (imageErrors[selectedImageEditorNode.id] ?? null)
+    : null;
+  const selectedImageBusy = selectedImageEditorNode
+    ? imageBusyNodeId === selectedImageEditorNode.id
+    : false;
+  const selectedMusicEditorNode =
+    selectedNode?.type === "audio" && selectedNode.role === "source"
+      ? selectedNode
+      : null;
+  const selectedConnectedLyrics = selectedMusicEditorNode
+    ? getConnectedAudioLyrics(
+        selectedMusicEditorNode,
+        state,
+        scriptInput,
+        scriptOutcomes,
+      )
+    : null;
+  const selectedMusicPrompt = selectedMusicEditorNode
+    ? (musicPrompts[selectedMusicEditorNode.id] ?? DEFAULT_MUSIC_PROMPT)
+    : "";
+  const selectedMusicLyrics = selectedMusicEditorNode
+    ? (musicLyrics[selectedMusicEditorNode.id] ??
+      selectedConnectedLyrics ??
+      DEFAULT_MUSIC_LYRICS)
+    : "";
+  const selectedMusicGeneration = selectedMusicEditorNode
+    ? (musicGenerations[selectedMusicEditorNode.id] ?? null)
+    : null;
+  const selectedMusicError = selectedMusicEditorNode
+    ? (musicErrors[selectedMusicEditorNode.id] ?? null)
+    : null;
+  const selectedMusicBusy = selectedMusicEditorNode
+    ? musicBusyNodeId === selectedMusicEditorNode.id
+    : false;
+  const selectedVideoEditorNode =
+    selectedNode?.type === "video" && selectedNode.role === "source"
+      ? selectedNode
+      : null;
+  const selectedConnectedVideoInputs = selectedVideoEditorNode
+    ? getConnectedVideoInputs(
+        selectedVideoEditorNode,
+        state,
+        scriptInput,
+        scriptOutcomes,
+      )
+    : null;
+  const selectedVideoPrompt = selectedVideoEditorNode
+    ? (videoPrompts[selectedVideoEditorNode.id] ??
+      selectedConnectedVideoInputs?.prompt ??
+      DEFAULT_VIDEO_PROMPT)
+    : "";
+  const selectedVideoDuration = selectedVideoEditorNode
+    ? (videoDurations[selectedVideoEditorNode.id] ??
+      String(DEFAULT_VIDEO_DURATION_SECONDS))
+    : String(DEFAULT_VIDEO_DURATION_SECONDS);
+  const selectedVideoGeneration = selectedVideoEditorNode
+    ? (videoGenerations[selectedVideoEditorNode.id] ?? null)
+    : null;
+  const selectedVideoError = selectedVideoEditorNode
+    ? (videoErrors[selectedVideoEditorNode.id] ?? null)
+    : null;
+  const selectedVideoBusy = selectedVideoEditorNode
+    ? videoBusyNodeId === selectedVideoEditorNode.id
+    : false;
   const pendingPort = useMemo(() => {
     if (!connectionDrag) {
       return null;
@@ -619,7 +1063,7 @@ export function WorkflowCanvasWorkspace({
 
     if (
       target.closest(
-        "[data-workflow-node], [data-workflow-edge-hit], [data-script-node-inline-editor], button, textarea, input, select, [data-workspace-bottom-toolbar], [data-workspace-floating-topbar]",
+        "[data-workflow-node], [data-workflow-edge-hit], [data-script-node-inline-editor], [data-music-node-inline-editor], [data-video-node-editor], button, textarea, input, select, [data-workspace-bottom-toolbar], [data-workspace-floating-topbar]",
       )
     ) {
       return;
@@ -678,8 +1122,11 @@ export function WorkflowCanvasWorkspace({
       },
     });
     dispatch({ type: "select", selection: { kind: "node", id: node.id } });
-    if (isFloatingImageEditorNodeType(node.type)) {
+    if (node.role === "source" && isFloatingImageEditorNodeType(node.type)) {
       setImageEditorOpen(true);
+    }
+    if (node.type === "video" && node.role === "source") {
+      setVideoEditorOpen(true);
     }
   }
 
@@ -846,6 +1293,427 @@ export function WorkflowCanvasWorkspace({
       });
     } finally {
       setScriptBusy(false);
+    }
+  }
+
+  function updateImagePrompt(nodeId: string, value: string) {
+    setImagePrompts((current) => ({ ...current, [nodeId]: value }));
+  }
+
+  function showImageNotImplemented(node: WorkflowNode, message: string) {
+    setImageErrors((current) => ({ ...current, [node.id]: message }));
+    setImageResponseOpen(true);
+    dispatch({
+      type: "setNotice",
+      notice: message,
+    });
+  }
+
+  async function generateImageNode(node: WorkflowNode) {
+    const nodeType = getImageGenerationNodeType(node.type);
+
+    if (!nodeType) {
+      showImageNotImplemented(node, IMAGE_COMPOSITION_GENERATE_NOT_IMPLEMENTED);
+      return;
+    }
+
+    const prompt = (
+      imagePrompts[node.id] ?? getDefaultImagePrompt(node.type)
+    ).trim();
+
+    if (!prompt) {
+      const message = "Image prompt is required before generation.";
+      setImageErrors((current) => ({ ...current, [node.id]: message }));
+      setImageResponseOpen(true);
+      dispatch({
+        type: "setNodeStatus",
+        nodeId: node.id,
+        status: "blocked",
+        notice: message,
+      });
+      return;
+    }
+
+    setImageBusyNodeId(node.id);
+    setImageErrors((current) => {
+      const next = { ...current };
+      delete next[node.id];
+      return next;
+    });
+    setImageResponseOpen(true);
+    dispatch({
+      type: "setNodeStatus",
+      nodeId: node.id,
+      status: "running",
+      notice: `${node.title} generation started through FastAPI SeedDream.`,
+    });
+
+    try {
+      const result = await imageGenerationRunner({
+        projectId: state.projectId,
+        nodeId: node.id,
+        nodeType,
+        prompt,
+      });
+      const dataType = getImageOutputDataType(node.type);
+      const outcomeTitle = `${node.title} outcome`;
+      const outcomeNodeId = createWorkflowOutputNodeId(node.id, dataType);
+
+      setImageGenerations((current) => ({ ...current, [node.id]: result }));
+      dispatch({
+        type: "setNodeStatus",
+        nodeId: node.id,
+        status: "ready",
+        notice: `${outcomeTitle} is ready as a local image node.`,
+      });
+      dispatch({
+        type: "upsertOutputNode",
+        sourceNodeId: node.id,
+        nodeType: node.type,
+        title: outcomeTitle,
+        description:
+          "SeedDream text-to-image result. Local preview only; asset persistence is deferred.",
+        position: {
+          x: node.position.x + 360,
+          y: Math.max(80, node.position.y - 40),
+        },
+        output: {
+          sourceNodeId: node.id,
+          dataType,
+          label: `${node.title} image`,
+          provider: result.provider,
+          model: result.model,
+          editable: false,
+          media: {
+            kind: "image",
+            url: result.image.url,
+            b64Json: result.image.b64_json,
+            mimeType: result.image.mime_type,
+            alt: `${node.title} generated image`,
+          },
+        },
+        ports: [
+          {
+            key: `${dataType}-out`,
+            label: connectionDataTypeLabel(dataType),
+            direction: "output",
+            dataType,
+          },
+        ],
+        notice:
+          `${outcomeTitle} updated. Image preview is not persisted to the asset library yet.`,
+      });
+      setImageGenerations((current) => ({
+        ...current,
+        [outcomeNodeId]: result,
+      }));
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Image generation failed.";
+
+      setImageErrors((current) => ({ ...current, [node.id]: message }));
+      dispatch({
+        type: "setNodeStatus",
+        nodeId: node.id,
+        status: "blocked",
+        notice: message,
+      });
+    } finally {
+      setImageBusyNodeId(null);
+    }
+  }
+
+  function updateMusicPrompt(nodeId: string, value: string) {
+    setMusicPrompts((current) => ({ ...current, [nodeId]: value }));
+  }
+
+  function updateMusicLyrics(nodeId: string, value: string) {
+    setMusicLyrics((current) => ({ ...current, [nodeId]: value }));
+  }
+
+  async function generateMusicNode(node: WorkflowNode) {
+    const prompt = (musicPrompts[node.id] ?? DEFAULT_MUSIC_PROMPT).trim();
+    const lyrics = (
+      musicLyrics[node.id] ??
+      getConnectedAudioLyrics(node, state, scriptInput, scriptOutcomes) ??
+      DEFAULT_MUSIC_LYRICS
+    ).trim();
+
+    if (!prompt || !lyrics) {
+      const message = "Music style prompt and lyrics are required before generation.";
+      setMusicErrors((current) => ({ ...current, [node.id]: message }));
+      setMusicResponseOpen(true);
+      dispatch({
+        type: "setNodeStatus",
+        nodeId: node.id,
+        status: "blocked",
+        notice: message,
+      });
+      return;
+    }
+
+    setMusicBusyNodeId(node.id);
+    setMusicErrors((current) => {
+      const next = { ...current };
+      delete next[node.id];
+      return next;
+    });
+    setMusicResponseOpen(true);
+    dispatch({
+      type: "setNodeStatus",
+      nodeId: node.id,
+      status: "running",
+      notice: `${node.title} generation started through FastAPI MiniMax Music.`,
+    });
+
+    try {
+      const result = await musicGenerationRunner({
+        projectId: state.projectId,
+        nodeId: node.id,
+        prompt,
+        lyrics,
+      });
+      const outcomeTitle = `${node.title} outcome`;
+      const outcomeNodeId = createWorkflowOutputNodeId(node.id, "audio");
+
+      setMusicGenerations((current) => ({ ...current, [node.id]: result }));
+      dispatch({
+        type: "setNodeStatus",
+        nodeId: node.id,
+        status: "ready",
+        notice: `${outcomeTitle} is ready as a local audio node.`,
+      });
+      dispatch({
+        type: "upsertOutputNode",
+        sourceNodeId: node.id,
+        nodeType: "audio",
+        title: outcomeTitle,
+        description:
+          "MiniMax text-to-music result. Local playback only; asset persistence is deferred.",
+        position: {
+          x: node.position.x + 360,
+          y: Math.max(80, node.position.y - 40),
+        },
+        output: {
+          sourceNodeId: node.id,
+          dataType: "audio",
+          label: `${node.title} music`,
+          provider: result.provider,
+          model: result.model,
+          editable: false,
+          media: {
+            kind: "audio",
+            url: result.audio.url,
+            hex: result.audio.hex,
+            b64Audio: result.audio.b64_audio,
+            mimeType: result.audio.mime_type,
+            durationMs: result.audio.duration_ms,
+            alt: `${node.title} generated audio`,
+          },
+        },
+        ports: [
+          {
+            key: "audio-out",
+            label: "Audio",
+            direction: "output",
+            dataType: "audio",
+          },
+        ],
+        notice:
+          `${outcomeTitle} updated. Audio preview is not persisted to the asset library yet.`,
+      });
+      setMusicGenerations((current) => ({
+        ...current,
+        [outcomeNodeId]: result,
+      }));
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Music generation failed.";
+
+      setMusicErrors((current) => ({ ...current, [node.id]: message }));
+      dispatch({
+        type: "setNodeStatus",
+        nodeId: node.id,
+        status: "blocked",
+        notice: message,
+      });
+    } finally {
+      setMusicBusyNodeId(null);
+    }
+  }
+
+  function updateVideoPrompt(nodeId: string, value: string) {
+    setVideoPrompts((current) => ({ ...current, [nodeId]: value }));
+  }
+
+  function updateVideoDuration(nodeId: string, value: string) {
+    setVideoDurations((current) => ({ ...current, [nodeId]: value }));
+  }
+
+  async function generateVideoNode(node: WorkflowNode) {
+    const connectedInputs = getConnectedVideoInputs(
+      node,
+      state,
+      scriptInput,
+      scriptOutcomes,
+    );
+    const prompt = (
+      videoPrompts[node.id] ??
+      connectedInputs.prompt ??
+      DEFAULT_VIDEO_PROMPT
+    ).trim();
+    const parsedDuration = Number.parseInt(
+      videoDurations[node.id] ?? String(DEFAULT_VIDEO_DURATION_SECONDS),
+      10,
+    );
+    const duration = Number.isFinite(parsedDuration)
+      ? parsedDuration
+      : DEFAULT_VIDEO_DURATION_SECONDS;
+    const imageUrls = connectedInputs.imageUrls;
+    const audioUrls = connectedInputs.audioUrls;
+
+    if (!prompt && imageUrls.length === 0) {
+      const message =
+        "Video prompt or at least one connected image URL is required before generation.";
+      setVideoErrors((current) => ({ ...current, [node.id]: message }));
+      setVideoResponseOpen(true);
+      dispatch({
+        type: "setNodeStatus",
+        nodeId: node.id,
+        status: "blocked",
+        notice: message,
+      });
+      return;
+    }
+
+    if (
+      duration < MIN_VIDEO_DURATION_SECONDS ||
+      duration > MAX_VIDEO_DURATION_SECONDS
+    ) {
+      const message = `Video duration must be between ${MIN_VIDEO_DURATION_SECONDS} and ${MAX_VIDEO_DURATION_SECONDS} seconds.`;
+      setVideoErrors((current) => ({ ...current, [node.id]: message }));
+      setVideoResponseOpen(true);
+      dispatch({
+        type: "setNodeStatus",
+        nodeId: node.id,
+        status: "blocked",
+        notice: message,
+      });
+      return;
+    }
+
+    if (audioUrls.length > 0 && imageUrls.length === 0) {
+      const message =
+        "Audio input requires at least one connected image URL for video generation.";
+      setVideoErrors((current) => ({ ...current, [node.id]: message }));
+      setVideoResponseOpen(true);
+      dispatch({
+        type: "setNodeStatus",
+        nodeId: node.id,
+        status: "blocked",
+        notice: message,
+      });
+      return;
+    }
+
+    setVideoBusyNodeId(node.id);
+    setVideoErrors((current) => {
+      const next = { ...current };
+      delete next[node.id];
+      return next;
+    });
+    setVideoResponseOpen(true);
+    dispatch({
+      type: "setNodeStatus",
+      nodeId: node.id,
+      status: "running",
+      notice: `${node.title} generation started through FastAPI Evolink Seedance.`,
+    });
+
+    try {
+      const result = await videoGenerationRunner({
+        projectId: state.projectId,
+        nodeId: node.id,
+        prompt,
+        duration,
+        imageUrls,
+        audioUrls,
+      });
+      const outcomeTitle = `${node.title} outcome`;
+      const outcomeNodeId = createWorkflowOutputNodeId(node.id, "video");
+
+      setVideoGenerations((current) => ({ ...current, [node.id]: result }));
+      if (!result.video.url?.trim()) {
+        dispatch({
+          type: "setNodeStatus",
+          nodeId: node.id,
+          status: "blocked",
+          notice:
+            "Video provider task accepted, but no playable video URL is available yet. Task polling is not implemented.",
+        });
+        return;
+      }
+
+      dispatch({
+        type: "setNodeStatus",
+        nodeId: node.id,
+        status: "ready",
+        notice: `${outcomeTitle} is ready as a local video node.`,
+      });
+      dispatch({
+        type: "upsertOutputNode",
+        sourceNodeId: node.id,
+        nodeType: "video",
+        title: outcomeTitle,
+        description:
+          "Evolink Seedance video result. Local playback only; asset persistence is deferred.",
+        position: {
+          x: node.position.x + 360,
+          y: Math.max(80, node.position.y - 40),
+        },
+        output: {
+          sourceNodeId: node.id,
+          dataType: "video",
+          label: `${node.title} clip`,
+          provider: result.provider,
+          model: result.model,
+          editable: false,
+          media: {
+            kind: "video",
+            url: result.video.url,
+            mimeType: result.video.mime_type,
+            durationMs: result.video.duration_ms,
+            alt: `${node.title} generated video`,
+          },
+        },
+        ports: [
+          {
+            key: "video-out",
+            label: "Video",
+            direction: "output",
+            dataType: "video",
+          },
+        ],
+        notice:
+          `${outcomeTitle} updated. Video preview is not persisted to the asset library yet.`,
+      });
+      setVideoGenerations((current) => ({
+        ...current,
+        [outcomeNodeId]: result,
+      }));
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Video generation failed.";
+
+      setVideoErrors((current) => ({ ...current, [node.id]: message }));
+      dispatch({
+        type: "setNodeStatus",
+        nodeId: node.id,
+        status: "blocked",
+        notice: message,
+      });
+    } finally {
+      setVideoBusyNodeId(null);
     }
   }
 
@@ -1065,9 +1933,17 @@ export function WorkflowCanvasWorkspace({
                     dispatch({ type: "select", selection });
                     if (
                       selection.kind === "node" &&
+                      node.role === "source" &&
                       isFloatingImageEditorNodeType(node.type)
                     ) {
                       setImageEditorOpen(true);
+                    }
+                    if (
+                      selection.kind === "node" &&
+                      node.role === "source" &&
+                      node.type === "video"
+                    ) {
+                      setVideoEditorOpen(true);
                     }
                   }}
                   onPortConnectionStart={startPortConnection}
@@ -1100,19 +1976,94 @@ export function WorkflowCanvasWorkspace({
                   }}
                 />
               ) : null}
+              {selectedMusicEditorNode ? (
+                <MusicNodeInlineEditor
+                  busy={selectedMusicBusy}
+                  connectedLyrics={selectedConnectedLyrics}
+                  error={selectedMusicError}
+                  generation={selectedMusicGeneration}
+                  lyrics={selectedMusicLyrics}
+                  node={selectedMusicEditorNode}
+                  prompt={selectedMusicPrompt}
+                  responseOpen={musicResponseOpen}
+                  viewportZoom={state.viewport.zoom}
+                  onGenerate={() => {
+                    void generateMusicNode(selectedMusicEditorNode);
+                  }}
+                  onLyricsChange={(value) =>
+                    updateMusicLyrics(selectedMusicEditorNode.id, value)
+                  }
+                  onPromptChange={(value) =>
+                    updateMusicPrompt(selectedMusicEditorNode.id, value)
+                  }
+                  onResponseOpenChange={setMusicResponseOpen}
+                  onUseConnectedLyrics={(value) =>
+                    updateMusicLyrics(selectedMusicEditorNode.id, value)
+                  }
+                />
+              ) : null}
+              {selectedImageEditorNode && imageEditorOpen ? (
+                <ImageNodeFloatingEditor
+                  frame={imageEditorFrame}
+                  busy={selectedImageBusy}
+                  error={selectedImageError}
+                  generation={selectedImageGeneration}
+                  node={selectedImageEditorNode}
+                  prompt={selectedImagePrompt}
+                  responseOpen={imageResponseOpen}
+                  viewportZoom={state.viewport.zoom}
+                  onClose={() => setImageEditorOpen(false)}
+                  onFrameChange={setImageEditorFrame}
+                  onGenerate={() => {
+                    void generateImageNode(selectedImageEditorNode);
+                  }}
+                  onPromptChange={(value) =>
+                    updateImagePrompt(selectedImageEditorNode.id, value)
+                  }
+                  onResponseOpenChange={setImageResponseOpen}
+                  onRevise={() =>
+                    showImageNotImplemented(
+                      selectedImageEditorNode,
+                      IMAGE_AI_MODIFY_NOT_IMPLEMENTED,
+                    )
+                  }
+                />
+              ) : null}
             </div>
           </div>
 
-          {selectedImageEditorNode && imageEditorOpen ? (
-            <ImageNodeFloatingEditor
-              frame={imageEditorFrame}
-              node={selectedImageEditorNode}
-              prompt={imagePrompt}
-              responseOpen={imageResponseOpen}
-              onClose={() => setImageEditorOpen(false)}
-              onFrameChange={setImageEditorFrame}
-              onPromptChange={setImagePrompt}
-              onResponseOpenChange={setImageResponseOpen}
+          {selectedVideoEditorNode && videoEditorOpen ? (
+            <VideoNodeFloatingEditor
+              frame={videoEditorFrame}
+              audioUrlCount={
+                selectedConnectedVideoInputs?.audioUrls.length ?? 0
+              }
+              busy={selectedVideoBusy}
+              connectedPrompt={selectedConnectedVideoInputs?.prompt ?? null}
+              duration={selectedVideoDuration}
+              error={selectedVideoError}
+              generation={selectedVideoGeneration}
+              imageUrlCount={
+                selectedConnectedVideoInputs?.imageUrls.length ?? 0
+              }
+              node={selectedVideoEditorNode}
+              prompt={selectedVideoPrompt}
+              responseOpen={videoResponseOpen}
+              onClose={() => setVideoEditorOpen(false)}
+              onDurationChange={(value) =>
+                updateVideoDuration(selectedVideoEditorNode.id, value)
+              }
+              onFrameChange={setVideoEditorFrame}
+              onGenerate={() => {
+                void generateVideoNode(selectedVideoEditorNode);
+              }}
+              onPromptChange={(value) =>
+                updateVideoPrompt(selectedVideoEditorNode.id, value)
+              }
+              onResponseOpenChange={setVideoResponseOpen}
+              onUseConnectedPrompt={(value) =>
+                updateVideoPrompt(selectedVideoEditorNode.id, value)
+              }
             />
           ) : null}
 
@@ -1622,215 +2573,417 @@ export function ScriptNodeInlineEditor({
 
 type ImageNodeFloatingEditorProps = {
   frame: ImageEditorFrame;
+  busy: boolean;
+  error: string | null;
+  generation: ImageGenerationResponse | null;
   node: WorkflowNode;
   prompt: string;
   responseOpen: boolean;
+  viewportZoom: number;
   onClose: () => void;
   onFrameChange: (frame: ImageEditorFrame) => void;
+  onGenerate: () => void;
   onPromptChange: (prompt: string) => void;
   onResponseOpenChange: (open: boolean) => void;
+  onRevise: () => void;
 };
 
 export function ImageNodeFloatingEditor({
-  frame,
+  busy,
+  error,
+  generation,
   node,
   prompt,
   responseOpen,
-  onClose,
-  onFrameChange,
+  viewportZoom,
+  onGenerate,
   onPromptChange,
   onResponseOpenChange,
+  onRevise,
 }: ImageNodeFloatingEditorProps) {
-  const [interaction, setInteraction] = useState<ImageEditorInteraction>(null);
   const promptReady = prompt.trim().length > 0;
-
-  useEffect(() => {
-    if (!interaction) {
-      return;
-    }
-
-    const activeInteraction = interaction;
-
-    function handlePointerMove(event: PointerEvent) {
-      const deltaX = event.clientX - activeInteraction.startClient.x;
-      const deltaY = event.clientY - activeInteraction.startClient.y;
-      const nextFrame =
-        activeInteraction.mode === "drag"
-          ? {
-              ...activeInteraction.startFrame,
-              x: activeInteraction.startFrame.x + deltaX,
-              y: activeInteraction.startFrame.y + deltaY,
-            }
-          : {
-              ...activeInteraction.startFrame,
-              width: activeInteraction.startFrame.width + deltaX,
-              height: activeInteraction.startFrame.height + deltaY,
-            };
-
-      onFrameChange(
-        clampImageEditorFrame(nextFrame, {
-          width: window.innerWidth,
-          height: window.innerHeight,
-        }),
-      );
-    }
-
-    function handlePointerUp() {
-      setInteraction(null);
-    }
-
-    window.addEventListener("pointermove", handlePointerMove);
-    window.addEventListener("pointerup", handlePointerUp);
-
-    return () => {
-      window.removeEventListener("pointermove", handlePointerMove);
-      window.removeEventListener("pointerup", handlePointerUp);
-    };
-  }, [interaction, onFrameChange]);
-
-  function startInteraction(
-    event: ReactPointerEvent<HTMLElement>,
-    mode: NonNullable<ImageEditorInteraction>["mode"],
-  ) {
-    if (event.button !== 0) {
-      return;
-    }
-
-    event.preventDefault();
-    event.stopPropagation();
-    setInteraction({
-      mode,
-      startClient: { x: event.clientX, y: event.clientY },
-      startFrame: frame,
-    });
-  }
-
-  function showResponse() {
-    onResponseOpenChange(true);
-  }
+  const imageSource = generation
+    ? imageSourceFromGeneratedImage(generation.image)
+    : null;
+  const left = node.position.x - (SCRIPT_INLINE_EDITOR_WIDTH - NODE_WIDTH) / 2;
+  const top = node.position.y + NODE_HEIGHT + SCRIPT_INLINE_EDITOR_GAP;
 
   return (
-    <aside
+    <div
       aria-label="Image node editor"
-      className="absolute z-50 flex flex-col overflow-hidden rounded-xl border border-neutral-200 bg-white/95 text-neutral-950 shadow-[0_24px_70px_rgba(15,23,42,0.18)] backdrop-blur"
+      className="absolute z-30 flex flex-col"
       data-image-node-editor="true"
+      data-image-node-inline-editor="true"
       onPointerDown={(event) => event.stopPropagation()}
       style={{
-        left: frame.x,
-        top: frame.y,
-        width: frame.width,
-        height: frame.height,
+        left,
+        top,
+        width: SCRIPT_INLINE_EDITOR_WIDTH,
+        transform: `scale(${getInlineEditorCompensationScale(viewportZoom)})`,
+        transformOrigin: "top center",
       }}
     >
-      <div
-        className="flex cursor-grab items-start justify-between gap-3 border-b border-neutral-200 px-4 py-3 active:cursor-grabbing"
-        data-image-node-drag-handle="true"
-        onPointerDown={(event) => startInteraction(event, "drag")}
+      {responseOpen ? (
+        <section
+          className="mb-3 rounded-xl border border-neutral-200 bg-white/95 p-3 text-neutral-950 shadow-[0_20px_60px_rgba(15,23,42,0.14)] backdrop-blur"
+          data-image-node-response="true"
+        >
+          <div className="max-h-[24rem] overflow-y-auto rounded-lg border border-neutral-200 bg-neutral-50 p-4">
+            {busy ? (
+              <AssistantResponseBubble title="SeedDream">
+                <div className="flex items-center gap-2 text-neutral-700">
+                  <Loader2 aria-hidden="true" className="size-4 animate-spin" />
+                  <span>Generating image through the backend...</span>
+                </div>
+              </AssistantResponseBubble>
+            ) : error ? (
+              <AssistantResponseBubble title="Image Agent">
+                <p className="text-red-700" data-image-node-error="true">
+                  {error}
+                </p>
+              </AssistantResponseBubble>
+            ) : generation && imageSource ? (
+              <div className="flex gap-3">
+                <div className="w-48 shrink-0 overflow-hidden rounded-lg border border-neutral-200 bg-white">
+                  <img
+                    alt={`${node.title} generated preview`}
+                    className="aspect-square w-full object-cover"
+                    data-generated-image-preview="true"
+                    src={imageSource}
+                  />
+                </div>
+                <div className="flex min-w-0 flex-1 flex-col justify-center rounded-lg border border-neutral-200 bg-white p-3 text-xs leading-5 text-neutral-600">
+                  <p
+                    className="font-medium text-neutral-950"
+                    data-image-backend-execution="true"
+                  >
+                    Backend: {generation.provider} / {generation.model}
+                  </p>
+                  <p className="mt-1" data-image-not-persisted="true">
+                    Local preview only. Asset persistence is not implemented yet.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <AssistantResponseBubble title="Image Agent">
+                <p>No image response is available yet.</p>
+              </AssistantResponseBubble>
+            )}
+          </div>
+        </section>
+      ) : null}
+
+      <section
+        className="rounded-xl border border-neutral-200 bg-white/95 p-3 text-neutral-950 shadow-[0_20px_60px_rgba(15,23,42,0.14)] backdrop-blur"
+        data-image-node-input-composer="true"
       >
-        <div className="min-w-0">
-          <p className="truncate text-sm font-semibold">{node.title}</p>
-          <p className="truncate text-xs text-neutral-500">
-            Image popup comparison
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Badge className="border-neutral-200 bg-neutral-50 text-neutral-600">
-            {node.status}
-          </Badge>
+        <label htmlFor={`image-node-prompt-${node.id}`} className="sr-only">
+          Image prompt
+        </label>
+        <Textarea
+          id={`image-node-prompt-${node.id}`}
+          aria-label="Image prompt"
+          className="min-h-20 resize-none border-0 bg-transparent px-0 text-sm shadow-none placeholder:text-neutral-400 focus-visible:ring-0"
+          onChange={(event) => onPromptChange(event.target.value)}
+          placeholder="Describe the image frame, location, character pose, wardrobe, lighting, and mood..."
+          value={prompt}
+        />
+
+        <div className="mt-3 flex items-center justify-between gap-3 border-t border-neutral-200 pt-3">
+          <div className="flex items-center gap-2">
+            <label htmlFor={`image-model-select-${node.id}`} className="sr-only">
+              Image model
+            </label>
+            <select
+              id={`image-model-select-${node.id}`}
+              aria-label="Image model"
+              className="h-9 rounded-lg border border-neutral-200 bg-white px-3 text-xs font-medium text-neutral-700 shadow-sm"
+              data-image-model-select="true"
+              defaultValue="configured"
+              disabled={busy}
+            >
+              <option value="configured">Configured image model</option>
+            </select>
+            <Button
+              className="h-9 rounded-lg px-3 text-xs"
+              data-image-ai-revise="true"
+              disabled={busy}
+              onClick={() => {
+                onResponseOpenChange(true);
+                onRevise();
+              }}
+              type="button"
+              variant="outline"
+            >
+              {"AI\u4fee\u6539"}
+            </Button>
+          </div>
+
           <Button
-            aria-label="Close Image node editor"
-            className="size-8 rounded-lg"
-            onClick={onClose}
+            aria-label="Generate Image node"
+            className="h-9 rounded-lg px-4 text-xs"
+            data-image-generate-loading={busy ? "true" : undefined}
+            disabled={busy || !promptReady}
+            onClick={() => {
+              onResponseOpenChange(true);
+              onGenerate();
+            }}
             type="button"
-            variant="ghost"
           >
-            <X aria-hidden="true" className="size-4" />
+            {busy ? "Generating" : "Generate"}
+            {busy ? (
+              <Loader2 aria-hidden="true" className="size-4 animate-spin" />
+            ) : (
+              <Sparkles aria-hidden="true" className="size-4" />
+            )}
           </Button>
         </div>
-      </div>
+      </section>
+    </div>
+  );
+}
 
-      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden p-4">
-        {responseOpen ? (
-          <section
-            className="min-h-0 flex-1 overflow-y-auto rounded-xl border border-neutral-200 bg-neutral-50 p-4"
-            data-image-node-response="true"
+type MusicNodeInlineEditorProps = {
+  busy: boolean;
+  connectedLyrics: string | null;
+  error: string | null;
+  generation: MusicGenerationResponse | null;
+  lyrics: string;
+  node: WorkflowNode;
+  prompt: string;
+  responseOpen: boolean;
+  viewportZoom: number;
+  onGenerate: () => void;
+  onLyricsChange: (lyrics: string) => void;
+  onPromptChange: (prompt: string) => void;
+  onResponseOpenChange: (open: boolean) => void;
+  onUseConnectedLyrics: (lyrics: string) => void;
+};
+
+export function MusicNodeInlineEditor({
+  busy,
+  connectedLyrics,
+  error,
+  generation,
+  lyrics,
+  node,
+  prompt,
+  responseOpen,
+  viewportZoom,
+  onGenerate,
+  onLyricsChange,
+  onPromptChange,
+  onResponseOpenChange,
+  onUseConnectedLyrics,
+}: MusicNodeInlineEditorProps) {
+  const promptReady = prompt.trim().length > 0;
+  const lyricsReady = lyrics.trim().length > 0;
+  const audioSource = generation
+    ? audioSourceFromGeneratedAudio(generation.audio)
+    : null;
+  const left = node.position.x - (SCRIPT_INLINE_EDITOR_WIDTH - NODE_WIDTH) / 2;
+  const top = node.position.y + NODE_HEIGHT + SCRIPT_INLINE_EDITOR_GAP;
+  const statusLabel = busy ? "Generating" : error ? "Error" : "Ready";
+
+  return (
+    <div
+      aria-label="Audio node inline music editor"
+      className="absolute z-30 flex flex-col"
+      data-music-node-inline-editor="true"
+      onPointerDown={(event) => event.stopPropagation()}
+      style={{
+        left,
+        top,
+        width: SCRIPT_INLINE_EDITOR_WIDTH,
+        transform: `scale(${getInlineEditorCompensationScale(viewportZoom)})`,
+        transformOrigin: "top center",
+      }}
+    >
+      {responseOpen ? (
+        <section
+          className="mb-3 flex flex-col overflow-hidden rounded-xl border border-neutral-200 bg-white/95 text-neutral-950 shadow-[0_20px_60px_rgba(15,23,42,0.14)] backdrop-blur"
+          data-music-node-output-panel="true"
+          style={{ height: SCRIPT_RESPONSE_PANEL_HEIGHT }}
+        >
+          <div className="flex items-start justify-between gap-3 border-b border-neutral-200 px-4 py-3">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-semibold">MiniMax Music</p>
+                <Badge
+                  className={cn(
+                    "border-neutral-200 bg-neutral-50 text-neutral-600",
+                    statusLabel === "Ready" &&
+                      "border-emerald-200 bg-emerald-50 text-emerald-700",
+                    statusLabel === "Generating" &&
+                      "border-sky-200 bg-sky-50 text-sky-700",
+                    statusLabel === "Error" &&
+                      "border-red-200 bg-red-50 text-red-700",
+                  )}
+                  data-music-node-response-status="true"
+                >
+                  {statusLabel}
+                </Badge>
+              </div>
+              {error ? (
+                <p className="mt-1 truncate text-xs text-red-700">{error}</p>
+              ) : (
+                <p
+                  className="mt-1 truncate text-xs text-neutral-500"
+                  data-music-backend-execution="true"
+                >
+                  Backend: {generation?.provider ?? "minimax"} /{" "}
+                  {generation?.model ?? "music-2.6-free"}
+                </p>
+              )}
+            </div>
+            <Button
+              aria-label="Hide Audio response"
+              className="h-8 rounded-lg px-3 text-xs"
+              onClick={() => onResponseOpenChange(false)}
+              type="button"
+              variant="ghost"
+            >
+              Hide
+            </Button>
+          </div>
+
+          <div
+            className="flex-1 overflow-y-auto p-4"
+            data-music-node-response="true"
           >
-            <AssistantResponseBubble title="Image Agent">
-              <AIResponseTyping
-                showCursor={false}
-                speed={12}
-                text={`Image prompt draft for ${node.title}: ${promptReady ? prompt.trim() : "No prompt yet."} Image generation is still deferred.`}
-                thinkingState="typing"
-              />
-            </AssistantResponseBubble>
-          </section>
-        ) : (
-          <section className="flex min-h-0 flex-1 items-center justify-center rounded-xl border border-dashed border-neutral-200 bg-neutral-50 px-6 text-center text-xs leading-5 text-neutral-500">
-            Select AI modify or Generate to show the image-node response here.
-          </section>
-        )}
+            {busy ? (
+              <AssistantResponseBubble title="MiniMax">
+                <div className="flex items-center gap-2 text-neutral-700">
+                  <Loader2 aria-hidden="true" className="size-4 animate-spin" />
+                  <span>Generating music through the backend...</span>
+                </div>
+              </AssistantResponseBubble>
+            ) : error ? (
+              <AssistantResponseBubble title="Audio Agent">
+                <p className="text-red-700" data-music-node-error="true">
+                  {error}
+                </p>
+              </AssistantResponseBubble>
+            ) : generation && audioSource ? (
+              <div className="flex flex-col gap-3">
+                <div
+                  className="rounded-lg border border-neutral-200 bg-white p-3"
+                  data-generated-audio-preview="true"
+                >
+                  <audio
+                    aria-label={`${node.title} generated audio preview`}
+                    className="w-full"
+                    controls
+                    src={audioSource}
+                  />
+                </div>
+                <div className="rounded-lg border border-neutral-200 bg-white p-3 text-xs leading-5 text-neutral-600">
+                  <p
+                    className="font-medium text-neutral-950"
+                    data-music-backend-execution="true"
+                  >
+                    Backend: {generation.provider} / {generation.model}
+                  </p>
+                  <p className="mt-1" data-music-not-persisted="true">
+                    {MUSIC_NO_PERSISTENCE_LABEL}
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <AssistantResponseBubble title="Audio Agent">
+                <p>No audio response is available yet.</p>
+              </AssistantResponseBubble>
+            )}
+          </div>
+        </section>
+      ) : null}
 
-        <section className="shrink-0 rounded-xl border border-neutral-200 bg-white p-3">
-          <label htmlFor="image-node-prompt" className="sr-only">
-            Image prompt
-          </label>
-          <Textarea
-            id="image-node-prompt"
-            aria-label="Image prompt"
-            className="min-h-20 resize-none border-0 bg-transparent px-0 text-sm shadow-none placeholder:text-neutral-400 focus-visible:ring-0"
-            onChange={(event) => onPromptChange(event.target.value)}
-            placeholder="Describe the image frame, location, character pose, wardrobe, lighting, and mood..."
-            value={prompt}
-          />
+      <section
+        className="rounded-xl border border-neutral-200 bg-white/95 p-3 text-neutral-950 shadow-[0_20px_60px_rgba(15,23,42,0.14)] backdrop-blur"
+        data-music-node-input-composer="true"
+      >
+        <label htmlFor="music-node-prompt" className="sr-only">
+          Music style prompt
+        </label>
+        <Textarea
+          id="music-node-prompt"
+          aria-label="Music style prompt"
+          className="min-h-16 resize-none border-0 bg-transparent px-0 text-sm shadow-none placeholder:text-neutral-400 focus-visible:ring-0"
+          data-music-prompt-input="true"
+          disabled={busy}
+          onChange={(event) => onPromptChange(event.target.value)}
+          onKeyDown={(event) => event.stopPropagation()}
+          placeholder="Describe genre, mood, tempo, vocal style, and scene..."
+          value={prompt}
+        />
 
-          <div className="mt-3 flex items-center justify-between gap-3 border-t border-neutral-200 pt-3">
-            <div className="flex items-center gap-2">
-              <label htmlFor="image-model-select" className="sr-only">
-                Image model
-              </label>
-              <select
-                id="image-model-select"
-                aria-label="Image model"
-                className="h-9 rounded-lg border border-neutral-200 bg-white px-3 text-xs font-medium text-neutral-700 shadow-sm"
-                data-image-model-select="true"
-                defaultValue="configured"
-              >
-                <option value="configured">Configured image model</option>
-              </select>
+        <label htmlFor="music-node-lyrics" className="sr-only">
+          Lyrics
+        </label>
+        <Textarea
+          id="music-node-lyrics"
+          aria-label="Lyrics"
+          className="mt-2 min-h-24 resize-none border-0 border-t border-neutral-200 bg-transparent px-0 pt-2 text-sm shadow-none placeholder:text-neutral-400 focus-visible:ring-0"
+          data-music-lyrics-input="true"
+          disabled={busy}
+          onChange={(event) => onLyricsChange(event.target.value)}
+          onKeyDown={(event) => event.stopPropagation()}
+          placeholder="[Verse]\nWrite lyrics or connect Script output..."
+          value={lyrics}
+        />
+
+        <div className="mt-3 flex items-center justify-between gap-3 border-t border-neutral-200 pt-3">
+          <div className="flex min-w-0 items-center gap-2">
+            <label htmlFor="music-model-select" className="sr-only">
+              Music model
+            </label>
+            <select
+              id="music-model-select"
+              aria-label="Music model"
+              className="h-9 rounded-lg border border-neutral-200 bg-white px-3 text-xs font-medium text-neutral-700 shadow-sm"
+              data-music-model-select="true"
+              defaultValue="configured"
+              disabled={busy}
+            >
+              <option value="configured">Configured music model</option>
+            </select>
+            {connectedLyrics ? (
               <Button
                 className="h-9 rounded-lg px-3 text-xs"
-                data-image-ai-revise="true"
-                disabled={!promptReady}
-                onClick={showResponse}
+                data-music-use-connected-lyrics="true"
+                disabled={busy}
+                onClick={() => onUseConnectedLyrics(connectedLyrics)}
                 type="button"
                 variant="outline"
               >
-                {"AI\u4fee\u6539"}
+                Use connected lyrics
               </Button>
-            </div>
+            ) : null}
+          </div>
 
+          <div className="flex items-center gap-2">
             <Button
-              aria-label="Generate Image node"
+              aria-label="Generate Audio node"
               className="h-9 rounded-lg px-4 text-xs"
-              disabled={!promptReady}
-              onClick={showResponse}
+              data-music-generate-loading={busy ? "true" : undefined}
+              disabled={busy || !promptReady || !lyricsReady}
+              onClick={() => {
+                onResponseOpenChange(true);
+                onGenerate();
+              }}
               type="button"
             >
-              Generate
-              <Sparkles aria-hidden="true" className="size-4" />
+              {busy ? "Generating" : "Generate"}
+              {busy ? (
+                <Loader2 aria-hidden="true" className="size-4 animate-spin" />
+              ) : (
+                <Sparkles aria-hidden="true" className="size-4" />
+              )}
             </Button>
           </div>
-        </section>
-      </div>
-
-      <button
-        aria-label="Resize Image node editor"
-        className="absolute bottom-1 right-1 size-5 cursor-nwse-resize rounded-sm border-b-2 border-r-2 border-neutral-300"
-        data-image-node-resize-handle="true"
-        onPointerDown={(event) => startInteraction(event, "resize")}
-        type="button"
-      />
-    </aside>
+        </div>
+      </section>
+    </div>
   );
 }
 
@@ -1970,6 +3123,314 @@ export function ScriptOutputTabs({
   );
 }
 
+type VideoNodeFloatingEditorProps = {
+  frame: ImageEditorFrame;
+  audioUrlCount: number;
+  busy: boolean;
+  connectedPrompt: string | null;
+  duration: string;
+  error: string | null;
+  generation: VideoGenerationResponse | null;
+  imageUrlCount: number;
+  node: WorkflowNode;
+  prompt: string;
+  responseOpen: boolean;
+  onClose: () => void;
+  onDurationChange: (duration: string) => void;
+  onFrameChange: (frame: ImageEditorFrame) => void;
+  onGenerate: () => void;
+  onPromptChange: (prompt: string) => void;
+  onResponseOpenChange: (open: boolean) => void;
+  onUseConnectedPrompt: (prompt: string) => void;
+};
+
+export function VideoNodeFloatingEditor({
+  frame,
+  audioUrlCount,
+  busy,
+  connectedPrompt,
+  duration,
+  error,
+  generation,
+  imageUrlCount,
+  node,
+  prompt,
+  responseOpen,
+  onClose,
+  onDurationChange,
+  onFrameChange,
+  onGenerate,
+  onPromptChange,
+  onResponseOpenChange,
+  onUseConnectedPrompt,
+}: VideoNodeFloatingEditorProps) {
+  const [interaction, setInteraction] = useState<ImageEditorInteraction>(null);
+  const promptReady = prompt.trim().length > 0;
+  const videoSource = generation
+    ? videoSourceFromGeneratedVideo(generation.video)
+    : null;
+
+  useEffect(() => {
+    if (!interaction) {
+      return;
+    }
+
+    const activeInteraction = interaction;
+
+    function handlePointerMove(event: PointerEvent) {
+      const deltaX = event.clientX - activeInteraction.startClient.x;
+      const deltaY = event.clientY - activeInteraction.startClient.y;
+      const nextFrame =
+        activeInteraction.mode === "drag"
+          ? {
+              ...activeInteraction.startFrame,
+              x: activeInteraction.startFrame.x + deltaX,
+              y: activeInteraction.startFrame.y + deltaY,
+            }
+          : {
+              ...activeInteraction.startFrame,
+              width: activeInteraction.startFrame.width + deltaX,
+              height: activeInteraction.startFrame.height + deltaY,
+            };
+
+      onFrameChange(
+        clampImageEditorFrame(nextFrame, {
+          width: window.innerWidth,
+          height: window.innerHeight,
+        }),
+      );
+    }
+
+    function handlePointerUp() {
+      setInteraction(null);
+    }
+
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", handlePointerUp);
+
+    return () => {
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", handlePointerUp);
+    };
+  }, [interaction, onFrameChange]);
+
+  function startInteraction(
+    event: ReactPointerEvent<HTMLElement>,
+    mode: NonNullable<ImageEditorInteraction>["mode"],
+  ) {
+    if (event.button !== 0) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    setInteraction({
+      mode,
+      startClient: { x: event.clientX, y: event.clientY },
+      startFrame: frame,
+    });
+  }
+
+  return (
+    <aside
+      aria-label="Video node generation editor"
+      className="absolute z-50 flex flex-col overflow-hidden rounded-xl border border-neutral-200 bg-white/95 text-neutral-950 shadow-[0_24px_70px_rgba(15,23,42,0.18)] backdrop-blur"
+      data-video-node-editor="true"
+      onPointerDown={(event) => event.stopPropagation()}
+      style={{
+        left: frame.x,
+        top: frame.y,
+        width: frame.width,
+        height: frame.height,
+      }}
+    >
+      <div
+        className="flex cursor-grab items-start justify-between gap-3 border-b border-neutral-200 px-4 py-3 active:cursor-grabbing"
+        data-video-node-drag-handle="true"
+        onPointerDown={(event) => startInteraction(event, "drag")}
+      >
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold">{node.title}</p>
+          <p className="truncate text-xs text-neutral-500">
+            Evolink Seedance video
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Badge className="border-neutral-200 bg-neutral-50 text-neutral-600">
+            {node.status}
+          </Badge>
+          <Button
+            aria-label="Close Video node editor"
+            className="size-8 rounded-lg"
+            onClick={onClose}
+            type="button"
+            variant="ghost"
+          >
+            <X aria-hidden="true" className="size-4" />
+          </Button>
+        </div>
+      </div>
+
+      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden p-4">
+        {responseOpen ? (
+          <section
+            className="min-h-0 flex-1 overflow-y-auto rounded-xl border border-neutral-200 bg-neutral-50 p-4"
+            data-video-node-response="true"
+          >
+            {busy ? (
+              <AssistantResponseBubble title="Seedance">
+                <div className="flex items-center gap-2 text-neutral-700">
+                  <Loader2 aria-hidden="true" className="size-4 animate-spin" />
+                  <span>Generating video through the backend...</span>
+                </div>
+              </AssistantResponseBubble>
+            ) : error ? (
+              <AssistantResponseBubble title="Video Agent">
+                <p className="text-red-700" data-video-node-error="true">
+                  {error}
+                </p>
+              </AssistantResponseBubble>
+            ) : generation && videoSource ? (
+              <div className="flex flex-col gap-3">
+                <div
+                  className="overflow-hidden rounded-lg border border-neutral-200 bg-black"
+                  data-generated-video-preview="true"
+                >
+                  <video
+                    aria-label={`${node.title} generated video preview`}
+                    className="aspect-video w-full bg-black"
+                    controls
+                    src={videoSource}
+                  />
+                </div>
+                <div className="rounded-lg border border-neutral-200 bg-white p-3 text-xs leading-5 text-neutral-600">
+                  <p
+                    className="font-medium text-neutral-950"
+                    data-video-backend-execution="true"
+                  >
+                    Backend: {generation.provider} / {generation.model}
+                  </p>
+                  <p className="mt-1" data-video-not-persisted="true">
+                    {VIDEO_NO_PERSISTENCE_LABEL}
+                  </p>
+                </div>
+              </div>
+            ) : generation ? (
+              <AssistantResponseBubble
+                title="Video Agent"
+                subtitle={`Backend: ${generation.provider} / ${generation.model}`}
+              >
+                <p data-video-provider-task="true">
+                  Provider task {generation.provider_task_id ?? generation.task_id} was
+                  accepted, but no playable video URL is available yet. Task polling is
+                  not implemented in this Video node pass.
+                </p>
+              </AssistantResponseBubble>
+            ) : (
+              <AssistantResponseBubble title="Video Agent">
+                <p>No video response is available yet.</p>
+              </AssistantResponseBubble>
+            )}
+          </section>
+        ) : (
+          <section className="flex min-h-0 flex-1 items-center justify-center rounded-xl border border-dashed border-neutral-200 bg-neutral-50 px-6 text-center text-xs leading-5 text-neutral-500">
+            Generate a video clip to preview backend-confirmed playback here.
+          </section>
+        )}
+
+        <section className="shrink-0 rounded-xl border border-neutral-200 bg-white p-3">
+          <div className="mb-2 flex flex-wrap items-center gap-2 text-[11px] text-neutral-500">
+            <Badge
+              className="border-neutral-200 bg-neutral-50 text-neutral-600"
+              data-video-connected-images="true"
+            >
+              {imageUrlCount} image URLs
+            </Badge>
+            <Badge
+              className="border-neutral-200 bg-neutral-50 text-neutral-600"
+              data-video-connected-audio="true"
+            >
+              {audioUrlCount} audio URLs
+            </Badge>
+            {connectedPrompt ? (
+              <Button
+                className="h-7 rounded-lg px-2 text-[11px]"
+                data-video-use-connected-prompt="true"
+                disabled={busy}
+                onClick={() => onUseConnectedPrompt(connectedPrompt)}
+                type="button"
+                variant="outline"
+              >
+                Use connected prompt
+              </Button>
+            ) : null}
+          </div>
+
+          <label htmlFor="video-node-prompt" className="sr-only">
+            Video prompt
+          </label>
+          <Textarea
+            id="video-node-prompt"
+            aria-label="Video prompt"
+            className="min-h-20 resize-none border-0 bg-transparent px-0 text-sm shadow-none placeholder:text-neutral-400 focus-visible:ring-0"
+            data-video-prompt-input="true"
+            disabled={busy}
+            onChange={(event) => onPromptChange(event.target.value)}
+            placeholder="Describe camera movement, action, style, and timing..."
+            value={prompt}
+          />
+          <div className="mt-3 flex items-center justify-between gap-3">
+            <label
+              htmlFor="video-node-duration"
+              className="text-xs font-medium text-neutral-700"
+            >
+              Duration
+            </label>
+            <input
+              id="video-node-duration"
+              aria-label="Video duration seconds"
+              className="h-9 w-24 rounded-lg border border-neutral-200 bg-white px-3 text-sm text-neutral-950 outline-none focus-visible:ring-2 focus-visible:ring-neutral-950/20"
+              data-video-duration-input="true"
+              disabled={busy}
+              max={MAX_VIDEO_DURATION_SECONDS}
+              min={MIN_VIDEO_DURATION_SECONDS}
+              onChange={(event) => onDurationChange(event.target.value)}
+              type="number"
+              value={duration}
+            />
+            <Button
+              aria-label="Generate Video node"
+              className="h-9 rounded-lg px-4 text-xs"
+              data-video-generate-loading={busy ? "true" : undefined}
+              disabled={busy || (!promptReady && imageUrlCount === 0)}
+              onClick={() => {
+                onResponseOpenChange(true);
+                onGenerate();
+              }}
+              type="button"
+            >
+              {busy ? "Generating" : "Generate"}
+              {busy ? (
+                <Loader2 aria-hidden="true" className="size-4 animate-spin" />
+              ) : (
+                <Video aria-hidden="true" className="size-4" />
+              )}
+            </Button>
+          </div>
+        </section>
+      </div>
+
+      <button
+        aria-label="Resize Video node editor"
+        className="absolute bottom-1 right-1 size-5 cursor-nwse-resize rounded-sm border-b-2 border-r-2 border-neutral-300"
+        data-video-node-resize-handle="true"
+        onPointerDown={(event) => startInteraction(event, "resize")}
+        type="button"
+      />
+    </aside>
+  );
+}
+
 type AssistantResponseBubbleProps = {
   title: string;
   subtitle?: string;
@@ -2091,6 +3552,9 @@ export function WorkflowNodeCard({
     ? formatWorkflowOutputExecutionLabel(node.output)
     : node.id;
   const running = node.status === "running";
+  const imageOutputSource = imageSourceFromWorkflowOutput(node.output);
+  const audioOutputSource = audioSourceFromWorkflowOutput(node.output);
+  const videoOutputSource = videoSourceFromWorkflowOutput(node.output);
 
   return (
     <article
@@ -2158,6 +3622,58 @@ export function WorkflowNodeCard({
             text={scriptOutcomeText}
             onTextChange={(value) => onScriptOutcomeTextChange(node.id, value)}
           />
+        ) : videoOutputSource ? (
+          <div
+            className="rounded-md border border-neutral-200 bg-neutral-50 p-3"
+            data-video-outcome-node="true"
+          >
+            <video
+              aria-label={`${node.title} video preview`}
+              className="aspect-video w-full rounded bg-black"
+              controls
+              data-video-outcome-player="true"
+              src={videoOutputSource}
+            />
+            <p
+              className="mt-2 text-[11px] leading-4 text-neutral-500"
+              data-video-outcome-not-persisted="true"
+            >
+              {VIDEO_NO_PERSISTENCE_LABEL}
+            </p>
+          </div>
+        ) : audioOutputSource ? (
+          <div
+            className="rounded-md border border-neutral-200 bg-neutral-50 p-3"
+            data-audio-outcome-node="true"
+          >
+            <audio
+              aria-label={`${node.title} audio preview`}
+              className="w-full"
+              controls
+              data-audio-outcome-player="true"
+              src={audioOutputSource}
+            />
+            <p
+              className="mt-2 text-[11px] leading-4 text-neutral-500"
+              data-audio-outcome-not-persisted="true"
+            >
+              {MUSIC_NO_PERSISTENCE_LABEL}
+            </p>
+          </div>
+        ) : imageOutputSource ? (
+          <div data-image-outcome-node="true">
+            <div className="overflow-hidden rounded-md border border-neutral-200 bg-neutral-50">
+              <img
+                alt={node.output?.media?.alt ?? `${node.title} generated image`}
+                className="aspect-square w-full object-cover"
+                data-image-outcome-preview="true"
+                src={imageOutputSource}
+              />
+            </div>
+            <p className="mt-2 text-[11px] leading-4 text-neutral-500">
+              Local preview only; not saved to the asset library yet.
+            </p>
+          </div>
         ) : node.type === "script" ? (
           <div className="max-h-28 overflow-hidden text-xs leading-5 text-neutral-700">
             <p className="font-semibold text-neutral-950">
@@ -2185,6 +3701,11 @@ export function WorkflowNodeCard({
         ) : node.type === "composition" || node.type === "video" ? (
           <div className="flex h-24 items-center justify-center">
             <Film aria-hidden="true" className="text-neutral-500" />
+          </div>
+        ) : node.type === "audio" ? (
+          <div className="flex h-24 flex-col items-center justify-center gap-2 text-xs text-neutral-500">
+            <Mic2 aria-hidden="true" />
+            <span>Text to music</span>
           </div>
         ) : (
           <div className="flex h-24 items-center justify-center">

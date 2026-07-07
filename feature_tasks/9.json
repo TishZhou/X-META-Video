@@ -1,15 +1,49 @@
-﻿{
-    "parent_feature":  {
-                           "id":  9,
-                           "title":  "Video Node",
-                           "status":  "not_started"
-                       },
-    "planning_status":  "pending_decomposition",
-    "notes":  [
-                  "Small features must be added here before implementation starts.",
-                  "Keep this file focused on Video Node only."
-              ],
-    "small_features":  [
-
-                       ]
+{
+  "parent_feature": {
+    "id": 9,
+    "title": "Video Node",
+    "status": "passing"
+  },
+  "planning_status": "decomposed",
+  "notes": [
+    "Keep this file focused on Video Node only.",
+    "This task must be additive because Feature 5 text-to-image and Feature 8 audio have active dirty workstreams in shared backend/frontend files.",
+    "The web app must call the local FastAPI backend only; Evolink and Seedance credentials stay server-side."
+  ],
+  "small_features": [
+    {
+      "id": "video-node-001",
+      "title": "Generate playable video outcome from local backend",
+      "status": "passing",
+      "user_visible_behavior": "Users can open a Video node editor, send prompt/duration plus connected image and audio inputs to the local backend, and receive one draggable playable Video outcome node on the canvas.",
+      "scope": [
+        "Add shared request/response types for Video node generation.",
+        "Add FastAPI schemas, provider settings, provider wrapper, and route for local video generation.",
+        "Use Evolink Seedance reference-to-video when image URLs exist and text-to-video when prompt-only generation is requested.",
+        "Add frontend Video node API helper and floating editor.",
+        "Seed image_urls and audio_urls from connected image/audio outcome nodes when available.",
+        "Render a standalone Video outcome node with provider/model evidence, video controls, and one video output port.",
+        "Record no-persistence and future task-status limitations honestly."
+      ],
+      "acceptance": [
+        "Video Generate validates prompt/duration and connected media constraints before sending.",
+        "Frontend sends only to the local FastAPI backend, never directly to Evolink or Seedance.",
+        "Backend config errors name missing env keys without leaking secret values.",
+        "Provider payloads match reference-to-video and text-to-video model rules.",
+        "Successful generation creates or updates a single playable Video outcome node.",
+        "Image/audio/audio-node dirty behavior remains intact.",
+        "Backend tests, focused web tests, typecheck/build, and rendered interaction verification pass."
+      ],
+      "evidence": [
+        ".\\.venv\\Scripts\\python.exe -m pytest services\\api\\tests\\test_video_node.py passed: 9 tests.",
+        ".\\.venv\\Scripts\\python.exe -m pytest services\\api\\tests passed: 50 tests.",
+        ".\\.venv\\Scripts\\python.exe -m ruff check services\\api passed.",
+        "corepack pnpm --filter @xmeta/web test -- workflow-canvas-workspace.test.tsx passed: 26 tests.",
+        "corepack pnpm --filter @xmeta/web test passed: 9 files / 51 tests.",
+        "corepack pnpm --filter @xmeta/web typecheck passed.",
+        "corepack pnpm --filter @xmeta/web build passed and included /workspace.",
+        "Playwright Chrome E2E on http://localhost:3000/workspace passed: Add Video node, open Video editor, intercepted local /generate-video request, created one Video outcome node with one video player and backend evidence, with no console errors."
+      ]
+    }
+  ]
 }

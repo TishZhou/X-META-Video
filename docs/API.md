@@ -100,6 +100,9 @@ Workflow APIs support the canvas-based node editor.
 | `GET` | `/projects/{project_id}/nodes/{node_id}` | Load node input/output state | member |
 | `PATCH` | `/projects/{project_id}/nodes/{node_id}` | Save node input, settings, or selected output | editor |
 | `POST` | `/projects/{project_id}/nodes/{node_id}/chat` | Send one backend-connected Script node AI dialogue turn | editor |
+| `POST` | `/projects/{project_id}/nodes/{node_id}/generate-image` | Generate one text-to-image preview for Character Image, Prop / Asset, or Scene Image nodes | editor |
+| `POST` | `/projects/{project_id}/nodes/{node_id}/generate-audio` | Generate one text-to-music preview for Audio nodes | editor |
+| `POST` | `/projects/{project_id}/nodes/{node_id}/generate-video` | Generate one video preview for Video nodes from prompt plus optional image/audio references | editor |
 | `POST` | `/projects/{project_id}/nodes/{node_id}/run` | Create generation task for one node | editor |
 
 Node types:
@@ -254,7 +257,7 @@ The older `/run` task path still returns structured JSON under `output` for comp
 }
 ```
 
-Script provider configuration is server-only:
+Model provider configuration is server-only:
 
 ```txt
 OPENAI_API_KEY=
@@ -268,28 +271,228 @@ TEXT_MODEL_TEMPERATURE=
 TEXT_MODEL_TIMEOUT_SECONDS=60
 TEXT_MODEL_MAX_RETRIES=1
 
-IMAGE_MODEL_PROVIDER=openai-compatible
-IMAGE_MODEL_BASE_URL=https://api.openai.com/v1
-IMAGE_MODEL_API_KEY=
-IMAGE_MODEL_NAME=gpt-image-1-mini
+IMAGE_MODEL_PROVIDER=doubao-seedream
+DOUBAO_BASE_URL=https://ark.cn-beijing.volces.com
+DOUBAO_API_KEY=
+DOUBAO_HTTPS_PROXY=
+SEEDREAM_MODEL=doubao-seedream-5-0-260128
+SEEDREAM_SIZE=2K
+SEEDREAM_RESPONSE_FORMAT=url
+SEEDREAM_WATERMARK=false
+SEEDREAM_TIMEOUT_SECONDS=120
+SEEDREAM_MAX_RETRIES=1
 
-VIDEO_MODEL_PROVIDER=openai-compatible
-VIDEO_MODEL_BASE_URL=https://api.openai.com/v1
-VIDEO_MODEL_API_KEY=
-VIDEO_MODEL_NAME=sora-2
+VIDEO_MODEL_PROVIDER=evolink
+EVOLINK_BASE_URL=https://api.evolink.ai/v1
+EVOLINK_API_KEY=
+EVOLINK_VIDEO_MODEL=seedance-2.0-reference-to-video
+EVOLINK_TEXT_TO_VIDEO_MODEL=seedance-2.0-text-to-video
+EVOLINK_VIDEO_QUALITY=720p
+EVOLINK_VIDEO_ASPECT_RATIO=16:9
+EVOLINK_GENERATE_AUDIO=true
+EVOLINK_VIDEO_TIMEOUT_SECONDS=240
+EVOLINK_VIDEO_MAX_RETRIES=1
 
-MUSIC_MODEL_PROVIDER=openai-compatible
-MUSIC_MODEL_BASE_URL=https://api.openai.com/v1
+MUSIC_MODEL_PROVIDER=minimax
+MUSIC_MODEL_BASE_URL=https://api.minimax.io
 MUSIC_MODEL_API_KEY=
-MUSIC_MODEL_NAME=
-MUSIC_MODEL_IMPLEMENTATION_STATUS=config_only_no_openai_dedicated_music_endpoint
+MUSIC_MODEL_NAME=music-2.6-free
+MINIMAX_BASE_URL=https://api.minimax.io
+MINIMAX_API_KEY=
+MINIMAX_HTTPS_PROXY=
+MINIMAX_MUSIC_MODEL=music-2.6-free
+MINIMAX_MUSIC_OUTPUT_FORMAT=url
+MINIMAX_MUSIC_SAMPLE_RATE=44100
+MINIMAX_MUSIC_BITRATE=256000
+MINIMAX_MUSIC_FORMAT=mp3
+MINIMAX_MUSIC_LYRICS_OPTIMIZER=false
+MINIMAX_MUSIC_IS_INSTRUMENTAL=false
+MINIMAX_MUSIC_TIMEOUT_SECONDS=180
+MINIMAX_MUSIC_MAX_RETRIES=1
 ```
 
 For Feature 3, only the text category is executed: set `TEXT_MODEL_PROVIDER=openai` or `TEXT_MODEL_PROVIDER=openai-compatible`, provide `OPENAI_API_KEY` or `TEXT_MODEL_API_KEY`, and the Script Node will call the configured OpenAI-compatible `/responses` endpoint. `TEXT_MODEL_BASE_URL` defaults to OpenAI's API base URL; live OpenAI-compatible providers default `TEXT_MODEL_NAME` to the low-cost `gpt-5.4-mini` model when no model name is supplied. Legacy `SCRIPT_MODEL_*` names remain a compatibility fallback for the Script Node only.
 
 Provider config is read from process environment first, then local `.env`, then `services/api/.env`, then `.env.example` for this repository's current local workflow. Tests disable dotenv loading so unit tests do not accidentally call a live provider.
 
-Image and video model env values are configuration slots for later nodes. Music is also a configuration slot; the checked OpenAI docs cover audio/speech models, but this API contract does not claim a dedicated OpenAI music-generation endpoint is implemented.
+### Image Node Text-to-Image Generation
+
+For `node_type=character_image`, `node_type=prop_asset`, or `node_type=scene_image`, the web app calls the local FastAPI route:
+
+```txt
+POST /api/v1/projects/{project_id}/nodes/{node_id}/generate-image
+```
+
+Request:
+
+```json
+{
+  "node_type": "character_image",
+  "input": {
+    "prompt": "Full-body character reference, front view, clear face and wardrobe."
+  },
+  "settings": {
+    "provider": "doubao-seedream",
+    "model": "doubao-seedream-5-0-260128",
+    "size": "2K",
+    "response_format": "url",
+    "watermark": false
+  }
+}
+```
+
+Response:
+
+```json
+{
+  "project_id": "project_123",
+  "node_id": "character-1",
+  "node_type": "character_image",
+  "provider": "doubao-seedream",
+  "model": "doubao-seedream-5-0-260128",
+  "prompt": "Full-body character reference, front view, clear face and wardrobe.",
+  "image": {
+    "url": "https://example.com/generated-image.png",
+    "b64_json": null,
+    "mime_type": "image/png",
+    "width": 1024,
+    "height": 1024
+  },
+  "persisted": false
+}
+```
+
+The backend wrapper is `submitSeedreamWithRetry()` -> `submitSeedreamGenerationOnce()` and posts to the configured Doubao Ark `/api/v3/images/generations` endpoint. The web app never calls Doubao directly and never receives provider credentials.
+
+Image generation currently returns a local preview output only. It does not claim object storage, signed URLs, reusable asset versions, queue workers, or generation history writes yet.
+
+### Audio Node Text-to-Music Generation
+
+For `node_type=audio`, the web app calls the local FastAPI route:
+
+```txt
+POST /api/v1/projects/{project_id}/nodes/{node_id}/generate-audio
+```
+
+Request:
+
+```json
+{
+  "node_type": "audio",
+  "input": {
+    "prompt": "K-pop cinematic MV chorus, bright synths, emotional female vocal, 120 BPM",
+    "lyrics": "[Verse]\nSnow lights fall around me\n[Chorus]\nWe run into the glow"
+  },
+  "settings": {
+    "provider": "minimax",
+    "model": "music-2.6-free",
+    "output_format": "url",
+    "sample_rate": 44100,
+    "bitrate": 256000,
+    "format": "mp3",
+    "lyrics_optimizer": false,
+    "is_instrumental": false
+  }
+}
+```
+
+Response:
+
+```json
+{
+  "project_id": "project_123",
+  "node_id": "audio-1",
+  "node_type": "audio",
+  "provider": "minimax",
+  "model": "music-2.6-free",
+  "prompt": "K-pop cinematic MV chorus, bright synths, emotional female vocal, 120 BPM",
+  "lyrics": "[Verse]\nSnow lights fall around me\n[Chorus]\nWe run into the glow",
+  "audio": {
+    "url": "https://example.com/generated-music.mp3",
+    "hex": null,
+    "b64_audio": null,
+    "mime_type": "audio/mpeg",
+    "duration_ms": 25364,
+    "sample_rate": 44100,
+    "channels": 2,
+    "bitrate": 256000,
+    "size_bytes": 813651
+  },
+  "persisted": false
+}
+```
+
+The backend wrapper is `submitMiniMaxMusicWithRetry()` -> `submitMiniMaxMusicGenerationOnce()` and posts to the configured MiniMax `/v1/music_generation` endpoint. The web app never calls MiniMax directly and never receives provider credentials.
+
+Audio generation currently returns a local playback preview only. MiniMax URL outputs can expire, and this route does not claim object storage, signed URLs, reusable asset versions, queue workers, Audio Library persistence, or generation history writes yet.
+
+### Video Node Generation
+
+For `node_type=video`, the web app calls the local FastAPI route:
+
+```txt
+POST /api/v1/projects/{project_id}/nodes/{node_id}/generate-video
+```
+
+Request:
+
+```json
+{
+  "node_type": "video",
+  "input": {
+    "prompt": "Turn the keyframe into a cinematic MV shot with a slow push-in.",
+    "image_urls": ["https://example.com/keyframe.png"],
+    "audio_urls": ["https://example.com/music.mp3"],
+    "duration": 6
+  },
+  "settings": {
+    "provider": "evolink",
+    "model": "seedance-2.0-reference-to-video",
+    "text_to_video_model": "seedance-2.0-text-to-video",
+    "quality": "720p",
+    "aspect_ratio": "16:9",
+    "generate_audio": true
+  }
+}
+```
+
+Response:
+
+```json
+{
+  "task_id": null,
+  "project_id": "project_123",
+  "node_id": "video-1",
+  "node_type": "video",
+  "provider": "evolink",
+  "model": "seedance-2.0-reference-to-video",
+  "prompt": "Turn the keyframe into a cinematic MV shot with a slow push-in.",
+  "image_urls": ["https://example.com/keyframe.png"],
+  "audio_urls": ["https://example.com/music.mp3"],
+  "duration": 6,
+  "duration_seconds": 6,
+  "video": {
+    "url": "https://example.com/generated-video.mp4",
+    "mime_type": "video/mp4",
+    "duration_ms": 6000,
+    "width": 1280,
+    "height": 720,
+    "thumbnail_url": "https://example.com/generated-video.jpg"
+  },
+  "provider_task_id": null,
+  "persisted": false
+}
+```
+
+Validation rules:
+- `audio_urls` require at least one `image_url`.
+- `image_urls` accepts at most 9 references.
+- `audio_urls` accepts at most 3 references.
+- `duration` and `duration_seconds` are both accepted request names; duration must be between 1 and 60 seconds.
+
+The backend wrapper is `submitEvolinkVideoWithRetry()` -> `submitEvolinkVideoGenerationOnce()` and posts to the configured Evolink `{EVOLINK_BASE_URL}/videos/generations` endpoint. When `image_urls` are present it uses `seedance-2.0-reference-to-video` by default and sends prompt, image URLs, optional audio URLs, duration, `quality=720p`, `aspect_ratio=16:9`, and `generate_audio=true`. For prompt-only requests it uses `seedance-2.0-text-to-video` by default and sends prompt plus duration.
+
+Video generation currently returns a local playback preview or a provider task id only. This route does not poll provider tasks and does not claim object storage, signed URLs, reusable asset versions, queue workers, Video Library persistence, or generation history writes yet.
 
 ## Tasks
 
