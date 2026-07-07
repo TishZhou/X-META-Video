@@ -188,6 +188,36 @@
         "2026-07-07 Browser E2E passed on the user's already-open in-app browser tab at http://localhost:3000/workspace: initial composer had AI modify and Generate but no Send control; direct Generate produced Ready structured ScriptOutput; AI modify opened AI dialogue mode and showed guidance without producing Script AI turn text; Send then called backend chat and showed Script AI turn 1; Generate remained visible; no AI disabled copy, framework overlay, or console warn/error logs were present.",
         "2026-07-07 final .\\init.ps1 passed after artifact updates and reran web tests: 9 files / 39 tests."
       ]
+    },
+    {
+      "id": "script-node-009",
+      "title": "Show backend provider truth in Script AI replies",
+      "status": "passing",
+      "user_visible_behavior": "Users can see whether AI modify dialogue replies and generated ScriptOutput replies came from the mock backend or a configured live text provider, with backend-confirmed provider/model displayed inside the response panel.",
+      "acceptance_criteria": [
+        "Script dialogue responses return backend-resolved provider and model metadata.",
+        "Script generation task responses return backend-resolved provider and model metadata.",
+        "The Script composer no longer presents a static frontend model label as proof of live LLM execution.",
+        "AI modify dialogue replies show provider/model evidence beside the assistant reply content.",
+        "Mock provider replies are visibly labeled as mock backend replies.",
+        "FastAPI can read local provider configuration from process env, .env files, or this repository's current real-env .env.example fallback.",
+        "Verification checks the displayed AI reply content against backend response metadata."
+      ],
+      "verification": [
+        "2026-07-07 baseline .\\init.ps1 passed before implementation and reran web tests: 9 files / 39 tests.",
+        "2026-07-07 .\\.venv\\Scripts\\python.exe -m pytest services\\api\\tests\\test_script_node.py passed: 23 tests with one Starlette TestClient deprecation warning.",
+        "2026-07-07 .\\.venv\\Scripts\\python.exe -m ruff check services\\api passed.",
+        "2026-07-07 backend provider preflight with .env.example fallback passed: POST /api/v1/projects/local-project/nodes/script-1/chat returned provider openai, model gpt-5.4-mini, role assistant, and natural-language content preview.",
+        "2026-07-07 corepack pnpm --filter @xmeta/web test -- workflow-canvas-workspace.test.tsx passed: 1 file / 16 tests.",
+        "2026-07-07 corepack pnpm --filter @xmeta/web typecheck passed.",
+        "2026-07-07 corepack pnpm --filter @xmeta/web test passed: 9 files / 40 tests.",
+        "2026-07-07 corepack pnpm --filter @xmeta/web build passed and included /workspace.",
+        "2026-07-07 Browser E2E passed on http://localhost:3000/workspace: AI modify plus Send produced a natural-language assistant reply with Backend: openai / gpt-5.4-mini, no Script AI turn mock text, no mock backend label, and empty console warn/error logs.",
+        "2026-07-07 .\\.venv\\Scripts\\python.exe -m pytest services\\api\\tests passed: 23 tests with one Starlette TestClient warning.",
+        "2026-07-07 JSON validation passed for feature_list.json and feature_tasks/3.json.",
+        "2026-07-07 git diff --check passed with LF/CRLF warnings only.",
+        "2026-07-07 final .\\init.ps1 passed after artifact updates and reran web tests: 9 files / 40 tests."
+      ]
     }
   ]
 }

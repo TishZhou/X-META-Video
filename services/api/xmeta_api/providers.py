@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 import os
 from dataclasses import dataclass
+from functools import lru_cache
+from pathlib import Path
 from typing import Any, Protocol
 
 import httpx
@@ -59,9 +61,11 @@ class ScriptProviderSettings:
     @classmethod
     def from_env(cls) -> "ScriptProviderSettings":
         provider = _first_env("TEXT_MODEL_PROVIDER", "SCRIPT_MODEL_PROVIDER", default="mock")
+        normalized_provider = provider.strip().lower() or "mock"
+        default_model = "local-script-mock" if normalized_provider == "mock" else "gpt-5.4-mini"
         temperature = _first_env("TEXT_MODEL_TEMPERATURE", "SCRIPT_MODEL_TEMPERATURE")
         return cls(
-            provider=provider.strip().lower() or "mock",
+            provider=normalized_provider,
             base_url=_first_env(
                 "TEXT_MODEL_BASE_URL",
                 "SCRIPT_MODEL_BASE_URL",
@@ -73,7 +77,7 @@ class ScriptProviderSettings:
                 "SCRIPT_MODEL_API_KEY",
                 "OPENAI_API_KEY",
             ),
-            model=_first_env("TEXT_MODEL_NAME", "SCRIPT_MODEL_NAME", default="gpt-5.4-mini"),
+            model=_first_env("TEXT_MODEL_NAME", "SCRIPT_MODEL_NAME", default=default_model),
             temperature=_parse_optional_float("TEXT_MODEL_TEMPERATURE", temperature),
             timeout_seconds=_parse_int(
                 "TEXT_MODEL_TIMEOUT_SECONDS",
@@ -377,11 +381,46 @@ class OpenAICompatibleScriptProvider:
 
 
 def _first_env(*names: str, default: str | None = None) -> str | None:
+    dotenv_values = _load_dotenv_values()
     for name in names:
         value = os.getenv(name)
         if value is not None and value.strip():
             return value.strip()
+        dotenv_value = dotenv_values.get(name)
+        if dotenv_value is not None and dotenv_value.strip():
+            return dotenv_value.strip()
     return default
+
+
+@lru_cache(maxsize=1)
+def _load_dotenv_values() -> dict[str, str]:
+    if os.getenv("X_META_DISABLE_DOTENV") == "1":
+        return {}
+
+    values: dict[str, str] = {}
+    repo_root = Path(__file__).resolve().parents[3]
+    for path in (
+        repo_root / ".env",
+        repo_root / "services" / "api" / ".env",
+        repo_root / ".env.example",
+    ):
+        if not path.exists() or not path.is_file():
+            continue
+        for raw_line in path.read_text(encoding="utf-8").splitlines():
+            line = raw_line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, value = line.split("=", 1)
+            key = key.strip()
+            if key.startswith("export "):
+                key = key.removeprefix("export ").strip()
+            if not key:
+                continue
+            value = value.strip()
+            if len(value) >= 2 and value[0] == value[-1] and value[0] in {"'", '"'}:
+                value = value[1:-1]
+            values.setdefault(key, value)
+    return values
 
 
 def _parse_optional_float(env_name: str, value: str | None) -> float | None:

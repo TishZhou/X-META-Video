@@ -36,9 +36,9 @@
                          "id":  3,
                          "title":  "Script Node",
                          "status":  "passing",
-                         "current_task":  "script-node-008",
+                         "current_task":  "script-node-009",
                          "current_task_status":  "passing",
-                         "user_visible_behavior":  "Users can either directly Generate structured ScriptOutput from the selected Script node prompt, or click AI modify to enter conversation mode with a separate Send action before generating.",
+                         "user_visible_behavior":  "Users can directly Generate structured ScriptOutput or use AI modify conversation mode, and the response panel shows backend-confirmed provider/model so mock replies are not mistaken for live LLM output.",
                          "task_file":  "feature_tasks/3.json"
                      },
                      {

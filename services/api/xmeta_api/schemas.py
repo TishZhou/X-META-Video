@@ -62,6 +62,7 @@ class ScriptDialogueResponse(BaseModel):
     project_id: str
     node_id: str
     provider: str
+    model: str | None = None
     message: ScriptDialogueMessage
     history: list[ScriptDialogueMessage]
 
@@ -134,6 +135,7 @@ class TaskState(TaskResponse):
     task_type: str = "script_node"
     input_version: int
     provider: str
+    model: str | None = None
     created_at: datetime
     updated_at: datetime
 

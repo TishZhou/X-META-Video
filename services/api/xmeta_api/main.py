@@ -87,6 +87,7 @@ def run_script_node(project_id: str, node_id: str) -> TaskState:
         node_id=node_id,
         input_version=node.version,
         provider=settings.provider,
+        model=settings.model,
     )
     return run_script_task_sync(store=store, provider=provider, task=task, node=node)
 
@@ -139,6 +140,7 @@ def chat_script_node(
         project_id=project_id,
         node_id=node_id,
         provider=settings.provider,
+        model=settings.model,
         message=assistant_message,
         history=[*request.history, user_message, assistant_message],
     )

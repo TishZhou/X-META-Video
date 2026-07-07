@@ -96,6 +96,7 @@ export type ScriptDialogueResponse = {
   project_id: string;
   node_id: string;
   provider: string;
+  model?: string | null;
   message: ScriptDialogueMessage;
   history: ScriptDialogueMessage[];
 };
@@ -125,6 +126,8 @@ export type TaskResponse = {
 
 export type ScriptTaskStatusResponse = TaskResponse & {
   error?: string | null;
+  provider?: string;
+  model?: string | null;
 };
 
 export type ScriptTaskResultResponse = ScriptTaskStatusResponse & {

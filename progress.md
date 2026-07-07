@@ -21,10 +21,21 @@ Record major decisions and progress each session. Keep the current verified stat
 - Current Script Node closure revision: Feature 3 `script-node-006` confirms task coverage includes both the canvas Script node and its AI dialogue script-generation path. `AI淇敼` and Generate now route through the same Script generation handler while preserving distinct response modes, the workspace boundary says Script AI is enabled while media AI/persistence are deferred, and backend runs honor saved Script node provider/model/temperature settings.
 - Current Script Node realtime dialogue revision: Feature 3 `script-node-007` adds backend-connected multi-turn Script AI dialogue. `AI modify` sends the selected Script node prompt/history to `POST /api/v1/projects/{project_id}/nodes/{node_id}/chat`, renders user/assistant history with deterministic mock or OpenAI-compatible text-provider replies, and leaves Generate as the structured `ScriptOutput` path for downstream nodes.
 - Current Script Node dual-mode revision: Feature 3 `script-node-008` separates direct generation from conversation mode. Initial composer shows `AI modify` and `Generate` only; `AI modify` opens `AI对话` guidance without sending; conversation mode exposes a separate `发送` button for backend chat turns; `Generate` remains the direct structured ScriptOutput action.
+- Current Script Node provider-truth revision: Feature 3 `script-node-009` makes Script AI replies show backend-confirmed provider/model evidence. The response panel labels mock dialogue replies as `AI修改 · mock backend` and `Mock backend: mock / local-script-mock`, and live replies as `Backend: openai / gpt-5.4-mini`. FastAPI reads real provider config from process env, `.env`, `services/api/.env`, or this repo's current real-env `.env.example` fallback.
 - Current Storyboard browser-comment revision: `/workspace` now shows confirmed Script output in the Script node preview after generation; the Storyboard AI response/history panel is fixed-height, scrollable, width-aligned with the composer, hideable/restorable, and keeps stable 820px/288px geometry at 50% canvas zoom; the composer dropdown is a model selector; errors render inside the Storyboard AI panel; and nodes can be dragged to negative x positions without a far-left invisible wall.
 - Current blocker: none.
 
 ## Session Log
+
+### Session 040
+
+- Date: 2026-07-07
+- Goal: Correct the Script AI dialogue reply surface so `AI modify` and assistant replies are visibly tied to real backend provider/model metadata instead of frontend placeholder labels.
+- Completed: Added `model` metadata to Script dialogue responses and Script generation task state; changed mock provider defaults to `local-script-mock`; added FastAPI process env, `.env`, `services/api/.env`, and `.env.example` loading because this repo currently uses `.env.example` as the real local env; changed the Script response panel to show backend provider/model evidence beside AI modify replies and generated ScriptOutput; changed the initial selector label from a static model claim to `Server configured model`; updated `verify` skill to require AI/provider proof from backend metadata.
+- Verification run: Baseline `.\init.ps1` passed before work with 9 web files / 39 tests. Focused backend pytest passed 23 tests. API ruff passed. Focused workspace test passed 1 file / 16 tests. Web typecheck passed. Full web tests passed 9 files / 40 tests. Web build passed and included `/workspace`.
+- API preflight: Restarted the local FastAPI process and confirmed `POST /api/v1/projects/local-project/nodes/script-1/chat` reads `.env.example`, calls the live OpenAI-compatible provider, and returns assistant content with `provider: openai` and `model: gpt-5.4-mini`.
+- Browser QA: Passed on the user's already-open in-app browser tab at `http://localhost:3000/workspace`: initial UI had no static `gpt-5.4-mini` claim; `AI modify` opened conversation mode with `Backend: waiting for server confirmation`; Send produced a natural-language assistant reply with `Backend: openai / gpt-5.4-mini`; no `Script AI turn` mock text or mock backend label appeared; console warn/error logs were empty.
+- Evaluation: Main evaluator accepted `script-node-009` at 150 / 150 after live provider preflight and Browser E2E.
 
 ### Session 039
 

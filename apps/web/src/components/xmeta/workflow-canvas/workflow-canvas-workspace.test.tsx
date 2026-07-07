@@ -14,6 +14,8 @@ import {
 import {
   calculateDraggedNodePosition,
   clampImageEditorFrame,
+  createScriptBackendExecution,
+  formatScriptBackendExecutionLabel,
   formatScriptOutputConversationReply,
   formatScriptNodePreview,
   formatTemplateIoLabel,
@@ -143,8 +145,9 @@ describe("WorkflowCanvasWorkspace", () => {
     expect(html).toContain('data-script-node-inline-editor="true"');
     expect(html).toContain('data-script-node-input-composer="true"');
     expect(html).toContain('data-script-model-select="true"');
-    expect(html).toContain("gpt-5.4-mini");
-    expect(html).toContain("Mock local model");
+    expect(html).toContain("Server configured model");
+    expect(html).toContain("Mock backend model");
+    expect(html).not.toContain("gpt-5.4-mini");
     expect(html).toContain('data-script-ai-revise="true"');
     expect(html).toContain(
       "\u63cf\u8ff0\u4f60\u7684\u5267\u60c5\u7247\u6bb5\u3001\u6545\u4e8b\u548c\u4e16\u754c\u89c2\u6784\u60f3",
@@ -168,6 +171,22 @@ describe("WorkflowCanvasWorkspace", () => {
   it("maps Script AI modify and Generate actions to distinct response modes", () => {
     expect(getScriptResponseModeForAction("revise")).toBe("revise");
     expect(getScriptResponseModeForAction("generate")).toBe("generation");
+  });
+
+  it("formats Script backend execution evidence for AI replies", () => {
+    expect(formatScriptBackendExecutionLabel(null)).toBe(
+      "Backend: waiting for server confirmation",
+    );
+    expect(
+      formatScriptBackendExecutionLabel(
+        createScriptBackendExecution("mock", "local-script-mock"),
+      ),
+    ).toBe("Mock backend: mock / local-script-mock");
+    expect(
+      formatScriptBackendExecutionLabel(
+        createScriptBackendExecution("openai", "gpt-live"),
+      ),
+    ).toBe("Backend: openai / gpt-live");
   });
 
   it("renders the previous floating editor behavior for image-class nodes", () => {
@@ -224,6 +243,7 @@ describe("WorkflowCanvasWorkspace", () => {
     const output = makeScriptOutput();
     const html = renderToStaticMarkup(
       <ScriptOutputTabs
+        backendExecution={createScriptBackendExecution("openai", "gpt-live")}
         conversationMode={false}
         input={{ world_description: "A generated snow MV world" }}
         messages={[]}
@@ -235,6 +255,7 @@ describe("WorkflowCanvasWorkspace", () => {
 
     expect(html).toContain("A generated snow MV world");
     expect(html).toContain("Ready");
+    expect(html).toContain("Backend: openai / gpt-live");
     expect(html).toContain('data-script-node-output-scroll="true"');
     expect(html).toContain("Agent generated answer for the chat history.");
     expect(html).not.toContain("A structured MV world summary.");
@@ -310,6 +331,10 @@ describe("WorkflowCanvasWorkspace", () => {
     ];
     const html = renderToStaticMarkup(
       <ScriptOutputTabs
+        backendExecution={createScriptBackendExecution(
+          "mock",
+          "storyboard-browser-polish",
+        )}
         conversationMode={true}
         input={{ world_description: "A generated snow MV world" }}
         messages={messages}
@@ -320,7 +345,8 @@ describe("WorkflowCanvasWorkspace", () => {
     );
 
     expect(html).toContain("AI\u5bf9\u8bdd");
-    expect(html).toContain("AI\u4fee\u6539");
+    expect(html).toContain("AI\u4fee\u6539 · mock backend");
+    expect(html).toContain("Mock backend: mock / storyboard-browser-polish");
     expect(html).toContain("Make the two leads argue before the chorus.");
     expect(html).toContain(
       "Script AI turn 1: I would add conflict before the chorus payoff.",

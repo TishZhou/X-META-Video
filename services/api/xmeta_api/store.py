@@ -56,6 +56,7 @@ class InMemoryScriptStore:
         node_id: str,
         input_version: int,
         provider: str,
+        model: str | None = None,
     ) -> TaskState:
         with self._lock:
             now = datetime.now(UTC)
@@ -66,6 +67,7 @@ class InMemoryScriptStore:
                 status=TaskStatus.QUEUED,
                 input_version=input_version,
                 provider=provider,
+                model=model,
                 created_at=now,
                 updated_at=now,
             )

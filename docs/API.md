@@ -33,7 +33,9 @@ Global rules:
   "task_id": "task_123",
   "project_id": "project_123",
   "node_id": "node_script_1",
-  "status": "queued"
+  "status": "queued",
+  "provider": "mock",
+  "model": "local-script-mock"
 }
 ```
 
@@ -163,6 +165,7 @@ Response:
   "project_id": "project_123",
   "node_id": "node_script_1",
   "provider": "mock",
+  "model": "local-script-mock",
   "message": {
     "role": "assistant",
     "content": "Natural-language assistant reply."
@@ -175,6 +178,8 @@ Response:
   ]
 }
 ```
+
+The web app must display the returned `provider` and `model` beside Script AI replies and generation output. A frontend model selector label is not proof of live LLM execution; `mock` replies must be visibly identified as mock backend replies.
 
 The dialogue endpoint is a request/response backend AI chat path for Feature 3. It does not create downstream-ready `ScriptOutput`; users run `/run` when the dialogue should be converted into structured output for later nodes.
 
@@ -234,7 +239,7 @@ OPENAI_BASE_URL=https://api.openai.com/v1
 TEXT_MODEL_PROVIDER=mock
 TEXT_MODEL_BASE_URL=https://api.openai.com/v1
 TEXT_MODEL_API_KEY=
-TEXT_MODEL_NAME=gpt-5.4-mini
+TEXT_MODEL_NAME=
 TEXT_MODEL_TEMPERATURE=
 TEXT_MODEL_TIMEOUT_SECONDS=60
 TEXT_MODEL_MAX_RETRIES=1
@@ -256,7 +261,9 @@ MUSIC_MODEL_NAME=
 MUSIC_MODEL_IMPLEMENTATION_STATUS=config_only_no_openai_dedicated_music_endpoint
 ```
 
-`mock` is the default development provider. For Feature 3, only the text category is executed: set `TEXT_MODEL_PROVIDER=openai` or `TEXT_MODEL_PROVIDER=openai-compatible`, provide `OPENAI_API_KEY` or `TEXT_MODEL_API_KEY`, and the Script Node will call the configured OpenAI-compatible `/responses` endpoint. `TEXT_MODEL_BASE_URL` and `TEXT_MODEL_NAME` default to OpenAI's API base URL and the low-cost `gpt-5.4-mini` model. Legacy `SCRIPT_MODEL_*` names remain a compatibility fallback for the Script Node only.
+`mock` is the default development provider and reports `local-script-mock` when no text model name is configured. For Feature 3, only the text category is executed: set `TEXT_MODEL_PROVIDER=openai` or `TEXT_MODEL_PROVIDER=openai-compatible`, provide `OPENAI_API_KEY` or `TEXT_MODEL_API_KEY`, and the Script Node will call the configured OpenAI-compatible `/responses` endpoint. `TEXT_MODEL_BASE_URL` defaults to OpenAI's API base URL; live OpenAI-compatible providers default `TEXT_MODEL_NAME` to the low-cost `gpt-5.4-mini` model when no model name is supplied. Legacy `SCRIPT_MODEL_*` names remain a compatibility fallback for the Script Node only.
+
+Provider config is read from process environment first, then local `.env`, then `services/api/.env`, then `.env.example` for this repository's current local workflow. Tests disable dotenv loading so unit tests do not accidentally call a live provider.
 
 Image and video model env values are configuration slots for later nodes. Music is also a configuration slot; the checked OpenAI docs cover audio/speech models, but this API contract does not claim a dedicated OpenAI music-generation endpoint is implemented.
 

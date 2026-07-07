@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Generator
 import json
 
 import httpx
@@ -11,6 +12,7 @@ from xmeta_api.providers import (
     OpenAICompatibleScriptProvider,
     ProviderExecutionError,
     ScriptProviderSettings,
+    _load_dotenv_values,
 )
 from xmeta_api.schemas import ScriptDialogueMessage, ScriptInput, ScriptSettings
 from xmeta_api.store import store
@@ -20,8 +22,12 @@ client = TestClient(app)
 
 
 @pytest.fixture(autouse=True)
-def clean_store_and_provider_env(monkeypatch: pytest.MonkeyPatch) -> None:
+def clean_store_and_provider_env(
+    monkeypatch: pytest.MonkeyPatch,
+) -> Generator[None, None, None]:
     store.reset()
+    monkeypatch.setenv("X_META_DISABLE_DOTENV", "1")
+    _load_dotenv_values.cache_clear()
     for name in (
         "TEXT_MODEL_PROVIDER",
         "TEXT_MODEL_BASE_URL",
@@ -41,6 +47,8 @@ def clean_store_and_provider_env(monkeypatch: pytest.MonkeyPatch) -> None:
         "OPENAI_API_KEY",
     ):
         monkeypatch.delenv(name, raising=False)
+    yield
+    _load_dotenv_values.cache_clear()
 
 
 def script_payload(**overrides: object) -> dict[str, object]:
@@ -112,6 +120,7 @@ def test_run_script_node_creates_succeeded_task_and_task_lookup() -> None:
     assert task["status"] == "succeeded"
     assert task["input_version"] == saved["version"]
     assert task["provider"] == "mock"
+    assert task["model"] == "local-script-mock"
 
     lookup_response = client.get(f"/api/v1/tasks/{task['task_id']}")
     assert lookup_response.status_code == 200
@@ -165,6 +174,7 @@ def test_script_node_chat_returns_backend_dialogue_history() -> None:
     assert body["project_id"] == "project-1"
     assert body["node_id"] == "script-1"
     assert body["provider"] == "mock"
+    assert body["model"] == "local-script-mock"
     assert body["message"]["role"] == "assistant"
     assert "Make the two leads argue before the chorus." in body["message"]["content"]
     assert body["history"][-2] == {
@@ -200,6 +210,7 @@ def test_saved_mock_provider_settings_override_env_openai_without_credentials(
     task = response.json()
     assert task["status"] == "succeeded"
     assert task["provider"] == "mock"
+    assert task["model"] == "local-script-mock"
     assert task["input_version"] == saved["version"]
 
 
@@ -233,7 +244,7 @@ def test_text_model_config_defaults_to_mock() -> None:
     assert settings.provider == "mock"
     assert settings.base_url == "https://api.openai.com/v1"
     assert settings.api_key is None
-    assert settings.model == "gpt-5.4-mini"
+    assert settings.model == "local-script-mock"
     assert settings.temperature is None
     assert settings.timeout_seconds == 60
     assert settings.max_retries == 1

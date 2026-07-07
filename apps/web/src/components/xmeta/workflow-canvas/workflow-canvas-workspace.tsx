@@ -170,6 +170,10 @@ const emptyScriptTask: ScriptTaskStatusResponse = {
 type ScriptModelSelection = "mock" | "configured";
 type ScriptResponseMode = "generation" | "revise";
 type ScriptGenerationAction = "generate" | "revise";
+type ScriptBackendExecution = {
+  provider: string;
+  model?: string | null;
+} | null;
 type ImageEditorFrame = {
   x: number;
   y: number;
@@ -192,12 +196,12 @@ const defaultImageEditorFrame: ImageEditorFrame = {
 const scriptModelOptions = [
   {
     id: "configured",
-    label: "gpt-5.4-mini",
+    label: "Server configured model",
     settings: {},
   },
   {
     id: "mock",
-    label: "Mock local model",
+    label: "Mock backend model",
     settings: { provider: "mock", model: "storyboard-browser-polish" },
   },
 ] as const satisfies Array<{
@@ -216,6 +220,40 @@ export function getScriptResponseModeForAction(
   action: ScriptGenerationAction,
 ): ScriptResponseMode {
   return action === "revise" ? "revise" : "generation";
+}
+
+export function createScriptBackendExecution(
+  provider?: string | null,
+  model?: string | null,
+): ScriptBackendExecution {
+  const trimmedProvider = provider?.trim();
+
+  if (!trimmedProvider) {
+    return null;
+  }
+
+  const trimmedModel = model?.trim();
+
+  return {
+    provider: trimmedProvider,
+    model: trimmedModel || null,
+  };
+}
+
+export function formatScriptBackendExecutionLabel(
+  execution: ScriptBackendExecution,
+) {
+  if (!execution) {
+    return "Backend: waiting for server confirmation";
+  }
+
+  const model = execution.model ?? "server default";
+
+  if (execution.provider === "mock") {
+    return `Mock backend: ${execution.provider} / ${model}`;
+  }
+
+  return `Backend: ${execution.provider} / ${model}`;
 }
 
 export function calculateDraggedNodePosition(
@@ -410,6 +448,8 @@ export function WorkflowCanvasWorkspace({
   const [scriptDialogueMessages, setScriptDialogueMessages] = useState<
     ScriptDialogueMessage[]
   >([]);
+  const [scriptBackendExecution, setScriptBackendExecution] =
+    useState<ScriptBackendExecution>(null);
   const [scriptTask, setScriptTask] =
     useState<ScriptTaskStatusResponse>(emptyScriptTask);
   const [scriptError, setScriptError] = useState<string | null>(null);
@@ -678,6 +718,7 @@ export function WorkflowCanvasWorkspace({
     setScriptBusy(true);
     setScriptConversationMode(false);
     setScriptError(null);
+    setScriptBackendExecution(null);
     setScriptTask({
       task_id: "pending",
       project_id: state.projectId,
@@ -701,6 +742,9 @@ export function WorkflowCanvasWorkspace({
       });
 
       setScriptTask(result.task);
+      setScriptBackendExecution(
+        createScriptBackendExecution(result.task.provider, result.task.model),
+      );
       setScriptOutput(result.output);
       setScriptHistoryOpen(true);
       dispatch({
@@ -760,6 +804,7 @@ export function WorkflowCanvasWorkspace({
     setScriptBusy(true);
     setScriptConversationMode(true);
     setScriptError(null);
+    setScriptBackendExecution(null);
     setScriptHistoryOpen(true);
     setScriptResponseMode("revise");
     setScriptDialogueMessages(pendingMessages);
@@ -788,12 +833,17 @@ export function WorkflowCanvasWorkspace({
       });
 
       setScriptDialogueMessages(result.history);
+      setScriptBackendExecution(
+        createScriptBackendExecution(result.provider, result.model),
+      );
       setScriptTask({
         task_id: "dialogue-succeeded",
         project_id: result.project_id,
         node_id: result.node_id,
         status: "succeeded",
         error: null,
+        provider: result.provider,
+        model: result.model,
       });
       dispatch({
         type: "setNodeStatus",
@@ -940,6 +990,7 @@ export function WorkflowCanvasWorkspace({
                   historyOpen={scriptHistoryOpen}
                   input={scriptInput}
                   messages={scriptDialogueMessages}
+                  backendExecution={scriptBackendExecution}
                   responseMode={scriptResponseMode}
                   node={selectedScriptNode}
                   output={scriptOutput}
@@ -1308,6 +1359,7 @@ function CanvasStatusBar({ edge, node, notice, zoom }: CanvasStatusBarProps) {
 }
 
 type ScriptNodeInlineEditorProps = {
+  backendExecution: ScriptBackendExecution;
   busy: boolean;
   conversationMode: boolean;
   error: string | null;
@@ -1332,6 +1384,7 @@ type ScriptNodeInlineEditorProps = {
 };
 
 function ScriptNodeInlineEditor({
+  backendExecution,
   busy,
   conversationMode,
   error,
@@ -1376,6 +1429,7 @@ function ScriptNodeInlineEditor({
       {historyOpen ? (
         <div className="mb-3" data-script-node-history="true">
           <ScriptOutputTabs
+            backendExecution={backendExecution}
             conversationMode={conversationMode}
             error={error}
             input={input}
@@ -1690,6 +1744,7 @@ export function ImageNodeFloatingEditor({
 }
 
 type ScriptOutputTabsProps = {
+  backendExecution?: ScriptBackendExecution;
   conversationMode: boolean;
   error?: string | null;
   input: ScriptNodeInput;
@@ -1701,6 +1756,7 @@ type ScriptOutputTabsProps = {
 };
 
 export function ScriptOutputTabs({
+  backendExecution = null,
   conversationMode,
   error,
   input,
@@ -1719,6 +1775,11 @@ export function ScriptOutputTabs({
         ? SCRIPT_DIALOGUE_READY_LABEL
         : getScriptResponseStatusLabel(task, output, error);
   const statusDetail = error ?? task.error ?? null;
+  const backendExecutionLabel = formatScriptBackendExecutionLabel(backendExecution);
+  const assistantTitle =
+    backendExecution?.provider === "mock"
+      ? `${SCRIPT_REVISE_LABEL} · mock backend`
+      : SCRIPT_REVISE_LABEL;
 
   return (
     <section
@@ -1749,7 +1810,14 @@ export function ScriptOutputTabs({
           </div>
           {statusDetail ? (
             <p className="mt-1 truncate text-xs text-red-700">{statusDetail}</p>
-          ) : null}
+          ) : (
+            <p
+              className="mt-1 truncate text-xs text-neutral-500"
+              data-script-backend-execution="true"
+            >
+              {backendExecutionLabel}
+            </p>
+          )}
         </div>
         {onHide ? (
           <Button
@@ -1777,7 +1845,8 @@ export function ScriptOutputTabs({
               ) : (
                 <AssistantResponseBubble
                   key={`${message.role}-${index}`}
-                  title={SCRIPT_REVISE_LABEL}
+                  subtitle={backendExecutionLabel}
+                  title={assistantTitle}
                 >
                   <p className="whitespace-pre-line">{message.content}</p>
                 </AssistantResponseBubble>
@@ -1800,7 +1869,7 @@ export function ScriptOutputTabs({
         ) : null}
 
         {task.status === "running" ? (
-          <AssistantResponseBubble title="AI">
+          <AssistantResponseBubble title="AI" subtitle={backendExecutionLabel}>
             <AIResponseTyping
               showCursor
               speed={12}
@@ -1814,7 +1883,7 @@ export function ScriptOutputTabs({
         task.status !== "running" &&
         !statusDetail &&
         responseMode === "generation" ? (
-          <AssistantResponseBubble title="AI">
+          <AssistantResponseBubble title="AI" subtitle={backendExecutionLabel}>
             <p className="whitespace-pre-line">
               {formatScriptOutputConversationReply(output)}
             </p>
