@@ -14,6 +14,7 @@ import {
   Plus,
   Save,
   Scissors,
+  Send,
   Share2,
   Sparkles,
   Trash2,
@@ -147,8 +148,11 @@ const SCRIPT_WORLD_DESCRIPTION_LABEL =
 const SCRIPT_REVISE_STATUS_LABEL = "AI\u4fee\u6539\u4e2d";
 const SCRIPT_DIALOGUE_READY_LABEL = "AI\u5bf9\u8bdd";
 const SCRIPT_REVISE_LABEL = "AI\u4fee\u6539";
+const SCRIPT_SEND_LABEL = "\u53d1\u9001";
 const SCRIPT_GENERATE_LABEL = "\u751f\u6210";
 const SCRIPT_GENERATING_LABEL = "\u751f\u6210\u4e2d";
+const SCRIPT_CONVERSATION_GUIDE =
+  "\u6211\u4f1a\u5148\u5e2e\u4f60\u628a\u6545\u4e8b\u6838\u5fc3\u3001\u89d2\u8272\u5173\u7cfb\u548c\u60c5\u7eea\u8f6c\u6298\u95ee\u6e05\u695a\u3002\u5148\u544a\u8bc9\u6211\u4f60\u60f3\u5f3a\u5316\u54ea\u4e00\u90e8\u5206\uff1a\u4e16\u754c\u89c2\u3001\u4eba\u7269\u51b2\u7a81\u3001\u5206\u955c\u8282\u594f\uff0c\u8fd8\u662f\u7ed3\u5c3e\u60c5\u7eea\uff1f";
 
 const defaultScriptInput: ScriptNodeInput = {
   ...DEFAULT_SCRIPT_NODE_INPUT,
@@ -410,6 +414,7 @@ export function WorkflowCanvasWorkspace({
     useState<ScriptTaskStatusResponse>(emptyScriptTask);
   const [scriptError, setScriptError] = useState<string | null>(null);
   const [scriptBusy, setScriptBusy] = useState(false);
+  const [scriptConversationMode, setScriptConversationMode] = useState(false);
   const [scriptHistoryOpen, setScriptHistoryOpen] = useState(false);
   const [scriptResponseMode, setScriptResponseMode] =
     useState<ScriptResponseMode>("generation");
@@ -671,6 +676,7 @@ export function WorkflowCanvasWorkspace({
     }
 
     setScriptBusy(true);
+    setScriptConversationMode(false);
     setScriptError(null);
     setScriptTask({
       task_id: "pending",
@@ -752,6 +758,7 @@ export function WorkflowCanvasWorkspace({
     const pendingMessages = [...scriptDialogueMessages, userMessage];
 
     setScriptBusy(true);
+    setScriptConversationMode(true);
     setScriptError(null);
     setScriptHistoryOpen(true);
     setScriptResponseMode("revise");
@@ -816,6 +823,16 @@ export function WorkflowCanvasWorkspace({
     } finally {
       setScriptBusy(false);
     }
+  }
+
+  function openScriptConversationMode() {
+    setScriptConversationMode(true);
+    setScriptHistoryOpen(true);
+    setScriptResponseMode("revise");
+    setScriptError(null);
+    setScriptTask((current) =>
+      current.status === "running" ? emptyScriptTask : current,
+    );
   }
 
   return (
@@ -918,6 +935,7 @@ export function WorkflowCanvasWorkspace({
               {selectedScriptNode ? (
                 <ScriptNodeInlineEditor
                   busy={scriptBusy}
+                  conversationMode={scriptConversationMode}
                   error={scriptError}
                   historyOpen={scriptHistoryOpen}
                   input={scriptInput}
@@ -929,6 +947,7 @@ export function WorkflowCanvasWorkspace({
                   task={scriptTask}
                   viewportZoom={state.viewport.zoom}
                   onGenerate={() => {
+                    setScriptConversationMode(false);
                     setScriptResponseMode("generation");
                     setScriptHistoryOpen(true);
                     void generateScriptNode();
@@ -936,9 +955,8 @@ export function WorkflowCanvasWorkspace({
                   onHistoryOpenChange={setScriptHistoryOpen}
                   onInputChange={updateScriptInput}
                   onModelChange={setScriptModel}
-                  onRevise={() => {
-                    setScriptResponseMode("revise");
-                    setScriptHistoryOpen(true);
+                  onRevise={openScriptConversationMode}
+                  onSendMessage={() => {
                     void sendScriptDialogueMessage();
                   }}
                 />
@@ -1291,6 +1309,7 @@ function CanvasStatusBar({ edge, node, notice, zoom }: CanvasStatusBarProps) {
 
 type ScriptNodeInlineEditorProps = {
   busy: boolean;
+  conversationMode: boolean;
   error: string | null;
   historyOpen: boolean;
   input: ScriptNodeInput;
@@ -1309,10 +1328,12 @@ type ScriptNodeInlineEditorProps = {
   ) => void;
   onModelChange: (model: ScriptModelSelection) => void;
   onRevise: () => void;
+  onSendMessage: () => void;
 };
 
 function ScriptNodeInlineEditor({
   busy,
+  conversationMode,
   error,
   historyOpen,
   input,
@@ -1328,6 +1349,7 @@ function ScriptNodeInlineEditor({
   onInputChange,
   onModelChange,
   onRevise,
+  onSendMessage,
 }: ScriptNodeInlineEditorProps) {
   const promptReady = input.world_description.trim().length > 0;
   const left = node.position.x - (SCRIPT_INLINE_EDITOR_WIDTH - NODE_WIDTH) / 2;
@@ -1354,6 +1376,7 @@ function ScriptNodeInlineEditor({
       {historyOpen ? (
         <div className="mb-3" data-script-node-history="true">
           <ScriptOutputTabs
+            conversationMode={conversationMode}
             error={error}
             input={input}
             messages={messages}
@@ -1410,16 +1433,30 @@ function ScriptNodeInlineEditor({
             <Button
               className="h-9 rounded-lg px-3 text-xs"
               data-script-ai-revise="true"
-              disabled={busy || !promptReady}
+              disabled={busy}
               onClick={handleAiRevise}
               type="button"
-              variant="outline"
+              variant={conversationMode ? "default" : "outline"}
             >
               {SCRIPT_REVISE_LABEL}
             </Button>
           </div>
 
           <div className="flex items-center gap-2">
+            {conversationMode ? (
+              <Button
+                aria-label="Send Script dialogue message"
+                className="h-9 rounded-lg px-3 text-xs"
+                data-script-dialogue-send="true"
+                disabled={busy || !promptReady}
+                onClick={onSendMessage}
+                type="button"
+                variant="outline"
+              >
+                {SCRIPT_SEND_LABEL}
+                <Send aria-hidden="true" className="size-4" />
+              </Button>
+            ) : null}
             <Button
               aria-label="Generate Script node"
               className="h-9 rounded-lg px-4 text-xs"
@@ -1653,6 +1690,7 @@ export function ImageNodeFloatingEditor({
 }
 
 type ScriptOutputTabsProps = {
+  conversationMode: boolean;
   error?: string | null;
   input: ScriptNodeInput;
   messages: ScriptDialogueMessage[];
@@ -1663,6 +1701,7 @@ type ScriptOutputTabsProps = {
 };
 
 export function ScriptOutputTabs({
+  conversationMode,
   error,
   input,
   messages,
@@ -1676,7 +1715,7 @@ export function ScriptOutputTabs({
   const statusLabel =
     responseMode === "revise" && !error && task.status === "running"
       ? SCRIPT_REVISE_STATUS_LABEL
-      : responseMode === "revise" && !error && hasDialogueMessages
+      : responseMode === "revise" && !error && (conversationMode || hasDialogueMessages)
         ? SCRIPT_DIALOGUE_READY_LABEL
         : getScriptResponseStatusLabel(task, output, error);
   const statusDetail = error ?? task.error ?? null;
@@ -1747,6 +1786,12 @@ export function ScriptOutputTabs({
           : promptText ? (
               <UserPromptBubble>{promptText}</UserPromptBubble>
             ) : null}
+
+        {conversationMode && !hasDialogueMessages && !statusDetail ? (
+          <AssistantResponseBubble title={SCRIPT_REVISE_LABEL}>
+            <p className="whitespace-pre-line">{SCRIPT_CONVERSATION_GUIDE}</p>
+          </AssistantResponseBubble>
+        ) : null}
 
         {statusLabel === "Error" && statusDetail ? (
           <AssistantResponseBubble title="AI">

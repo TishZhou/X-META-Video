@@ -20,10 +20,20 @@ Record major decisions and progress each session. Keep the current verified stat
 - Current Script Node provider revision: Feature 3 `script-node-005` adds a real server-side OpenAI-compatible text provider for Script Node generation. `mock` remains the default; `TEXT_MODEL_PROVIDER=openai` or `openai-compatible` calls `/responses` using `OPENAI_API_KEY` or `TEXT_MODEL_API_KEY`, defaults to `gpt-5.4-mini`, validates JSON into `ScriptOutput`, and keeps image/video/music as configuration slots only.
 - Current Script Node closure revision: Feature 3 `script-node-006` confirms task coverage includes both the canvas Script node and its AI dialogue script-generation path. `AI淇敼` and Generate now route through the same Script generation handler while preserving distinct response modes, the workspace boundary says Script AI is enabled while media AI/persistence are deferred, and backend runs honor saved Script node provider/model/temperature settings.
 - Current Script Node realtime dialogue revision: Feature 3 `script-node-007` adds backend-connected multi-turn Script AI dialogue. `AI modify` sends the selected Script node prompt/history to `POST /api/v1/projects/{project_id}/nodes/{node_id}/chat`, renders user/assistant history with deterministic mock or OpenAI-compatible text-provider replies, and leaves Generate as the structured `ScriptOutput` path for downstream nodes.
+- Current Script Node dual-mode revision: Feature 3 `script-node-008` separates direct generation from conversation mode. Initial composer shows `AI modify` and `Generate` only; `AI modify` opens `AI对话` guidance without sending; conversation mode exposes a separate `发送` button for backend chat turns; `Generate` remains the direct structured ScriptOutput action.
 - Current Storyboard browser-comment revision: `/workspace` now shows confirmed Script output in the Script node preview after generation; the Storyboard AI response/history panel is fixed-height, scrollable, width-aligned with the composer, hideable/restorable, and keeps stable 820px/288px geometry at 50% canvas zoom; the composer dropdown is a model selector; errors render inside the Storyboard AI panel; and nodes can be dragged to negative x positions without a far-left invisible wall.
 - Current blocker: none.
 
 ## Session Log
+
+### Session 039
+
+- Date: 2026-07-07
+- Goal: Correct Feature 3 Script node UX into two clear modes: direct Generate from prompt, or AI modify conversation mode with separate Send.
+- Completed: Added explicit `scriptConversationMode`; changed `AI modify` to enter conversation mode and show guidance without calling backend chat; added a separate `发送` button visible only in conversation mode; kept Generate as the direct structured ScriptOutput action and made it exit conversation mode; updated Feature 3 task/status artifacts.
+- Verification run: Baseline `.\init.ps1` passed before work and reran web tests: 9 files / 38 tests. Focused workspace test passed 1 file / 15 tests. Web typecheck passed. Full web tests passed 9 files / 39 tests. Web build passed and included `/workspace`. Backend chat preflight returned a mock assistant reply. Final `.\init.ps1` passed after artifact updates and reran web tests: 9 files / 39 tests.
+- Browser QA: Passed on the user's already-open in-app browser tab at `http://localhost:3000/workspace`: initial composer had `AI modify` and Generate but no Send; direct Generate produced Ready structured ScriptOutput; AI modify opened `AI对话` guidance and did not show `Script AI turn` before Send; Send then produced `Script AI turn 1`; Generate remained visible; no `AI disabled` copy, framework overlay, or console warn/error logs were present. Browser `domSnapshot()` still hit the known `incrementalAriaSnapshot` issue, so targeted locators/evaluate plus screenshot were used.
+- Evaluation: Main evaluator accepted `script-node-008` at 146 / 150. Remaining risk is future synthesis from full dialogue history into generation prompt and production streaming/persistence, both outside this pass.
 
 ### Session 038
 

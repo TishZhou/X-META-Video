@@ -151,6 +151,7 @@ describe("WorkflowCanvasWorkspace", () => {
     );
     expect(html).toContain("AI\u4fee\u6539");
     expect(html).toContain("\u751f\u6210");
+    expect(html).not.toContain('data-script-dialogue-send="true"');
     expect(html).toContain("Storyboard");
     expect(html).not.toContain("Mock storyboard model");
     expect(html).not.toContain("Configured model");
@@ -223,6 +224,7 @@ describe("WorkflowCanvasWorkspace", () => {
     const output = makeScriptOutput();
     const html = renderToStaticMarkup(
       <ScriptOutputTabs
+        conversationMode={false}
         input={{ world_description: "A generated snow MV world" }}
         messages={[]}
         output={output}
@@ -269,6 +271,7 @@ describe("WorkflowCanvasWorkspace", () => {
     };
     const html = renderToStaticMarkup(
       <ScriptOutputTabs
+        conversationMode={false}
         error="Provider unavailable"
         input={{ world_description: "A generated snow MV world" }}
         messages={[]}
@@ -307,6 +310,7 @@ describe("WorkflowCanvasWorkspace", () => {
     ];
     const html = renderToStaticMarkup(
       <ScriptOutputTabs
+        conversationMode={true}
         input={{ world_description: "A generated snow MV world" }}
         messages={messages}
         output={makeScriptOutput()}
@@ -324,6 +328,31 @@ describe("WorkflowCanvasWorkspace", () => {
     expect(html).not.toContain("Agent generated answer for the chat history.");
     expect(html).not.toContain("Shot 1");
     expect(html).not.toContain("Direction");
+  });
+
+  it("renders conversation guidance before any Script dialogue turn is sent", () => {
+    const task: ScriptTaskStatusResponse = {
+      task_id: "not-started",
+      project_id: "local-project",
+      node_id: "script-1",
+      status: "queued",
+      error: null,
+    };
+    const html = renderToStaticMarkup(
+      <ScriptOutputTabs
+        conversationMode={true}
+        input={{ world_description: "A generated snow MV world" }}
+        messages={[]}
+        output={null}
+        responseMode="revise"
+        task={task}
+      />,
+    );
+
+    expect(html).toContain("AI\u5bf9\u8bdd");
+    expect(html).toContain("AI\u4fee\u6539");
+    expect(html).toContain("\u6545\u4e8b\u6838\u5fc3");
+    expect(html).not.toContain("Script AI turn");
   });
 
   it("keeps inline composer usable under zoom and permits far-left node dragging", () => {

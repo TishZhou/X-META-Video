@@ -36,9 +36,9 @@
                          "id":  3,
                          "title":  "Script Node",
                          "status":  "passing",
-                         "current_task":  "script-node-007",
+                         "current_task":  "script-node-008",
                          "current_task_status":  "passing",
-                         "user_visible_behavior":  "Users can use the selected Script node inline composer on the workflow canvas for backend-connected multi-turn AI dialogue, then run Generate to produce structured ScriptOutput for downstream nodes.",
+                         "user_visible_behavior":  "Users can either directly Generate structured ScriptOutput from the selected Script node prompt, or click AI modify to enter conversation mode with a separate Send action before generating.",
                          "task_file":  "feature_tasks/3.json"
                      },
                      {

@@ -4,7 +4,7 @@
     "title": "Script Node",
     "status": "passing"
   },
-  "planning_status": "script_node_realtime_ai_dialogue_backend_passing",
+  "planning_status": "script_node_dual_mode_passing",
   "notes": [
     "Feature 3 implements the Script Node MV world-description input/output interaction and API contract only.",
     "The current Script Node input is a single AI chat-style world-view description.",
@@ -15,7 +15,8 @@
     "Storyboards as a separate editable node remain Feature 4.",
     "2026-07-06 provider optimization scope adds OpenAI text execution for Script Node while keeping image, video, and music as agent-layer configuration slots only.",
     "2026-07-07 closure confirms Feature 3 includes both the canvas Script node and its AI dialogue path for generating full ScriptOutput from the composer.",
-    "2026-07-07 realtime dialogue follow-up adds backend-connected multi-turn Script AI chat, while Generate remains the structured ScriptOutput path."
+    "2026-07-07 realtime dialogue follow-up adds backend-connected multi-turn Script AI chat, while Generate remains the structured ScriptOutput path.",
+    "2026-07-07 dual-mode follow-up clarifies that AI modify is a conversation-mode entry, not the chat send action."
   ],
   "small_features": [
     {
@@ -163,6 +164,29 @@
         "2026-07-07 local API preflight passed against POST /api/v1/projects/local-project/nodes/script-1/chat after restarting the stale uvicorn process on port 8000.",
         "2026-07-07 Browser E2E passed on the user's already-open in-app browser tab at http://localhost:3000/workspace: page identity matched, the Script AI boundary was visible, old AI disabled copy was absent, AI modify sent two dialogue turns through the backend chat route, the response panel showed AI dialogue mode, both user turns and Script AI turn 1/2 assistant replies were present, the Generate hint stayed honest about structured ScriptOutput, no framework overlay appeared, and console warn/error logs were empty.",
         "2026-07-07 final .\\init.ps1 passed after artifact updates and reran web tests: 9 files / 38 tests."
+      ]
+    },
+    {
+      "id": "script-node-008",
+      "title": "Separate direct Generate mode from AI modify conversation mode",
+      "status": "passing",
+      "user_visible_behavior": "Users can directly generate a structured script from the prompt, or enter AI modify conversation mode where a separate Send action handles multi-turn dialogue before generation.",
+      "acceptance_criteria": [
+        "AI modify opens the conversation/history panel without sending the current prompt.",
+        "Conversation mode shows an explicit Send action for backend chat turns.",
+        "Generate remains the primary direct structured ScriptOutput action before and after conversation mode.",
+        "The response panel distinguishes conversation guidance/history from generated ScriptOutput.",
+        "Tests and Browser E2E verify AI modify mode entry, chat Send, and direct Generate as separate user flows."
+      ],
+      "verification": [
+        "2026-07-07 baseline .\\init.ps1 passed before implementation and reran web tests: 9 files / 38 tests.",
+        "2026-07-07 corepack pnpm --filter @xmeta/web test -- workflow-canvas-workspace.test.tsx passed: 1 file / 15 tests.",
+        "2026-07-07 corepack pnpm --filter @xmeta/web typecheck passed.",
+        "2026-07-07 corepack pnpm --filter @xmeta/web test passed: 9 files / 39 tests.",
+        "2026-07-07 corepack pnpm --filter @xmeta/web build passed and included /workspace.",
+        "2026-07-07 backend chat preflight against POST /api/v1/projects/local-project/nodes/script-1/chat returned a mock assistant reply.",
+        "2026-07-07 Browser E2E passed on the user's already-open in-app browser tab at http://localhost:3000/workspace: initial composer had AI modify and Generate but no Send control; direct Generate produced Ready structured ScriptOutput; AI modify opened AI dialogue mode and showed guidance without producing Script AI turn text; Send then called backend chat and showed Script AI turn 1; Generate remained visible; no AI disabled copy, framework overlay, or console warn/error logs were present.",
+        "2026-07-07 final .\\init.ps1 passed after artifact updates and reran web tests: 9 files / 39 tests."
       ]
     }
   ]
