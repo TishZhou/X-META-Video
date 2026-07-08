@@ -6,7 +6,7 @@ import {
   xmetaSurfaceClassNames,
 } from "@/lib/design-system";
 
-import { AppTopBar } from "./app-top-bar";
+import { AuthAwareTopBar } from "./auth-aware-top-bar";
 
 type AppShellProps = {
   children: ReactNode;
@@ -18,7 +18,7 @@ export function AppShell({ children }: AppShellProps) {
       data-xmeta-app-shell="true"
       className={cn(xmetaSurfaceClassNames.app, xmetaLayoutClassNames.appShell)}
     >
-      <AppTopBar />
+      <AuthAwareTopBar />
       <main className={xmetaLayoutClassNames.appMain}>{children}</main>
     </div>
   );

@@ -134,6 +134,45 @@ export type ScriptTaskResultResponse = ScriptTaskStatusResponse & {
   output: ScriptNodeOutput | null;
 };
 
+export const ACCOUNT_ROLES = ["owner", "admin", "editor", "viewer"] as const;
+
+export type AccountRole = (typeof ACCOUNT_ROLES)[number];
+
+export type AccountUserResponse = {
+  user_id: string;
+  email: string;
+  name: string;
+};
+
+export type AccountOrganizationResponse = {
+  org_id: string;
+  name: string;
+  role: string;
+};
+
+export type AuthSessionResponse = {
+  user: AccountUserResponse;
+  active_organization: AccountOrganizationResponse;
+};
+
+export type AccountsResponse = {
+  organizations: AccountOrganizationResponse[];
+};
+
+export type AuthLoginRequest = {
+  email: string;
+  password: string;
+};
+
+export type AuthRegisterRequest = AuthLoginRequest & {
+  name: string;
+  workspace_name: string;
+};
+
+export type ActiveAccountRequest = {
+  org_id: string;
+};
+
 export const DEFAULT_SCRIPT_NODE_INPUT: ScriptNodeInput = {
   world_description: "",
 };

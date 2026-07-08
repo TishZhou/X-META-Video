@@ -1,11 +1,16 @@
 import Link from "next/link";
 import { Home, UserCircle } from "lucide-react";
+import type { AuthSessionResponse } from "@xmeta/shared-contracts";
 
 import { Button } from "@/components/ui/button";
 import { xmetaLayoutClassNames } from "@/lib/design-system";
 import { cn } from "@/lib/utils";
 
-export function AppTopBar() {
+type AppTopBarProps = {
+  account?: AuthSessionResponse | null;
+};
+
+export function AppTopBar({ account }: AppTopBarProps) {
   return (
     <header
       className="sticky top-0 z-40 border-b border-border/40 bg-background/80 backdrop-blur-xl"
@@ -45,11 +50,27 @@ export function AppTopBar() {
           </Button>
         </nav>
 
-        <div className="flex min-w-0 items-center gap-2 rounded-md border border-border/50 bg-background/70 px-2.5 py-1.5 text-xs text-muted-foreground">
-          <UserCircle aria-hidden="true" />
-          <span className="hidden sm:inline">Studio Admin</span>
-          <span className="sm:hidden">Admin</span>
-        </div>
+        {account ? (
+          <div className="flex min-w-0 items-center gap-2 rounded-md border border-border/50 bg-background/70 px-2.5 py-1.5 text-xs text-muted-foreground">
+            <UserCircle aria-hidden="true" />
+            <span className="hidden max-w-44 truncate sm:inline">
+              {account.user.email}
+            </span>
+            <span className="max-w-28 truncate">
+              {account.active_organization.name}
+            </span>
+            <span className="rounded-md border border-border/60 px-1.5 py-0.5">
+              {account.active_organization.role}
+            </span>
+          </div>
+        ) : (
+          <Button asChild size="sm" variant="outline">
+            <Link href="/account/login">
+              <UserCircle aria-hidden="true" />
+              Sign in
+            </Link>
+          </Button>
+        )}
       </div>
     </header>
   );

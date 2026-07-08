@@ -1,0 +1,53 @@
+import { renderToStaticMarkup } from "react-dom/server";
+import { describe, expect, it } from "vitest";
+
+import { AuthPanel } from "./auth-panel";
+import { WorkspaceSelector } from "./workspace-selector";
+
+const session = {
+  user: {
+    user_id: "user-1",
+    email: "creator@example.com",
+    name: "Creator",
+  },
+  active_organization: {
+    org_id: "org-1",
+    name: "Creator Studio",
+    role: "owner",
+  },
+};
+
+describe("AuthPanel", () => {
+  it("renders login and registration forms plus disabled OAuth coming soon actions", () => {
+    const html = renderToStaticMarkup(<AuthPanel mode="register" />);
+
+    expect(html).toContain("Create your X-META account");
+    expect(html).toContain('name="email"');
+    expect(html).toContain('name="password"');
+    expect(html).toContain('name="workspace_name"');
+    expect(html).toContain("GitHub");
+    expect(html).toContain("Google");
+    expect(html).toContain("Coming soon");
+    expect(html).toContain("Provider login is not implemented yet");
+  });
+});
+
+describe("WorkspaceSelector", () => {
+  it("renders backend workspace memberships and active account context", () => {
+    const html = renderToStaticMarkup(
+      <WorkspaceSelector
+        session={session}
+        workspaces={[
+          session.active_organization,
+          { org_id: "org-2", name: "Client Studio", role: "editor" },
+        ]}
+      />,
+    );
+
+    expect(html).toContain("Creator Studio");
+    expect(html).toContain("owner");
+    expect(html).toContain("Client Studio");
+    expect(html).toContain("editor");
+    expect(html).toContain("Continue to workspace");
+  });
+});

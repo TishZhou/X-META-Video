@@ -5,7 +5,7 @@
 - Repository root: `D:\xmeta video\X-META-Video`
 - Feature 1 `Web Design`, Feature 2 `Workflow Canvas Foundation`, and Feature 3 `Script Node` are recorded as `passing`.
 - Feature 3 current task is `script-node-009`, recorded as `passing`.
-- Current active feature on branch `zheng` is Feature 15 `Production Auth And Workspace Management`; `auth-account-002`, `auth-account-003`, and `auth-account-004` are recorded as `passing`.
+- Current active feature on branch `zheng` is Feature 15 `Production Auth And Workspace Management`; `auth-account-002`, `auth-account-003`, `auth-account-004`, and `auth-account-005` are recorded as `passing`.
 - Feature 4 `Storyboard Node` is paused for branch coordination and should resume in its own workstream.
 - Pre-existing unrelated working tree edits were preserved: `.env.example`, `AGENTS.md`, `docs/PRODUCT.md`, `pnpm-workspace.yaml`, and untracked `scripts/`.
 
@@ -30,6 +30,8 @@
 - Script Node save/chat/run now require owner/admin/editor. Viewer can read same-workspace task status/result but cannot write or generate.
 - MVP in-memory project/task state is bound to the active organization on first write so another workspace cannot access a guessed project ID or task ID.
 - Account UI, OAuth provider routes, production email delivery, Billing, durable project persistence, and task retry/cancel routes remain future slices.
+- `auth-account-005` scope is limited to login, registration, workspace selection, real top-bar account state, disabled OAuth Coming soon controls, and frontend API cookie-session compatibility.
+- `auth-account-005` added `/account/login`, `/account/register`, and `/account/workspaces`; added a frontend auth API client; connected `AuthAwareTopBar`; removed the fake `Studio Admin` top-bar state; added shared account contracts; and added `credentials: include` to protected Script/Task frontend requests.
 
 ## Verification Evidence
 
@@ -46,6 +48,8 @@
 - Feature 15 evaluator round 2 accepted the backend slice at 145 / 150.
 - Feature 15 RBAC verification: `.\.venv\Scripts\python.exe -m pytest tests\test_script_node_auth.py tests\test_script_node.py -q` passed 29 tests; `.\.venv\Scripts\python.exe -m pytest tests -q` passed 37 tests with one StarletteDeprecationWarning; `.\.venv\Scripts\python.exe -m ruff check xmeta_api tests` passed; Alembic smoke, JSON validation, git diff hygiene, web tests, web build, web typecheck, and final `.\init.ps1` passed.
 - Feature 15 evaluator accepted `auth-account-004` at 145 / 150.
+- Feature 15 auth UI verification: Focused auth/top-bar tests passed 4 files / 9 tests; full web tests passed 11 files / 45 tests; standalone web typecheck passed; web build passed with account routes; Browser E2E passed register -> workspace selection -> workspace; JSON validation passed; `git diff --check` passed with CRLF warnings only; explicit shared-contracts file typecheck passed; final `.\init.ps1` passed with 11 web files / 45 tests.
+- Feature 15 evaluator fallback accepted `auth-account-005` at 144 / 150 after evaluator subagent failed due platform usage limit.
 
 ## Boundaries
 
@@ -53,7 +57,7 @@
 - Current dialogue remains request/response from the UI perspective, not SSE/WebSocket streaming.
 - Conversation history is not yet automatically summarized into the generation prompt; users can refine the main prompt before Generate.
 - Durable chat persistence, queue workers, task event streaming, object storage, asset lineage, generated media, and export remain later feature scope.
-- Feature 15 remaining slices: `auth-account-005` auth/workspace UI, `auth-account-006` full account center MVP, and `auth-account-007` closure evidence.
+- Feature 15 remaining slices: `auth-account-006` full account center MVP and `auth-account-007` closure evidence.
 
 ## Next Commands
 

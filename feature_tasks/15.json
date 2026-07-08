@@ -4,7 +4,7 @@
     "title": "Production Auth And Workspace Management",
     "status": "in_progress"
   },
-  "planning_status": "auth_account_004_passing",
+  "planning_status": "auth_account_005_passing",
   "notes": [
     "Keep this file focused on Production Auth And Workspace Management only.",
     "Feature 15 work is starting on branch zheng while Feature 4 canvas/storyboard work remains active in the shared project context.",
@@ -146,7 +146,7 @@
     {
       "id": "auth-account-005",
       "title": "Build login, registration, and workspace selection UI",
-      "status": "not_started",
+      "status": "passing",
       "user_visible_behavior": "Users can create an account, sign in, select a workspace, and see real account context in the app shell instead of the Studio Admin placeholder.",
       "scope": [
         "Add login and registration routes using the existing design system and TriplD/shadcn components where appropriate.",
@@ -164,6 +164,17 @@
         "Run focused web tests for auth pages and top bar state.",
         "Run full web tests, typecheck, and build.",
         "Run Browser E2E for register to workspace entry."
+      ],
+      "evidence": [
+        "Started on branch zheng after auth-account-004 was verified, evaluated at 145 / 150, and committed as 9081b6c.",
+        "Baseline .\\init.ps1 passed before 005 edits and reran 9 web files / 40 tests.",
+        "Added login, registration, and workspace selection routes under /account.",
+        "Added frontend auth API client for register/login/me/accounts/active/logout with credentials: include and no browser bearer-token storage.",
+        "Replaced the fake Studio Admin top-bar state with truthful sign-in state and real email/workspace/role rendering when an authenticated session is available.",
+        "Rendered GitHub and Google provider login as disabled Coming soon controls with visible provider-not-implemented copy.",
+        "Added credentials: include to protected Script/Task frontend API requests.",
+        "Focused web tests, full web tests, web typecheck, web build, Browser E2E, JSON validation, diff hygiene, shared-contracts file typecheck, and final .\\init.ps1 passed.",
+        "Evaluator fallback accepted auth-account-005 at 144 / 150 after evaluator subagent failed due platform usage limit."
       ]
     },
     {

@@ -8,7 +8,7 @@ Record major decisions and progress each session. Keep the current verified stat
 - Standard startup path: `.\init.ps1`
 - Standard web verification path: `corepack pnpm --filter @xmeta/web test`
 - Current highest-priority unfinished feature on branch `zheng`: Feature 15, Production Auth And Workspace Management.
-- Current active feature on branch `zheng`: Feature 15; current small tasks `auth-account-002`, `auth-account-003`, and `auth-account-004` are `passing`, while the full account system remains `in_progress`.
+- Current active feature on branch `zheng`: Feature 15; current small tasks `auth-account-002`, `auth-account-003`, `auth-account-004`, and `auth-account-005` are `passing`; the full account system remains `in_progress`.
 - Account-system branch note: branch `zheng` now contains Feature 15 backend account foundation work. Feature 4 storyboard/canvas context is paused for branch coordination and should resume on its own branch/workstream.
 - Current reset status: Feature 2 and Feature 3 have been removed from the active plan, their task files have been deleted, old web implementation files have been cleared while preserving minimal app structure, and the remaining feature plan has now been renumbered so old Features 4-17 are new Features 2-15.
 - Current feature numbering: Feature 1 remains Web Design and is now recorded as `passing`; Feature 2 is Workflow Canvas Foundation and is now `passing`; old Features 5-17 shifted to new Features 3-15.
@@ -27,6 +27,19 @@ Record major decisions and progress each session. Keep the current verified stat
 - Current blocker: none.
 
 ## Session Log
+
+### Session 043
+
+- Date: 2026-07-07
+- Goal: Continue Feature 15 with `auth-account-005`, building login, registration, workspace selection, and top-bar account context UI after committing the verified RBAC slice.
+- Starting state: `auth-account-004` was verified, evaluated at 145 / 150, and committed as `9081b6c feature 15 03: apply account RBAC`.
+- Baseline: Confirmed repository root `D:\xmeta video\X-META-Video`, branch `zheng`, read AGENTS, product, architecture, feature list, Feature 15 task file, progress, session handoff, and recent commits. `.\init.ps1` passed before 005 work and reran web tests: 9 files / 40 tests.
+- Scope: Implement only login/register/workspace selection UI, real top-bar account state, OAuth Coming soon controls, and cookie-session frontend API compatibility. Full account center, member management, password flows, OAuth backend routes, billing, backend schema changes, and mobile-specific UI remain out of scope.
+- Completed: Added `/account/login`, `/account/register`, and `/account/workspaces`; added auth API client for register/login/me/accounts/active/logout with `credentials: include`; added auth and workspace UI components; connected the global top bar to authenticated session state without storing bearer tokens; removed the fake `Studio Admin` state; added shared account contracts; and added credentials to protected Script/Task frontend API calls.
+- Verification run: RED focused tests failed before implementation for missing auth files and the legacy `Studio Admin` placeholder. Focused tests then passed 4 files / 9 tests. Full web tests passed 11 files / 45 tests. Standalone web typecheck passed. Web build passed and included `/account/login`, `/account/register`, `/account/workspaces`, and `/workspace`. JSON validation passed. `git diff --check` passed with CRLF warnings only. Explicit shared-contracts file typecheck passed. Final `.\init.ps1` passed with 11 web files / 45 tests.
+- Browser E2E: Playwright CLI passed register -> workspace selection -> workspace against `http://localhost:3002` and temporary FastAPI `http://localhost:8000`. It verified disabled GitHub/Google Coming soon controls with provider-not-implemented copy, real email/workspace/role in the top bar on `/account/workspaces`, no `Studio Admin`, and no console warning/error beyond React DevTools/HMR info.
+- Evaluation: Evaluator subagent failed due platform usage limit. Main fallback evaluator accepted `auth-account-005` at 144 / 150 and recorded the process risk in `evaluator-rubric.md`.
+- Known risk or unresolved issue: Full account center, member management, password/security flows, OAuth backend routes, billing, durable project persistence, project membership tables, and final Feature 15 closure remain later slices.
 
 ### Session 041
 
