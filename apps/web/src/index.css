@@ -196,6 +196,12 @@
       "rlig" 1,
       "calt" 1;
   }
+
+  input::-ms-reveal,
+  input::-ms-clear,
+  input::-webkit-credentials-auto-fill-button {
+    display: none !important;
+  }
 }
 
 @layer components {

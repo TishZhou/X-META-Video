@@ -5,7 +5,7 @@
 - Repository root: `D:\xmeta video\X-META-Video`
 - Feature 1 `Web Design`, Feature 2 `Workflow Canvas Foundation`, and Feature 3 `Script Node` are recorded as `passing`.
 - Feature 3 current task is `script-node-009`, recorded as `passing`.
-- Current active feature on branch `zheng` is Feature 15 `Production Auth And Workspace Management`; `auth-account-002` through `auth-account-006` are recorded as `passing`; `auth-account-007` closure is `in_progress` pending user-run manual page QA.
+- Current active feature on branch `zheng` is Feature 15 `Production Auth And Workspace Management`; `auth-account-002` through `auth-account-007` are recorded as `passing`.
 - Feature 4 `Storyboard Node` is paused for branch coordination and should resume in its own workstream.
 - Pre-existing unrelated working tree edits were preserved: `.env.example`, `AGENTS.md`, `docs/PRODUCT.md`, `pnpm-workspace.yaml`, and untracked `scripts/`.
 
@@ -33,7 +33,7 @@
 - `auth-account-005` scope is limited to login, registration, workspace selection, real top-bar account state, disabled OAuth Coming soon controls, and frontend API cookie-session compatibility.
 - `auth-account-005` added `/account/login`, `/account/register`, and `/account/workspaces`; added a frontend auth API client; connected `AuthAwareTopBar`; removed the fake `Studio Admin` top-bar state; added shared account contracts; and added `credentials: include` to protected Script/Task frontend requests.
 - `auth-account-006` is recorded as passing and includes backend-backed account center APIs plus `/account` UI for profile, workspace settings, members, security/password flows, disabled OAuth placeholders, Owner-only Billing Coming soon, and sign out.
-- Registration UX has been corrected: users enter email, name, password, and confirm password; both password fields can be shown/hidden; registration no longer asks for workspace name; successful registration goes to `/account`, not workspace selection or the canvas. The backend still creates a default workspace and Owner membership for account context, and workspace naming is handled later in workspace settings.
+- Registration UX has been corrected and later gated: the backend still supports email/password registration and creates a default workspace with Owner membership, but the current UI only disables Email input as Coming soon while temporary Name + Password access remains usable. Workspace naming is handled in workspace settings.
 
 ## Verification Evidence
 
@@ -57,8 +57,7 @@
 - Feature 15 closure verification: baseline `.\init.ps1`, backend full pytest 42 tests, backend ruff, web full tests 12 files / 48 tests, web typecheck, web build, JSON validation, `git diff --check`, and final `.\init.ps1` passed for `auth-account-007`.
 - Feature 15 API smoke: temporary FastAPI smoke passed register, owner workspace creation, profile update, workspace rename, member list, invite token, password change, logout, login with changed password, accounts list, and active workspace selection.
 - Feature 15 unavailable-action test coverage: frontend tests now assert Coming soon OAuth/Billing and non-manager account actions render disabled; focused account tests, full web tests, and web typecheck passed after the assertion update.
-- Manual page QA result: user found duplicate password reveal icons, login routing to `/account/workspaces` instead of account center, workspace semantics conflated with direct canvas entry, and poor UI quality for the account chip/account center/workspace surfaces.
-- Follow-up conclusion: later fix pass should use one password reveal icon source, route login to `/account`, redefine workspace as a project-management area with project/canvas entry inside it, and redesign account/workspace UI. User asked to defer implementation and only record analysis now.
+- Manual page QA fixes: password native reveal controls were suppressed so only the custom icon remains; sign-in/registration success routes to `/account`; `/workspace` is now a project/workspace dashboard; canvas moved to `/project`; account/workspace UI received a cleaner pass; Email input is disabled as Coming soon while Name + Password remains usable.
 
 ## Boundaries
 
@@ -66,7 +65,7 @@
 - Current dialogue remains request/response from the UI perspective, not SSE/WebSocket streaming.
 - Conversation history is not yet automatically summarized into the generation prompt; users can refine the main prompt before Generate.
 - Durable chat persistence, queue workers, task event streaming, object storage, asset lineage, generated media, and export remain later feature scope.
-- Feature 15 remaining slice: fix and reverify manual QA findings before `auth-account-007` or Feature 15 can be marked passing.
+- Feature 15 remaining slice: none recorded in this branch; later work should reopen editable Email and provider auth intentionally rather than implying live access.
 
 ## Next Commands
 

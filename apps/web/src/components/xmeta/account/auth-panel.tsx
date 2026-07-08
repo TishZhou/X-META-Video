@@ -24,12 +24,32 @@ function getFormValue(form: HTMLFormElement, name: string) {
   return String(new FormData(form).get(name) ?? "").trim();
 }
 
+function emailFromName(name: string) {
+  const trimmedName = name.trim();
+  const slug = trimmedName
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+  if (slug.length > 0) {
+    return `${slug}@xmeta.local`;
+  }
+
+  let hash = 0;
+  for (const character of trimmedName) {
+    hash = (hash * 31 + (character.codePointAt(0) ?? 0)) >>> 0;
+  }
+
+  return `user-${hash.toString(16)}@xmeta.local`;
+}
+
 export function AuthPanel({ mode }: AuthPanelProps) {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const isRegister = mode === "register";
+  const isEmailInputAvailable = false;
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -38,6 +58,8 @@ export function AuthPanel({ mode }: AuthPanelProps) {
 
     try {
       const form = event.currentTarget;
+      const name = getFormValue(form, "name");
+      const email = emailFromName(name);
 
       if (isRegister) {
         const password = getFormValue(form, "password");
@@ -49,21 +71,19 @@ export function AuthPanel({ mode }: AuthPanelProps) {
         }
 
         await registerAccount({
-          email: getFormValue(form, "email"),
+          email,
           password,
-          name: getFormValue(form, "name"),
+          name,
         });
       } else {
         await loginAccount({
-          email: getFormValue(form, "email"),
+          email,
           password: getFormValue(form, "password"),
         });
       }
 
       globalThis.localStorage?.setItem("xmeta_has_account_session", "true");
-      globalThis.window?.location.assign(
-        isRegister ? "/account" : "/account/workspaces",
-      );
+      globalThis.window?.location.assign("/account");
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Account request failed.");
     } finally {
@@ -79,31 +99,31 @@ export function AuthPanel({ mode }: AuthPanelProps) {
         </CardTitle>
         <CardDescription>
           {isRegister
-            ? "Register with email and confirm your password before continuing."
-            : "Use your email and password to continue to your workspace."}
+            ? "Create a temporary account with name and password. Email entry opens later."
+            : "Sign in with name and password. Email entry opens later."}
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-5">
         <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
-          {isRegister ? (
-            <label className="flex flex-col gap-1.5 text-sm font-medium">
-              Name
-              <input
-                className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-ring"
-                name="name"
-                required
-                type="text"
-              />
-            </label>
-          ) : null}
+          <label className="flex flex-col gap-1.5 text-sm font-medium">
+            Name
+            <input
+              autoComplete="username"
+              className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-ring"
+              name="name"
+              required
+              type="text"
+            />
+          </label>
 
           <label className="flex flex-col gap-1.5 text-sm font-medium">
             Email
             <input
               autoComplete="email"
-              className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-ring"
+              className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground focus-visible:ring-1 focus-visible:ring-ring"
+              disabled={!isEmailInputAvailable}
               name="email"
-              required
+              placeholder="Email Coming soon"
               type="email"
             />
           </label>
@@ -200,8 +220,8 @@ export function AuthPanel({ mode }: AuthPanelProps) {
             Google Coming soon
           </Button>
           <p className="text-xs leading-5 text-muted-foreground">
-            Provider login is not implemented yet. Use email and password for
-            this auth slice.
+            Email, GitHub, and Google account identifiers are not user-editable
+            yet. Use name and password for this auth slice.
           </p>
         </div>
 

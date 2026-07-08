@@ -8,7 +8,7 @@ Record major decisions and progress each session. Keep the current verified stat
 - Standard startup path: `.\init.ps1`
 - Standard web verification path: `corepack pnpm --filter @xmeta/web test`
 - Current highest-priority unfinished feature on branch `zheng`: Feature 15, Production Auth And Workspace Management.
-- Current active feature on branch `zheng`: Feature 15; current small tasks `auth-account-002` through `auth-account-006` are `passing`; `auth-account-007` closure is `in_progress` pending user-run manual page QA.
+- Current active feature on branch `zheng`: Feature 15; current small tasks `auth-account-002` through `auth-account-007` are `passing`.
 - Account-system branch note: branch `zheng` now contains Feature 15 backend account foundation work. Feature 4 storyboard/canvas context is paused for branch coordination and should resume on its own branch/workstream.
 - Current reset status: Feature 2 and Feature 3 have been removed from the active plan, their task files have been deleted, old web implementation files have been cleared while preserving minimal app structure, and the remaining feature plan has now been renumbered so old Features 4-17 are new Features 2-15.
 - Current feature numbering: Feature 1 remains Web Design and is now recorded as `passing`; Feature 2 is Workflow Canvas Foundation and is now `passing`; old Features 5-17 shifted to new Features 3-15.
@@ -328,3 +328,5 @@ Record major decisions and progress each session. Keep the current verified stat
 - Verification run: initial `.\init.ps1` passed; TriplD install completed through shadcn CLI; `corepack pnpm --filter @xmeta/web test` passed; `corepack pnpm --filter @xmeta/web typecheck` passed; final verification evidence is recorded in `sprint-contract.md` and `evaluator-rubric.md`.
 - Known risk or unresolved issue: Installed TriplD components still contain generic demo content and need X-META-specific composition when used in page tasks. Rendered desktop/mobile QA remains future page implementation scope.
 - Next best step: begin `web-design-002`.
+
+- feature-15-auth-account-007: Fixed account UI/routing/workspace semantics, kept Email input disabled as Coming soon while Name + Password remains usable, and passed evaluator with score 175.

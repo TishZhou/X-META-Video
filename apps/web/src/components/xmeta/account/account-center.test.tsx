@@ -49,25 +49,25 @@ describe("AccountCenter", () => {
       <AccountCenter initialMembers={members} initialSession={session} />,
     );
 
-    expect(html).toContain("Account center");
+    expect(html).toContain("Authenticated as");
     expect(html).toContain("Profile");
-    expect(html).toContain("Workspace settings");
-    expect(html).toContain("Members");
+    expect(html).toContain("Workspace configuration");
+    expect(html).toContain("Access control");
     expect(html).toContain("editor@example.com");
-    expect(html).toContain("Invite member");
-    expect(html).toContain("Security");
-    expect(html).toContain("Change password");
-    expect(html).toContain("OAuth");
-    expect(html).toContain("Coming soon");
-    expect(html).toContain("GitHub Coming soon");
-    expect(html).toContain("Google Coming soon");
+    expect(html).toContain("Provision Access");
+    expect(html).toContain("Security credentials");
+    expect(html).toContain("Rotate Password");
+    expect(html).toContain("Identity providers");
+    expect(html).toContain("Pending");
+    expect(html).toContain("GitHub (Pending)");
+    expect(html).toContain("Google (Pending)");
     expect(html).toContain("Billing");
-    expect(html).toContain("Billing Coming soon");
+    expect(html).toContain("Billing (Pending)");
     expect(html).toContain("Owner only");
     expect(html).toContain("Sign out");
-    expectDisabledButton(html, "GitHub Coming soon");
-    expectDisabledButton(html, "Google Coming soon");
-    expectDisabledButton(html, "Billing Coming soon");
+    expectDisabledButton(html, "GitHub (Pending)");
+    expectDisabledButton(html, "Google (Pending)");
+    expectDisabledButton(html, "Billing (Pending)");
   });
 
   it("renders non-manager sessions with unavailable member and billing controls", () => {
@@ -84,13 +84,13 @@ describe("AccountCenter", () => {
       />,
     );
 
-    expect(html).toContain("Account center");
-    expect(html).toContain("viewer access");
-    expect(html).toContain("Members");
-    expect(html).toContain("Owner or Admin role is required");
-    expect(html).toContain("Billing Coming soon");
-    expectDisabledButton(html, "Invite member");
-    expectDisabledButton(html, "Billing Coming soon");
+    expect(html).toContain("Authenticated as");
+    expect(html).toContain("viewer");
+    expect(html).toContain("Access control");
+    expect(html).toContain("Elevated privileges required");
+    expect(html).toContain("Billing (Pending)");
+    expectDisabledButton(html, "Provision Access");
+    expectDisabledButton(html, "Billing (Pending)");
     expect(html).not.toContain("Account required");
   });
 });

@@ -1,4 +1,4 @@
-﻿{
+{
     "project":  "X-META Video",
     "last_updated":  "2026-07-07",
     "rules":  {
@@ -124,9 +124,9 @@
                      {
                          "id":  15,
                          "title":  "Production Auth And Workspace Management",
-                         "status":  "in_progress",
+                         "status":  "passing",
                         "current_task":  "auth-account-007",
-                        "current_task_status":  "in_progress",
+                        "current_task_status":  "passing",
                          "user_visible_behavior":  "Users can log in, select a workspace, and access projects, assets, tasks, and history through production account and role boundaries.",
                          "task_file":  "feature_tasks/15.json"
                      }

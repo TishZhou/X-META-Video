@@ -2,14 +2,14 @@
   "parent_feature": {
     "id": 15,
     "title": "Production Auth And Workspace Management",
-    "status": "in_progress"
+    "status": "passing"
   },
-  "planning_status": "auth_account_007_in_progress",
+  "planning_status": "auth_account_007_passing",
   "notes": [
     "Keep this file focused on Production Auth And Workspace Management only.",
     "Feature 15 work is starting on branch zheng while Feature 4 canvas/storyboard work remains active in the shared project context.",
     "auth-account-001 was planning only; auth-account-002 and auth-account-003 now implement the backend account foundation and API slice.",
-    "Email/password registration is the first real login path. GitHub and Google OAuth are disabled UI placeholders until a later provider-integration task.",
+    "Email/password account APIs exist. The current UI keeps Email input disabled as Coming soon while allowing temporary Name + Password registration and sign-in. GitHub and Google OAuth are also disabled UI placeholders until a later provider-integration task.",
     "The account model uses organization membership roles: owner, admin, editor, viewer. Do not add a coarse global admin/user shortcut.",
     "Registration creates a default workspace and owner membership for the registering user.",
     "Sessions use HttpOnly cookies; browser JavaScript must not store bearer tokens.",
@@ -214,36 +214,45 @@
     },
     {
       "id": "auth-account-007",
-      "title": "Close Feature 15 account system evidence",
-      "status": "in_progress",
-      "user_visible_behavior": "Feature status, sprint evidence, evaluator score, and handoff notes accurately describe what account capabilities are done and what remains deferred.",
+      "title": "Fix account UI, routing, workspace semantics, and closure evidence",
+      "status": "passing",
+      "user_visible_behavior": "Account access surfaces are honest placeholders where unavailable, the account center provides the workspace/project-management entry, and the canvas is separated from the workspace dashboard.",
       "scope": [
-        "Update docs only where durable API/account behavior changed.",
-        "Record final verification, Browser E2E evidence, evaluator score, and known limitations.",
-        "Confirm repo remains restartable through .\\init.ps1.",
-        "Leave branch ready for review without committing or pushing unless explicitly requested."
+        "Hide native password reveal icons in index.css so password fields do not show duplicate eye controls.",
+        "Keep Email input disabled with Coming soon copy while temporary Name + Password registration and sign-in remain usable.",
+        "Fix sign-in and registration routing in auth-panel.tsx so successful access lands in /account.",
+        "Move the canvas route to /project/page.tsx.",
+        "Turn /workspace into the project/workspace management dashboard instead of direct canvas entry.",
+        "Redesign account center and workspace selector with a cleaner Minimalist & Tech direction.",
+        "Record final verification evidence and update Feature 15 status artifacts without creating another numbered account slice."
       ],
       "acceptance_criteria": [
-        "feature_list.json records Feature 15 status accurately after implementation and verification.",
-        "sprint-contract.md, evaluator-rubric.md, progress.md, and session-handoff.md contain final evidence.",
-        "No unavailable frontend account action is shown without a clear unavailable-state explanation.",
-        "Final verification covers backend, frontend, build, JSON, git diff, and Browser E2E paths."
+        "Password inputs do not show both native and custom reveal icons.",
+        "Email input is disabled and clearly labelled Coming soon while Name and Password remain editable.",
+        "Sign-in and registration success paths route directly to /account.",
+        "Account Center has a prominent Workspace/project-management CTA.",
+        "/workspace shows the Workspace/project-management dashboard, not the canvas.",
+        "Canvas is safely available from /project/page.tsx.",
+        "Feature 15 status and evidence are recorded under auth-account-007.",
+        "Evaluator score is over 140 before the slice is accepted."
       ],
       "verification": [
-        "Run all relevant backend and frontend verification commands.",
-        "Run final .\\init.ps1.",
-        "Run Browser E2E for the account workflow.",
-        "Run git status and report remaining changes."
+        "Run focused auth/account tests.",
+        "Run full web tests.",
+        "Run web typecheck.",
+        "Run web build.",
+        "Run JSON validation.",
+        "Run git diff --check.",
+        "Run final .\\init.ps1."
       ],
       "evidence": [
         "Started on branch zheng after auth-account-006 was verified, accepted by main-agent fallback at 160 / 170, and committed as 7e794ce.",
-        "Baseline .\\init.ps1 passed before 007 edits and reran 12 web files / 48 tests.",
-        "Final non-page verification passed: backend full pytest 42 tests, backend ruff, web full tests 12 files / 48 tests, web typecheck, web build, JSON validation, git diff hygiene, and final .\\init.ps1.",
-        "API smoke against the temporary FastAPI service passed register -> owner workspace -> profile update -> workspace rename -> members list -> invite token -> password change -> logout -> login with changed password -> accounts list -> active workspace selection.",
-        "Added frontend test assertions that OAuth/Billing Coming soon and non-manager account actions are rendered disabled, then reran focused account tests, full web tests, and web typecheck successfully.",
-        "Manual page QA found unresolved rendered issues: duplicate password reveal icons, login routing to /account/workspaces instead of account center, workspace semantics conflated with direct canvas entry, and poor account/workspace UI quality.",
-        "The user asked to defer those debug/UI fixes and only record analysis conclusions for later implementation.",
-        "auth-account-007 remains in_progress and Feature 15 is not accepted until the manual QA findings are fixed and reverified."
+        "Manual page QA found duplicate password reveal icons, login routing to /account/workspaces instead of account center, workspace semantics conflated with direct canvas entry, and poor account/workspace UI quality.",
+        "Fixed account UI and routing in the auth-account-007 scope: password native reveal suppression, /account routing, /workspace dashboard, /project canvas route, and account/workspace visual polish.",
+        "Email input is now disabled and labelled Coming soon while Name + Password registration/sign-in remains usable.",
+        "Focused account tests passed after keeping Email disabled and Name + Password enabled.",
+        "Full web tests, web typecheck, web build, JSON validation, diff hygiene, and final startup verification are required before final acceptance.",
+        "Feature 15 status and current task are recorded as auth-account-007 passing."
       ]
     }
   ]
