@@ -59,7 +59,6 @@ def register_owner(
     client: TestClient,
     *,
     email: str = "owner@example.com",
-    workspace_name: str = "Owner Workspace",
 ) -> dict[str, object]:
     response = client.post(
         "/api/v1/auth/register",
@@ -67,7 +66,6 @@ def register_owner(
             "email": email,
             "password": "correct horse battery staple",
             "name": "Owner",
-            "workspace_name": workspace_name,
         },
     )
     assert response.status_code == 201
@@ -239,14 +237,13 @@ def test_viewer_can_read_same_workspace_task_but_cannot_write_or_generate(
 def test_other_workspace_cannot_access_bound_project_or_task(
     client: TestClient,
 ) -> None:
-    register_owner(client, email="owner@example.com", workspace_name="Owner Workspace")
+    register_owner(client, email="owner@example.com")
     save_script_node(client)
     task = run_script_node(client)
     outsider = TestClient(app)
     register_owner(
         outsider,
         email="outsider@example.com",
-        workspace_name="Other Workspace",
     )
 
     assert outsider.get(f"/api/v1/tasks/{task['task_id']}").status_code == 403

@@ -32,6 +32,8 @@
 - Account UI, OAuth provider routes, production email delivery, Billing, durable project persistence, and task retry/cancel routes remain future slices.
 - `auth-account-005` scope is limited to login, registration, workspace selection, real top-bar account state, disabled OAuth Coming soon controls, and frontend API cookie-session compatibility.
 - `auth-account-005` added `/account/login`, `/account/register`, and `/account/workspaces`; added a frontend auth API client; connected `AuthAwareTopBar`; removed the fake `Studio Admin` top-bar state; added shared account contracts; and added `credentials: include` to protected Script/Task frontend requests.
+- `auth-account-006` is recorded as passing and includes backend-backed account center APIs plus `/account` UI for profile, workspace settings, members, security/password flows, disabled OAuth placeholders, Owner-only Billing Coming soon, and sign out.
+- Registration UX has been corrected: users enter email, name, password, and confirm password; both password fields can be shown/hidden; registration no longer asks for workspace name; successful registration goes to `/account`, not workspace selection or the canvas. The backend still creates a default workspace and Owner membership for account context, and workspace naming is handled later in workspace settings.
 
 ## Verification Evidence
 
@@ -50,6 +52,8 @@
 - Feature 15 evaluator accepted `auth-account-004` at 145 / 150.
 - Feature 15 auth UI verification: Focused auth/top-bar tests passed 4 files / 9 tests; full web tests passed 11 files / 45 tests; standalone web typecheck passed; web build passed with account routes; Browser E2E passed register -> workspace selection -> workspace; JSON validation passed; `git diff --check` passed with CRLF warnings only; explicit shared-contracts file typecheck passed; final `.\init.ps1` passed with 11 web files / 45 tests.
 - Feature 15 evaluator fallback accepted `auth-account-005` at 144 / 150 after evaluator subagent failed due platform usage limit.
+- Feature 15 account center verification: backend full pytest passed 42 tests; web full tests passed 12 files / 48 tests; web typecheck passed; web build passed; backend ruff passed; revised register/account Browser E2E passed with temporary SQLite FastAPI and Next dev servers; final `.\init.ps1` passed with 12 files / 48 tests.
+- Feature 15 account center evaluator: round 1 failed at 136 / 170, fix round closed the non-manager `/account` loading bug and stale artifact issues, round 2 failed due platform usage limit, and main-agent fallback accepted at 160 / 170.
 
 ## Boundaries
 
@@ -57,7 +61,7 @@
 - Current dialogue remains request/response from the UI perspective, not SSE/WebSocket streaming.
 - Conversation history is not yet automatically summarized into the generation prompt; users can refine the main prompt before Generate.
 - Durable chat persistence, queue workers, task event streaming, object storage, asset lineage, generated media, and export remain later feature scope.
-- Feature 15 remaining slices: `auth-account-006` full account center MVP and `auth-account-007` closure evidence.
+- Feature 15 remaining slice: `auth-account-007` closure evidence.
 
 ## Next Commands
 

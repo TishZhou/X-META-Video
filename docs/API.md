@@ -68,12 +68,11 @@ Auth sessions use the `xmeta_session` HttpOnly cookie. Auth responses do not ret
 {
   "email": "creator@example.com",
   "password": "correct horse battery staple",
-  "name": "Creator One",
-  "workspace_name": "Creator Studio"
+  "name": "Creator One"
 }
 ```
 
-Registration creates a default organization/workspace and assigns the registering user the `owner` membership role.
+Registration creates a default organization/workspace, assigns the registering user the `owner` membership role, and does not ask the browser to provide a workspace name during registration. Workspace naming is handled later through workspace settings.
 
 `POST /auth/login` request:
 ```json

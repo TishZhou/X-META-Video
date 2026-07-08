@@ -159,6 +159,61 @@ export type AccountsResponse = {
   organizations: AccountOrganizationResponse[];
 };
 
+export type AccountProfileUpdateRequest = {
+  name: string;
+};
+
+export type AccountWorkspaceUpdateRequest = {
+  name: string;
+};
+
+export type AccountMemberResponse = {
+  membership_id: string;
+  user_id: string;
+  email: string;
+  name: string;
+  role: string;
+};
+
+export type AccountMembersResponse = {
+  members: AccountMemberResponse[];
+};
+
+export type AccountInviteRequest = {
+  email: string;
+  role?: AccountRole;
+};
+
+export type AccountInviteResponse = {
+  invite_id: string;
+  email: string;
+  role: string;
+  development_token: string;
+};
+
+export type AccountMemberRoleUpdateRequest = {
+  role: AccountRole;
+};
+
+export type AccountPasswordChangeRequest = {
+  current_password: string;
+  new_password: string;
+};
+
+export type AccountPasswordResetRequest = {
+  email: string;
+};
+
+export type AccountPasswordResetResponse = {
+  email: string;
+  development_token?: string | null;
+};
+
+export type AccountPasswordResetConfirmRequest = {
+  token: string;
+  new_password: string;
+};
+
 export type AuthLoginRequest = {
   email: string;
   password: string;
@@ -166,7 +221,6 @@ export type AuthLoginRequest = {
 
 export type AuthRegisterRequest = AuthLoginRequest & {
   name: string;
-  workspace_name: string;
 };
 
 export type ActiveAccountRequest = {

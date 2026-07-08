@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
-import { Github, Mail } from "lucide-react";
+import { Eye, EyeOff, Github, Mail } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -27,6 +27,8 @@ function getFormValue(form: HTMLFormElement, name: string) {
 export function AuthPanel({ mode }: AuthPanelProps) {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const isRegister = mode === "register";
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -38,11 +40,18 @@ export function AuthPanel({ mode }: AuthPanelProps) {
       const form = event.currentTarget;
 
       if (isRegister) {
+        const password = getFormValue(form, "password");
+        const confirmPassword = getFormValue(form, "confirm_password");
+
+        if (password !== confirmPassword) {
+          setError("Passwords do not match.");
+          return;
+        }
+
         await registerAccount({
           email: getFormValue(form, "email"),
-          password: getFormValue(form, "password"),
+          password,
           name: getFormValue(form, "name"),
-          workspace_name: getFormValue(form, "workspace_name"),
         });
       } else {
         await loginAccount({
@@ -52,7 +61,9 @@ export function AuthPanel({ mode }: AuthPanelProps) {
       }
 
       globalThis.localStorage?.setItem("xmeta_has_account_session", "true");
-      globalThis.window?.location.assign("/account/workspaces");
+      globalThis.window?.location.assign(
+        isRegister ? "/account" : "/account/workspaces",
+      );
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Account request failed.");
     } finally {
@@ -68,7 +79,7 @@ export function AuthPanel({ mode }: AuthPanelProps) {
         </CardTitle>
         <CardDescription>
           {isRegister
-            ? "Register with email and create your first workspace."
+            ? "Register with email and confirm your password before continuing."
             : "Use your email and password to continue to your workspace."}
         </CardDescription>
       </CardHeader>
@@ -99,25 +110,59 @@ export function AuthPanel({ mode }: AuthPanelProps) {
 
           <label className="flex flex-col gap-1.5 text-sm font-medium">
             Password
-            <input
-              autoComplete={isRegister ? "new-password" : "current-password"}
-              className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-ring"
-              minLength={isRegister ? 8 : 1}
-              name="password"
-              required
-              type="password"
-            />
+            <span className="flex h-10 overflow-hidden rounded-md border border-input bg-background focus-within:ring-1 focus-within:ring-ring">
+              <input
+                autoComplete={isRegister ? "new-password" : "current-password"}
+                className="min-w-0 flex-1 bg-transparent px-3 text-sm outline-none placeholder:text-muted-foreground"
+                minLength={isRegister ? 8 : 1}
+                name="password"
+                required
+                type={showPassword ? "text" : "password"}
+              />
+              <button
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                className="flex w-10 items-center justify-center text-muted-foreground hover:text-foreground"
+                onClick={() => setShowPassword((value) => !value)}
+                type="button"
+              >
+                {showPassword ? (
+                  <EyeOff aria-hidden="true" />
+                ) : (
+                  <Eye aria-hidden="true" />
+                )}
+              </button>
+            </span>
           </label>
 
           {isRegister ? (
             <label className="flex flex-col gap-1.5 text-sm font-medium">
-              Workspace name
-              <input
-                className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-ring"
-                name="workspace_name"
-                required
-                type="text"
-              />
+              Confirm password
+              <span className="flex h-10 overflow-hidden rounded-md border border-input bg-background focus-within:ring-1 focus-within:ring-ring">
+                <input
+                  autoComplete="new-password"
+                  className="min-w-0 flex-1 bg-transparent px-3 text-sm outline-none placeholder:text-muted-foreground"
+                  minLength={8}
+                  name="confirm_password"
+                  required
+                  type={showConfirmPassword ? "text" : "password"}
+                />
+                <button
+                  aria-label={
+                    showConfirmPassword
+                      ? "Hide confirm password"
+                      : "Show confirm password"
+                  }
+                  className="flex w-10 items-center justify-center text-muted-foreground hover:text-foreground"
+                  onClick={() => setShowConfirmPassword((value) => !value)}
+                  type="button"
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff aria-hidden="true" />
+                  ) : (
+                    <Eye aria-hidden="true" />
+                  )}
+                </button>
+              </span>
             </label>
           ) : null}
 

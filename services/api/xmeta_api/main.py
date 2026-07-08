@@ -25,6 +25,15 @@ from .providers import (
 )
 from .runner import run_script_task_sync
 from .schemas import (
+    AccountInviteRequest,
+    AccountInviteResponse,
+    AccountMemberResponse,
+    AccountMemberRoleUpdateRequest,
+    AccountMembersResponse,
+    AccountPasswordChangeRequest,
+    AccountPasswordResetConfirmRequest,
+    AccountPasswordResetRequest,
+    AccountPasswordResetResponse,
     ScriptDialogueMessage,
     ScriptDialogueRequest,
     ScriptDialogueResponse,
@@ -37,11 +46,13 @@ from .schemas import (
     TaskStatus,
     AccountOrganizationResponse,
     AccountsResponse,
+    AccountProfileUpdateRequest,
     AccountUserResponse,
     ActiveAccountRequest,
     AuthLoginRequest,
     AuthRegisterRequest,
     AuthSessionResponse,
+    AccountWorkspaceUpdateRequest,
 )
 from .store import store
 
@@ -67,6 +78,7 @@ app.add_middleware(
 
 SESSION_COOKIE_NAME = "xmeta_session"
 EDITOR_ROLES = {MembershipRole.OWNER, MembershipRole.ADMIN, MembershipRole.EDITOR}
+ACCOUNT_MANAGER_ROLES = {MembershipRole.OWNER, MembershipRole.ADMIN}
 
 
 @dataclass(frozen=True)
@@ -94,6 +106,41 @@ def _organization_response(
         name=organization.name,
         role=membership.role.value,
     )
+
+
+def _member_response(membership: Membership) -> AccountMemberResponse:
+    user = membership.user
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Membership user not found.",
+        )
+    return AccountMemberResponse(
+        membership_id=membership.id,
+        user_id=user.id,
+        email=user.email,
+        name=user.name,
+        role=membership.role.value,
+    )
+
+
+def _membership_role(value: str) -> MembershipRole:
+    try:
+        return MembershipRole(value.strip().lower())
+    except ValueError as exc:
+        allowed = ", ".join(role.value for role in MembershipRole)
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Role must be one of: {allowed}.",
+        ) from exc
+
+
+def _require_account_manager(membership: Membership) -> None:
+    if membership.role not in ACCOUNT_MANAGER_ROLES:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Owner or Admin role is required.",
+        )
 
 
 def _set_session_cookie(response: Response, raw_token: str) -> None:
@@ -212,7 +259,6 @@ def register_account(
             email=request.email,
             password=request.password,
             name=request.name,
-            workspace_name=request.workspace_name,
         )
     except AccountConflictError as exc:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
@@ -314,6 +360,182 @@ def set_active_account(
         organization_id=request.org_id,
     )
     return _session_response(service=service, user=user, membership=membership)
+
+
+@app.patch("/api/v1/account/profile", response_model=AuthSessionResponse)
+def update_account_profile(
+    request: AccountProfileUpdateRequest,
+    db: Session = Depends(get_account_db),
+    session_token: str | None = Cookie(default=None, alias=SESSION_COOKIE_NAME),
+) -> AuthSessionResponse:
+    service, _refresh_session, user, membership = _current_session(db, session_token)
+    user = service.update_user_name(user_id=user.id, name=request.name)
+    return _session_response(service=service, user=user, membership=membership)
+
+
+@app.patch("/api/v1/account/workspace", response_model=AuthSessionResponse)
+def update_active_workspace(
+    request: AccountWorkspaceUpdateRequest,
+    db: Session = Depends(get_account_db),
+    session_token: str | None = Cookie(default=None, alias=SESSION_COOKIE_NAME),
+) -> AuthSessionResponse:
+    service, _refresh_session, user, membership = _current_session(db, session_token)
+    _require_account_manager(membership)
+    service.update_organization_name(
+        organization_id=membership.organization_id,
+        name=request.name,
+    )
+    refreshed_membership = service.get_membership(user.id, membership.organization_id)
+    if refreshed_membership is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required.",
+        )
+    return _session_response(service=service, user=user, membership=refreshed_membership)
+
+
+@app.get("/api/v1/account/members", response_model=AccountMembersResponse)
+def list_account_members(
+    db: Session = Depends(get_account_db),
+    session_token: str | None = Cookie(default=None, alias=SESSION_COOKIE_NAME),
+) -> AccountMembersResponse:
+    service, _refresh_session, _user, membership = _current_session(db, session_token)
+    _require_account_manager(membership)
+    members = [
+        _member_response(member)
+        for member in service.list_organization_memberships(membership.organization_id)
+    ]
+    return AccountMembersResponse(members=members)
+
+
+@app.post(
+    "/api/v1/account/invites",
+    response_model=AccountInviteResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_account_invite(
+    request: AccountInviteRequest,
+    db: Session = Depends(get_account_db),
+    session_token: str | None = Cookie(default=None, alias=SESSION_COOKIE_NAME),
+) -> AccountInviteResponse:
+    service, _refresh_session, user, membership = _current_session(db, session_token)
+    _require_account_manager(membership)
+    role = _membership_role(request.role)
+    delivery = service.create_invite_delivery(
+        organization_id=membership.organization_id,
+        email=request.email,
+        invited_by_user_id=user.id,
+        role=role,
+    )
+    return AccountInviteResponse(
+        invite_id=delivery.token.id,
+        email=delivery.token.email,
+        role=(delivery.token.role or MembershipRole.EDITOR).value,
+        development_token=delivery.raw_token,
+    )
+
+
+@app.patch("/api/v1/account/members/{membership_id}", response_model=AccountMemberResponse)
+def update_account_member_role(
+    membership_id: str,
+    request: AccountMemberRoleUpdateRequest,
+    db: Session = Depends(get_account_db),
+    session_token: str | None = Cookie(default=None, alias=SESSION_COOKIE_NAME),
+) -> AccountMemberResponse:
+    service, _refresh_session, _user, actor_membership = _current_session(db, session_token)
+    _require_account_manager(actor_membership)
+    target = service.get_membership_by_id(membership_id)
+    if target is None or target.organization_id != actor_membership.organization_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Member not found.")
+
+    role = _membership_role(request.role)
+    if (
+        target.role == MembershipRole.OWNER
+        and role != MembershipRole.OWNER
+        and service.count_owners(actor_membership.organization_id) <= 1
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="The last Owner cannot be demoted.",
+        )
+
+    updated = service.update_membership_role(membership_id=target.id, role=role)
+    return _member_response(updated)
+
+
+@app.delete("/api/v1/account/members/{membership_id}", status_code=status.HTTP_204_NO_CONTENT)
+def remove_account_member(
+    membership_id: str,
+    db: Session = Depends(get_account_db),
+    session_token: str | None = Cookie(default=None, alias=SESSION_COOKIE_NAME),
+) -> Response:
+    service, _refresh_session, _user, actor_membership = _current_session(db, session_token)
+    _require_account_manager(actor_membership)
+    target = service.get_membership_by_id(membership_id)
+    if target is None or target.organization_id != actor_membership.organization_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Member not found.")
+    if (
+        target.role == MembershipRole.OWNER
+        and service.count_owners(actor_membership.organization_id) <= 1
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="The last Owner cannot be removed.",
+        )
+
+    service.remove_membership(target.id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@app.post("/api/v1/account/password/change", status_code=status.HTTP_204_NO_CONTENT)
+def change_account_password(
+    request: AccountPasswordChangeRequest,
+    db: Session = Depends(get_account_db),
+    session_token: str | None = Cookie(default=None, alias=SESSION_COOKIE_NAME),
+) -> Response:
+    service, _refresh_session, user, _membership = _current_session(db, session_token)
+    try:
+        service.change_password(
+            user_id=user.id,
+            current_password=request.current_password,
+            new_password=request.new_password,
+        )
+    except InvalidCredentialsError as exc:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc)) from exc
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@app.post(
+    "/api/v1/account/password/reset/request",
+    response_model=AccountPasswordResetResponse,
+)
+def request_account_password_reset(
+    request: AccountPasswordResetRequest,
+    db: Session = Depends(get_account_db),
+) -> AccountPasswordResetResponse:
+    delivery = AccountService(db).create_password_reset_delivery(email=request.email)
+    return AccountPasswordResetResponse(
+        email=AccountService.normalize_email(request.email),
+        development_token=delivery.raw_token if delivery is not None else None,
+    )
+
+
+@app.post(
+    "/api/v1/account/password/reset/confirm",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+def confirm_account_password_reset(
+    request: AccountPasswordResetConfirmRequest,
+    db: Session = Depends(get_account_db),
+) -> Response:
+    try:
+        AccountService(db).reset_password(
+            raw_token=request.token,
+            new_password=request.new_password,
+        )
+    except UnauthorizedSessionError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @app.patch(

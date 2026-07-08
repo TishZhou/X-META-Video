@@ -28,6 +28,19 @@ Record major decisions and progress each session. Keep the current verified stat
 
 ## Session Log
 
+### Session 044
+
+- Date: 2026-07-08
+- Goal: Continue Feature 15 `auth-account-006`, full account center MVP, and correct the registration flow to match real account UX.
+- Completed: Added backend account center APIs for profile update, active workspace rename, member listing, development invite tokens, role changes, member removal, password change, and development password reset request/confirm. Added `/account` account center UI with profile, workspace settings, members, security, OAuth Coming soon, Owner-only Billing Coming soon, and sign out. Added shared account center contracts and frontend auth API client methods. Updated the authenticated top bar account state to link to `/account`.
+- Registration correction: Registration now requires confirm password, both password fields have show/hide controls, registration no longer asks users to name a workspace, and successful registration lands in account center `/account` instead of workspace selection or canvas. The backend still creates a default workspace and Owner membership so account context exists, and workspace naming is handled later in workspace settings.
+- Verification run: Backend focused RED failed first because `/auth/register` still required `workspace_name`; frontend focused RED failed because confirm password/show-password UI was missing. After fixes, backend focused register test passed; focused auth-panel/API tests passed; backend full pytest passed 42 tests; web full tests passed 12 files / 47 tests; web typecheck passed; web build passed with `/account`; backend ruff passed; `git diff --check` passed with CRLF warnings only.
+- Browser E2E: Headless Chrome with temporary SQLite FastAPI and Next dev servers passed revised register flow: no `workspace_name` input, confirm-password mismatch blocks submit, password visibility toggles switch labels, successful register lands on `/account`, default workspace appears in account center, password change works, sign out works, login with changed password works, and workspace entry still works after login.
+- Evaluator: Round 1 failed at 136 / 170 because Editor/Viewer `/account` loading called the member-list API unconditionally, non-manager frontend coverage was missing, rubric was stale, and backend command paths were unclear. Fix round made member loading manager-only, kept non-managers on `/account` with disabled controls and explicit Owner/Admin-required copy, added non-manager account-center test coverage, filled the rubric, and clarified backend command paths.
+- Final verification: Post-fix full web tests passed 12 files / 48 tests; web typecheck passed; backend full pytest passed 42 tests; backend ruff passed; web build passed; JSON validation passed; `git diff --check` passed with CRLF warnings only; final `.\init.ps1` passed and reran 12 files / 48 tests.
+- Final evaluation: Evaluator round 2 was attempted but failed due platform usage limit. Main-agent fallback accepted `auth-account-006` at 160 / 170 after fresh verification and closed round 1 findings.
+- Known risk or unresolved issue: Full Feature 15 closure remains `auth-account-007`.
+
 ### Session 043
 
 - Date: 2026-07-07

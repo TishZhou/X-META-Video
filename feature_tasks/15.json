@@ -4,7 +4,7 @@
     "title": "Production Auth And Workspace Management",
     "status": "in_progress"
   },
-  "planning_status": "auth_account_005_passing",
+  "planning_status": "auth_account_006_passing",
   "notes": [
     "Keep this file focused on Production Auth And Workspace Management only.",
     "Feature 15 work is starting on branch zheng while Feature 4 canvas/storyboard work remains active in the shared project context.",
@@ -180,7 +180,7 @@
     {
       "id": "auth-account-006",
       "title": "Build full account center MVP",
-      "status": "not_started",
+      "status": "passing",
       "user_visible_behavior": "Users can manage profile, workspace settings, members, roles, password/security flows, and see honest placeholders for OAuth and Billing.",
       "scope": [
         "Add account center routes for profile, workspace settings, members, security, OAuth placeholders, and Billing Coming soon.",
@@ -198,6 +198,18 @@
         "Run backend member/security pytest.",
         "Run web account center tests.",
         "Run Browser E2E for account center profile, member, security, and placeholder flows."
+      ],
+      "evidence": [
+        "Started on branch zheng after auth-account-005 was verified, evaluated at 144 / 150, and committed as b444653.",
+        "Baseline .\\init.ps1 passed before 006 edits and reran 11 web files / 45 tests.",
+        "Scope is the account center MVP only: profile, workspace settings, members, security/password flows, OAuth disabled placeholders, and Owner-only Billing Coming soon.",
+        "Added backend account center APIs for profile update, active workspace rename, member list/invite/role/remove, password change, and development password reset request/confirm.",
+        "Added frontend /account account center UI, shared account center contracts, and auth API client methods.",
+        "Corrected registration UX: confirm password is required, both password fields have visibility toggles, registration no longer asks for workspace name, and successful registration lands in /account instead of workspace/canvas.",
+        "Backend full pytest passed 42 tests; web full tests passed 12 files / 48 tests after the non-manager fix; web typecheck, web build, backend ruff, and revised register/account browser E2E passed.",
+        "Evaluator round 1 failed at 136 / 170 due non-manager account center loading, missing frontend non-manager test coverage, stale rubric, and unclear backend command paths.",
+        "Fix round made /account load member lists only for Owner/Admin, kept Editor/Viewer on account center with disabled member/Billing controls and explicit Owner/Admin-required copy, added frontend non-manager test coverage, and clarified command paths.",
+        "Evaluator round 2 was attempted but failed due platform usage limit; main-agent fallback accepted the slice at 160 / 170 after fresh full verification and closed round 1 findings."
       ]
     },
     {

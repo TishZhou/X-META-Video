@@ -155,7 +155,6 @@ class AuthRegisterRequest(BaseModel):
     email: str = Field(..., min_length=3)
     password: str = Field(..., min_length=8)
     name: str = Field(..., min_length=1)
-    workspace_name: str = Field(..., min_length=1)
 
 
 class AuthLoginRequest(BaseModel):
@@ -169,6 +168,51 @@ class ActiveAccountRequest(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
     org_id: str = Field(..., min_length=1)
+
+
+class AccountProfileUpdateRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    name: str = Field(..., min_length=1)
+
+
+class AccountWorkspaceUpdateRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    name: str = Field(..., min_length=1)
+
+
+class AccountInviteRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    email: str = Field(..., min_length=3)
+    role: str = Field(default="editor", min_length=1)
+
+
+class AccountMemberRoleUpdateRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    role: str = Field(..., min_length=1)
+
+
+class AccountPasswordChangeRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    current_password: str = Field(..., min_length=1)
+    new_password: str = Field(..., min_length=8)
+
+
+class AccountPasswordResetRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    email: str = Field(..., min_length=3)
+
+
+class AccountPasswordResetConfirmRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    token: str = Field(..., min_length=1)
+    new_password: str = Field(..., min_length=8)
 
 
 class AccountUserResponse(BaseModel):
@@ -190,3 +234,27 @@ class AuthSessionResponse(BaseModel):
 
 class AccountsResponse(BaseModel):
     organizations: list[AccountOrganizationResponse]
+
+
+class AccountMemberResponse(BaseModel):
+    membership_id: str
+    user_id: str
+    email: str
+    name: str
+    role: str
+
+
+class AccountMembersResponse(BaseModel):
+    members: list[AccountMemberResponse]
+
+
+class AccountInviteResponse(BaseModel):
+    invite_id: str
+    email: str
+    role: str
+    development_token: str
+
+
+class AccountPasswordResetResponse(BaseModel):
+    email: str
+    development_token: str | None = None

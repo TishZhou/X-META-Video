@@ -1,4 +1,14 @@
 import type {
+  AccountInviteRequest,
+  AccountInviteResponse,
+  AccountMemberRoleUpdateRequest,
+  AccountMembersResponse,
+  AccountPasswordChangeRequest,
+  AccountPasswordResetConfirmRequest,
+  AccountPasswordResetRequest,
+  AccountPasswordResetResponse,
+  AccountProfileUpdateRequest,
+  AccountWorkspaceUpdateRequest,
   AccountsResponse,
   ActiveAccountRequest,
   AuthLoginRequest,
@@ -82,5 +92,75 @@ export function selectWorkspace(orgId: string) {
 export function logoutAccount() {
   return requestJson<void>("/auth/logout", {
     method: "POST",
+  });
+}
+
+export function updateAccountProfile(payload: AccountProfileUpdateRequest) {
+  return requestJson<AuthSessionResponse>("/account/profile", {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function updateWorkspaceSettings(payload: AccountWorkspaceUpdateRequest) {
+  return requestJson<AuthSessionResponse>("/account/workspace", {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function listAccountMembers() {
+  return requestJson<AccountMembersResponse>("/account/members");
+}
+
+export function inviteAccountMember(payload: AccountInviteRequest) {
+  return requestJson<AccountInviteResponse>("/account/invites", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function updateAccountMemberRole(
+  membershipId: string,
+  payload: AccountMemberRoleUpdateRequest,
+) {
+  return requestJson<void | AccountMembersResponse>(
+    `/account/members/${membershipId}`,
+    {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    },
+  );
+}
+
+export function removeAccountMember(membershipId: string) {
+  return requestJson<void>(`/account/members/${membershipId}`, {
+    method: "DELETE",
+  });
+}
+
+export function changeAccountPassword(payload: AccountPasswordChangeRequest) {
+  return requestJson<void>("/account/password/change", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function requestPasswordReset(payload: AccountPasswordResetRequest) {
+  return requestJson<AccountPasswordResetResponse>(
+    "/account/password/reset/request",
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    },
+  );
+}
+
+export function confirmPasswordReset(
+  payload: AccountPasswordResetConfirmRequest,
+) {
+  return requestJson<void>("/account/password/reset/confirm", {
+    method: "POST",
+    body: JSON.stringify(payload),
   });
 }

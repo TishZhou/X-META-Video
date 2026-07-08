@@ -1,8 +1,13 @@
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { AuthPanel } from "./auth-panel";
 import { WorkspaceSelector } from "./workspace-selector";
+
+vi.mock("@/lib/auth/api", () => ({
+  loginAccount: vi.fn(),
+  registerAccount: vi.fn(),
+}));
 
 const session = {
   user: {
@@ -18,13 +23,21 @@ const session = {
 };
 
 describe("AuthPanel", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("renders login and registration forms plus disabled OAuth coming soon actions", () => {
     const html = renderToStaticMarkup(<AuthPanel mode="register" />);
 
     expect(html).toContain("Create your X-META account");
     expect(html).toContain('name="email"');
     expect(html).toContain('name="password"');
-    expect(html).toContain('name="workspace_name"');
+    expect(html).toContain('name="confirm_password"');
+    expect(html).toContain("Show password");
+    expect(html).toContain("Show confirm password");
+    expect(html).not.toContain('name="workspace_name"');
+    expect(html).not.toContain("Workspace name");
     expect(html).toContain("GitHub");
     expect(html).toContain("Google");
     expect(html).toContain("Coming soon");

@@ -79,7 +79,6 @@ def client(db_session: Session) -> Generator[TestClient, None, None]:
                 "email": "script-owner@example.com",
                 "password": "correct horse battery staple",
                 "name": "Script Owner",
-                "workspace_name": "Script Workspace",
             },
         )
         assert register.status_code == 201

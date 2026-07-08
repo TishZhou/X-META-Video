@@ -49,14 +49,13 @@ def test_register_creates_owner_workspace_and_http_only_session_cookie(
             "email": "creator@example.com",
             "password": "correct horse battery staple",
             "name": "Creator One",
-            "workspace_name": "Creator Studio",
         },
     )
 
     assert response.status_code == 201
     body = response.json()
     assert body["user"]["email"] == "creator@example.com"
-    assert body["active_organization"]["name"] == "Creator Studio"
+    assert body["active_organization"]["name"] == "Creator One Workspace"
     assert body["active_organization"]["role"] == "owner"
     assert "access_token" not in body
     assert "refresh_token" not in body
@@ -70,7 +69,7 @@ def test_register_creates_owner_workspace_and_http_only_session_cookie(
         "organizations": [
             {
                 "org_id": body["active_organization"]["org_id"],
-                "name": "Creator Studio",
+                "name": "Creator One Workspace",
                 "role": "owner",
             }
         ]
@@ -82,7 +81,6 @@ def test_register_rejects_duplicate_email(client: TestClient) -> None:
         "email": "creator@example.com",
         "password": "correct horse battery staple",
         "name": "Creator One",
-        "workspace_name": "Creator Studio",
     }
     assert client.post("/api/v1/auth/register", json=payload).status_code == 201
 
@@ -99,7 +97,6 @@ def test_login_me_and_logout_session_flow(client: TestClient) -> None:
             "email": "creator@example.com",
             "password": "correct horse battery staple",
             "name": "Creator One",
-            "workspace_name": "Creator Studio",
         },
     )
     assert register.status_code == 201
@@ -131,7 +128,6 @@ def test_refresh_rotates_session_cookie_and_revokes_old_cookie(client: TestClien
             "email": "creator@example.com",
             "password": "correct horse battery staple",
             "name": "Creator One",
-            "workspace_name": "Creator Studio",
         },
     )
     assert register.status_code == 201
@@ -164,7 +160,6 @@ def test_active_workspace_selection_validates_membership(
             "email": "creator@example.com",
             "password": "correct horse battery staple",
             "name": "Creator One",
-            "workspace_name": "Creator Studio",
         },
     )
     assert register.status_code == 201
@@ -214,7 +209,6 @@ def test_login_rejects_wrong_password(client: TestClient) -> None:
                 "email": "creator@example.com",
                 "password": "correct horse battery staple",
                 "name": "Creator One",
-                "workspace_name": "Creator Studio",
             },
         ).status_code
         == 201

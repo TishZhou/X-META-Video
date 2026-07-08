@@ -51,7 +51,10 @@ export function AppTopBar({ account }: AppTopBarProps) {
         </nav>
 
         {account ? (
-          <div className="flex min-w-0 items-center gap-2 rounded-md border border-border/50 bg-background/70 px-2.5 py-1.5 text-xs text-muted-foreground">
+          <Link
+            className="flex min-w-0 items-center gap-2 rounded-md border border-border/50 bg-background/70 px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+            href="/account"
+          >
             <UserCircle aria-hidden="true" />
             <span className="hidden max-w-44 truncate sm:inline">
               {account.user.email}
@@ -62,7 +65,7 @@ export function AppTopBar({ account }: AppTopBarProps) {
             <span className="rounded-md border border-border/60 px-1.5 py-0.5">
               {account.active_organization.role}
             </span>
-          </div>
+          </Link>
         ) : (
           <Button asChild size="sm" variant="outline">
             <Link href="/account/login">
