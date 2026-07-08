@@ -38,6 +38,9 @@ export type RunImageGenerationOptions = {
   nodeId: string;
   nodeType: ImageGenerationNodeType;
   prompt: string;
+  referenceImageUrl?: string | null;
+  referenceImageB64?: string | null;
+  referenceImageMimeType?: string | null;
   settings?: ImageGenerationSettings;
 };
 
@@ -46,6 +49,9 @@ export async function runImageGeneration({
   nodeId,
   nodeType,
   prompt,
+  referenceImageUrl,
+  referenceImageB64,
+  referenceImageMimeType,
   settings,
 }: RunImageGenerationOptions): Promise<ImageGenerationResponse> {
   return requestJson<ImageGenerationResponse>(
@@ -54,7 +60,12 @@ export async function runImageGeneration({
       method: "POST",
       body: JSON.stringify({
         node_type: nodeType,
-        input: { prompt },
+        input: {
+          prompt,
+          reference_image_url: referenceImageUrl ?? null,
+          reference_image_b64: referenceImageB64 ?? null,
+          reference_image_mime_type: referenceImageMimeType ?? null,
+        },
         settings,
       }),
     },

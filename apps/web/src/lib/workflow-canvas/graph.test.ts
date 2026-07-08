@@ -110,6 +110,51 @@ describe("workflow graph state", () => {
     expect(connected.notice).toContain("No generation task was started");
   });
 
+  it("allows Script text outcomes to feed Prop / Asset image nodes", () => {
+    const state = createInitialWorkflowGraphState();
+    const withScriptOutcome = workflowGraphReducer(state, {
+      type: "upsertOutputNode",
+      sourceNodeId: "script-1",
+      nodeType: "script",
+      title: "Script outcome",
+      description: "Editable structured script generated from the Script node.",
+      position: { x: 500, y: 120 },
+      output: {
+        sourceNodeId: "script-1",
+        dataType: "script",
+        label: "Script output",
+        provider: "openai",
+        model: "gpt-live",
+        editable: true,
+      },
+      ports: [
+        {
+          key: "script-out",
+          label: "Script",
+          direction: "output",
+          dataType: "script",
+        },
+      ],
+    });
+    const withAsset = workflowGraphReducer(withScriptOutcome, {
+      type: "addNode",
+      nodeType: "asset",
+      position: { x: 820, y: 120 },
+    });
+    const scriptOutcomeNodeId = createWorkflowOutputNodeId("script-1", "script");
+    const connected = workflowGraphReducer(withAsset, {
+      type: "connect",
+      sourcePortId: `${scriptOutcomeNodeId}:script-out`,
+      targetPortId: "asset-4:asset-brief-in",
+    });
+
+    expect(connected.edges.at(-1)).toMatchObject({
+      sourceNodeId: scriptOutcomeNodeId,
+      targetNodeId: "asset-4",
+      dataType: "script",
+    });
+  });
+
   it("upserts reusable output nodes with editable output metadata", () => {
     const state = createInitialWorkflowGraphState();
     const outputNodeId = createWorkflowOutputNodeId("script-1", "script");

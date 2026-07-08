@@ -83,7 +83,13 @@ export const workflowNodeTemplates = [
     title: "Prop / Asset",
     description: "Generates one prop or object photo from a text description.",
     ports: [
-      { key: "asset-brief-in", label: "Prompt", direction: "input", dataType: "brief" },
+      {
+        key: "asset-brief-in",
+        label: "Prompt",
+        direction: "input",
+        dataType: "brief",
+        accepts: ["brief", "script"],
+      },
       { key: "asset-out", label: "Asset", direction: "output", dataType: "asset" },
     ],
   },
@@ -187,6 +193,13 @@ export type WorkflowGraphAction =
       position: WorkflowPoint;
       output: WorkflowNodeOutput;
       ports: WorkflowPortDefinition[];
+      notice?: string;
+    }
+  | {
+      type: "updateNodeOutput";
+      nodeId: string;
+      status?: WorkflowNodeStatus;
+      output: WorkflowNodeOutput;
       notice?: string;
     }
   | { type: "moveNode"; nodeId: string; position: WorkflowPoint }
@@ -334,6 +347,23 @@ export function workflowGraphReducer(
           `${action.title} is ready as a local editable output node.`,
       };
     }
+
+    case "updateNodeOutput":
+      return {
+        ...state,
+        nodes: state.nodes.map((node) =>
+          node.id === action.nodeId
+            ? {
+                ...node,
+                status: action.status ?? node.status,
+                output: action.output,
+              }
+            : node,
+        ),
+        selection: { kind: "node", id: action.nodeId },
+        draftStatus: "dirty",
+        notice: action.notice ?? "Node output updated locally.",
+      };
 
     case "moveNode":
       return {

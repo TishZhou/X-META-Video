@@ -4,7 +4,7 @@
     "title": "Character Image Node",
     "status": "passing"
   },
-  "planning_status": "text_to_image_nodes_001_passing",
+  "planning_status": "image_node_self_contained_002_passing",
   "notes": [
     "Feature 5 owns the first image-generation node implementation because Character Image is the first product image asset node.",
     "This task deliberately shares the foundation with Prop / Asset and Scene Image source nodes so the canvas does not get three duplicated text-to-image implementations.",
@@ -46,6 +46,35 @@
         "2026-07-07 final corepack pnpm --filter @xmeta/web build passed and included /workspace.",
         "2026-07-07 final .\\init.ps1 passed after artifact updates and reran web tests: 9 files / 48 tests.",
         "2026-07-07 follow-up UI alignment: Image node AI editor now uses the same below-node inline composer pattern as Script. Focused workspace test passed 1 file / 26 tests, full web tests passed 9 files / 51 tests, typecheck passed, build passed with /workspace, and Browser QA on http://127.0.0.1:3002/workspace confirmed the Image Composition editor renders inside the canvas stage below the selected node with no image drag/resize floating controls and no console warn/error logs."
+      ]
+    },
+    {
+      "id": "image-node-self-contained-002",
+      "title": "Make image nodes self-contained for text, upload, and image edit",
+      "status": "passing",
+      "user_visible_behavior": "Character Image, Prop / Asset, and Scene Image nodes display their own current image and update in place from connected text prompts, typed prompts, uploads, or image-plus-prompt SeedDream edits.",
+      "acceptance_criteria": [
+        "Image source nodes render as image-bearing nodes with an empty placeholder state, generated/uploaded preview state, and provider/model/no-persistence evidence in the node itself.",
+        "Connected upstream text from Script or other text output nodes can seed the image prompt and be used for generation.",
+        "If the image node has no current image, the below-node AI composer prompt generates a new image through the local SeedDream backend.",
+        "If the image node already has a generated or uploaded image, the below-node AI composer sends prompt plus the current image reference to the local backend for SeedDream image editing.",
+        "Users can upload a local reference image into the selected image node; upload remains local preview only and is labeled as not persisted.",
+        "Successful generation or edit updates the selected image node itself instead of creating a separate image outcome node.",
+        "Frontend still calls only local FastAPI image routes and does not expose Doubao credentials.",
+        "Unavailable durable asset persistence, storage, signed URLs, queues, and history are labeled honestly.",
+        "Tests and rendered QA cover connected-text prompt seeding, prompt-only generation, uploaded/reference-image edit request shape, in-place node preview rendering, and no separate outcome node creation."
+      ],
+      "verification": [
+        "2026-07-08 baseline .\\init.ps1 passed before implementation and reran web tests: 9 files / 52 tests.",
+        "2026-07-08 .\\.venv\\Scripts\\python.exe -m pytest services\\api\\tests\\test_image_node.py passed: 10 tests with one existing Starlette warning.",
+        "2026-07-08 .\\.venv\\Scripts\\python.exe -m pytest services\\api\\tests passed: 52 tests with one existing Starlette warning.",
+        "2026-07-08 corepack pnpm --filter @xmeta/web test -- workflow-canvas-workspace.test.tsx passed: 1 file / 29 tests.",
+        "2026-07-08 corepack pnpm --filter @xmeta/web test -- graph.test.ts passed: 1 file / 7 tests.",
+        "2026-07-08 corepack pnpm --filter @xmeta/web test passed: 9 files / 55 tests.",
+        "2026-07-08 corepack pnpm --filter @xmeta/web typecheck passed.",
+        "2026-07-08 corepack pnpm --filter @xmeta/web build passed and included /workspace.",
+        "2026-07-08 Browser QA on http://localhost:3000/workspace with system Chrome passed: added Scene Image, verified empty image-node state and below-node composer, uploaded the provided PNG into the node, saw one in-node image preview, zero image outcome nodes, local-upload provider evidence, Edit image mode for current-image reference editing, and Use connected text after connecting Script output to Scene Image input.",
+        "2026-07-08 final .\\init.ps1 passed and reran web tests: 9 files / 55 tests."
       ]
     }
   ]

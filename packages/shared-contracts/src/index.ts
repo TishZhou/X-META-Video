@@ -151,6 +151,9 @@ export type ImageGenerationNodeType =
 
 export type ImageGenerationInput = {
   prompt: string;
+  reference_image_url?: string | null;
+  reference_image_b64?: string | null;
+  reference_image_mime_type?: string | null;
 };
 
 export type ImageGenerationSettings = {

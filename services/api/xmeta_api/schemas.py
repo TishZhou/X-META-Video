@@ -90,6 +90,9 @@ class ImageGenerationInput(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
     prompt: str = Field(..., min_length=1)
+    reference_image_url: str | None = Field(default=None, min_length=1)
+    reference_image_b64: str | None = Field(default=None, min_length=1)
+    reference_image_mime_type: str | None = Field(default=None, min_length=1)
 
 
 class ImageGenerationSettings(BaseModel):

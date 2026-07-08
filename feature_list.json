@@ -1,6 +1,6 @@
 {
     "project":  "X-META Video",
-    "last_updated":  "2026-07-07",
+    "last_updated":  "2026-07-08",
     "rules":  {
                   "single_active_feature":  true,
                   "passing_requires_evidence":  true,
@@ -54,9 +54,9 @@
                          "id":  5,
                          "title":  "Character Image Node",
                          "status":  "passing",
-                         "current_task":  "text-to-image-nodes-001",
+                         "current_task":  "image-node-self-contained-002",
                          "current_task_status":  "passing",
-                         "user_visible_behavior":  "Users can generate one image outcome node from Character Image, Prop / Asset, or Scene Image text prompts through the local SeedDream backend path; reusable persisted asset references remain later scope.",
+                         "user_visible_behavior":  "Users can use Character Image, Prop / Asset, and Scene Image nodes as self-contained image nodes: connected text, prompt-only generation, upload, and image-plus-prompt edit all update the selected image node itself.",
                          "task_file":  "feature_tasks/5.json"
                      },
                      {

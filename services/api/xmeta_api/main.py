@@ -176,6 +176,9 @@ def generate_image_node(
         image = submitSeedreamWithRetry(
             settings=settings,
             prompt=request.input.prompt,
+            reference_image_url=request.input.reference_image_url,
+            reference_image_b64=request.input.reference_image_b64,
+            reference_image_mime_type=request.input.reference_image_mime_type,
         )
     except ProviderConfigurationError as exc:
         raise HTTPException(

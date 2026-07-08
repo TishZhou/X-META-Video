@@ -135,6 +135,48 @@ def test_generate_image_node_returns_backend_seedream_evidence(
     }
 
 
+def test_generate_image_node_forwards_reference_image_to_seedream(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    seen: dict[str, object] = {}
+
+    monkeypatch.setenv("DOUBAO_API_KEY", "test-doubao-key")
+    monkeypatch.setenv("DOUBAO_BASE_URL", "https://ark.cn-beijing.volces.com")
+    monkeypatch.setenv("SEEDREAM_MODEL", "doubao-seedream-5-0-260128")
+
+    def fake_submit_seedream(**kwargs: object) -> GeneratedImage:
+        seen.update(kwargs)
+        return GeneratedImage(
+            url="https://image.example/edited.png",
+            mime_type="image/png",
+            width=1024,
+            height=1024,
+        )
+
+    monkeypatch.setattr(
+        "xmeta_api.main.submitSeedreamWithRetry",
+        fake_submit_seedream,
+    )
+    payload = image_generation_payload()
+    payload["input"] = {
+        "prompt": "Make the uploaded prop snowy.",
+        "reference_image_url": "data:image/png;base64,old-image",
+        "reference_image_b64": None,
+        "reference_image_mime_type": "image/png",
+    }
+
+    response = client.post(
+        "/api/v1/projects/project-1/nodes/asset-1/generate-image",
+        json=payload,
+    )
+
+    assert response.status_code == 200
+    assert seen["prompt"] == "Make the uploaded prop snowy."
+    assert seen["reference_image_url"] == "data:image/png;base64,old-image"
+    assert seen["reference_image_b64"] is None
+    assert seen["reference_image_mime_type"] == "image/png"
+
+
 def test_generate_image_node_fails_clearly_when_seedream_key_missing() -> None:
     response = client.post(
         "/api/v1/projects/project-1/nodes/character-1/generate-image",
@@ -228,6 +270,49 @@ def test_seedream_provider_accepts_base64_image_response() -> None:
     assert image.url is None
     assert image.b64_json == "iVBORw0KGgo="
     assert image.mime_type == "image/png"
+
+
+def test_seedream_provider_posts_reference_image_payload() -> None:
+    seen: dict[str, object] = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen["payload"] = json.loads(request.content)
+        return httpx.Response(
+            200,
+            json={
+                "data": [
+                    {
+                        "url": "https://image.example/edited.png",
+                        "width": 1024,
+                        "height": 1024,
+                    }
+                ]
+            },
+        )
+
+    image = submitSeedreamWithRetry(
+        settings=SeedDreamProviderSettings(
+            base_url="https://ark.cn-beijing.volces.com",
+            api_key="test-doubao-key",
+            model="doubao-seedream-5-0-260128",
+            max_retries=0,
+        ),
+        prompt="Edit this uploaded image.",
+        reference_image_b64="old-image",
+        reference_image_mime_type="image/jpeg",
+        client=httpx.Client(transport=SeedDreamTestTransport(handler)),
+    )
+
+    assert seen["payload"] == {
+        "model": "doubao-seedream-5-0-260128",
+        "prompt": "Edit this uploaded image.",
+        "size": "2K",
+        "response_format": "url",
+        "watermark": False,
+        "stream": False,
+        "image": "data:image/jpeg;base64,old-image",
+    }
+    assert image.url == "https://image.example/edited.png"
 
 
 def test_seedream_provider_rejects_response_without_image() -> None:

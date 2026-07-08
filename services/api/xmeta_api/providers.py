@@ -584,6 +584,9 @@ def submitSeedreamWithRetry(
     *,
     settings: SeedDreamProviderSettings,
     prompt: str,
+    reference_image_url: str | None = None,
+    reference_image_b64: str | None = None,
+    reference_image_mime_type: str | None = None,
     client: httpx.Client | None = None,
 ) -> GeneratedImage:
     settings.validate()
@@ -595,6 +598,13 @@ def submitSeedreamWithRetry(
         "watermark": settings.watermark,
         "stream": False,
     }
+    reference_image = _build_seedream_reference_image(
+        url=reference_image_url,
+        b64_json=reference_image_b64,
+        mime_type=reference_image_mime_type,
+    )
+    if reference_image:
+        payload["image"] = reference_image
     attempts = max(0, settings.max_retries) + 1
     last_error: Exception | None = None
 
@@ -942,6 +952,26 @@ def _seedream_generation_url(base_url: str | None) -> str:
     if normalized.endswith("/api/v3"):
         return f"{normalized}/images/generations"
     return f"{normalized}/api/v3/images/generations"
+
+
+def _build_seedream_reference_image(
+    *,
+    url: str | None,
+    b64_json: str | None,
+    mime_type: str | None,
+) -> str | None:
+    if url and url.strip():
+        return url.strip()
+
+    if not b64_json or not b64_json.strip():
+        return None
+
+    image_data = b64_json.strip()
+    if image_data.startswith("data:image/"):
+        return image_data
+
+    image_mime_type = (mime_type or "image/png").strip() or "image/png"
+    return f"data:{image_mime_type};base64,{image_data}"
 
 
 def _extract_seedream_image(response_data: dict[str, Any]) -> GeneratedImage:

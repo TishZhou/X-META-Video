@@ -244,8 +244,6 @@ const defaultImagePrompts = {
     "Composition node image prompt rewriting is not implemented yet.",
 } satisfies Record<"character" | "asset" | "scene" | "composition", string>;
 
-const IMAGE_AI_MODIFY_NOT_IMPLEMENTED =
-  "AI modify for image prompts is not implemented yet. Edit the prompt and use Generate for the live SeedDream backend path.";
 const IMAGE_COMPOSITION_GENERATE_NOT_IMPLEMENTED =
   "Image Composition generation is not implemented in this text-to-image pass. Use Character Image, Prop / Asset, or Scene Image nodes for SeedDream text-to-image.";
 
@@ -426,6 +424,32 @@ export function imageSourceFromWorkflowOutput(output?: WorkflowNodeOutput) {
   }
 
   return `data:${output.media.mimeType ?? "image/png"};base64,${b64Json}`;
+}
+
+export function imageReferenceFromWorkflowOutput(output?: WorkflowNodeOutput) {
+  if (output?.media?.kind !== "image") {
+    return null;
+  }
+
+  const imageUrl = output.media.url?.trim();
+  if (imageUrl) {
+    return {
+      referenceImageUrl: imageUrl,
+      referenceImageB64: null,
+      referenceImageMimeType: output.media.mimeType ?? null,
+    };
+  }
+
+  const b64Json = output.media.b64Json?.trim();
+  if (!b64Json) {
+    return null;
+  }
+
+  return {
+    referenceImageUrl: null,
+    referenceImageB64: b64Json,
+    referenceImageMimeType: output.media.mimeType ?? null,
+  };
 }
 
 export function audioSourceFromGeneratedAudio(audio: GeneratedAudio) {
@@ -614,6 +638,35 @@ export function getConnectedAudioLyrics(
   }
 
   return null;
+}
+
+export function getConnectedImagePrompt(
+  node: WorkflowNode,
+  state: WorkflowGraphState,
+  scriptInput: ScriptNodeInput,
+  scriptOutcomes: ScriptOutcomeMap,
+) {
+  const incomingTextEdge = state.edges.find(
+    (edge) =>
+      edge.targetNodeId === node.id &&
+      (edge.dataType === "script" ||
+        edge.dataType === "storyboard" ||
+        edge.dataType === "brief" ||
+        edge.dataType === "character" ||
+        edge.dataType === "asset" ||
+        edge.dataType === "scene"),
+  );
+
+  if (!incomingTextEdge) {
+    return null;
+  }
+
+  const sourceNode = findNode(state.nodes, incomingTextEdge.sourceNodeId);
+  if (!sourceNode) {
+    return null;
+  }
+
+  return getConnectedTextFromNode(sourceNode, scriptInput, scriptOutcomes);
 }
 
 export function getConnectedVideoInputs(
@@ -880,10 +933,22 @@ export function WorkflowCanvasWorkspace({
     selectedNode?.role === "source" && isFloatingImageEditorNodeType(selectedNode.type)
       ? selectedNode
       : null;
+  const selectedConnectedImagePrompt = selectedImageEditorNode
+    ? getConnectedImagePrompt(
+        selectedImageEditorNode,
+        state,
+        scriptInput,
+        scriptOutcomes,
+      )
+    : null;
   const selectedImagePrompt = selectedImageEditorNode
     ? (imagePrompts[selectedImageEditorNode.id] ??
+      selectedConnectedImagePrompt ??
       getDefaultImagePrompt(selectedImageEditorNode.type))
     : "";
+  const selectedImageSource = selectedImageEditorNode
+    ? imageSourceFromWorkflowOutput(selectedImageEditorNode.output)
+    : null;
   const selectedImageGeneration = selectedImageEditorNode
     ? (imageGenerations[selectedImageEditorNode.id] ?? null)
     : null;
@@ -1309,6 +1374,121 @@ export function WorkflowCanvasWorkspace({
     });
   }
 
+  function updateImageNodeLocalOutput({
+    node,
+    provider,
+    model,
+    url,
+    b64Json,
+    mimeType,
+    alt,
+    notice,
+  }: {
+    node: WorkflowNode;
+    provider: string;
+    model?: string | null;
+    url?: string | null;
+    b64Json?: string | null;
+    mimeType?: string | null;
+    alt: string;
+    notice: string;
+  }) {
+    const dataType = getImageOutputDataType(node.type);
+
+    dispatch({
+      type: "updateNodeOutput",
+      nodeId: node.id,
+      status: "ready",
+      output: {
+        sourceNodeId: node.id,
+        dataType,
+        label: `${node.title} image`,
+        provider,
+        model,
+        editable: false,
+        media: {
+          kind: "image",
+          url,
+          b64Json,
+          mimeType,
+          alt,
+        },
+      },
+      notice,
+    });
+  }
+
+  function uploadImageForNode(node: WorkflowNode, file: File | null) {
+    if (!file) {
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      const message = "Upload an image file before using it as a reference.";
+      setImageErrors((current) => ({ ...current, [node.id]: message }));
+      setImageResponseOpen(true);
+      dispatch({
+        type: "setNodeStatus",
+        nodeId: node.id,
+        status: "blocked",
+        notice: message,
+      });
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = typeof reader.result === "string" ? reader.result : null;
+      if (!dataUrl) {
+        const message = "The uploaded image could not be read.";
+        setImageErrors((current) => ({ ...current, [node.id]: message }));
+        setImageResponseOpen(true);
+        dispatch({
+          type: "setNodeStatus",
+          nodeId: node.id,
+          status: "blocked",
+          notice: message,
+        });
+        return;
+      }
+
+      setImageGenerations((current) => {
+        const next = { ...current };
+        delete next[node.id];
+        return next;
+      });
+      setImageErrors((current) => {
+        const next = { ...current };
+        delete next[node.id];
+        return next;
+      });
+      setImageResponseOpen(false);
+      updateImageNodeLocalOutput({
+        node,
+        provider: "local-upload",
+        model: file.name || "browser-file",
+        url: dataUrl,
+        b64Json: null,
+        mimeType: file.type || "image/png",
+        alt: `${node.title} uploaded image`,
+        notice:
+          `${node.title} uploaded locally. It can be used as a SeedDream edit reference; durable asset storage is deferred.`,
+      });
+    };
+    reader.onerror = () => {
+      const message = "The uploaded image could not be read.";
+      setImageErrors((current) => ({ ...current, [node.id]: message }));
+      setImageResponseOpen(true);
+      dispatch({
+        type: "setNodeStatus",
+        nodeId: node.id,
+        status: "blocked",
+        notice: message,
+      });
+    };
+    reader.readAsDataURL(file);
+  }
+
   async function generateImageNode(node: WorkflowNode) {
     const nodeType = getImageGenerationNodeType(node.type);
 
@@ -1318,7 +1498,9 @@ export function WorkflowCanvasWorkspace({
     }
 
     const prompt = (
-      imagePrompts[node.id] ?? getDefaultImagePrompt(node.type)
+      imagePrompts[node.id] ??
+      getConnectedImagePrompt(node, state, scriptInput, scriptOutcomes) ??
+      getDefaultImagePrompt(node.type)
     ).trim();
 
     if (!prompt) {
@@ -1334,6 +1516,7 @@ export function WorkflowCanvasWorkspace({
       return;
     }
 
+    const reference = imageReferenceFromWorkflowOutput(node.output);
     setImageBusyNodeId(node.id);
     setImageErrors((current) => {
       const next = { ...current };
@@ -1349,64 +1532,30 @@ export function WorkflowCanvasWorkspace({
     });
 
     try {
+      setImagePrompts((current) => ({ ...current, [node.id]: prompt }));
       const result = await imageGenerationRunner({
         projectId: state.projectId,
         nodeId: node.id,
         nodeType,
         prompt,
+        referenceImageUrl: reference?.referenceImageUrl ?? null,
+        referenceImageB64: reference?.referenceImageB64 ?? null,
+        referenceImageMimeType: reference?.referenceImageMimeType ?? null,
       });
-      const dataType = getImageOutputDataType(node.type);
-      const outcomeTitle = `${node.title} outcome`;
-      const outcomeNodeId = createWorkflowOutputNodeId(node.id, dataType);
+      const editedExistingImage = Boolean(reference);
 
       setImageGenerations((current) => ({ ...current, [node.id]: result }));
-      dispatch({
-        type: "setNodeStatus",
-        nodeId: node.id,
-        status: "ready",
-        notice: `${outcomeTitle} is ready as a local image node.`,
-      });
-      dispatch({
-        type: "upsertOutputNode",
-        sourceNodeId: node.id,
-        nodeType: node.type,
-        title: outcomeTitle,
-        description:
-          "SeedDream text-to-image result. Local preview only; asset persistence is deferred.",
-        position: {
-          x: node.position.x + 360,
-          y: Math.max(80, node.position.y - 40),
-        },
-        output: {
-          sourceNodeId: node.id,
-          dataType,
-          label: `${node.title} image`,
-          provider: result.provider,
-          model: result.model,
-          editable: false,
-          media: {
-            kind: "image",
-            url: result.image.url,
-            b64Json: result.image.b64_json,
-            mimeType: result.image.mime_type,
-            alt: `${node.title} generated image`,
-          },
-        },
-        ports: [
-          {
-            key: `${dataType}-out`,
-            label: connectionDataTypeLabel(dataType),
-            direction: "output",
-            dataType,
-          },
-        ],
+      updateImageNodeLocalOutput({
+        node,
+        provider: result.provider,
+        model: result.model,
+        url: result.image.url,
+        b64Json: result.image.b64_json,
+        mimeType: result.image.mime_type,
+        alt: `${node.title} ${editedExistingImage ? "edited" : "generated"} image`,
         notice:
-          `${outcomeTitle} updated. Image preview is not persisted to the asset library yet.`,
+          `${node.title} ${editedExistingImage ? "edited" : "generated"} on this node. Image preview is not persisted to the asset library yet.`,
       });
-      setImageGenerations((current) => ({
-        ...current,
-        [outcomeNodeId]: result,
-      }));
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Image generation failed.";
@@ -1856,7 +2005,7 @@ export function WorkflowCanvasWorkspace({
             className="pointer-events-none absolute left-4 top-16 z-30 max-w-[calc(100vw-2rem)] rounded-lg border border-neutral-200 bg-white/90 px-3 py-1.5 text-xs text-neutral-600 shadow-sm backdrop-blur"
             data-workspace-boundary-label="true"
           >
-            Local workflow only / Script AI enabled / media AI and persistence deferred
+            Local workflow only / Script + media AI enabled / persistence deferred
           </div>
 
           <div
@@ -2006,6 +2155,8 @@ export function WorkflowCanvasWorkspace({
                 <ImageNodeFloatingEditor
                   frame={imageEditorFrame}
                   busy={selectedImageBusy}
+                  connectedPrompt={selectedConnectedImagePrompt}
+                  currentImageSource={selectedImageSource}
                   error={selectedImageError}
                   generation={selectedImageGeneration}
                   node={selectedImageEditorNode}
@@ -2021,11 +2172,11 @@ export function WorkflowCanvasWorkspace({
                     updateImagePrompt(selectedImageEditorNode.id, value)
                   }
                   onResponseOpenChange={setImageResponseOpen}
-                  onRevise={() =>
-                    showImageNotImplemented(
-                      selectedImageEditorNode,
-                      IMAGE_AI_MODIFY_NOT_IMPLEMENTED,
-                    )
+                  onUpload={(file) =>
+                    uploadImageForNode(selectedImageEditorNode, file)
+                  }
+                  onUseConnectedPrompt={(value) =>
+                    updateImagePrompt(selectedImageEditorNode.id, value)
                   }
                 />
               ) : null}
@@ -2574,6 +2725,8 @@ export function ScriptNodeInlineEditor({
 type ImageNodeFloatingEditorProps = {
   frame: ImageEditorFrame;
   busy: boolean;
+  connectedPrompt: string | null;
+  currentImageSource: string | null;
   error: string | null;
   generation: ImageGenerationResponse | null;
   node: WorkflowNode;
@@ -2585,11 +2738,14 @@ type ImageNodeFloatingEditorProps = {
   onGenerate: () => void;
   onPromptChange: (prompt: string) => void;
   onResponseOpenChange: (open: boolean) => void;
-  onRevise: () => void;
+  onUpload: (file: File | null) => void;
+  onUseConnectedPrompt: (prompt: string) => void;
 };
 
 export function ImageNodeFloatingEditor({
   busy,
+  connectedPrompt,
+  currentImageSource,
   error,
   generation,
   node,
@@ -2599,9 +2755,12 @@ export function ImageNodeFloatingEditor({
   onGenerate,
   onPromptChange,
   onResponseOpenChange,
-  onRevise,
+  onUpload,
+  onUseConnectedPrompt,
 }: ImageNodeFloatingEditorProps) {
   const promptReady = prompt.trim().length > 0;
+  const hasCurrentImage = Boolean(currentImageSource);
+  const uploadInputRef = useRef<HTMLInputElement>(null);
   const imageSource = generation
     ? imageSourceFromGeneratedImage(generation.image)
     : null;
@@ -2684,13 +2843,14 @@ export function ImageNodeFloatingEditor({
           id={`image-node-prompt-${node.id}`}
           aria-label="Image prompt"
           className="min-h-20 resize-none border-0 bg-transparent px-0 text-sm shadow-none placeholder:text-neutral-400 focus-visible:ring-0"
+          disabled={busy}
           onChange={(event) => onPromptChange(event.target.value)}
           placeholder="Describe the image frame, location, character pose, wardrobe, lighting, and mood..."
           value={prompt}
         />
 
         <div className="mt-3 flex items-center justify-between gap-3 border-t border-neutral-200 pt-3">
-          <div className="flex items-center gap-2">
+          <div className="flex min-w-0 items-center gap-2">
             <label htmlFor={`image-model-select-${node.id}`} className="sr-only">
               Image model
             </label>
@@ -2704,25 +2864,52 @@ export function ImageNodeFloatingEditor({
             >
               <option value="configured">Configured image model</option>
             </select>
+            <input
+              ref={uploadInputRef}
+              accept="image/*"
+              aria-label="Upload image reference"
+              className="hidden"
+              data-image-upload-input="true"
+              disabled={busy}
+              onChange={(event) => {
+                onUpload(event.target.files?.[0] ?? null);
+                event.currentTarget.value = "";
+              }}
+              type="file"
+            />
             <Button
               className="h-9 rounded-lg px-3 text-xs"
-              data-image-ai-revise="true"
+              data-image-upload-reference="true"
               disabled={busy}
-              onClick={() => {
-                onResponseOpenChange(true);
-                onRevise();
-              }}
+              onClick={() => uploadInputRef.current?.click()}
               type="button"
               variant="outline"
             >
-              {"AI\u4fee\u6539"}
+              <FolderDown aria-hidden="true" className="size-4" />
+              Upload
             </Button>
+            {connectedPrompt ? (
+              <Button
+                className="h-9 max-w-44 rounded-lg px-3 text-xs"
+                data-image-use-connected-prompt="true"
+                disabled={busy}
+                onClick={() => onUseConnectedPrompt(connectedPrompt)}
+                title={connectedPrompt}
+                type="button"
+                variant="outline"
+              >
+                <span className="truncate">Use connected text</span>
+              </Button>
+            ) : null}
           </div>
 
           <Button
-            aria-label="Generate Image node"
+            aria-label={
+              hasCurrentImage ? "Edit Image node" : "Generate Image node"
+            }
             className="h-9 rounded-lg px-4 text-xs"
             data-image-generate-loading={busy ? "true" : undefined}
+            data-image-reference-edit={hasCurrentImage ? "true" : undefined}
             disabled={busy || !promptReady}
             onClick={() => {
               onResponseOpenChange(true);
@@ -2730,7 +2917,7 @@ export function ImageNodeFloatingEditor({
             }}
             type="button"
           >
-            {busy ? "Generating" : "Generate"}
+            {busy ? "Generating" : hasCurrentImage ? "Edit image" : "Generate"}
             {busy ? (
               <Loader2 aria-hidden="true" className="size-4 animate-spin" />
             ) : (
@@ -3555,6 +3742,8 @@ export function WorkflowNodeCard({
   const imageOutputSource = imageSourceFromWorkflowOutput(node.output);
   const audioOutputSource = audioSourceFromWorkflowOutput(node.output);
   const videoOutputSource = videoSourceFromWorkflowOutput(node.output);
+  const isSelfContainedImageNode =
+    node.role === "source" && getImageGenerationNodeType(node.type) !== null;
 
   return (
     <article
@@ -3661,11 +3850,19 @@ export function WorkflowNodeCard({
             </p>
           </div>
         ) : imageOutputSource ? (
-          <div data-image-outcome-node="true">
+          <div
+            data-image-node-current={
+              isSelfContainedImageNode ? "true" : undefined
+            }
+            data-image-outcome-node={node.role === "outcome" ? "true" : undefined}
+          >
             <div className="overflow-hidden rounded-md border border-neutral-200 bg-neutral-50">
               <img
                 alt={node.output?.media?.alt ?? `${node.title} generated image`}
                 className="aspect-square w-full object-cover"
+                data-image-node-current-preview={
+                  isSelfContainedImageNode ? "true" : undefined
+                }
                 data-image-outcome-preview="true"
                 src={imageOutputSource}
               />
@@ -3673,6 +3870,14 @@ export function WorkflowNodeCard({
             <p className="mt-2 text-[11px] leading-4 text-neutral-500">
               Local preview only; not saved to the asset library yet.
             </p>
+          </div>
+        ) : isSelfContainedImageNode ? (
+          <div
+            className="flex h-28 flex-col items-center justify-center gap-2 rounded-md border border-dashed border-neutral-300 bg-neutral-50 text-xs text-neutral-500"
+            data-image-node-empty-state="true"
+          >
+            <Image aria-hidden="true" className="size-6 text-neutral-400" />
+            <span>No image yet</span>
           </div>
         ) : node.type === "script" ? (
           <div className="max-h-28 overflow-hidden text-xs leading-5 text-neutral-700">

@@ -100,7 +100,7 @@ Workflow APIs support the canvas-based node editor.
 | `GET` | `/projects/{project_id}/nodes/{node_id}` | Load node input/output state | member |
 | `PATCH` | `/projects/{project_id}/nodes/{node_id}` | Save node input, settings, or selected output | editor |
 | `POST` | `/projects/{project_id}/nodes/{node_id}/chat` | Send one backend-connected Script node AI dialogue turn | editor |
-| `POST` | `/projects/{project_id}/nodes/{node_id}/generate-image` | Generate one text-to-image preview for Character Image, Prop / Asset, or Scene Image nodes | editor |
+| `POST` | `/projects/{project_id}/nodes/{node_id}/generate-image` | Generate or edit one image preview for Character Image, Prop / Asset, or Scene Image nodes | editor |
 | `POST` | `/projects/{project_id}/nodes/{node_id}/generate-audio` | Generate one text-to-music preview for Audio nodes | editor |
 | `POST` | `/projects/{project_id}/nodes/{node_id}/generate-video` | Generate one video preview for Video nodes from prompt plus optional image/audio references | editor |
 | `POST` | `/projects/{project_id}/nodes/{node_id}/run` | Create generation task for one node | editor |
@@ -315,7 +315,7 @@ For Feature 3, only the text category is executed: set `TEXT_MODEL_PROVIDER=open
 
 Provider config is read from process environment first, then local `.env`, then `services/api/.env`, then `.env.example` for this repository's current local workflow. Tests disable dotenv loading so unit tests do not accidentally call a live provider.
 
-### Image Node Text-to-Image Generation
+### Image Node Text-to-Image / Image Edit Generation
 
 For `node_type=character_image`, `node_type=prop_asset`, or `node_type=scene_image`, the web app calls the local FastAPI route:
 
@@ -329,7 +329,10 @@ Request:
 {
   "node_type": "character_image",
   "input": {
-    "prompt": "Full-body character reference, front view, clear face and wardrobe."
+    "prompt": "Full-body character reference, front view, clear face and wardrobe.",
+    "reference_image_url": null,
+    "reference_image_b64": null,
+    "reference_image_mime_type": null
   },
   "settings": {
     "provider": "doubao-seedream",
@@ -362,9 +365,9 @@ Response:
 }
 ```
 
-The backend wrapper is `submitSeedreamWithRetry()` -> `submitSeedreamGenerationOnce()` and posts to the configured Doubao Ark `/api/v3/images/generations` endpoint. The web app never calls Doubao directly and never receives provider credentials.
+When the selected image node already contains a generated or uploaded image, the web app sends that image as `reference_image_url` or `reference_image_b64` with the prompt. The backend wrapper is `submitSeedreamWithRetry()` -> `submitSeedreamGenerationOnce()` and posts to the configured Doubao Ark `/api/v3/images/generations` endpoint, including the reference as the SeedDream `image` payload field for image editing. The web app never calls Doubao directly and never receives provider credentials.
 
-Image generation currently returns a local preview output only. It does not claim object storage, signed URLs, reusable asset versions, queue workers, or generation history writes yet.
+Image generation and editing currently update the selected image node as a local preview only. It does not claim object storage, signed URLs, reusable asset versions, queue workers, or generation history writes yet.
 
 ### Audio Node Text-to-Music Generation
 

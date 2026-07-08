@@ -30,8 +30,10 @@ import {
   formatWorkflowOutputExecutionLabel,
   formatTemplateIoLabel,
   getConnectedAudioLyrics,
+  getConnectedImagePrompt,
   getConnectedVideoInputs,
   getImageGenerationNodeType,
+  imageReferenceFromWorkflowOutput,
   imageSourceFromGeneratedImage,
   imageSourceFromWorkflowOutput,
   getInlineEditorCompensationScale,
@@ -106,8 +108,8 @@ describe("WorkflowCanvasWorkspace", () => {
     expect(html).toContain('data-workspace-bottom-toolbar="true"');
     expect(html).toContain('data-workspace-boundary-label="true"');
     expect(html).toContain("Local workflow only");
-    expect(html).toContain("Script AI enabled");
-    expect(html).toContain("media AI and persistence deferred");
+    expect(html).toContain("Script + media AI enabled");
+    expect(html).toContain("persistence deferred");
     expect(html).not.toContain("AI disabled");
     expect(html).not.toContain("Node palette");
     expect(html).not.toContain("Inspector");
@@ -256,6 +258,8 @@ describe("WorkflowCanvasWorkspace", () => {
       <ImageNodeFloatingEditor
         frame={{ x: 880, y: 88, width: 430, height: 520 }}
         busy={false}
+        connectedPrompt="Connected character profile text"
+        currentImageSource="https://image.example/current.png"
         error={null}
         generation={generation}
         node={imageNode!}
@@ -267,7 +271,8 @@ describe("WorkflowCanvasWorkspace", () => {
         onGenerate={() => undefined}
         onPromptChange={() => undefined}
         onResponseOpenChange={() => undefined}
-        onRevise={() => undefined}
+        onUpload={() => undefined}
+        onUseConnectedPrompt={() => undefined}
       />,
     );
 
@@ -276,11 +281,16 @@ describe("WorkflowCanvasWorkspace", () => {
     expect(html).toContain('data-image-node-input-composer="true"');
     expect(html).toContain('data-image-node-response="true"');
     expect(html).toContain('data-image-model-select="true"');
-    expect(html).toContain('data-image-ai-revise="true"');
+    expect(html).toContain('data-image-upload-reference="true"');
+    expect(html).toContain('data-image-upload-input="true"');
+    expect(html).toContain('data-image-use-connected-prompt="true"');
+    expect(html).toContain('data-image-reference-edit="true"');
     expect(html).not.toContain('data-image-node-drag-handle="true"');
     expect(html).not.toContain('aria-label="Close Image node editor"');
     expect(html).not.toContain('aria-label="Resize Image node editor"');
     expect(html).toContain("Configured image model");
+    expect(html).toContain("Use connected text");
+    expect(html).toContain("Edit image");
     expect(html).toContain('data-generated-image-preview="true"');
     expect(html).toContain("https://image.example/scene.png");
     expect(html).toContain("Backend: doubao-seedream / doubao-seedream-5-0-260128");
@@ -339,6 +349,61 @@ describe("WorkflowCanvasWorkspace", () => {
         },
       ),
     ).toBe("[Chorus]\nWe run into the glow");
+  });
+
+  it("reads connected Script outcome text as an Image node prompt", () => {
+    const graph = createInitialWorkflowGraphState();
+    const withScriptOutcome = workflowGraphReducer(graph, {
+      type: "upsertOutputNode",
+      sourceNodeId: "script-1",
+      nodeType: "script",
+      title: "Script outcome",
+      description: "Editable direct text generated from the Script node.",
+      position: { x: 520, y: 120 },
+      output: {
+        sourceNodeId: "script-1",
+        dataType: "script",
+        label: "Script output",
+        provider: "openai",
+        model: "gpt-live",
+        editable: true,
+      },
+      ports: [
+        {
+          key: "script-out",
+          label: "Script",
+          direction: "output",
+          dataType: "script",
+        },
+      ],
+    });
+    const withAsset = workflowGraphReducer(withScriptOutcome, {
+      type: "addNode",
+      nodeType: "asset",
+      position: { x: 860, y: 120 },
+    });
+    const assetNode = withAsset.nodes.find((node) => node.type === "asset");
+    const scriptOutcomeNodeId = createWorkflowOutputNodeId("script-1", "script");
+
+    expect(assetNode).toBeDefined();
+
+    const connected = workflowGraphReducer(withAsset, {
+      type: "connect",
+      sourcePortId: `${scriptOutcomeNodeId}:script-out`,
+      targetPortId: `${assetNode!.id}:asset-brief-in`,
+    });
+
+    expect(connected.edges.at(-1)?.dataType).toBe("script");
+    expect(
+      getConnectedImagePrompt(
+        assetNode!,
+        connected,
+        { world_description: "fallback script input" },
+        {
+          [scriptOutcomeNodeId]: "A brass key prop with frosted edges",
+        },
+      ),
+    ).toBe("A brass key prop with frosted edges");
   });
 
   it("renders the MiniMax music inline composer with connected lyrics and audio preview", () => {
@@ -814,6 +879,73 @@ describe("WorkflowCanvasWorkspace", () => {
     expect(html).toContain("Local preview only; not saved to the asset library yet.");
   });
 
+  it("renders self-contained source image nodes with generated previews", () => {
+    const graph = workflowGraphReducer(createInitialWorkflowGraphState(), {
+      type: "addNode",
+      nodeType: "scene",
+      position: { x: 520, y: 240 },
+    });
+    const sceneNode = graph.nodes.find((candidate) => candidate.type === "scene");
+
+    expect(sceneNode).toBeDefined();
+
+    const withPreview = workflowGraphReducer(graph, {
+      type: "updateNodeOutput",
+      nodeId: sceneNode!.id,
+      status: "ready",
+      output: {
+        sourceNodeId: sceneNode!.id,
+        dataType: "scene",
+        label: "Scene Image image",
+        provider: "doubao-seedream",
+        model: "doubao-seedream-5-0-260128",
+        editable: false,
+        media: {
+          kind: "image",
+          url: "https://image.example/self-contained-scene.png",
+          mimeType: "image/png",
+          alt: "Scene Image generated image",
+        },
+      },
+      notice: "Scene Image generated on this node.",
+    });
+    const updatedNode = withPreview.nodes.find(
+      (candidate) => candidate.id === sceneNode!.id,
+    );
+    const outputNodeId = createWorkflowOutputNodeId(sceneNode!.id, "scene");
+
+    expect(withPreview.nodes).toHaveLength(graph.nodes.length);
+    expect(withPreview.selection).toEqual({ kind: "node", id: sceneNode!.id });
+    expect(
+      withPreview.nodes.find((candidate) => candidate.id === outputNodeId),
+    ).toBeUndefined();
+    expect(updatedNode?.output?.media?.kind).toBe("image");
+    expect(imageReferenceFromWorkflowOutput(updatedNode?.output)).toEqual({
+      referenceImageUrl: "https://image.example/self-contained-scene.png",
+      referenceImageB64: null,
+      referenceImageMimeType: "image/png",
+    });
+
+    const html = renderToStaticMarkup(
+      <WorkflowNodeCard
+        node={updatedNode!}
+        scriptInput={null}
+        scriptOutcomeText={null}
+        selected={true}
+        pendingPort={null}
+        onScriptOutcomeTextChange={() => undefined}
+        onDragStart={() => undefined}
+        onSelect={() => undefined}
+        onPortConnectionStart={() => undefined}
+      />,
+    );
+
+    expect(html).toContain('data-image-node-current="true"');
+    expect(html).toContain('data-image-node-current-preview="true"');
+    expect(html).not.toContain('data-image-outcome-node="true"');
+    expect(html).toContain("https://image.example/self-contained-scene.png");
+  });
+
   it("renders playable Audio outcome nodes with backend evidence", () => {
     const node = {
       id: createWorkflowOutputNodeId("audio-4", "audio"),
@@ -923,7 +1055,7 @@ describe("WorkflowCanvasWorkspace", () => {
     expect(html).toContain("Video persistence, signed URLs, task polling");
   });
 
-  it("renders unavailable image AI functions as visible messages", () => {
+  it("renders image generation errors as visible messages", () => {
     const graph = createInitialWorkflowGraphState();
     const imageNode = graph.nodes.find(
       (candidate) => candidate.type === "composition",
@@ -932,7 +1064,9 @@ describe("WorkflowCanvasWorkspace", () => {
       <ImageNodeFloatingEditor
         frame={{ x: 880, y: 88, width: 430, height: 520 }}
         busy={false}
-        error="AI modify for image prompts is not implemented yet."
+        connectedPrompt={null}
+        currentImageSource={null}
+        error="SeedDream API key is missing."
         generation={null}
         node={imageNode!}
         prompt="A neon jeep frame"
@@ -943,12 +1077,13 @@ describe("WorkflowCanvasWorkspace", () => {
         onGenerate={() => undefined}
         onPromptChange={() => undefined}
         onResponseOpenChange={() => undefined}
-        onRevise={() => undefined}
+        onUpload={() => undefined}
+        onUseConnectedPrompt={() => undefined}
       />,
     );
 
     expect(html).toContain('data-image-node-error="true"');
-    expect(html).toContain("AI modify for image prompts is not implemented yet.");
+    expect(html).toContain("SeedDream API key is missing.");
   });
 
   it("renders a loading animation on the Script node while generation runs", () => {
