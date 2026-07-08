@@ -152,6 +152,20 @@ describe("WorkflowCanvasWorkspace", () => {
     expect(formatTemplateIoLabel(videoTemplate!)).toBe(
       "Video: Input Prompt + Image + Audio -> Output Video",
     );
+    const imageTemplate = workflowNodeTemplates.find(
+      (template) => template.type === "image",
+    );
+
+    expect(imageTemplate).toBeDefined();
+    expect(formatTemplateIoLabel(imageTemplate!)).toBe(
+      "Image: Input Prompt -> Output Image",
+    );
+    const templateTitles = workflowNodeTemplates.map(
+      (template) => template.title as string,
+    );
+    expect(templateTitles).not.toContain("Character Image");
+    expect(templateTitles).not.toContain("Prop / Asset");
+    expect(templateTitles).not.toContain("Scene Image");
   });
 
   it("renders initial typed graph nodes and the selected Script node inline input", () => {
@@ -213,10 +227,12 @@ describe("WorkflowCanvasWorkspace", () => {
   });
 
   it("renders the SeedDream image editor states for image-class nodes", () => {
-    const graph = createInitialWorkflowGraphState();
-    const imageNode = graph.nodes.find(
-      (candidate) => candidate.type === "composition",
-    );
+    const graph = workflowGraphReducer(createInitialWorkflowGraphState(), {
+      type: "addNode",
+      nodeType: "image",
+      position: { x: 880, y: 120 },
+    });
+    const imageNode = graph.nodes.find((candidate) => candidate.type === "image");
     const generation = {
       project_id: "local-project",
       node_id: "scene-4",
@@ -235,14 +251,10 @@ describe("WorkflowCanvasWorkspace", () => {
     } satisfies ImageGenerationResponse;
 
     expect(imageNode).toBeDefined();
-    expect(isFloatingImageEditorNodeType("composition")).toBe(true);
-    expect(isFloatingImageEditorNodeType("asset")).toBe(true);
-    expect(isFloatingImageEditorNodeType("scene")).toBe(true);
-    expect(isFloatingImageEditorNodeType("character")).toBe(true);
+    expect(isFloatingImageEditorNodeType("image")).toBe(true);
+    expect(isFloatingImageEditorNodeType("composition")).toBe(false);
     expect(isFloatingImageEditorNodeType("script")).toBe(false);
-    expect(getImageGenerationNodeType("character")).toBe("character_image");
-    expect(getImageGenerationNodeType("asset")).toBe("prop_asset");
-    expect(getImageGenerationNodeType("scene")).toBe("scene_image");
+    expect(getImageGenerationNodeType("image")).toBe("scene_image");
     expect(getImageGenerationNodeType("composition")).toBeNull();
     expect(imageSourceFromGeneratedImage(generation.image)).toBe(
       "https://image.example/scene.png",
@@ -288,7 +300,7 @@ describe("WorkflowCanvasWorkspace", () => {
     expect(html).not.toContain('data-image-node-drag-handle="true"');
     expect(html).not.toContain('aria-label="Close Image node editor"');
     expect(html).not.toContain('aria-label="Resize Image node editor"');
-    expect(html).toContain("Configured image model");
+    expect(html).toContain("SeedDream 5.0");
     expect(html).toContain("Use connected text");
     expect(html).toContain("Edit image");
     expect(html).toContain('data-generated-image-preview="true"');
@@ -377,26 +389,26 @@ describe("WorkflowCanvasWorkspace", () => {
         },
       ],
     });
-    const withAsset = workflowGraphReducer(withScriptOutcome, {
+    const withImage = workflowGraphReducer(withScriptOutcome, {
       type: "addNode",
-      nodeType: "asset",
+      nodeType: "image",
       position: { x: 860, y: 120 },
     });
-    const assetNode = withAsset.nodes.find((node) => node.type === "asset");
+    const imageNode = withImage.nodes.find((node) => node.type === "image");
     const scriptOutcomeNodeId = createWorkflowOutputNodeId("script-1", "script");
 
-    expect(assetNode).toBeDefined();
+    expect(imageNode).toBeDefined();
 
-    const connected = workflowGraphReducer(withAsset, {
+    const connected = workflowGraphReducer(withImage, {
       type: "connect",
       sourcePortId: `${scriptOutcomeNodeId}:script-out`,
-      targetPortId: `${assetNode!.id}:asset-brief-in`,
+      targetPortId: `${imageNode!.id}:image-prompt-in`,
     });
 
     expect(connected.edges.at(-1)?.dataType).toBe("script");
     expect(
       getConnectedImagePrompt(
-        assetNode!,
+        imageNode!,
         connected,
         { world_description: "fallback script input" },
         {
@@ -501,15 +513,15 @@ describe("WorkflowCanvasWorkspace", () => {
     });
     const withImageOutcome = workflowGraphReducer(withScriptOutcome, {
       type: "upsertOutputNode",
-      sourceNodeId: "scene-4",
-      nodeType: "scene",
-      title: "Scene Image outcome",
+      sourceNodeId: "image-4",
+      nodeType: "image",
+      title: "Image outcome",
       description: "SeedDream text-to-image result.",
       position: { x: 620, y: 280 },
       output: {
-        sourceNodeId: "scene-4",
-        dataType: "scene",
-        label: "Scene Image image",
+        sourceNodeId: "image-4",
+        dataType: "image",
+        label: "Image",
         provider: "doubao-seedream",
         model: "doubao-seedream-5-0-260128",
         editable: false,
@@ -517,15 +529,15 @@ describe("WorkflowCanvasWorkspace", () => {
           kind: "image",
           url: "https://image.example/scene.png",
           mimeType: "image/png",
-          alt: "Scene image",
+          alt: "Image generated image",
         },
       },
       ports: [
         {
-          key: "scene-out",
-          label: "Scene",
+          key: "image-out",
+          label: "Image",
           direction: "output",
-          dataType: "scene",
+          dataType: "image",
         },
       ],
     });
@@ -566,7 +578,7 @@ describe("WorkflowCanvasWorkspace", () => {
     });
     const videoNode = withVideo.nodes.find((node) => node.type === "video");
     const scriptOutcomeNodeId = createWorkflowOutputNodeId("script-1", "script");
-    const sceneOutcomeNodeId = createWorkflowOutputNodeId("scene-4", "scene");
+    const imageOutcomeNodeId = createWorkflowOutputNodeId("image-4", "image");
     const audioOutcomeNodeId = createWorkflowOutputNodeId("audio-5", "audio");
 
     expect(videoNode).toBeDefined();
@@ -578,7 +590,7 @@ describe("WorkflowCanvasWorkspace", () => {
     });
     const withImage = workflowGraphReducer(withPrompt, {
       type: "connect",
-      sourcePortId: `${sceneOutcomeNodeId}:scene-out`,
+      sourcePortId: `${imageOutcomeNodeId}:image-out`,
       targetPortId: `${videoNode!.id}:image-in`,
     });
     const connected = workflowGraphReducer(withImage, {
@@ -826,20 +838,20 @@ describe("WorkflowCanvasWorkspace", () => {
   });
 
   it("renders image generation outcome nodes as canvas image previews", () => {
-    const nodeId = createWorkflowOutputNodeId("scene-4", "scene");
+    const nodeId = createWorkflowOutputNodeId("image-4", "image");
     const node = {
       id: nodeId,
-      type: "scene",
+      type: "image",
       role: "outcome",
-      title: "Scene Image outcome",
+      title: "Image outcome",
       description: "SeedDream text-to-image result.",
       status: "ready",
       position: { x: 520, y: 240 },
       ports: [],
       output: {
-        sourceNodeId: "scene-4",
-        dataType: "scene",
-        label: "Scene Image image",
+        sourceNodeId: "image-4",
+        dataType: "image",
+        label: "Image",
         provider: "doubao-seedream",
         model: "doubao-seedream-5-0-260128",
         editable: false,
@@ -848,7 +860,7 @@ describe("WorkflowCanvasWorkspace", () => {
           url: null,
           b64Json: "iVBORw0KGgo=",
           mimeType: "image/png",
-          alt: "Scene Image generated image",
+          alt: "Image generated image",
         },
       },
     } satisfies WorkflowNode;
@@ -882,21 +894,21 @@ describe("WorkflowCanvasWorkspace", () => {
   it("renders self-contained source image nodes with generated previews", () => {
     const graph = workflowGraphReducer(createInitialWorkflowGraphState(), {
       type: "addNode",
-      nodeType: "scene",
+      nodeType: "image",
       position: { x: 520, y: 240 },
     });
-    const sceneNode = graph.nodes.find((candidate) => candidate.type === "scene");
+    const imageNode = graph.nodes.find((candidate) => candidate.type === "image");
 
-    expect(sceneNode).toBeDefined();
+    expect(imageNode).toBeDefined();
 
     const withPreview = workflowGraphReducer(graph, {
       type: "updateNodeOutput",
-      nodeId: sceneNode!.id,
+      nodeId: imageNode!.id,
       status: "ready",
       output: {
-        sourceNodeId: sceneNode!.id,
-        dataType: "scene",
-        label: "Scene Image image",
+        sourceNodeId: imageNode!.id,
+        dataType: "image",
+        label: "Image",
         provider: "doubao-seedream",
         model: "doubao-seedream-5-0-260128",
         editable: false,
@@ -904,18 +916,18 @@ describe("WorkflowCanvasWorkspace", () => {
           kind: "image",
           url: "https://image.example/self-contained-scene.png",
           mimeType: "image/png",
-          alt: "Scene Image generated image",
+          alt: "Image generated image",
         },
       },
-      notice: "Scene Image generated on this node.",
+      notice: "Image generated on this node.",
     });
     const updatedNode = withPreview.nodes.find(
-      (candidate) => candidate.id === sceneNode!.id,
+      (candidate) => candidate.id === imageNode!.id,
     );
-    const outputNodeId = createWorkflowOutputNodeId(sceneNode!.id, "scene");
+    const outputNodeId = createWorkflowOutputNodeId(imageNode!.id, "image");
 
     expect(withPreview.nodes).toHaveLength(graph.nodes.length);
-    expect(withPreview.selection).toEqual({ kind: "node", id: sceneNode!.id });
+    expect(withPreview.selection).toEqual({ kind: "node", id: imageNode!.id });
     expect(
       withPreview.nodes.find((candidate) => candidate.id === outputNodeId),
     ).toBeUndefined();

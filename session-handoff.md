@@ -6,20 +6,19 @@
 - Feature 1 Web Design, Feature 2 Workflow Canvas Foundation, Feature 3 Script Node, Feature 5 self-contained image nodes, Feature 8 Audio Node, and Feature 9 Video Node are recorded as `passing`.
 - Current active feature: none.
 - Next broader unfinished feature remains Feature 4 Storyboard Node unless the user selects another media/export task.
-- Feature 5 latest state: Character Image, Prop / Asset, and Scene Image are self-contained image nodes. They display their own uploaded/generated image, can seed prompts from connected text, can generate prompt-only images, and can send prompt plus current image reference for SeedDream editing. They no longer create separate image outcome nodes.
+- Feature 5 latest state: Character Image, Prop / Asset, and Scene Image generation entries have been collapsed into one self-contained Image node. It displays its own uploaded/generated image, can seed prompts from connected text, can generate prompt-only images, and can send prompt plus current image reference for SeedDream editing. It no longer creates separate image outcome nodes.
 
 ## Feature 5 Image Node State
 
-- Character Image, Prop / Asset, and Scene Image source nodes render an empty image placeholder until they have image media.
-- Selecting one of these image source nodes opens the Script-style below-node composer.
+- The Add menu exposes one Image generation node instead of separate Character Image, Prop / Asset, and Scene Image nodes.
+- The Image source node renders an empty image placeholder until it has image media.
+- Selecting the Image source node opens the Script-style below-node composer.
 - If no image is present, the composer Generate button runs text-to-image against the local FastAPI SeedDream route.
 - If the node already has a generated or uploaded image, the composer switches to Edit image and sends the prompt plus current image reference to the same local FastAPI SeedDream route.
 - Upload uses a local browser data URL only; it updates the selected node preview and is not durable storage.
-- Connected text is supported:
-  - Character and Scene already accepted Script-compatible inputs.
-  - Prop / Asset now accepts `brief` or `script`.
-  - The editor shows `Use connected text` when a compatible upstream text edge exists.
+- Connected text is supported through the Image node prompt input; the editor shows `Use connected text` when a compatible upstream text edge exists.
 - Successful generation/edit updates the selected source node via local `output.media.kind=image`; it does not upsert an image outcome node.
+- The image editor model selector displays `SeedDream 5.0`.
 
 ## Feature 5 Backend/API State
 
@@ -109,6 +108,7 @@ POST /api/v1/projects/{project_id}/nodes/{node_id}/generate-image
 - `corepack pnpm --filter @xmeta/web test -- graph.test.ts` passed: 1 file / 7 tests.
 - `corepack pnpm --filter @xmeta/web test` passed: 9 files / 55 tests.
 - `corepack pnpm --filter @xmeta/web typecheck` passed.
+- Follow-up unified Image node verification passed: focused workspace/graph tests 2 files / 36 tests, full web tests 9 files / 55 tests, web typecheck, web build with `/workspace`, JSON validation, Browser QA on `http://localhost:3000/workspace` confirming one Image Add-menu entry, no old image-generation entries, `SeedDream 5.0` in the model selector, no console warn/error logs, and final `.\init.ps1`.
 - `corepack pnpm --filter @xmeta/web build` passed and included `/workspace`.
 - Browser QA on `http://localhost:3000/workspace` with system Chrome passed: added Scene Image, verified empty image-node state and below-node composer, uploaded the provided PNG, saw one in-node image preview, zero image outcome nodes, local-upload provider evidence, Edit image mode, and Use connected text after connecting Script output to Scene Image input.
 - Final `.\init.ps1` passed and reran web tests: 9 files / 55 tests.

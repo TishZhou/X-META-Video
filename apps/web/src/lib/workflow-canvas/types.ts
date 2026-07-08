@@ -1,9 +1,7 @@
 export type WorkflowNodeType =
   | "script"
   | "storyboard"
-  | "character"
-  | "asset"
-  | "scene"
+  | "image"
   | "composition"
   | "audio"
   | "video"

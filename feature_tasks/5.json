@@ -1,15 +1,14 @@
 {
   "parent_feature": {
     "id": 5,
-    "title": "Character Image Node",
+    "title": "Image Node",
     "status": "passing"
   },
   "planning_status": "image_node_self_contained_002_passing",
   "notes": [
-    "Feature 5 owns the first image-generation node implementation because Character Image is the first product image asset node.",
-    "This task deliberately shares the foundation with Prop / Asset and Scene Image source nodes so the canvas does not get three duplicated text-to-image implementations.",
-    "Scene Image as a full feature remains not complete until reusable scene asset references and persistence are implemented.",
-    "Prop asset persistence and the full Asset Library remain later feature scope.",
+    "Feature 5 owns the unified Image node implementation for text-to-image, upload, and prompt-plus-image edit flows.",
+    "Character Image, Prop / Asset, and Scene Image source-node variants have been collapsed into one user-visible Image node.",
+    "Character, scene, and prop asset persistence plus the full Asset Library remain later feature scope.",
     "Image-to-video work is explicitly out of scope for this task."
   ],
   "small_features": [
@@ -17,9 +16,9 @@
       "id": "text-to-image-nodes-001",
       "title": "Implement SeedDream text-to-image graph foundation",
       "status": "passing",
-      "user_visible_behavior": "Users can generate a single image outcome node from Character Image, Prop / Asset, or Scene Image text prompts, with backend-confirmed SeedDream provider/model evidence and honest no-persistence labeling.",
+      "user_visible_behavior": "Users can generate a single image from the unified Image node with backend-confirmed SeedDream provider/model evidence and honest no-persistence labeling.",
       "acceptance_criteria": [
-        "Character Image, Prop / Asset, and Scene Image source nodes open the shared image editor with node-specific prompt defaults.",
+        "The Add menu exposes one Image node instead of separate Character Image, Prop / Asset, and Scene Image generation nodes.",
         "Generate posts to the local FastAPI backend and never exposes Doubao credentials in frontend code.",
         "Backend SeedDream config uses DOUBAO_API_KEY, DOUBAO_BASE_URL, SEEDREAM_MODEL, and optional DOUBAO_HTTPS_PROXY.",
         "Provider code exposes submitSeedreamWithRetry() and submitSeedreamGenerationOnce() wrappers.",
@@ -52,14 +51,14 @@
       "id": "image-node-self-contained-002",
       "title": "Make image nodes self-contained for text, upload, and image edit",
       "status": "passing",
-      "user_visible_behavior": "Character Image, Prop / Asset, and Scene Image nodes display their own current image and update in place from connected text prompts, typed prompts, uploads, or image-plus-prompt SeedDream edits.",
+      "user_visible_behavior": "The unified Image node displays its own current image and updates in place from connected text prompts, typed prompts, uploads, or image-plus-prompt SeedDream edits.",
       "acceptance_criteria": [
-        "Image source nodes render as image-bearing nodes with an empty placeholder state, generated/uploaded preview state, and provider/model/no-persistence evidence in the node itself.",
+        "The unified Image source node renders as an image-bearing node with an empty placeholder state, generated/uploaded preview state, and provider/model/no-persistence evidence in the node itself.",
         "Connected upstream text from Script or other text output nodes can seed the image prompt and be used for generation.",
-        "If the image node has no current image, the below-node AI composer prompt generates a new image through the local SeedDream backend.",
-        "If the image node already has a generated or uploaded image, the below-node AI composer sends prompt plus the current image reference to the local backend for SeedDream image editing.",
-        "Users can upload a local reference image into the selected image node; upload remains local preview only and is labeled as not persisted.",
-        "Successful generation or edit updates the selected image node itself instead of creating a separate image outcome node.",
+        "If the Image node has no current image, the below-node AI composer prompt generates a new image through the local SeedDream backend.",
+        "If the Image node already has a generated or uploaded image, the below-node AI composer sends prompt plus the current image reference to the local backend for SeedDream image editing.",
+        "Users can upload a local reference image into the selected Image node; upload remains local preview only and is labeled as not persisted.",
+        "Successful generation or edit updates the selected Image node itself instead of creating a separate image outcome node.",
         "Frontend still calls only local FastAPI image routes and does not expose Doubao credentials.",
         "Unavailable durable asset persistence, storage, signed URLs, queues, and history are labeled honestly.",
         "Tests and rendered QA cover connected-text prompt seeding, prompt-only generation, uploaded/reference-image edit request shape, in-place node preview rendering, and no separate outcome node creation."
@@ -74,6 +73,7 @@
         "2026-07-08 corepack pnpm --filter @xmeta/web typecheck passed.",
         "2026-07-08 corepack pnpm --filter @xmeta/web build passed and included /workspace.",
         "2026-07-08 Browser QA on http://localhost:3000/workspace with system Chrome passed: added Scene Image, verified empty image-node state and below-node composer, uploaded the provided PNG into the node, saw one in-node image preview, zero image outcome nodes, local-upload provider evidence, Edit image mode for current-image reference editing, and Use connected text after connecting Script output to Scene Image input.",
+        "2026-07-08 follow-up unification: Add menu now exposes one Image node instead of Character Image, Prop / Asset, and Scene Image generation nodes; the image model selector displays SeedDream 5.0. Focused workspace/graph tests passed 2 files / 36 tests, full web tests passed 9 files / 55 tests, web typecheck passed, web build passed with /workspace, JSON validation passed, Browser QA on http://localhost:3000/workspace confirmed the menu/model behavior with no console warn/error logs, and final .\\init.ps1 passed with 9 files / 55 tests.",
         "2026-07-08 final .\\init.ps1 passed and reran web tests: 9 files / 55 tests."
       ]
     }

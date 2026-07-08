@@ -2,7 +2,6 @@
 
 import {
   ArrowDownToLine,
-  Box,
   CircleDot,
   Film,
   FolderDown,
@@ -72,6 +71,7 @@ import {
   workflowNodeTemplates,
 } from "@/lib/workflow-canvas/graph";
 import type {
+  WorkflowDataType,
   WorkflowGraphState,
   WorkflowNode,
   WorkflowNodeOutput,
@@ -113,9 +113,7 @@ const MAX_INITIAL_ZOOM = 1;
 const nodeIcons = {
   script: Wand2,
   storyboard: Frame,
-  character: Sparkles,
-  asset: Box,
-  scene: Image,
+  image: Image,
   composition: Scissors,
   audio: Mic2,
   video: Video,
@@ -125,9 +123,7 @@ const nodeIcons = {
 const nodeTitles = {
   script: "Script node",
   storyboard: "Storyboard node",
-  character: "Character image node",
-  asset: "Prop / asset node",
-  scene: "Image node",
+  image: "Image node",
   composition: "Composition node",
   audio: "Audio node",
   video: "Video node",
@@ -234,18 +230,14 @@ const defaultImageEditorFrame: ImageEditorFrame = {
 };
 
 const defaultImagePrompts = {
-  character:
-    "Full-body cinematic character photo, front view, clear face, wardrobe, accessories, consistent MV styling.",
-  asset:
-    "Studio product photo of the prop, isolated object, clean lighting, visible shape and material details.",
-  scene:
-    "Wide cinematic background photo, location establishing shot, clear lighting, atmosphere, no main character.",
+  image:
+    "Cinematic image, clear subject, coherent composition, polished lighting, production-ready visual detail.",
   composition:
     "Composition node image prompt rewriting is not implemented yet.",
-} satisfies Record<"character" | "asset" | "scene" | "composition", string>;
+} satisfies Record<"image" | "composition", string>;
 
 const IMAGE_COMPOSITION_GENERATE_NOT_IMPLEMENTED =
-  "Image Composition generation is not implemented in this text-to-image pass. Use Character Image, Prop / Asset, or Scene Image nodes for SeedDream text-to-image.";
+  "Image Composition generation is not implemented in this text-to-image pass. Use the Image node for SeedDream image generation.";
 
 const DEFAULT_MUSIC_PROMPT =
   "K-pop cinematic MV theme, bright synths, emotional chorus, 120 BPM, polished female vocal production.";
@@ -348,43 +340,24 @@ export function isEditableKeyboardTarget(target: EventTarget | null) {
 }
 
 export function isFloatingImageEditorNodeType(type: WorkflowNodeType) {
-  return (
-    type === "character" ||
-    type === "asset" ||
-    type === "scene" ||
-    type === "composition"
-  );
+  return type === "image";
 }
 
 export function getImageGenerationNodeType(
   type: WorkflowNodeType,
 ): ImageGenerationNodeType | null {
-  if (type === "character") {
-    return "character_image";
-  }
-  if (type === "asset") {
-    return "prop_asset";
-  }
-  if (type === "scene") {
+  if (type === "image") {
     return "scene_image";
   }
   return null;
 }
 
-export function getImageOutputDataType(type: WorkflowNodeType) {
-  if (type === "character" || type === "asset" || type === "scene") {
-    return type;
-  }
+export function getImageOutputDataType(_type: WorkflowNodeType): WorkflowDataType {
   return "image";
 }
 
 export function getDefaultImagePrompt(type: WorkflowNodeType) {
-  if (
-    type === "character" ||
-    type === "asset" ||
-    type === "scene" ||
-    type === "composition"
-  ) {
+  if (type === "image" || type === "composition") {
     return defaultImagePrompts[type];
   }
   return "";
@@ -2862,7 +2835,7 @@ export function ImageNodeFloatingEditor({
               defaultValue="configured"
               disabled={busy}
             >
-              <option value="configured">Configured image model</option>
+              <option value="configured">SeedDream 5.0</option>
             </select>
             <input
               ref={uploadInputRef}

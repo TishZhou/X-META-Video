@@ -88,29 +88,29 @@ describe("workflow graph state", () => {
     }
     expect(invalid.reason).toContain("cannot connect");
 
-    const character = workflowGraphReducer(state, {
+    const image = workflowGraphReducer(state, {
       type: "addNode",
-      nodeType: "character",
+      nodeType: "image",
       position: { x: 180, y: 300 },
     });
-    const connected = workflowGraphReducer(character, {
+    const connected = workflowGraphReducer(image, {
       type: "connect",
-      sourcePortId: "script-1:profiles-out",
-      targetPortId: "character-4:profile-in",
+      sourcePortId: "script-1:script-out",
+      targetPortId: "image-4:image-prompt-in",
     });
 
     expect(connected.edges.at(-1)).toMatchObject({
       id: "edge-3",
       sourceNodeId: "script-1",
-      sourcePortId: "script-1:profiles-out",
-      targetNodeId: "character-4",
-      targetPortId: "character-4:profile-in",
-      dataType: "character",
+      sourcePortId: "script-1:script-out",
+      targetNodeId: "image-4",
+      targetPortId: "image-4:image-prompt-in",
+      dataType: "script",
     });
     expect(connected.notice).toContain("No generation task was started");
   });
 
-  it("allows Script text outcomes to feed Prop / Asset image nodes", () => {
+  it("allows Script text outcomes to feed Image nodes", () => {
     const state = createInitialWorkflowGraphState();
     const withScriptOutcome = workflowGraphReducer(state, {
       type: "upsertOutputNode",
@@ -136,21 +136,21 @@ describe("workflow graph state", () => {
         },
       ],
     });
-    const withAsset = workflowGraphReducer(withScriptOutcome, {
+    const withImage = workflowGraphReducer(withScriptOutcome, {
       type: "addNode",
-      nodeType: "asset",
+      nodeType: "image",
       position: { x: 820, y: 120 },
     });
     const scriptOutcomeNodeId = createWorkflowOutputNodeId("script-1", "script");
-    const connected = workflowGraphReducer(withAsset, {
+    const connected = workflowGraphReducer(withImage, {
       type: "connect",
       sourcePortId: `${scriptOutcomeNodeId}:script-out`,
-      targetPortId: "asset-4:asset-brief-in",
+      targetPortId: "image-4:image-prompt-in",
     });
 
     expect(connected.edges.at(-1)).toMatchObject({
       sourceNodeId: scriptOutcomeNodeId,
-      targetNodeId: "asset-4",
+      targetNodeId: "image-4",
       dataType: "script",
     });
   });

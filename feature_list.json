@@ -52,11 +52,11 @@
                      },
                      {
                          "id":  5,
-                         "title":  "Character Image Node",
+                         "title":  "Image Node",
                          "status":  "passing",
                          "current_task":  "image-node-self-contained-002",
                          "current_task_status":  "passing",
-                         "user_visible_behavior":  "Users can use Character Image, Prop / Asset, and Scene Image nodes as self-contained image nodes: connected text, prompt-only generation, upload, and image-plus-prompt edit all update the selected image node itself.",
+                         "user_visible_behavior":  "Users can use one self-contained Image node for generated images: connected text, prompt-only generation, upload, and image-plus-prompt edit all update the selected Image node itself, with the model selector showing SeedDream 5.0.",
                          "task_file":  "feature_tasks/5.json"
                      },
                      {
