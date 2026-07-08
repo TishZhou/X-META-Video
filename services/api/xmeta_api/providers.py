@@ -50,7 +50,7 @@ class ScriptProvider(Protocol):
 SUPPORTED_TEXT_PROVIDERS = {"openai", "openai-compatible"}
 SUPPORTED_IMAGE_PROVIDERS = {"doubao-seedream"}
 SUPPORTED_MUSIC_PROVIDERS = {"minimax"}
-SUPPORTED_VIDEO_PROVIDERS = {"evolink", "evolink-seedance"}
+SUPPORTED_VIDEO_PROVIDERS = {"ark-seedance", "volcengine-ark"}
 
 
 @dataclass(frozen=True)
@@ -382,102 +382,100 @@ class VideoGenerationProviderResult:
 
 
 @dataclass(frozen=True)
-class EvolinkVideoProviderSettings:
-    provider: str = "evolink"
+class ArkSeedanceVideoProviderSettings:
+    provider: str = "volcengine-ark"
     base_url: str | None = None
     api_key: str | None = None
     model: str | None = None
-    text_to_video_model: str | None = None
-    quality: str = "720p"
-    aspect_ratio: str = "16:9"
+    ratio: str = "16:9"
     generate_audio: bool = True
+    watermark: bool = False
     timeout_seconds: int = 240
     max_retries: int = 1
 
     @classmethod
-    def from_env(cls) -> "EvolinkVideoProviderSettings":
-        provider = _first_env("VIDEO_MODEL_PROVIDER", default="evolink")
+    def from_env(cls) -> "ArkSeedanceVideoProviderSettings":
+        provider = _first_env("VIDEO_MODEL_PROVIDER", default="volcengine-ark")
         return cls(
-            provider=(provider or "evolink").strip().lower(),
+            provider=(provider or "volcengine-ark").strip().lower(),
             base_url=_first_env(
-                "EVOLINK_BASE_URL",
+                "ARK_BASE_URL",
+                "VOLCENGINE_ARK_BASE_URL",
                 "VIDEO_MODEL_BASE_URL",
-                default="https://api.evolink.ai/v1",
+                default="https://ark.cn-beijing.volces.com/api/v3",
             ),
-            api_key=_first_env("EVOLINK_API_KEY", "VIDEO_MODEL_API_KEY"),
+            api_key=_first_env(
+                "ARK_API_KEY",
+                "VOLCENGINE_ARK_API_KEY",
+                "VIDEO_MODEL_API_KEY",
+            ),
             model=_first_env(
-                "EVOLINK_VIDEO_MODEL",
+                "ARK_VIDEO_MODEL",
                 "VIDEO_MODEL_NAME",
-                default="seedance-2.0-reference-to-video",
+                default="doubao-seedance-2-0-mini-260615",
             ),
-            text_to_video_model=_first_env(
-                "EVOLINK_TEXT_TO_VIDEO_MODEL",
-                default="seedance-2.0-text-to-video",
-            ),
-            quality=_first_env("EVOLINK_VIDEO_QUALITY", default="720p") or "720p",
-            aspect_ratio=_first_env("EVOLINK_VIDEO_ASPECT_RATIO", default="16:9")
+            ratio=_first_env(
+                "ARK_VIDEO_RATIO",
+                "ARK_VIDEO_ASPECT_RATIO",
+                "VIDEO_MODEL_ASPECT_RATIO",
+                default="16:9",
+            )
             or "16:9",
             generate_audio=_parse_bool(
-                "EVOLINK_GENERATE_AUDIO",
-                _first_env("EVOLINK_GENERATE_AUDIO", default="true") or "true",
+                "ARK_VIDEO_GENERATE_AUDIO",
+                _first_env("ARK_VIDEO_GENERATE_AUDIO", default="true") or "true",
+            ),
+            watermark=_parse_bool(
+                "ARK_VIDEO_WATERMARK",
+                _first_env("ARK_VIDEO_WATERMARK", default="false") or "false",
             ),
             timeout_seconds=_parse_int(
-                "EVOLINK_VIDEO_TIMEOUT_SECONDS",
-                _first_env("EVOLINK_VIDEO_TIMEOUT_SECONDS") or "240",
+                "ARK_VIDEO_TIMEOUT_SECONDS",
+                _first_env("ARK_VIDEO_TIMEOUT_SECONDS") or "240",
             ),
             max_retries=_parse_int(
-                "EVOLINK_VIDEO_MAX_RETRIES",
-                _first_env("EVOLINK_VIDEO_MAX_RETRIES") or "1",
+                "ARK_VIDEO_MAX_RETRIES",
+                _first_env("ARK_VIDEO_MAX_RETRIES") or "1",
             ),
         )
 
     def with_overrides(
         self,
         settings: VideoGenerationSettings,
-    ) -> "EvolinkVideoProviderSettings":
+    ) -> "ArkSeedanceVideoProviderSettings":
         provider = (
             settings.provider.strip().lower()
             if settings.provider and settings.provider.strip()
             else self.provider
         )
         model = settings.model.strip() if settings.model and settings.model.strip() else self.model
-        text_to_video_model = (
-            settings.text_to_video_model.strip()
-            if settings.text_to_video_model and settings.text_to_video_model.strip()
-            else self.text_to_video_model
-        )
-        quality = (
-            settings.quality.strip()
-            if settings.quality and settings.quality.strip()
-            else self.quality
-        )
-        aspect_ratio = (
-            settings.aspect_ratio.strip()
-            if settings.aspect_ratio and settings.aspect_ratio.strip()
-            else self.aspect_ratio
+        ratio = (
+            settings.ratio.strip()
+            if settings.ratio and settings.ratio.strip()
+            else (
+                settings.aspect_ratio.strip()
+                if settings.aspect_ratio and settings.aspect_ratio.strip()
+                else self.ratio
+            )
         )
 
-        return EvolinkVideoProviderSettings(
+        return ArkSeedanceVideoProviderSettings(
             provider=provider,
             base_url=self.base_url,
             api_key=self.api_key,
             model=model,
-            text_to_video_model=text_to_video_model,
-            quality=quality,
-            aspect_ratio=aspect_ratio,
+            ratio=ratio,
             generate_audio=(
                 settings.generate_audio
                 if settings.generate_audio is not None
                 else self.generate_audio
             ),
+            watermark=(
+                settings.watermark if settings.watermark is not None else self.watermark
+            ),
             timeout_seconds=self.timeout_seconds,
             max_retries=self.max_retries,
         )
-
-    def model_for_generation(self, *, has_images: bool) -> str:
-        model = self.model if has_images else self.text_to_video_model
-        assert model is not None
-        return model
 
     def validate(self) -> None:
         if self.provider not in SUPPORTED_VIDEO_PROVIDERS:
@@ -490,10 +488,9 @@ class EvolinkVideoProviderSettings:
         missing = [
             env_name
             for env_name, value in (
-                ("EVOLINK_BASE_URL", self.base_url),
-                ("EVOLINK_API_KEY", self.api_key),
-                ("EVOLINK_VIDEO_MODEL", self.model),
-                ("EVOLINK_TEXT_TO_VIDEO_MODEL", self.text_to_video_model),
+                ("ARK_BASE_URL", self.base_url),
+                ("ARK_API_KEY", self.api_key),
+                ("ARK_VIDEO_MODEL", self.model),
             )
             if not value
         ]
@@ -787,20 +784,22 @@ def submitMiniMaxMusicGenerationOnce(
     return _extract_minimax_audio(response.json(), settings=settings)
 
 
-def submitEvolinkVideoWithRetry(
+def submitArkSeedanceVideoWithRetry(
     *,
-    settings: EvolinkVideoProviderSettings,
+    settings: ArkSeedanceVideoProviderSettings,
     prompt: str,
     image_urls: list[str],
+    video_urls: list[str],
     audio_urls: list[str],
     duration_seconds: int,
     client: httpx.Client | None = None,
 ) -> VideoGenerationProviderResult:
     settings.validate()
-    payload = _build_evolink_video_payload(
+    payload = _build_ark_seedance_video_payload(
         settings=settings,
         prompt=prompt,
         image_urls=image_urls,
+        video_urls=video_urls,
         audio_urls=audio_urls,
         duration_seconds=duration_seconds,
     )
@@ -809,7 +808,7 @@ def submitEvolinkVideoWithRetry(
 
     for attempt in range(attempts):
         try:
-            return submitEvolinkVideoGenerationOnce(
+            return submitArkSeedanceVideoGenerationOnce(
                 settings=settings,
                 payload=payload,
                 client=client,
@@ -820,19 +819,22 @@ def submitEvolinkVideoWithRetry(
             if not retryable or attempt == attempts - 1:
                 break
 
-    raise ProviderExecutionError("Evolink video generation request failed.") from last_error
+    if last_error is not None:
+        raise ProviderExecutionError(str(last_error)) from last_error
+
+    raise ProviderExecutionError("Ark Seedance video generation request failed.")
 
 
-def submitEvolinkVideoGenerationOnce(
+def submitArkSeedanceVideoGenerationOnce(
     *,
-    settings: EvolinkVideoProviderSettings,
+    settings: ArkSeedanceVideoProviderSettings,
     payload: dict[str, object],
     client: httpx.Client | None = None,
 ) -> VideoGenerationProviderResult:
     settings.validate()
     assert settings.api_key is not None
 
-    url = _evolink_video_generation_url(settings.base_url)
+    url = _ark_seedance_video_generation_url(settings.base_url)
     headers = {
         "Authorization": f"Bearer {settings.api_key}",
         "Content-Type": "application/json",
@@ -842,47 +844,70 @@ def submitEvolinkVideoGenerationOnce(
         if client is not None:
             response = client.post(url, headers=headers, json=payload)
         else:
-            with httpx.Client(timeout=settings.timeout_seconds) as evolink_client:
-                response = evolink_client.post(url, headers=headers, json=payload)
+            with httpx.Client(timeout=settings.timeout_seconds) as ark_client:
+                response = ark_client.post(url, headers=headers, json=payload)
         response.raise_for_status()
     except httpx.HTTPStatusError as exc:
-        error = ProviderExecutionError("Evolink video generation request failed.")
+        detail = _provider_error_detail(exc.response)
+        error = ProviderExecutionError(
+            f"Ark Seedance video generation request failed with status "
+            f"{exc.response.status_code}: {detail}"
+        )
         error.retryable = exc.response.status_code >= 500  # type: ignore[attr-defined]
         raise error from exc
     except httpx.HTTPError as exc:
-        error = ProviderExecutionError("Evolink video generation request failed.")
+        error = ProviderExecutionError(
+            f"Ark Seedance video generation request failed: {exc.__class__.__name__}: {exc}"
+        )
         error.retryable = True  # type: ignore[attr-defined]
         raise error from exc
 
-    return _extract_evolink_video(response.json())
+    return _extract_ark_seedance_video(response.json())
 
 
-def _build_evolink_video_payload(
+def _build_ark_seedance_video_payload(
     *,
-    settings: EvolinkVideoProviderSettings,
+    settings: ArkSeedanceVideoProviderSettings,
     prompt: str,
     image_urls: list[str],
+    video_urls: list[str],
     audio_urls: list[str],
     duration_seconds: int,
 ) -> dict[str, object]:
-    if image_urls:
-        payload: dict[str, object] = {
-            "model": settings.model_for_generation(has_images=True),
-            "prompt": prompt,
-            "image_urls": image_urls,
-            "duration": duration_seconds,
-            "quality": settings.quality,
-            "aspect_ratio": settings.aspect_ratio,
-            "generate_audio": settings.generate_audio,
+    assert settings.model is not None
+    content: list[dict[str, object]] = [{"type": "text", "text": prompt}]
+    content.extend(
+        {
+            "type": "image_url",
+            "image_url": {"url": image_url},
+            "role": "reference_image",
         }
-        if audio_urls:
-            payload["audio_urls"] = audio_urls
-        return payload
+        for image_url in image_urls
+    )
+    content.extend(
+        {
+            "type": "video_url",
+            "video_url": {"url": video_url},
+            "role": "reference_video",
+        }
+        for video_url in video_urls
+    )
+    content.extend(
+        {
+            "type": "audio_url",
+            "audio_url": {"url": audio_url},
+            "role": "reference_audio",
+        }
+        for audio_url in audio_urls
+    )
 
     return {
-        "model": settings.model_for_generation(has_images=False),
-        "prompt": _prompt_with_duration(prompt, duration_seconds),
+        "model": settings.model,
+        "content": content,
+        "generate_audio": settings.generate_audio,
+        "ratio": settings.ratio,
         "duration": duration_seconds,
+        "watermark": settings.watermark,
     }
 
 
@@ -1073,12 +1098,14 @@ def _is_minimax_music_cover_model(model: str | None) -> bool:
     return bool(model and model.strip().startswith("music-cover"))
 
 
-def _evolink_video_generation_url(base_url: str | None) -> str:
+def _ark_seedance_video_generation_url(base_url: str | None) -> str:
     assert base_url is not None
     normalized = base_url.rstrip("/")
-    if normalized.endswith("/videos/generations"):
+    if normalized.endswith("/contents/generations/tasks"):
         return normalized
-    return f"{normalized}/videos/generations"
+    if normalized.endswith("/api/v3"):
+        return f"{normalized}/contents/generations/tasks"
+    return f"{normalized}/api/v3/contents/generations/tasks"
 
 
 def _extract_minimax_audio(
@@ -1166,8 +1193,8 @@ def _provider_error_detail(response: httpx.Response) -> str:
     return json.dumps(payload, ensure_ascii=False)[:500]
 
 
-def _extract_evolink_video(response_data: dict[str, Any]) -> VideoGenerationProviderResult:
-    _raise_evolink_response_error(response_data)
+def _extract_ark_seedance_video(response_data: dict[str, Any]) -> VideoGenerationProviderResult:
+    _raise_ark_seedance_response_error(response_data)
     provider_task_id = _find_provider_task_id(response_data)
 
     for candidate in _nested_dict_candidates(response_data):
@@ -1216,24 +1243,24 @@ def _extract_evolink_video(response_data: dict[str, Any]) -> VideoGenerationProv
             provider_task_id=provider_task_id,
         )
 
-    raise ProviderExecutionError("Evolink response did not include a video URL or task id.")
+    raise ProviderExecutionError("Ark Seedance response did not include a video URL or task id.")
 
 
-def _raise_evolink_response_error(response_data: dict[str, Any]) -> None:
+def _raise_ark_seedance_response_error(response_data: dict[str, Any]) -> None:
     base_resp = response_data.get("base_resp")
     if isinstance(base_resp, dict):
         status_code = base_resp.get("status_code")
         if isinstance(status_code, int) and status_code != 0:
             status_msg = _string_or_none(base_resp.get("status_msg")) or "unknown error"
-            raise ProviderExecutionError(f"Evolink video generation failed: {status_msg}")
+            raise ProviderExecutionError(f"Ark Seedance video generation failed: {status_msg}")
 
     error = response_data.get("error")
     if isinstance(error, str) and error.strip():
-        raise ProviderExecutionError(f"Evolink video generation failed: {error.strip()}")
+        raise ProviderExecutionError(f"Ark Seedance video generation failed: {error.strip()}")
     if isinstance(error, dict):
         message = _string_or_none(error.get("message") or error.get("msg"))
         if message:
-            raise ProviderExecutionError(f"Evolink video generation failed: {message}")
+            raise ProviderExecutionError(f"Ark Seedance video generation failed: {message}")
 
 
 def _nested_dict_candidates(value: object) -> list[dict[str, Any]]:

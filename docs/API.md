@@ -282,16 +282,15 @@ SEEDREAM_WATERMARK=false
 SEEDREAM_TIMEOUT_SECONDS=120
 SEEDREAM_MAX_RETRIES=1
 
-VIDEO_MODEL_PROVIDER=evolink
-EVOLINK_BASE_URL=https://api.evolink.ai/v1
-EVOLINK_API_KEY=
-EVOLINK_VIDEO_MODEL=seedance-2.0-reference-to-video
-EVOLINK_TEXT_TO_VIDEO_MODEL=seedance-2.0-text-to-video
-EVOLINK_VIDEO_QUALITY=720p
-EVOLINK_VIDEO_ASPECT_RATIO=16:9
-EVOLINK_GENERATE_AUDIO=true
-EVOLINK_VIDEO_TIMEOUT_SECONDS=240
-EVOLINK_VIDEO_MAX_RETRIES=1
+VIDEO_MODEL_PROVIDER=volcengine-ark
+ARK_BASE_URL=https://ark.cn-beijing.volces.com/api/v3
+ARK_API_KEY=
+ARK_VIDEO_MODEL=doubao-seedance-2-0-mini-260615
+ARK_VIDEO_RATIO=16:9
+ARK_VIDEO_GENERATE_AUDIO=true
+ARK_VIDEO_WATERMARK=false
+ARK_VIDEO_TIMEOUT_SECONDS=240
+ARK_VIDEO_MAX_RETRIES=1
 
 MUSIC_MODEL_PROVIDER=minimax
 MUSIC_MODEL_BASE_URL=https://api.minimaxi.com/v1/music_generation
@@ -468,16 +467,16 @@ Request:
   "input": {
     "prompt": "Turn the keyframe into a cinematic MV shot with a slow push-in.",
     "image_urls": ["https://example.com/keyframe.png"],
+    "video_urls": ["https://example.com/reference.mp4"],
     "audio_urls": ["https://example.com/music.mp3"],
     "duration": 6
   },
   "settings": {
-    "provider": "evolink",
-    "model": "seedance-2.0-reference-to-video",
-    "text_to_video_model": "seedance-2.0-text-to-video",
-    "quality": "720p",
-    "aspect_ratio": "16:9",
-    "generate_audio": true
+    "provider": "volcengine-ark",
+    "model": "doubao-seedance-2-0-mini-260615",
+    "ratio": "16:9",
+    "generate_audio": true,
+    "watermark": false
   }
 }
 ```
@@ -490,10 +489,11 @@ Response:
   "project_id": "project_123",
   "node_id": "video-1",
   "node_type": "video",
-  "provider": "evolink",
-  "model": "seedance-2.0-reference-to-video",
+  "provider": "volcengine-ark",
+  "model": "doubao-seedance-2-0-mini-260615",
   "prompt": "Turn the keyframe into a cinematic MV shot with a slow push-in.",
   "image_urls": ["https://example.com/keyframe.png"],
+  "video_urls": ["https://example.com/reference.mp4"],
   "audio_urls": ["https://example.com/music.mp3"],
   "duration": 6,
   "duration_seconds": 6,
@@ -511,12 +511,13 @@ Response:
 ```
 
 Validation rules:
-- `audio_urls` require at least one `image_url`.
+- `audio_urls` require at least one `image_url` or `video_url`.
 - `image_urls` accepts at most 9 references.
+- `video_urls` accepts at most 3 references.
 - `audio_urls` accepts at most 3 references.
 - `duration` and `duration_seconds` are both accepted request names; duration must be between 1 and 60 seconds.
 
-The backend wrapper is `submitEvolinkVideoWithRetry()` -> `submitEvolinkVideoGenerationOnce()` and posts to the configured Evolink `{EVOLINK_BASE_URL}/videos/generations` endpoint. When `image_urls` are present it uses `seedance-2.0-reference-to-video` by default and sends prompt, image URLs, optional audio URLs, duration, `quality=720p`, `aspect_ratio=16:9`, and `generate_audio=true`. For prompt-only requests it uses `seedance-2.0-text-to-video` by default and sends prompt plus duration.
+The backend wrapper is `submitArkSeedanceVideoWithRetry()` -> `submitArkSeedanceVideoGenerationOnce()` and posts raw HTTP to the configured Ark `contents/generations/tasks` endpoint. The wrapper sends `model`, a `content` array, `generate_audio`, `ratio`, `duration`, and `watermark`. Prompt text becomes a `{"type":"text"}` content item; `image_urls`, `video_urls`, and `audio_urls` become `reference_image`, `reference_video`, and `reference_audio` content entries.
 
 Video generation currently returns a local playback preview or a provider task id only. This route does not poll provider tasks and does not claim object storage, signed URLs, reusable asset versions, queue workers, Video Library persistence, or generation history writes yet.
 

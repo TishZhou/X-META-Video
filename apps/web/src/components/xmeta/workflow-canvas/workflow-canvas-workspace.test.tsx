@@ -151,7 +151,7 @@ describe("WorkflowCanvasWorkspace", () => {
       "Audio: Input Lyrics -> Output Audio",
     );
     expect(formatTemplateIoLabel(videoTemplate!)).toBe(
-      "Video: Input Prompt + Image + Audio -> Output Video",
+      "Video: Input Prompt + Image + Reference video + Audio -> Output Video",
     );
     const imageTemplate = workflowNodeTemplates.find(
       (template) => template.type === "image",
@@ -589,7 +589,7 @@ describe("WorkflowCanvasWorkspace", () => {
     expect(html).not.toContain('data-music-use-connected-lyrics="true"');
   });
 
-  it("collects connected Script, image, and audio outputs for Video node inputs", () => {
+  it("collects connected Script, image, video, and audio outputs for Video node inputs", () => {
     const graph = createInitialWorkflowGraphState();
     const withScriptOutcome = workflowGraphReducer(graph, {
       type: "upsertOutputNode",
@@ -675,15 +675,48 @@ describe("WorkflowCanvasWorkspace", () => {
         },
       ],
     });
-    const withVideo = workflowGraphReducer(withAudioOutcome, {
+    const withVideoOutcome = workflowGraphReducer(withAudioOutcome, {
+      type: "upsertOutputNode",
+      sourceNodeId: "video-6",
+      nodeType: "video",
+      title: "Video outcome",
+      description: "Ark Seedance video result.",
+      position: { x: 620, y: 600 },
+      output: {
+        sourceNodeId: "video-6",
+        dataType: "video",
+        label: "Video clip",
+        provider: "volcengine-ark",
+        model: "doubao-seedance-2-0-mini-260615",
+        editable: false,
+        media: {
+          kind: "video",
+          url: "https://video.example/reference.mp4",
+          mimeType: "video/mp4",
+          alt: "Video clip",
+        },
+      },
+      ports: [
+        {
+          key: "video-out",
+          label: "Video",
+          direction: "output",
+          dataType: "video",
+        },
+      ],
+    });
+    const withVideo = workflowGraphReducer(withVideoOutcome, {
       type: "addNode",
       nodeType: "video",
       position: { x: 980, y: 260 },
     });
-    const videoNode = withVideo.nodes.find((node) => node.type === "video");
+    const videoNode = withVideo.nodes.find(
+      (node) => node.type === "video" && node.role === "source",
+    );
     const scriptOutcomeNodeId = createWorkflowOutputNodeId("script-1", "script");
     const imageOutcomeNodeId = createWorkflowOutputNodeId("image-4", "image");
     const audioOutcomeNodeId = createWorkflowOutputNodeId("audio-5", "audio");
+    const videoOutcomeNodeId = createWorkflowOutputNodeId("video-6", "video");
 
     expect(videoNode).toBeDefined();
 
@@ -697,7 +730,12 @@ describe("WorkflowCanvasWorkspace", () => {
       sourcePortId: `${imageOutcomeNodeId}:image-out`,
       targetPortId: `${videoNode!.id}:image-in`,
     });
-    const connected = workflowGraphReducer(withImage, {
+    const withReferenceVideo = workflowGraphReducer(withImage, {
+      type: "connect",
+      sourcePortId: `${videoOutcomeNodeId}:video-out`,
+      targetPortId: `${videoNode!.id}:reference-video-in`,
+    });
+    const connected = workflowGraphReducer(withReferenceVideo, {
       type: "connect",
       sourcePortId: `${audioOutcomeNodeId}:audio-out`,
       targetPortId: `${videoNode!.id}:audio-in`,
@@ -715,11 +753,12 @@ describe("WorkflowCanvasWorkspace", () => {
     ).toEqual({
       prompt: "Use this script as the video prompt",
       imageUrls: ["https://image.example/scene.png"],
+      videoUrls: ["https://video.example/reference.mp4"],
       audioUrls: ["https://audio.example/music.mp3"],
     });
   });
 
-  it("renders the Evolink video editor with connected media and video preview", () => {
+  it("renders the Ark video editor with connected media and video preview", () => {
     const graph = workflowGraphReducer(createInitialWorkflowGraphState(), {
       type: "addNode",
       nodeType: "video",
@@ -728,15 +767,16 @@ describe("WorkflowCanvasWorkspace", () => {
     const videoNode = graph.nodes.find((node) => node.type === "video");
     const generation = {
       task_id: "video-task-1",
-      provider_task_id: "evolink-task-1",
+      provider_task_id: "ark-task-1",
       project_id: "local-project",
       node_id: "video-4",
       node_type: "video",
-      provider: "evolink",
-      model: "seedance-2.0-reference-to-video",
+      provider: "volcengine-ark",
+      model: "doubao-seedance-2-0-mini-260615",
       prompt: "Cinematic MV clip",
       duration: 15,
       image_urls: ["https://image.example/scene.png"],
+      video_urls: ["https://video.example/reference.mp4"],
       audio_urls: ["https://audio.example/music.mp3"],
       video: {
         url: "https://video.example/generated.mp4",
@@ -761,6 +801,7 @@ describe("WorkflowCanvasWorkspace", () => {
         error={null}
         generation={generation}
         imageUrlCount={1}
+        videoUrlCount={1}
         node={videoNode!}
         prompt="Cinematic MV clip"
         responseOpen={true}
@@ -775,13 +816,16 @@ describe("WorkflowCanvasWorkspace", () => {
     );
 
     expect(html).toContain('data-video-node-editor="true"');
-    expect(html).toContain("Evolink Seedance video");
+    expect(html).toContain("Ark Seedance video");
     expect(html).toContain('data-video-use-connected-prompt="true"');
     expect(html).toContain('data-video-connected-images="true"');
+    expect(html).toContain('data-video-connected-videos="true"');
     expect(html).toContain('data-video-connected-audio="true"');
     expect(html).toContain('data-generated-video-preview="true"');
     expect(html).toContain("https://video.example/generated.mp4");
-    expect(html).toContain("Backend: evolink / seedance-2.0-reference-to-video");
+    expect(html).toContain(
+      "Backend: volcengine-ark / doubao-seedance-2-0-mini-260615",
+    );
     expect(html).toContain("Video persistence, signed URLs, task polling");
   });
 
@@ -794,15 +838,16 @@ describe("WorkflowCanvasWorkspace", () => {
     const videoNode = graph.nodes.find((node) => node.type === "video");
     const generation = {
       task_id: "video-task-queued",
-      provider_task_id: "evolink-task-queued",
+      provider_task_id: "ark-task-queued",
       project_id: "local-project",
       node_id: "video-4",
       node_type: "video",
-      provider: "evolink",
-      model: "seedance-2.0-text-to-video",
+      provider: "volcengine-ark",
+      model: "doubao-seedance-2-0-mini-260615",
       prompt: "Cinematic MV clip",
       duration: 15,
       image_urls: [],
+      video_urls: [],
       audio_urls: [],
       video: {
         url: null,
@@ -822,6 +867,7 @@ describe("WorkflowCanvasWorkspace", () => {
         error={null}
         generation={generation}
         imageUrlCount={0}
+        videoUrlCount={0}
         node={videoNode!}
         prompt="Cinematic MV clip"
         responseOpen={true}
@@ -836,7 +882,7 @@ describe("WorkflowCanvasWorkspace", () => {
     );
 
     expect(html).toContain('data-video-provider-task="true"');
-    expect(html).toContain("Provider task evolink-task-queued was accepted");
+    expect(html).toContain("Provider task ark-task-queued was accepted");
     expect(html).toContain("Task polling is not implemented");
     expect(html).not.toContain('data-generated-video-preview="true"');
   });
@@ -1191,7 +1237,7 @@ describe("WorkflowCanvasWorkspace", () => {
       type: "video",
       role: "outcome",
       title: "Video outcome",
-      description: "Evolink Seedance video result.",
+      description: "Ark Seedance video result.",
       status: "ready",
       position: { x: 900, y: 120 },
       ports: [],
@@ -1199,8 +1245,8 @@ describe("WorkflowCanvasWorkspace", () => {
         sourceNodeId: "video-4",
         dataType: "video",
         label: "Video clip",
-        provider: "evolink",
-        model: "seedance-2.0-reference-to-video",
+        provider: "volcengine-ark",
+        model: "doubao-seedance-2-0-mini-260615",
         editable: false,
         media: {
           kind: "video",
@@ -1231,12 +1277,14 @@ describe("WorkflowCanvasWorkspace", () => {
     );
 
     expect(formatWorkflowOutputExecutionLabel(node.output)).toBe(
-      "Backend: evolink / seedance-2.0-reference-to-video",
+      "Backend: volcengine-ark / doubao-seedance-2-0-mini-260615",
     );
     expect(html).toContain('data-video-outcome-node="true"');
     expect(html).toContain('data-video-outcome-player="true"');
     expect(html).toContain("https://video.example/generated.mp4");
-    expect(html).toContain("Backend: evolink / seedance-2.0-reference-to-video");
+    expect(html).toContain(
+      "Backend: volcengine-ark / doubao-seedance-2-0-mini-260615",
+    );
     expect(html).toContain("Video persistence, signed URLs, task polling");
   });
 

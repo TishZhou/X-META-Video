@@ -88,7 +88,7 @@
                          "status":  "passing",
                          "current_task":  "video-node-001",
                          "current_task_status":  "passing",
-                         "user_visible_behavior":  "Users can generate one playable video outcome node from a Video node prompt and duration, with connected script/image/audio outputs feeding local FastAPI Evolink Seedance generation; durable video persistence and task polling remain later scope.",
+                         "user_visible_behavior":  "Users can generate one video outcome from a Video node prompt and duration, with connected script/image/reference-video/audio outputs feeding local FastAPI Ark Seedance generation; playable URL responses render as draggable video nodes, while task-id-only responses are labeled honestly because provider polling remains later scope.",
                          "task_file":  "feature_tasks/9.json"
                      },
                      {

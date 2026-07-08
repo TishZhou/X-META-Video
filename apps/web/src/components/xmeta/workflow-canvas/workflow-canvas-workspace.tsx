@@ -739,6 +739,7 @@ export function getConnectedVideoInputs(
     ? getConnectedTextFromNode(promptSourceNode, scriptInput, scriptOutcomes)
     : null;
   const imageUrls = new Set<string>();
+  const videoUrls = new Set<string>();
   const audioUrls = new Set<string>();
 
   for (const edge of state.edges) {
@@ -764,11 +765,19 @@ export function getConnectedVideoInputs(
         audioUrls.add(audioUrl);
       }
     }
+
+    if (sourceNode.output.media.kind === "video") {
+      const videoUrl = videoSourceFromWorkflowOutput(sourceNode.output);
+      if (videoUrl) {
+        videoUrls.add(videoUrl);
+      }
+    }
   }
 
   return {
     prompt,
     imageUrls: Array.from(imageUrls).slice(0, 9),
+    videoUrls: Array.from(videoUrls).slice(0, 3),
     audioUrls: Array.from(audioUrls).slice(0, 3),
   };
 }
@@ -1890,11 +1899,12 @@ export function WorkflowCanvasWorkspace({
       ? parsedDuration
       : DEFAULT_VIDEO_DURATION_SECONDS;
     const imageUrls = connectedInputs.imageUrls;
+    const videoUrls = connectedInputs.videoUrls;
     const audioUrls = connectedInputs.audioUrls;
 
-    if (!prompt && imageUrls.length === 0) {
+    if (!prompt && imageUrls.length === 0 && videoUrls.length === 0) {
       const message =
-        "Video prompt or at least one connected image URL is required before generation.";
+        "Video prompt, connected image URL, or reference video URL is required before generation.";
       setVideoErrors((current) => ({ ...current, [node.id]: message }));
       setVideoResponseOpen(true);
       dispatch({
@@ -1922,9 +1932,13 @@ export function WorkflowCanvasWorkspace({
       return;
     }
 
-    if (audioUrls.length > 0 && imageUrls.length === 0) {
+    if (
+      audioUrls.length > 0 &&
+      imageUrls.length === 0 &&
+      videoUrls.length === 0
+    ) {
       const message =
-        "Audio input requires at least one connected image URL for video generation.";
+        "Audio input requires at least one connected image URL or reference video URL for video generation.";
       setVideoErrors((current) => ({ ...current, [node.id]: message }));
       setVideoResponseOpen(true);
       dispatch({
@@ -1947,7 +1961,7 @@ export function WorkflowCanvasWorkspace({
       type: "setNodeStatus",
       nodeId: node.id,
       status: "running",
-      notice: `${node.title} generation started through FastAPI Evolink Seedance.`,
+      notice: `${node.title} generation started through FastAPI Ark Seedance.`,
     });
 
     try {
@@ -1957,6 +1971,7 @@ export function WorkflowCanvasWorkspace({
         prompt,
         duration,
         imageUrls,
+        videoUrls,
         audioUrls,
       });
       const outcomeTitle = `${node.title} outcome`;
@@ -1986,7 +2001,7 @@ export function WorkflowCanvasWorkspace({
         nodeType: "video",
         title: outcomeTitle,
         description:
-          "Evolink Seedance video result. Local playback only; asset persistence is deferred.",
+          "Ark Seedance video result. Local playback only; asset persistence is deferred.",
         position: {
           x: node.position.x + 360,
           y: Math.max(80, node.position.y - 40),
@@ -2374,6 +2389,9 @@ export function WorkflowCanvasWorkspace({
               generation={selectedVideoGeneration}
               imageUrlCount={
                 selectedConnectedVideoInputs?.imageUrls.length ?? 0
+              }
+              videoUrlCount={
+                selectedConnectedVideoInputs?.videoUrls.length ?? 0
               }
               node={selectedVideoEditorNode}
               prompt={selectedVideoPrompt}
@@ -3542,6 +3560,7 @@ type VideoNodeFloatingEditorProps = {
   error: string | null;
   generation: VideoGenerationResponse | null;
   imageUrlCount: number;
+  videoUrlCount: number;
   node: WorkflowNode;
   prompt: string;
   responseOpen: boolean;
@@ -3563,6 +3582,7 @@ export function VideoNodeFloatingEditor({
   error,
   generation,
   imageUrlCount,
+  videoUrlCount,
   node,
   prompt,
   responseOpen,
@@ -3662,7 +3682,7 @@ export function VideoNodeFloatingEditor({
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold">{node.title}</p>
           <p className="truncate text-xs text-neutral-500">
-            Evolink Seedance video
+            Ark Seedance video
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -3762,6 +3782,12 @@ export function VideoNodeFloatingEditor({
             >
               {audioUrlCount} audio URLs
             </Badge>
+            <Badge
+              className="border-neutral-200 bg-neutral-50 text-neutral-600"
+              data-video-connected-videos="true"
+            >
+              {videoUrlCount} reference videos
+            </Badge>
             {connectedPrompt ? (
               <Button
                 className="h-7 rounded-lg px-2 text-[11px]"
@@ -3812,7 +3838,9 @@ export function VideoNodeFloatingEditor({
               aria-label="Generate Video node"
               className="h-9 rounded-lg px-4 text-xs"
               data-video-generate-loading={busy ? "true" : undefined}
-              disabled={busy || (!promptReady && imageUrlCount === 0)}
+              disabled={
+                busy || (!promptReady && imageUrlCount === 0 && videoUrlCount === 0)
+              }
               onClick={() => {
                 onResponseOpenChange(true);
                 onGenerate();

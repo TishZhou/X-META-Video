@@ -200,6 +200,7 @@ class VideoGenerationInput(BaseModel):
 
     prompt: str = Field(..., min_length=1, max_length=4000)
     image_urls: list[str] = Field(default_factory=list, max_length=9)
+    video_urls: list[str] = Field(default_factory=list, max_length=3)
     audio_urls: list[str] = Field(default_factory=list, max_length=3)
     duration_seconds: int = Field(
         default=5,
@@ -208,7 +209,7 @@ class VideoGenerationInput(BaseModel):
         validation_alias=AliasChoices("duration_seconds", "duration"),
     )
 
-    @field_validator("image_urls", "audio_urls")
+    @field_validator("image_urls", "video_urls", "audio_urls")
     @classmethod
     def strip_media_urls(cls, values: list[str]) -> list[str]:
         cleaned: list[str] = []
@@ -221,8 +222,10 @@ class VideoGenerationInput(BaseModel):
 
     @model_validator(mode="after")
     def validate_media_dependencies(self) -> "VideoGenerationInput":
-        if self.audio_urls and not self.image_urls:
-            raise ValueError("audio_urls require at least one image_url for video generation.")
+        if self.audio_urls and not (self.image_urls or self.video_urls):
+            raise ValueError(
+                "audio_urls require at least one image_url or video_url for video generation."
+            )
         return self
 
 
@@ -231,10 +234,10 @@ class VideoGenerationSettings(BaseModel):
 
     provider: str | None = None
     model: str | None = None
-    text_to_video_model: str | None = None
-    quality: str | None = None
+    ratio: str | None = None
     aspect_ratio: str | None = None
     generate_audio: bool | None = None
+    watermark: bool | None = None
 
 
 class VideoGenerationRequest(BaseModel):
@@ -263,6 +266,7 @@ class VideoGenerationResponse(BaseModel):
     model: str
     prompt: str
     image_urls: list[str]
+    video_urls: list[str]
     audio_urls: list[str]
     duration: int
     duration_seconds: int

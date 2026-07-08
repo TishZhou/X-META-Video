@@ -38,6 +38,7 @@ export type RunVideoGenerationOptions = {
   prompt: string;
   duration: number;
   imageUrls?: string[];
+  videoUrls?: string[];
   audioUrls?: string[];
   settings?: VideoGenerationSettings;
 };
@@ -48,6 +49,7 @@ export async function runVideoGeneration({
   prompt,
   duration,
   imageUrls,
+  videoUrls,
   audioUrls,
   settings,
 }: RunVideoGenerationOptions): Promise<VideoGenerationResponse> {
@@ -61,6 +63,7 @@ export async function runVideoGeneration({
           prompt,
           duration,
           image_urls: imageUrls ?? [],
+          video_urls: videoUrls ?? [],
           audio_urls: audioUrls ?? [],
         },
         settings,

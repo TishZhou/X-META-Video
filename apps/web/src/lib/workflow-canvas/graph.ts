@@ -136,6 +136,13 @@ export const workflowNodeTemplates = [
         dataType: "image",
         accepts: ["image", "character", "scene", "asset"],
       },
+      {
+        key: "reference-video-in",
+        label: "Reference video",
+        direction: "input",
+        dataType: "video",
+        accepts: ["video"],
+      },
       { key: "audio-in", label: "Audio", direction: "input", dataType: "audio" },
       { key: "video-out", label: "Clip", direction: "output", dataType: "video" },
     ],

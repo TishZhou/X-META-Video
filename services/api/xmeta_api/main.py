@@ -7,14 +7,14 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .prompt import build_script_dialogue_prompt
 from .providers import (
-    EvolinkVideoProviderSettings,
+    ArkSeedanceVideoProviderSettings,
     MiniMaxMusicProviderSettings,
     ProviderConfigurationError,
     ProviderExecutionError,
     SeedDreamProviderSettings,
     ScriptProviderSettings,
     get_script_provider,
-    submitEvolinkVideoWithRetry,
+    submitArkSeedanceVideoWithRetry,
     submitMiniMaxMusicWithRetry,
     submitSeedreamWithRetry,
 )
@@ -262,11 +262,12 @@ def generate_video_node(
     request: VideoGenerationRequest,
 ) -> VideoGenerationResponse:
     try:
-        settings = _resolve_evolink_video_provider_settings(request.settings)
-        result = submitEvolinkVideoWithRetry(
+        settings = _resolve_ark_seedance_video_provider_settings(request.settings)
+        result = submitArkSeedanceVideoWithRetry(
             settings=settings,
             prompt=request.input.prompt,
             image_urls=request.input.image_urls,
+            video_urls=request.input.video_urls,
             audio_urls=request.input.audio_urls,
             duration_seconds=request.input.duration_seconds,
         )
@@ -287,9 +288,10 @@ def generate_video_node(
         node_id=node_id,
         node_type=request.node_type,
         provider=settings.provider,
-        model=settings.model_for_generation(has_images=bool(request.input.image_urls)),
+        model=settings.model or "",
         prompt=request.input.prompt,
         image_urls=request.input.image_urls,
+        video_urls=request.input.video_urls,
         audio_urls=request.input.audio_urls,
         duration=request.input.duration_seconds,
         duration_seconds=request.input.duration_seconds,
@@ -343,10 +345,10 @@ def _resolve_minimax_music_provider_settings(
     return env_settings.with_overrides(node_settings)
 
 
-def _resolve_evolink_video_provider_settings(
+def _resolve_ark_seedance_video_provider_settings(
     node_settings: VideoGenerationSettings,
-) -> EvolinkVideoProviderSettings:
-    env_settings = EvolinkVideoProviderSettings.from_env()
+) -> ArkSeedanceVideoProviderSettings:
+    env_settings = ArkSeedanceVideoProviderSettings.from_env()
     return env_settings.with_overrides(node_settings)
 
 

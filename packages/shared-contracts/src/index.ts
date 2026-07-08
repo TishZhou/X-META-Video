@@ -252,6 +252,7 @@ export type VideoGenerationInput = {
   prompt: string;
   duration?: number;
   image_urls?: string[];
+  video_urls?: string[];
   audio_urls?: string[];
   duration_seconds?: number;
 };
@@ -259,10 +260,10 @@ export type VideoGenerationInput = {
 export type VideoGenerationSettings = {
   provider?: string;
   model?: string;
-  text_to_video_model?: string;
-  quality?: string;
+  ratio?: string;
   aspect_ratio?: string;
   generate_audio?: boolean;
+  watermark?: boolean;
 };
 
 export type GeneratedVideo = {
@@ -289,6 +290,7 @@ export type VideoGenerationResponse = {
   model: string;
   prompt: string;
   image_urls: string[];
+  video_urls: string[];
   audio_urls: string[];
   duration: number;
   duration_seconds?: number;

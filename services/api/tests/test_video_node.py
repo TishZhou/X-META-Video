@@ -9,12 +9,12 @@ from fastapi.testclient import TestClient
 
 from xmeta_api.main import app
 from xmeta_api.providers import (
-    EvolinkVideoProviderSettings,
+    ArkSeedanceVideoProviderSettings,
     ProviderExecutionError,
     VideoGenerationProviderResult,
     _load_dotenv_values,
-    submitEvolinkVideoGenerationOnce,
-    submitEvolinkVideoWithRetry,
+    submitArkSeedanceVideoGenerationOnce,
+    submitArkSeedanceVideoWithRetry,
 )
 from xmeta_api.schemas import GeneratedVideo
 from xmeta_api.store import store
@@ -23,7 +23,7 @@ from xmeta_api.store import store
 client = TestClient(app)
 
 
-class EvolinkVideoTestTransport(httpx.BaseTransport):
+class ArkVideoTestTransport(httpx.BaseTransport):
     def __init__(self, handler: Callable[[httpx.Request], httpx.Response]) -> None:
         self._handler = handler
 
@@ -39,26 +39,28 @@ class EvolinkVideoTestTransport(httpx.BaseTransport):
 
 
 @pytest.fixture(autouse=True)
-def clean_store_and_evolink_env(
+def clean_store_and_ark_env(
     monkeypatch: pytest.MonkeyPatch,
 ) -> Generator[None, None, None]:
     store.reset()
     monkeypatch.setenv("X_META_DISABLE_DOTENV", "1")
     _load_dotenv_values.cache_clear()
     for name in (
-        "EVOLINK_API_KEY",
-        "EVOLINK_BASE_URL",
-        "EVOLINK_VIDEO_MODEL",
-        "EVOLINK_TEXT_TO_VIDEO_MODEL",
-        "EVOLINK_VIDEO_QUALITY",
-        "EVOLINK_VIDEO_ASPECT_RATIO",
-        "EVOLINK_GENERATE_AUDIO",
-        "EVOLINK_VIDEO_TIMEOUT_SECONDS",
-        "EVOLINK_VIDEO_MAX_RETRIES",
+        "ARK_API_KEY",
+        "ARK_BASE_URL",
+        "ARK_VIDEO_MODEL",
+        "ARK_VIDEO_RATIO",
+        "ARK_VIDEO_GENERATE_AUDIO",
+        "ARK_VIDEO_WATERMARK",
+        "ARK_VIDEO_TIMEOUT_SECONDS",
+        "ARK_VIDEO_MAX_RETRIES",
+        "VOLCENGINE_ARK_API_KEY",
+        "VOLCENGINE_ARK_BASE_URL",
         "VIDEO_MODEL_PROVIDER",
         "VIDEO_MODEL_BASE_URL",
         "VIDEO_MODEL_API_KEY",
         "VIDEO_MODEL_NAME",
+        "VIDEO_MODEL_ASPECT_RATIO",
     ):
         monkeypatch.delenv(name, raising=False)
     yield
@@ -71,6 +73,7 @@ def video_generation_payload() -> dict[str, object]:
         "input": {
             "prompt": "Animate the hero walking through neon rain.",
             "image_urls": ["https://image.example/keyframe-1.png"],
+            "video_urls": ["https://video.example/reference.mp4"],
             "audio_urls": ["https://audio.example/music.mp3"],
             "duration": 6,
         },
@@ -89,7 +92,7 @@ def test_generate_video_node_validates_required_prompt() -> None:
     assert response.status_code == 422
 
 
-def test_generate_video_node_rejects_audio_without_image_reference() -> None:
+def test_generate_video_node_rejects_audio_without_visual_reference() -> None:
     response = client.post(
         "/api/v1/projects/project-1/nodes/video-1/generate-video",
         json={
@@ -113,6 +116,7 @@ def test_generate_video_node_enforces_media_and_duration_bounds() -> None:
             "input": {
                 "prompt": "Animate a scene.",
                 "image_urls": [f"https://image.example/{index}.png" for index in range(10)],
+                "video_urls": [f"https://video.example/{index}.mp4" for index in range(4)],
                 "audio_urls": [f"https://audio.example/{index}.mp3" for index in range(4)],
                 "duration_seconds": 61,
             },
@@ -122,15 +126,14 @@ def test_generate_video_node_enforces_media_and_duration_bounds() -> None:
     assert response.status_code == 422
 
 
-def test_generate_video_node_returns_backend_evolink_evidence(
+def test_generate_video_node_returns_backend_ark_evidence(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setenv("EVOLINK_API_KEY", "test-evolink-key")
-    monkeypatch.setenv("EVOLINK_BASE_URL", "https://api.evolink.ai/v1")
-    monkeypatch.setenv("EVOLINK_VIDEO_MODEL", "seedance-2.0-reference-to-video")
-    monkeypatch.setenv("EVOLINK_TEXT_TO_VIDEO_MODEL", "seedance-2.0-text-to-video")
+    monkeypatch.setenv("ARK_API_KEY", "test-ark-key")
+    monkeypatch.setenv("ARK_BASE_URL", "https://ark.cn-beijing.volces.com/api/v3")
+    monkeypatch.setenv("ARK_VIDEO_MODEL", "doubao-seedance-2-0-mini-260615")
     monkeypatch.setattr(
-        "xmeta_api.main.submitEvolinkVideoWithRetry",
+        "xmeta_api.main.submitArkSeedanceVideoWithRetry",
         lambda **_: VideoGenerationProviderResult(
             video=GeneratedVideo(
                 url="https://video.example/generated.mp4",
@@ -155,10 +158,11 @@ def test_generate_video_node_returns_backend_evolink_evidence(
         "project_id": "project-1",
         "node_id": "video-1",
         "node_type": "video",
-        "provider": "evolink",
-        "model": "seedance-2.0-reference-to-video",
+        "provider": "volcengine-ark",
+        "model": "doubao-seedance-2-0-mini-260615",
         "prompt": "Animate the hero walking through neon rain.",
         "image_urls": ["https://image.example/keyframe-1.png"],
+        "video_urls": ["https://video.example/reference.mp4"],
         "audio_urls": ["https://audio.example/music.mp3"],
         "duration": 6,
         "duration_seconds": 6,
@@ -175,7 +179,37 @@ def test_generate_video_node_returns_backend_evolink_evidence(
     }
 
 
-def test_generate_video_node_fails_clearly_when_evolink_key_missing() -> None:
+def test_generate_video_node_allows_audio_with_video_reference(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("ARK_API_KEY", "test-ark-key")
+    monkeypatch.setattr(
+        "xmeta_api.main.submitArkSeedanceVideoWithRetry",
+        lambda **_: VideoGenerationProviderResult(
+            video=GeneratedVideo(),
+            provider_task_id="video-task-queued",
+        ),
+    )
+
+    response = client.post(
+        "/api/v1/projects/project-1/nodes/video-1/generate-video",
+        json={
+            "node_type": "video",
+            "input": {
+                "prompt": "Use the reference video motion and this soundtrack.",
+                "video_urls": ["https://video.example/reference.mp4"],
+                "audio_urls": ["https://audio.example/music.mp3"],
+                "duration": 11,
+            },
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()["video_urls"] == ["https://video.example/reference.mp4"]
+    assert response.json()["audio_urls"] == ["https://audio.example/music.mp3"]
+
+
+def test_generate_video_node_fails_clearly_when_ark_key_missing() -> None:
     response = client.post(
         "/api/v1/projects/project-1/nodes/video-1/generate-video",
         json=video_generation_payload(),
@@ -183,12 +217,12 @@ def test_generate_video_node_fails_clearly_when_evolink_key_missing() -> None:
 
     assert response.status_code == 503
     detail = response.json()["detail"]
-    assert "evolink" in detail
-    assert "EVOLINK_API_KEY" in detail
-    assert "test-evolink-key" not in detail
+    assert "volcengine-ark" in detail
+    assert "ARK_API_KEY" in detail
+    assert "test-ark-key" not in detail
 
 
-def test_evolink_provider_posts_reference_payload_and_reads_url() -> None:
+def test_ark_provider_posts_content_payload_and_reads_url() -> None:
     seen: dict[str, object] = {}
 
     def handler(request: httpx.Request) -> httpx.Response:
@@ -200,127 +234,153 @@ def test_evolink_provider_posts_reference_payload_and_reads_url() -> None:
             json={
                 "data": {
                     "task_id": "video-task-1",
-                    "video_url": "https://video.example/evolink.mp4",
+                    "video_url": "https://video.example/ark.mp4",
                     "duration": 6,
                     "width": 1280,
                     "height": 720,
-                    "thumbnail_url": "https://video.example/evolink.jpg",
+                    "thumbnail_url": "https://video.example/ark.jpg",
                 }
             },
         )
 
-    result = submitEvolinkVideoWithRetry(
-        settings=EvolinkVideoProviderSettings(
-            base_url="https://api.evolink.ai/v1",
-            api_key="test-evolink-key",
-            model="seedance-2.0-reference-to-video",
-            text_to_video_model="seedance-2.0-text-to-video",
-            quality="720p",
-            aspect_ratio="16:9",
+    result = submitArkSeedanceVideoWithRetry(
+        settings=ArkSeedanceVideoProviderSettings(
+            base_url="https://ark.cn-beijing.volces.com/api/v3",
+            api_key="test-ark-key",
+            model="doubao-seedance-2-0-mini-260615",
+            ratio="16:9",
             generate_audio=True,
+            watermark=False,
             max_retries=0,
         ),
         prompt="Make this keyframe into a cinematic MV shot.",
         image_urls=["https://image.example/keyframe.png"],
+        video_urls=["https://video.example/reference.mp4"],
         audio_urls=["https://audio.example/music.mp3"],
         duration_seconds=6,
-        client=httpx.Client(transport=EvolinkVideoTestTransport(handler)),
+        client=httpx.Client(transport=ArkVideoTestTransport(handler)),
     )
 
-    assert seen["url"] == "https://api.evolink.ai/v1/videos/generations"
-    assert seen["authorization"] == "Bearer test-evolink-key"
+    assert (
+        seen["url"]
+        == "https://ark.cn-beijing.volces.com/api/v3/contents/generations/tasks"
+    )
+    assert seen["authorization"] == "Bearer test-ark-key"
     assert seen["payload"] == {
-        "model": "seedance-2.0-reference-to-video",
-        "prompt": "Make this keyframe into a cinematic MV shot.",
-        "image_urls": ["https://image.example/keyframe.png"],
-        "audio_urls": ["https://audio.example/music.mp3"],
-        "duration": 6,
-        "quality": "720p",
-        "aspect_ratio": "16:9",
+        "model": "doubao-seedance-2-0-mini-260615",
+        "content": [
+            {
+                "type": "text",
+                "text": "Make this keyframe into a cinematic MV shot.",
+            },
+            {
+                "type": "image_url",
+                "image_url": {"url": "https://image.example/keyframe.png"},
+                "role": "reference_image",
+            },
+            {
+                "type": "video_url",
+                "video_url": {"url": "https://video.example/reference.mp4"},
+                "role": "reference_video",
+            },
+            {
+                "type": "audio_url",
+                "audio_url": {"url": "https://audio.example/music.mp3"},
+                "role": "reference_audio",
+            },
+        ],
         "generate_audio": True,
+        "ratio": "16:9",
+        "duration": 6,
+        "watermark": False,
     }
     assert result.provider_task_id == "video-task-1"
-    assert result.video.url == "https://video.example/evolink.mp4"
+    assert result.video.url == "https://video.example/ark.mp4"
     assert result.video.duration_ms == 6000
     assert result.video.width == 1280
     assert result.video.height == 720
 
 
-def test_evolink_provider_posts_text_payload_and_accepts_task_id_only() -> None:
+def test_ark_provider_posts_text_payload_and_accepts_task_id_only() -> None:
     seen: dict[str, object] = {}
 
     def handler(request: httpx.Request) -> httpx.Response:
         seen["payload"] = json.loads(request.content)
-        return httpx.Response(200, json={"task_id": "queued-video-task"})
+        return httpx.Response(200, json={"id": "queued-video-task"})
 
-    result = submitEvolinkVideoWithRetry(
-        settings=EvolinkVideoProviderSettings(
-            base_url="https://api.evolink.ai/v1/videos/generations",
-            api_key="test-evolink-key",
-            model="seedance-2.0-reference-to-video",
-            text_to_video_model="seedance-2.0-text-to-video",
+    result = submitArkSeedanceVideoWithRetry(
+        settings=ArkSeedanceVideoProviderSettings(
+            base_url=(
+                "https://ark.cn-beijing.volces.com/api/v3/"
+                "contents/generations/tasks"
+            ),
+            api_key="test-ark-key",
+            model="doubao-seedance-2-0-mini-260615",
             max_retries=0,
         ),
         prompt="A neon stage camera push.",
         image_urls=[],
+        video_urls=[],
         audio_urls=[],
         duration_seconds=8,
-        client=httpx.Client(transport=EvolinkVideoTestTransport(handler)),
+        client=httpx.Client(transport=ArkVideoTestTransport(handler)),
     )
 
     assert seen["payload"] == {
-        "model": "seedance-2.0-text-to-video",
-        "prompt": "A neon stage camera push. Duration: 8 seconds.",
+        "model": "doubao-seedance-2-0-mini-260615",
+        "content": [{"type": "text", "text": "A neon stage camera push."}],
+        "generate_audio": True,
+        "ratio": "16:9",
         "duration": 8,
+        "watermark": False,
     }
     assert result.provider_task_id == "queued-video-task"
     assert result.video.url is None
 
 
-def test_evolink_provider_rejects_response_without_video_or_task() -> None:
+def test_ark_provider_rejects_response_without_video_or_task() -> None:
     def handler(request: httpx.Request) -> httpx.Response:
         del request
         return httpx.Response(200, json={"data": {}})
 
     with pytest.raises(ProviderExecutionError, match="video URL or task id"):
-        submitEvolinkVideoGenerationOnce(
-            settings=EvolinkVideoProviderSettings(
-                base_url="https://api.evolink.ai/v1",
-                api_key="test-evolink-key",
-                model="seedance-2.0-reference-to-video",
-                text_to_video_model="seedance-2.0-text-to-video",
+        submitArkSeedanceVideoGenerationOnce(
+            settings=ArkSeedanceVideoProviderSettings(
+                base_url="https://ark.cn-beijing.volces.com/api/v3",
+                api_key="test-ark-key",
+                model="doubao-seedance-2-0-mini-260615",
             ),
             payload={
-                "model": "seedance-2.0-reference-to-video",
-                "prompt": "A scene.",
+                "model": "doubao-seedance-2-0-mini-260615",
+                "content": [{"type": "text", "text": "A scene."}],
             },
-            client=httpx.Client(transport=EvolinkVideoTestTransport(handler)),
+            client=httpx.Client(transport=ArkVideoTestTransport(handler)),
         )
 
 
-def test_evolink_provider_does_not_retry_client_errors() -> None:
+def test_ark_provider_does_not_retry_client_errors() -> None:
     calls = 0
 
     def handler(request: httpx.Request) -> httpx.Response:
         nonlocal calls
         del request
         calls += 1
-        return httpx.Response(400, json={"error": "bad request"})
+        return httpx.Response(400, json={"error": {"message": "bad request"}})
 
-    with pytest.raises(ProviderExecutionError, match="request failed"):
-        submitEvolinkVideoWithRetry(
-            settings=EvolinkVideoProviderSettings(
-                base_url="https://api.evolink.ai/v1",
-                api_key="test-evolink-key",
-                model="seedance-2.0-reference-to-video",
-                text_to_video_model="seedance-2.0-text-to-video",
+    with pytest.raises(ProviderExecutionError, match="status 400: bad request"):
+        submitArkSeedanceVideoWithRetry(
+            settings=ArkSeedanceVideoProviderSettings(
+                base_url="https://ark.cn-beijing.volces.com/api/v3",
+                api_key="test-ark-key",
+                model="doubao-seedance-2-0-mini-260615",
                 max_retries=2,
             ),
             prompt="A scene.",
             image_urls=["https://image.example/keyframe.png"],
+            video_urls=[],
             audio_urls=[],
             duration_seconds=5,
-            client=httpx.Client(transport=EvolinkVideoTestTransport(handler)),
+            client=httpx.Client(transport=ArkVideoTestTransport(handler)),
         )
 
     assert calls == 1
