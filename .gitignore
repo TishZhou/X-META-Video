@@ -15,6 +15,7 @@ venv/
 dist/
 build/
 *.egg-info/
+services/api/uv.lock
 
 # Environment
 .env
