@@ -232,7 +232,6 @@ def test_seedream_provider_posts_configured_payload_and_reads_url() -> None:
         "size": "2K",
         "response_format": "url",
         "watermark": False,
-        "stream": False,
     }
     assert image.url == "https://image.example/seedream.png"
     assert image.width == 2048
@@ -309,7 +308,6 @@ def test_seedream_provider_posts_reference_image_payload() -> None:
         "size": "2K",
         "response_format": "url",
         "watermark": False,
-        "stream": False,
         "image": "data:image/jpeg;base64,old-image",
     }
     assert image.url == "https://image.example/edited.png"

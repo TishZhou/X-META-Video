@@ -596,7 +596,6 @@ def submitSeedreamWithRetry(
         "size": settings.size,
         "response_format": settings.response_format,
         "watermark": settings.watermark,
-        "stream": False,
     }
     reference_image = _build_seedream_reference_image(
         url=reference_image_url,
