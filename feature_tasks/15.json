@@ -4,7 +4,7 @@
     "title": "Production Auth And Workspace Management",
     "status": "in_progress"
   },
-  "planning_status": "auth_account_006_passing",
+  "planning_status": "auth_account_007_in_progress",
   "notes": [
     "Keep this file focused on Production Auth And Workspace Management only.",
     "Feature 15 work is starting on branch zheng while Feature 4 canvas/storyboard work remains active in the shared project context.",
@@ -215,7 +215,7 @@
     {
       "id": "auth-account-007",
       "title": "Close Feature 15 account system evidence",
-      "status": "not_started",
+      "status": "in_progress",
       "user_visible_behavior": "Feature status, sprint evidence, evaluator score, and handoff notes accurately describe what account capabilities are done and what remains deferred.",
       "scope": [
         "Update docs only where durable API/account behavior changed.",
@@ -234,6 +234,16 @@
         "Run final .\\init.ps1.",
         "Run Browser E2E for the account workflow.",
         "Run git status and report remaining changes."
+      ],
+      "evidence": [
+        "Started on branch zheng after auth-account-006 was verified, accepted by main-agent fallback at 160 / 170, and committed as 7e794ce.",
+        "Baseline .\\init.ps1 passed before 007 edits and reran 12 web files / 48 tests.",
+        "Final non-page verification passed: backend full pytest 42 tests, backend ruff, web full tests 12 files / 48 tests, web typecheck, web build, JSON validation, git diff hygiene, and final .\\init.ps1.",
+        "API smoke against the temporary FastAPI service passed register -> owner workspace -> profile update -> workspace rename -> members list -> invite token -> password change -> logout -> login with changed password -> accounts list -> active workspace selection.",
+        "Added frontend test assertions that OAuth/Billing Coming soon and non-manager account actions are rendered disabled, then reran focused account tests, full web tests, and web typecheck successfully.",
+        "Manual page QA found unresolved rendered issues: duplicate password reveal icons, login routing to /account/workspaces instead of account center, workspace semantics conflated with direct canvas entry, and poor account/workspace UI quality.",
+        "The user asked to defer those debug/UI fixes and only record analysis conclusions for later implementation.",
+        "auth-account-007 remains in_progress and Feature 15 is not accepted until the manual QA findings are fixed and reverified."
       ]
     }
   ]

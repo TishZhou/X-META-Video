@@ -1,11 +1,11 @@
-# Sprint Contract - Feature 15 Account Center MVP
+# Sprint Contract - Feature 15 Account System Closure
 
 ## Sprint Overview
 
-**Sprint:** feature-15-auth-account-006
+**Sprint:** feature-15-auth-account-007
 **Feature:** Feature 15, Production Auth And Workspace Management
-**Status:** passing
-**Goal:** Build the full account center MVP with backend-backed profile, workspace, member, role, invite, and password/security flows plus honest OAuth/Billing placeholders.
+**Status:** in_progress
+**Goal:** Close Feature 15 with fresh verification, final evidence, evaluator scoring, and accurate handoff notes after the account-system implementation slices.
 
 ## Write Scope
 
@@ -15,40 +15,28 @@
 - `evaluator-rubric.md`
 - `progress.md`
 - `session-handoff.md`
-- `docs/API.md`
-- `packages/shared-contracts/src/index.ts`
-- `services/api/tests/test_account_center.py`
-- `services/api/tests/test_auth_accounts.py`
-- `services/api/xmeta_api/account_service.py`
-- `services/api/xmeta_api/main.py`
-- `services/api/xmeta_api/schemas.py`
-- `apps/web/src/app/account/**`
-- `apps/web/src/components/xmeta/account/**`
-- `apps/web/src/lib/auth/**`
 
 Protected scope:
 
-- Do not implement real GitHub/Google OAuth provider backend routes.
+- Do not add new account functionality unless final verification exposes a blocking defect.
+- Do not change video canvas, storyboard, media generation, or other workstream code.
+- Do not implement real GitHub/Google OAuth provider routes.
 - Do not implement real production email delivery.
-- Do not implement Billing or payment provider integration; Billing remains owner-visible Coming soon UI only.
-- Do not add database migrations unless current account tables cannot support the MVP.
-- Do not change project/canvas/video work owned by other workstreams.
+- Do not implement Billing or payment provider integration.
+- Do not change database schema unless existing verified account behavior cannot restart.
 - Do not push or create a PR unless explicitly requested.
 
 ## In Scope
 
-- Backend current account profile update.
-- Backend active workspace settings update.
-- Backend member list, invite, role update, and member removal for active organization.
-- Backend password change for authenticated users.
-- Backend development password reset request/confirm using account outbox tokens and returning a development token only for local MVP verification.
-- Frontend account center route with profile, workspace settings, members, security, OAuth placeholder, and Billing placeholder surfaces.
-- Registration UX requires a repeated confirm-password field, password visibility toggles, no workspace-name field, and redirects to account center instead of workspace/canvas after account creation.
-- UI must make unavailable OAuth and Billing actions clear at click time or with disabled Coming soon copy.
-- Role behavior: Owner/Admin can invite, list, change roles, and remove members; Editor/Viewer cannot manage members or Billing. Guard against removing or demoting the last Owner.
+- Reconfirm current account behavior after `auth-account-006`.
+- Record final verification evidence for backend, frontend, typecheck, build, Browser E2E, JSON, diff hygiene, and startup.
+- Confirm unavailable account actions are honestly labeled: OAuth disabled Coming soon, Billing owner-visible Coming soon, and non-manager member controls disabled with Owner/Admin-required copy.
+- Update status artifacts so Feature 15 accurately reflects the completed account-system state and remaining deferred capabilities.
+- Run evaluator review and record a score over 140 before accepting the slice.
 
 ## Out of Scope
 
+- New product features beyond closure evidence.
 - Real OAuth providers and callbacks.
 - Real email provider delivery.
 - Billing provider, invoices, subscription state, or payment methods.
@@ -58,28 +46,23 @@ Protected scope:
 
 ## Acceptance Criteria
 
-1. Authenticated users can update their displayed profile name through backend API and account UI.
-2. Owner/Admin can update active workspace name; Editor/Viewer cannot.
-3. Owner/Admin can list members, invite a member through development outbox, change roles, and remove members within the active workspace.
-4. Editor/Viewer member-management attempts fail clearly with 403 and the UI shows disabled or unavailable management controls honestly.
-5. The backend prevents removing or demoting the last Owner.
-6. Users can change password with current password; wrong current password fails clearly.
-7. Password reset request creates a development outbox reset token for known users without exposing browser bearer tokens; confirm can update password using that development token.
-8. Account center UI shows OAuth providers and Owner-only Billing as Coming soon / unavailable without implying live provider or billing backend.
-9. Registration UI confirms matching passwords, can reveal/hide password fields, does not ask for workspace name, and lands in `/account` after account creation.
-10. Backend tests, web tests, typecheck, build, Browser E2E, JSON validation, diff hygiene, evaluator score, and final `.\init.ps1` evidence are recorded.
+1. `feature_list.json` records Feature 15 and `auth-account-007` status accurately after fresh verification.
+2. `feature_tasks/15.json` records all account slices through closure with evidence and known limitations.
+3. `sprint-contract.md`, `evaluator-rubric.md`, `progress.md`, and `session-handoff.md` contain final evidence.
+4. Account UI exposes no unavailable action without clear disabled or Coming soon state.
+5. Final verification covers backend tests, backend lint, frontend tests, frontend typecheck, frontend build, Browser E2E, JSON validation, `git diff --check`, and final `.\init.ps1`.
+6. Evaluator score is over 140 before the slice is accepted.
+7. Repository remains restartable from `.\init.ps1`.
 
 ## Verification Plan
 
-- Baseline: `.\init.ps1`
-- Backend RED/GREEN tests: from `services/api`, `.\.venv\Scripts\python.exe -m pytest tests\test_account_center.py tests\test_auth_accounts.py -q`
-- Backend regression: from `services/api`, `.\.venv\Scripts\python.exe -m pytest tests -q`
+- Baseline startup: `.\init.ps1`
+- Backend tests: from `services/api`, `.\.venv\Scripts\python.exe -m pytest tests -q`
 - Backend lint: from `services/api`, `.\.venv\Scripts\python.exe -m ruff check xmeta_api tests`
-- Web focused tests: `corepack pnpm --filter @xmeta/web test -- src/components/xmeta/account/account-center.test.tsx src/lib/auth/api.test.ts`
 - Full web tests: `corepack pnpm --filter @xmeta/web test`
 - Web typecheck: `corepack pnpm --filter @xmeta/web typecheck`
 - Web build: `corepack pnpm --filter @xmeta/web build`
-- Browser E2E: register/login -> account center -> update profile/workspace -> invite/list/change/remove member -> security placeholders/password flow -> Billing/OAuth unavailable-state checks.
+- Browser E2E: register -> account center -> profile/workspace update -> member invite/role/remove -> password change -> sign out -> login -> workspace entry, plus disabled OAuth/Billing/non-manager checks where practical.
 - JSON validation:
   - `Get-Content -Raw feature_list.json | ConvertFrom-Json | Out-Null`
   - `Get-Content -Raw feature_tasks/15.json | ConvertFrom-Json | Out-Null`
@@ -90,14 +73,16 @@ Protected scope:
 
 | Phase | Outcome |
 | --- | --- |
-| Baseline | Confirmed `D:\xmeta video\X-META-Video`, branch `zheng`, and read AGENTS, product, architecture, feature list, Feature 15 task file, progress, and recent commits. |
-| Startup | `.\init.ps1` passed before 006 work and reran web tests: 11 files / 45 tests. |
-| Scope | Current slice is `auth-account-006`: backend-backed account center MVP for profile, workspace, members, security/password flows, OAuth disabled placeholders, and Owner-only Billing Coming soon. |
-| Constraint | Evaluator/coding subagent usage is currently constrained by platform quota; if subagents are unavailable, main agent must record the deviation and keep verification evidence explicit. |
-| Backend | Added account center APIs for profile update, workspace rename, member listing/invite/role/remove, password change, and development password reset request/confirm. Backend full pytest passed 42 tests and ruff passed. |
-| Frontend | Added `/account` account center UI, shared account contracts, auth API client methods, top-bar account-center link, and registration UX correction: confirm password, password visibility toggles, no workspace-name field, register redirects to `/account`. |
-| Browser E2E | Passed revised register flow in headless Chrome against temporary FastAPI/Next servers: no workspace-name input, confirm-password mismatch blocks submit, password visibility toggles work, successful register lands on `/account`, default workspace is shown in account center, password change/logout/login/workspace entry works. |
-| Verification | Passed backend full pytest 42 tests, web full tests 12 files / 47 tests, web typecheck, web build, backend ruff, and `git diff --check` with CRLF warnings only. |
-| Evaluator round 1 | Failed at 136 / 170 because Editor/Viewer `/account` loading called member-list API unconditionally, frontend tests missed non-manager UI, rubric was stale, and backend command paths were unclear from repo root. |
-| Fix round | Account center now loads member lists only for Owner/Admin, keeps Editor/Viewer on `/account`, shows explicit Owner/Admin-required copy for member management, and has a non-manager account center test. |
-| Final evaluator fallback | Evaluator round 2 failed due platform usage limit. Main-agent fallback reviewed the fix and fresh verification, recorded 160 / 170 in `evaluator-rubric.md`, and accepted `auth-account-006`. |
+| Baseline | Confirmed `D:\xmeta video\X-META-Video`, branch `zheng`, recent commit `7e794ce feature 15 05: add account center`, and Feature 15 current state. |
+| Startup | `.\init.ps1` passed before 007 edits and reran web tests: 12 files / 48 tests. |
+| Scope | Current slice is `auth-account-007`: final evidence and status closure for the already implemented account system. |
+| Constraint | Evaluator subagent quota has failed in prior rounds; evaluator review will be attempted, and any platform failure must be recorded with main-agent fallback evidence. |
+| Backend verification | From `services/api`, `.\.venv\Scripts\python.exe -m pytest tests -q` passed 42 tests with one Starlette warning; `.\.venv\Scripts\python.exe -m ruff check xmeta_api tests` passed. |
+| Frontend verification | `corepack pnpm --filter @xmeta/web test` passed 12 files / 48 tests; `corepack pnpm --filter @xmeta/web typecheck` passed; `corepack pnpm --filter @xmeta/web build` passed and included account/workspace routes. |
+| Unavailable action coverage | Added focused frontend assertions that Coming soon OAuth/Billing controls and non-manager account controls render disabled; focused account tests passed 3 files / 7 tests, then full web tests and typecheck passed. |
+| API smoke | Temporary FastAPI API smoke passed register, owner workspace creation, profile update, workspace rename, member list, invite token, password change, logout, login with changed password, accounts list, and active workspace selection. |
+| Hygiene | JSON validation for `feature_list.json` and `feature_tasks/15.json` passed; `git diff --check` passed with CRLF warnings only. |
+| Final startup | `.\init.ps1` passed after 007 edits and reran 12 web files / 48 tests. |
+| Manual page QA | User tested the rendered pages and found unresolved issues: duplicate password reveal icons, login routing to `/account/workspaces` instead of account center, workspace semantics conflated with canvas entry, and poor account/workspace UI quality. |
+| Follow-up decision | User asked to defer actual debug/UI implementation and only record conclusions now. |
+| Current status | Automated non-page closure evidence is complete, but rendered manual QA failed; `auth-account-007` remains `in_progress` and Feature 15 is not accepted. |

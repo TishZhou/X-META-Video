@@ -8,7 +8,7 @@ Record major decisions and progress each session. Keep the current verified stat
 - Standard startup path: `.\init.ps1`
 - Standard web verification path: `corepack pnpm --filter @xmeta/web test`
 - Current highest-priority unfinished feature on branch `zheng`: Feature 15, Production Auth And Workspace Management.
-- Current active feature on branch `zheng`: Feature 15; current small tasks `auth-account-002`, `auth-account-003`, `auth-account-004`, and `auth-account-005` are `passing`; the full account system remains `in_progress`.
+- Current active feature on branch `zheng`: Feature 15; current small tasks `auth-account-002` through `auth-account-006` are `passing`; `auth-account-007` closure is `in_progress` pending user-run manual page QA.
 - Account-system branch note: branch `zheng` now contains Feature 15 backend account foundation work. Feature 4 storyboard/canvas context is paused for branch coordination and should resume on its own branch/workstream.
 - Current reset status: Feature 2 and Feature 3 have been removed from the active plan, their task files have been deleted, old web implementation files have been cleared while preserving minimal app structure, and the remaining feature plan has now been renumbered so old Features 4-17 are new Features 2-15.
 - Current feature numbering: Feature 1 remains Web Design and is now recorded as `passing`; Feature 2 is Workflow Canvas Foundation and is now `passing`; old Features 5-17 shifted to new Features 3-15.
@@ -25,8 +25,22 @@ Record major decisions and progress each session. Keep the current verified stat
 - Current Script Node provider-truth revision: Feature 3 `script-node-009` makes Script AI replies show backend-confirmed provider/model evidence. The response panel labels mock dialogue replies as `AI修改 · mock backend` and `Mock backend: mock / local-script-mock`, and live replies as `Backend: openai / gpt-5.4-mini`. FastAPI reads real provider config from process env, `.env`, `services/api/.env`, or this repo's current real-env `.env.example` fallback.
 - Current Storyboard browser-comment revision: `/workspace` now shows confirmed Script output in the Script node preview after generation; the Storyboard AI response/history panel is fixed-height, scrollable, width-aligned with the composer, hideable/restorable, and keeps stable 820px/288px geometry at 50% canvas zoom; the composer dropdown is a model selector; errors render inside the Storyboard AI panel; and nodes can be dragged to negative x positions without a far-left invisible wall.
 - Current blocker: none.
+- Current page QA handoff: user explicitly took concrete page testing. Local test links are `http://localhost:3000/account/register`, `http://localhost:3000/account/login`, and `http://localhost:3000/account`; API is running at `http://127.0.0.1:8000` against temporary SQLite under `output/manual-account-test/`.
 
 ## Session Log
+
+### Session 045
+
+- Date: 2026-07-08
+- Goal: Continue Feature 15 with `auth-account-007`, closure evidence and final verification after the account center MVP.
+- Completed: Ran AGENTS startup gate, confirmed branch `zheng`, recent commit `7e794ce feature 15 05: add account center`, and Feature 15 current state. Switched current task metadata and sprint contract to `auth-account-007` closure without expanding feature scope.
+- Verification run: Baseline `.\init.ps1` passed before 007 edits and reran 12 web files / 48 tests. Backend full pytest passed 42 tests with one Starlette warning. Backend ruff passed. Web full tests passed 12 files / 48 tests. Web typecheck passed. Web build passed and included account/workspace routes. JSON validation passed for `feature_list.json` and `feature_tasks/15.json`. `git diff --check` passed with CRLF warnings only. Final `.\init.ps1` passed and reran 12 web files / 48 tests.
+- API smoke: Temporary FastAPI smoke passed register, owner workspace creation, profile update, workspace rename, member list, invite token, password change, logout, login with changed password, accounts list, and active workspace selection.
+- Test coverage update: Added focused frontend assertions that Coming soon OAuth/Billing and non-manager account actions render disabled. Focused account tests passed 3 files / 7 tests; full web tests passed 12 files / 48 tests; web typecheck passed.
+- Manual page QA result: User found unresolved rendered issues: duplicate password reveal icons, login routing to `/account/workspaces` instead of account center, workspace semantics conflated with direct canvas entry, and poor visual quality for the top-right account chip, account center, workspace selector, and workspace management surface.
+- Follow-up analysis conclusion: Password reveal should use one icon source only; login should land on `/account`; workspace should become a project-management area rather than a direct canvas route; account/workspace UI needs a dedicated design pass. User asked to defer implementation and only record conclusions now.
+- Evaluation: Main-agent evaluator rubric records 140 / 180, not accepted because rendered manual QA failed.
+- Known risk or unresolved issue: `auth-account-007` remains `in_progress`; do not mark Feature 15 passing until the manual QA findings are fixed and reverified.
 
 ### Session 044
 

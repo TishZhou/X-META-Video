@@ -33,6 +33,16 @@ const members = [
   },
 ] as const;
 
+function expectDisabledButton(html: string, label: string) {
+  const escapedLabel = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const match = html.match(
+    new RegExp(`<button[^>]*>[\\s\\S]*?${escapedLabel}[\\s\\S]*?</button>`),
+  );
+
+  expect(match).not.toBeNull();
+  expect(match?.[0]).toContain("disabled");
+}
+
 describe("AccountCenter", () => {
   it("renders the full account center MVP with honest placeholders", () => {
     const html = renderToStaticMarkup(
@@ -49,9 +59,15 @@ describe("AccountCenter", () => {
     expect(html).toContain("Change password");
     expect(html).toContain("OAuth");
     expect(html).toContain("Coming soon");
+    expect(html).toContain("GitHub Coming soon");
+    expect(html).toContain("Google Coming soon");
     expect(html).toContain("Billing");
+    expect(html).toContain("Billing Coming soon");
     expect(html).toContain("Owner only");
     expect(html).toContain("Sign out");
+    expectDisabledButton(html, "GitHub Coming soon");
+    expectDisabledButton(html, "Google Coming soon");
+    expectDisabledButton(html, "Billing Coming soon");
   });
 
   it("renders non-manager sessions with unavailable member and billing controls", () => {
@@ -73,7 +89,8 @@ describe("AccountCenter", () => {
     expect(html).toContain("Members");
     expect(html).toContain("Owner or Admin role is required");
     expect(html).toContain("Billing Coming soon");
-    expect(html).toContain("disabled");
+    expectDisabledButton(html, "Invite member");
+    expectDisabledButton(html, "Billing Coming soon");
     expect(html).not.toContain("Account required");
   });
 });

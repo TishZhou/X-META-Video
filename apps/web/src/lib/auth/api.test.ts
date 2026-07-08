@@ -66,6 +66,15 @@ describe("auth api client", () => {
         credentials: "include",
       }),
     );
+    const registerInit = fetchMock.mock.calls[1]?.[1] as RequestInit;
+    const registerBody = JSON.parse(String(registerInit.body));
+
+    expect(registerBody).toEqual({
+      email: "new@example.com",
+      password: "password123",
+      name: "New Creator",
+    });
+    expect(registerBody).not.toHaveProperty("workspace_name");
   });
 
   it("loads account state and selects workspaces with session credentials", async () => {

@@ -22,6 +22,16 @@ const session = {
   },
 };
 
+function expectDisabledButton(html: string, label: string) {
+  const escapedLabel = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const match = html.match(
+    new RegExp(`<button[^>]*>[\\s\\S]*?${escapedLabel}[\\s\\S]*?</button>`),
+  );
+
+  expect(match).not.toBeNull();
+  expect(match?.[0]).toContain("disabled");
+}
+
 describe("AuthPanel", () => {
   afterEach(() => {
     vi.clearAllMocks();
@@ -41,6 +51,8 @@ describe("AuthPanel", () => {
     expect(html).toContain("GitHub");
     expect(html).toContain("Google");
     expect(html).toContain("Coming soon");
+    expectDisabledButton(html, "GitHub Coming soon");
+    expectDisabledButton(html, "Google Coming soon");
     expect(html).toContain("Provider login is not implemented yet");
   });
 });

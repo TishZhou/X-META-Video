@@ -5,7 +5,7 @@
 - Repository root: `D:\xmeta video\X-META-Video`
 - Feature 1 `Web Design`, Feature 2 `Workflow Canvas Foundation`, and Feature 3 `Script Node` are recorded as `passing`.
 - Feature 3 current task is `script-node-009`, recorded as `passing`.
-- Current active feature on branch `zheng` is Feature 15 `Production Auth And Workspace Management`; `auth-account-002`, `auth-account-003`, `auth-account-004`, and `auth-account-005` are recorded as `passing`.
+- Current active feature on branch `zheng` is Feature 15 `Production Auth And Workspace Management`; `auth-account-002` through `auth-account-006` are recorded as `passing`; `auth-account-007` closure is `in_progress` pending user-run manual page QA.
 - Feature 4 `Storyboard Node` is paused for branch coordination and should resume in its own workstream.
 - Pre-existing unrelated working tree edits were preserved: `.env.example`, `AGENTS.md`, `docs/PRODUCT.md`, `pnpm-workspace.yaml`, and untracked `scripts/`.
 
@@ -54,6 +54,11 @@
 - Feature 15 evaluator fallback accepted `auth-account-005` at 144 / 150 after evaluator subagent failed due platform usage limit.
 - Feature 15 account center verification: backend full pytest passed 42 tests; web full tests passed 12 files / 48 tests; web typecheck passed; web build passed; backend ruff passed; revised register/account Browser E2E passed with temporary SQLite FastAPI and Next dev servers; final `.\init.ps1` passed with 12 files / 48 tests.
 - Feature 15 account center evaluator: round 1 failed at 136 / 170, fix round closed the non-manager `/account` loading bug and stale artifact issues, round 2 failed due platform usage limit, and main-agent fallback accepted at 160 / 170.
+- Feature 15 closure verification: baseline `.\init.ps1`, backend full pytest 42 tests, backend ruff, web full tests 12 files / 48 tests, web typecheck, web build, JSON validation, `git diff --check`, and final `.\init.ps1` passed for `auth-account-007`.
+- Feature 15 API smoke: temporary FastAPI smoke passed register, owner workspace creation, profile update, workspace rename, member list, invite token, password change, logout, login with changed password, accounts list, and active workspace selection.
+- Feature 15 unavailable-action test coverage: frontend tests now assert Coming soon OAuth/Billing and non-manager account actions render disabled; focused account tests, full web tests, and web typecheck passed after the assertion update.
+- Manual page QA result: user found duplicate password reveal icons, login routing to `/account/workspaces` instead of account center, workspace semantics conflated with direct canvas entry, and poor UI quality for the account chip/account center/workspace surfaces.
+- Follow-up conclusion: later fix pass should use one password reveal icon source, route login to `/account`, redefine workspace as a project-management area with project/canvas entry inside it, and redesign account/workspace UI. User asked to defer implementation and only record analysis now.
 
 ## Boundaries
 
@@ -61,7 +66,7 @@
 - Current dialogue remains request/response from the UI perspective, not SSE/WebSocket streaming.
 - Conversation history is not yet automatically summarized into the generation prompt; users can refine the main prompt before Generate.
 - Durable chat persistence, queue workers, task event streaming, object storage, asset lineage, generated media, and export remain later feature scope.
-- Feature 15 remaining slice: `auth-account-007` closure evidence.
+- Feature 15 remaining slice: fix and reverify manual QA findings before `auth-account-007` or Feature 15 can be marked passing.
 
 ## Next Commands
 
