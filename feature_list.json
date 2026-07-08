@@ -77,9 +77,9 @@
                          "id":  8,
                          "title":  "Audio Node",
                          "status":  "passing",
-                         "current_task":  "text-to-music-audio-node-001",
+                         "current_task":  "text-to-music-audio-node-003",
                          "current_task_status":  "passing",
-                         "user_visible_behavior":  "Users can generate one playable music outcome node from Audio node lyrics/style text through a Script-style inline composer and the local MiniMax backend path; connected script text can seed lyrics and durable audio persistence remains later scope.",
+                         "user_visible_behavior":  "Users can generate or upload playable audio directly on the Audio node through the local MiniMax backend path; connected text can seed lyrics, generated audio renders as playable native controls with local download on the source Audio node, and existing audio can be edited through MiniMax cover generation from the inline AI box.",
                          "task_file":  "feature_tasks/8.json"
                      },
                      {

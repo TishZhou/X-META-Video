@@ -3,10 +3,24 @@
 ## Verified Now
 
 - Repository root: `D:\X-META-Video`
-- Feature 1 Web Design, Feature 2 Workflow Canvas Foundation, Feature 3 Script Node, Feature 5 self-contained image nodes, Feature 8 Audio Node, and Feature 9 Video Node are recorded as `passing`.
-- Current active feature: none.
+- Feature 1 Web Design, Feature 2 Workflow Canvas Foundation, Feature 3 Script Node, Feature 5 self-contained image nodes, and Feature 9 Video Node are recorded as `passing`.
+- Current active feature: Feature 8 Audio Node revision `text-to-music-audio-node-003` is now `passing` after live MiniMax generate-and-edit Browser E2E.
 - Next broader unfinished feature remains Feature 4 Storyboard Node unless the user selects another media/export task.
 - Feature 5 latest state: Character Image, Prop / Asset, and Scene Image generation entries have been collapsed into one self-contained Image node. It displays its own uploaded/generated image, can seed prompts from connected text, can generate prompt-only images, and can send prompt plus current image reference for SeedDream editing. It no longer creates separate image outcome nodes.
+
+## Feature 8 Audio Node State
+
+- Audio source nodes now render an empty audio state until audio media exists.
+- Selecting an Audio source node opens the Script-style below-node composer.
+- If no audio is present, the composer uses connected text as lyrics when available plus the inline natural-language music prompt, then calls the local FastAPI route: `POST /api/v1/projects/{project_id}/nodes/{node_id}/generate-audio`.
+- Successful generation updates the selected Audio source node via local `output.media.kind=audio`; it no longer creates a separate Audio outcome node.
+- The Audio source node renders browser `<audio controls>` with play/pause directly on the node.
+- The Audio source node exposes a visible Download action for saving the current generated/uploaded local audio preview.
+- Default Audio node test prompt/lyrics are intentionally short to reduce live MiniMax generation wait time during testing.
+- Upload uses a local browser data URL only; it updates the selected Audio node preview and is not durable storage.
+- If the selected Audio node already has generated or uploaded audio, the composer switches to Edit audio mode and calls local FastAPI with the current audio as a MiniMax `music-cover-free` reference, then replaces the selected source Audio node in place.
+- MiniMax defaults now match the domestic free-tier request shape: `MINIMAX_BASE_URL=https://api.minimaxi.com/v1/music_generation`, `MINIMAX_MUSIC_MODEL=music-2.6-free`, `MINIMAX_MUSIC_COVER_MODEL=music-cover-free`, `MINIMAX_MUSIC_OUTPUT_FORMAT=hex`, sample rate `44100`, bitrate `256000`, format `mp3`.
+- Real provider key remains gitignored in `.env`; no secret values were printed.
 
 ## Feature 5 Image Node State
 
@@ -97,6 +111,19 @@ POST /api/v1/projects/{project_id}/nodes/{node_id}/generate-image
   - `EVOLINK_GENERATE_AUDIO=true`
   - `EVOLINK_VIDEO_TIMEOUT_SECONDS`
   - `EVOLINK_VIDEO_MAX_RETRIES`
+- `.env` and `.env.example` include non-secret Audio settings:
+  - `MUSIC_MODEL_PROVIDER=minimax`
+  - `MINIMAX_BASE_URL=https://api.minimaxi.com/v1/music_generation`
+  - `MINIMAX_API_KEY=`
+  - `MINIMAX_HTTPS_PROXY=`
+  - `MINIMAX_MUSIC_MODEL=music-2.6-free`
+  - `MINIMAX_MUSIC_COVER_MODEL=music-cover-free`
+  - `MINIMAX_MUSIC_OUTPUT_FORMAT=hex`
+  - `MINIMAX_MUSIC_SAMPLE_RATE=44100`
+  - `MINIMAX_MUSIC_BITRATE=256000`
+  - `MINIMAX_MUSIC_FORMAT=mp3`
+  - `MINIMAX_MUSIC_TIMEOUT_SECONDS`
+  - `MINIMAX_MUSIC_MAX_RETRIES`
 - Real provider secrets remain gitignored in `.env`; no secret values were printed.
 
 ## Verification Evidence
@@ -112,6 +139,30 @@ POST /api/v1/projects/{project_id}/nodes/{node_id}/generate-image
 - `corepack pnpm --filter @xmeta/web build` passed and included `/workspace`.
 - Browser QA on `http://localhost:3000/workspace` with system Chrome passed: added Scene Image, verified empty image-node state and below-node composer, uploaded the provided PNG, saw one in-node image preview, zero image outcome nodes, local-upload provider evidence, Edit image mode, and Use connected text after connecting Script output to Scene Image input.
 - Final `.\init.ps1` passed and reran web tests: 9 files / 55 tests.
+- Feature 8 Audio revision evidence:
+  - Baseline `.\init.ps1` passed before implementation and reran web tests: 9 files / 55 tests.
+  - `.\.venv\Scripts\python.exe -m pytest services\api\tests\test_music_node.py` passed: 8 tests.
+  - `.\.venv\Scripts\python.exe -m ruff check services\api` passed.
+  - `corepack pnpm --filter @xmeta/web test -- workflow-canvas-workspace.test.tsx graph.test.ts` passed: 2 files / 38 tests.
+  - `corepack pnpm --filter @xmeta/web typecheck` passed.
+  - `.\.venv\Scripts\python.exe -m pytest services\api\tests` passed: 52 tests.
+  - `corepack pnpm --filter @xmeta/web test` passed: 9 files / 57 tests.
+  - `corepack pnpm --filter @xmeta/web build` passed and included `/workspace`.
+  - Live FastAPI preflight with external network permission reached domestic MiniMax and returned provider `minimax`, model `music-2.6-free`, `audio/mpeg`, hex length `11255410`, duration `175804ms`, sample rate `44100`, and bitrate `256000`.
+  - Browser E2E passed on `http://localhost:3000/workspace` with local FastAPI on 8000 and domestic MiniMax live provider: Add Audio, fill prompt/lyrics, Generate, backend evidence `minimax / music-2.6-free`, generated audio rendered on the source Audio node as native `<audio controls>`, data URL length `6000091`, duration `140.527166`, `readyState=4`, source node switched to Edit audio mode, and browser console warn/error logs were empty.
+  - Final `.\init.ps1` passed after live E2E artifact updates and reran web tests: 9 files / 57 tests.
+  - Final `.\init.ps1` passed after artifact updates and reran web tests: 9 files / 57 tests.
+  - Feature 8 Audio edit completion evidence:
+    - Baseline `.\init.ps1` passed before implementation and reran web tests: 9 files / 57 tests.
+    - `.\.venv\Scripts\python.exe -m pytest services\api\tests\test_music_node.py` passed: 10 tests.
+    - `corepack pnpm --filter @xmeta/web test -- workflow-canvas-workspace.test.tsx graph.test.ts` passed: 2 files / 39 tests.
+    - `corepack pnpm --filter @xmeta/web typecheck` passed.
+    - `.\.venv\Scripts\python.exe -m pytest services\api\tests` passed: 54 tests.
+    - `.\.venv\Scripts\python.exe -m ruff check services\api` passed.
+    - `corepack pnpm --filter @xmeta/web test` passed: 9 files / 58 tests.
+    - `corepack pnpm --filter @xmeta/web build` passed and included `/workspace`.
+    - Browser E2E passed on `http://localhost:3000/workspace` with local FastAPI on 8000 and domestic MiniMax live provider: Add Audio, Generate via `music-2.6-free`, source node rendered playable controls and Download, Edit audio with prompt, backend evidence switched to `minimax / music-cover-free`, source data URL length changed from `7626231` to `7440103`, duration changed from `178.642721` to `174.27737`, `readyState=4`, old audio-edit not-implemented text absent, and browser console warn/error logs were empty.
+    - Final `.\init.ps1` passed after artifact updates and reran web tests: 9 files / 58 tests.
 - Previous Feature 9 evidence remains:
   - Baseline `.\init.ps1` passed before implementation and reran web tests: 9 files / 48 tests.
 - `.\.venv\Scripts\python.exe -m pytest services\api\tests\test_video_node.py` passed: 9 tests.
@@ -127,6 +178,7 @@ POST /api/v1/projects/{project_id}/nodes/{node_id}/generate-image
 ## Boundaries
 
 - Live Doubao/SeedDream execution was not attempted because `DOUBAO_API_KEY` is empty.
+- Live MiniMax execution for Feature 8 passed through domestic MiniMax using `music-2.6-free` for text-to-music and `music-cover-free` for existing-audio edit.
 - Live Evolink execution was not attempted because `EVOLINK_API_KEY` is empty.
 - Durable workflow persistence, object storage, signed URLs, queue workers, provider task polling, Asset Library, Video Library, generation history, and export assembly remain later scope.
 - Feature 5 image, Feature 8 audio, and Feature 9 video behavior are preserved and passing.

@@ -19,6 +19,7 @@ import type { WorkflowNode } from "@/lib/workflow-canvas/types";
 
 import {
   audioSourceFromGeneratedAudio,
+  audioReferenceFromWorkflowOutput,
   audioSourceFromWorkflowOutput,
   base64FromHexAudio,
   buildScriptDirectOutputMessage,
@@ -457,6 +458,7 @@ describe("WorkflowCanvasWorkspace", () => {
       <MusicNodeInlineEditor
         busy={false}
         connectedLyrics="[Chorus]\nWe run into the glow"
+        currentAudioSource={null}
         error={null}
         generation={generation}
         lyrics="[Chorus]\nWe run into the glow"
@@ -464,10 +466,12 @@ describe("WorkflowCanvasWorkspace", () => {
         prompt="K-pop cinematic MV chorus"
         responseOpen={true}
         viewportZoom={1}
+        onEdit={() => undefined}
         onGenerate={() => undefined}
         onLyricsChange={() => undefined}
         onPromptChange={() => undefined}
         onResponseOpenChange={() => undefined}
+        onUpload={() => undefined}
         onUseConnectedLyrics={() => undefined}
       />,
     );
@@ -477,12 +481,112 @@ describe("WorkflowCanvasWorkspace", () => {
     expect(html).toContain('data-music-node-output-panel="true"');
     expect(html).toContain("MiniMax Music");
     expect(html).toContain('data-music-use-connected-lyrics="true"');
+    expect(html).toContain('data-music-upload-audio="true"');
     expect(html).toContain('data-generated-audio-preview="true"');
     expect(html).toContain("https://audio.example/generated.mp3");
     expect(html).toContain("Backend: minimax / music-2.6-free");
     expect(html).toContain("Audio persistence, signed URLs, and Audio Library save");
     expect(html).not.toContain('data-music-node-drag-handle="true"');
     expect(html).not.toContain('data-music-node-resize-handle="true"');
+  });
+
+  it("builds MiniMax cover references from current Audio node media", () => {
+    expect(
+      audioReferenceFromWorkflowOutput({
+        sourceNodeId: "audio-1",
+        dataType: "audio",
+        label: "Generated audio",
+        editable: false,
+        media: {
+          kind: "audio",
+          hex: "4869",
+          mimeType: "audio/mpeg",
+          alt: "Generated audio",
+        },
+      }),
+    ).toEqual({
+      referenceAudioUrl: null,
+      referenceAudioB64: "SGk=",
+      referenceAudioMimeType: "audio/mpeg",
+    });
+
+    expect(
+      audioReferenceFromWorkflowOutput({
+        sourceNodeId: "audio-1",
+        dataType: "audio",
+        label: "Uploaded audio",
+        editable: false,
+        media: {
+          kind: "audio",
+          url: "data:audio/mpeg;base64,UklGRg==",
+          mimeType: "audio/mpeg",
+          alt: "Uploaded audio",
+        },
+      }),
+    ).toEqual({
+      referenceAudioUrl: null,
+      referenceAudioB64: "UklGRg==",
+      referenceAudioMimeType: "audio/mpeg",
+    });
+
+    expect(
+      audioReferenceFromWorkflowOutput({
+        sourceNodeId: "audio-1",
+        dataType: "audio",
+        label: "Remote audio",
+        editable: false,
+        media: {
+          kind: "audio",
+          url: "https://audio.example/current.mp3",
+          mimeType: "audio/mpeg",
+          alt: "Remote audio",
+        },
+      }),
+    ).toEqual({
+      referenceAudioUrl: "https://audio.example/current.mp3",
+      referenceAudioB64: null,
+      referenceAudioMimeType: "audio/mpeg",
+    });
+  });
+
+  it("renders Audio edit mode when current audio exists", () => {
+    const graph = workflowGraphReducer(createInitialWorkflowGraphState(), {
+      type: "addNode",
+      nodeType: "audio",
+      position: { x: 860, y: 120 },
+    });
+    const audioNode = graph.nodes.find((node) => node.type === "audio");
+
+    expect(audioNode).toBeDefined();
+
+    const html = renderToStaticMarkup(
+      <MusicNodeInlineEditor
+        busy={false}
+        connectedLyrics="[Chorus]\nWe run into the glow"
+        currentAudioSource="https://audio.example/current.mp3"
+        error={null}
+        generation={null}
+        lyrics="[Chorus]\nWe run into the glow"
+        node={audioNode!}
+        prompt="Make the chorus brighter"
+        responseOpen={true}
+        viewportZoom={1}
+        onEdit={() => undefined}
+        onGenerate={() => undefined}
+        onLyricsChange={() => undefined}
+        onPromptChange={() => undefined}
+        onResponseOpenChange={() => undefined}
+        onUpload={() => undefined}
+        onUseConnectedLyrics={() => undefined}
+      />,
+    );
+
+    expect(html).toContain('data-music-reference-edit="true"');
+    expect(html).toContain("Edit audio");
+    expect(html).toContain("Upload");
+    expect(html).not.toContain("not implemented");
+    expect(html).not.toContain('data-music-lyrics-input="true"');
+    expect(html).not.toContain('data-music-use-connected-lyrics="true"');
   });
 
   it("collects connected Script, image, and audio outputs for Video node inputs", () => {
@@ -1007,9 +1111,78 @@ describe("WorkflowCanvasWorkspace", () => {
     );
     expect(html).toContain('data-audio-outcome-node="true"');
     expect(html).toContain('data-audio-outcome-player="true"');
+    expect(html).toContain('data-audio-outcome-download="true"');
+    expect(html).toContain('download="audio-outcome.mp3"');
     expect(html).toContain("https://audio.example/generated.mp3");
     expect(html).toContain("Backend: minimax / music-2.6-free");
     expect(html).toContain("Audio persistence, signed URLs, and Audio Library save");
+  });
+
+  it("renders self-contained source Audio nodes with playable generated audio", () => {
+    const graph = workflowGraphReducer(createInitialWorkflowGraphState(), {
+      type: "addNode",
+      nodeType: "audio",
+      position: { x: 520, y: 240 },
+    });
+    const audioNode = graph.nodes.find((candidate) => candidate.type === "audio");
+
+    expect(audioNode).toBeDefined();
+
+    const withPreview = workflowGraphReducer(graph, {
+      type: "updateNodeOutput",
+      nodeId: audioNode!.id,
+      status: "ready",
+      output: {
+        sourceNodeId: audioNode!.id,
+        dataType: "audio",
+        label: "Audio node audio",
+        provider: "minimax",
+        model: "music-2.6-free",
+        editable: false,
+        media: {
+          kind: "audio",
+          hex: "4869",
+          mimeType: "audio/mpeg",
+          alt: "Audio node generated audio",
+        },
+      },
+      notice: "Audio generated on this node.",
+    });
+    const updatedNode = withPreview.nodes.find(
+      (candidate) => candidate.id === audioNode!.id,
+    );
+    const outputNodeId = createWorkflowOutputNodeId(audioNode!.id, "audio");
+
+    expect(withPreview.nodes).toHaveLength(graph.nodes.length);
+    expect(withPreview.selection).toEqual({ kind: "node", id: audioNode!.id });
+    expect(
+      withPreview.nodes.find((candidate) => candidate.id === outputNodeId),
+    ).toBeUndefined();
+    expect(audioSourceFromWorkflowOutput(updatedNode?.output)).toBe(
+      "data:audio/mpeg;base64,SGk=",
+    );
+
+    const html = renderToStaticMarkup(
+      <WorkflowNodeCard
+        node={updatedNode!}
+        scriptInput={null}
+        scriptOutcomeText={null}
+        selected={true}
+        pendingPort={null}
+        onScriptOutcomeTextChange={() => undefined}
+        onDragStart={() => undefined}
+        onSelect={() => undefined}
+        onPortConnectionStart={() => undefined}
+      />,
+    );
+
+    expect(html).toContain('data-audio-node-current="true"');
+    expect(html).toContain('data-audio-node-player="true"');
+    expect(html).toContain('data-audio-node-download="true"');
+    expect(html).toContain('download="audio.mp3"');
+    expect(html).not.toContain('data-audio-outcome-node="true"');
+    expect(html).toContain("data:audio/mpeg;base64,SGk=");
+    expect(html).toContain("Backend: minimax / music-2.6-free");
   });
 
   it("renders playable Video outcome nodes with backend evidence", () => {

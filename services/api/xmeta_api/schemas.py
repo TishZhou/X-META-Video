@@ -141,6 +141,9 @@ class MusicGenerationInput(BaseModel):
 
     prompt: str = Field(..., min_length=1, max_length=2000)
     lyrics: str = Field(default="", max_length=3500)
+    reference_audio_url: str | None = Field(default=None, min_length=1)
+    reference_audio_b64: str | None = Field(default=None, min_length=1)
+    reference_audio_mime_type: str | None = Field(default=None, min_length=1)
 
 
 class MusicGenerationSettings(BaseModel):

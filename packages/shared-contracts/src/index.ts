@@ -197,6 +197,9 @@ export type MusicGenerationNodeType =
 export type MusicGenerationInput = {
   prompt: string;
   lyrics: string;
+  reference_audio_url?: string | null;
+  reference_audio_b64?: string | null;
+  reference_audio_mime_type?: string | null;
 };
 
 export type MusicGenerationSettings = {

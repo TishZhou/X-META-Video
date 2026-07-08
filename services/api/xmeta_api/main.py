@@ -215,10 +215,17 @@ def generate_audio_node(
 ) -> MusicGenerationResponse:
     try:
         settings = _resolve_minimax_music_provider_settings(request.settings)
+        has_reference_audio = bool(
+            request.input.reference_audio_url or request.input.reference_audio_b64
+        )
+        if has_reference_audio and not request.settings.model:
+            settings = settings.with_cover_model()
         audio = submitMiniMaxMusicWithRetry(
             settings=settings,
             prompt=request.input.prompt,
             lyrics=request.input.lyrics,
+            reference_audio_url=request.input.reference_audio_url,
+            reference_audio_b64=request.input.reference_audio_b64,
         )
     except ProviderConfigurationError as exc:
         raise HTTPException(

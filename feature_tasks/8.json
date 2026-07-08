@@ -4,7 +4,7 @@
     "title": "Audio Node",
     "status": "passing"
   },
-  "planning_status": "text_to_music_audio_node_001_passing",
+  "planning_status": "text_to_music_audio_node_003_passing",
   "notes": [
     "This task is limited to text or lyrics to music generation for the Audio node.",
     "The frontend must call only the local FastAPI backend, never MiniMax directly.",
@@ -40,6 +40,65 @@
         "Browser E2E passed on http://localhost:3000/workspace with a temporary local fake backend on 8000: Add Audio, fill style/lyrics, Generate, one playable Audio outcome node, backend evidence minimax / music-2.6-free, no-persistence label, drag moved the outcome node, no console warn/error logs.",
         "Final .\\init.ps1 passed after artifact updates and reran web tests: 9 files / 48 tests.",
         "Audio inline composer follow-up passed: focused workflow tests 2 files / 32 tests, web typecheck, browser QA confirming the inline composer under the selected Audio node and no old floating editor, and final .\\init.ps1 rerunning 9 files / 51 tests."
+      ]
+    },
+    {
+      "id": "text-to-music-audio-node-002",
+      "title": "Make Audio node self-contained with MiniMax music-2.6-free hex output",
+      "status": "passing",
+      "user_visible_behavior": "Audio source nodes generate or upload playable audio directly on the selected Audio node. When current audio exists, the inline AI box switches to Edit audio mode.",
+      "acceptance_criteria": [
+        "MiniMax provider defaults match the domestic free-tier shape: api.minimaxi.com music_generation endpoint, model music-2.6-free, output_format hex, sample_rate 44100, bitrate 256000, and mp3 format.",
+        "Empty Audio nodes generate from connected lyrics plus the inline natural-language music prompt through local FastAPI only.",
+        "Generated audio updates the selected Audio source node in place and renders browser audio controls on that node.",
+        "Audio generation no longer creates a separate Audio outcome node.",
+        "Generated or uploaded Audio node previews expose a visible local download action.",
+        "Audio upload updates the selected Audio source node locally and is labeled not persisted.",
+        "Existing audio switches the inline composer to Edit audio mode.",
+        "Feature 5 Image node and Feature 9 Video node behavior remain preserved.",
+        "Browser E2E must use the live MiniMax route; if provider/account issues occur, testing pauses instead of using a mock."
+      ],
+      "verification": [
+        ".\\init.ps1 passed before implementation and reran web tests: 9 files / 55 tests.",
+        ".\\.venv\\Scripts\\python.exe -m pytest services\\api\\tests\\test_music_node.py passed: 8 tests.",
+        ".\\.venv\\Scripts\\python.exe -m ruff check services\\api passed.",
+        "corepack pnpm --filter @xmeta/web test -- workflow-canvas-workspace.test.tsx graph.test.ts passed: 2 files / 38 tests.",
+        "corepack pnpm --filter @xmeta/web typecheck passed.",
+        ".\\.venv\\Scripts\\python.exe -m pytest services\\api\\tests passed: 52 tests.",
+        "corepack pnpm --filter @xmeta/web test passed: 9 files / 57 tests.",
+        "corepack pnpm --filter @xmeta/web build passed and included /workspace.",
+        "Live FastAPI preflight reached domestic MiniMax through the local backend with external network permission and returned provider minimax, model music-2.6-free, mime_type audio/mpeg, hex_length 11255410, duration_ms 175804, sample_rate 44100, and bitrate 256000.",
+        "Final .\\init.ps1 passed after artifact updates and reran web tests: 9 files / 57 tests.",
+        "Browser E2E passed on http://localhost:3000/workspace with local FastAPI on 8000 and domestic MiniMax live provider: Add Audio, fill prompt/lyrics, Generate, backend evidence minimax / music-2.6-free, generated audio rendered on the source Audio node as native audio controls, visible Download link, data URL length 6000091, duration 140.527166, readyState 4, source node switched to Edit audio mode, and browser console warn/error logs were empty.",
+        "Follow-up Browser QA confirmed the Audio node Download link uses download=audio.mp3, points to the same data:audio/mpeg source as the player, and appears after live generation.",
+        "Final .\\init.ps1 passed after live E2E artifact updates and reran web tests: 9 files / 57 tests."
+      ]
+    },
+    {
+      "id": "text-to-music-audio-node-003",
+      "title": "Complete Audio node AI edit with MiniMax cover reference",
+      "status": "passing",
+      "user_visible_behavior": "When an Audio node already has generated or uploaded audio, the inline AI box runs Edit audio through local FastAPI using the current audio as a MiniMax music-cover-free reference, then replaces the selected Audio node with the edited playable result.",
+      "acceptance_criteria": [
+        "Music generation contracts accept optional reference audio URL or base64 fields.",
+        "FastAPI maps existing-audio edit requests to MiniMax music-cover-free with audio_url or audio_base64.",
+        "The frontend derives a reference from generated hex audio, uploaded data URLs, base64 audio, or remote audio URLs.",
+        "Edit audio calls the local FastAPI backend and never calls MiniMax from the browser.",
+        "A successful edit replaces the selected Audio source node output in place with playable audio controls and a Download action.",
+        "The normal edit path no longer shows an AI audio editing not-implemented message.",
+        "Browser E2E covers empty-node generation followed by existing-audio edit through the live MiniMax route."
+      ],
+      "verification": [
+        ".\\init.ps1 passed before implementation and reran web tests: 9 files / 57 tests.",
+        ".\\.venv\\Scripts\\python.exe -m pytest services\\api\\tests\\test_music_node.py passed: 10 tests.",
+        "corepack pnpm --filter @xmeta/web test -- workflow-canvas-workspace.test.tsx graph.test.ts passed: 2 files / 39 tests.",
+        "corepack pnpm --filter @xmeta/web typecheck passed.",
+        ".\\.venv\\Scripts\\python.exe -m pytest services\\api\\tests passed: 54 tests.",
+        ".\\.venv\\Scripts\\python.exe -m ruff check services\\api passed.",
+        "corepack pnpm --filter @xmeta/web test passed: 9 files / 58 tests.",
+        "corepack pnpm --filter @xmeta/web build passed and included /workspace.",
+        "Browser E2E passed on http://localhost:3000/workspace with local FastAPI on 8000 and domestic MiniMax live provider: Add Audio, Generate via music-2.6-free, source Audio node rendered playable controls and Download, Edit audio with prompt, backend evidence switched to minimax / music-cover-free, source audio data URL length changed from 7626231 to 7440103, duration changed from 178.642721 to 174.27737, readyState stayed 4, no audio edit not-implemented text appeared, and console warn/error logs were empty.",
+        "Final .\\init.ps1 passed after artifact updates and reran web tests: 9 files / 58 tests."
       ]
     }
   ]

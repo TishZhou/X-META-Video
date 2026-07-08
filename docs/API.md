@@ -101,7 +101,7 @@ Workflow APIs support the canvas-based node editor.
 | `PATCH` | `/projects/{project_id}/nodes/{node_id}` | Save node input, settings, or selected output | editor |
 | `POST` | `/projects/{project_id}/nodes/{node_id}/chat` | Send one backend-connected Script node AI dialogue turn | editor |
 | `POST` | `/projects/{project_id}/nodes/{node_id}/generate-image` | Generate or edit one image preview for Character Image, Prop / Asset, or Scene Image nodes | editor |
-| `POST` | `/projects/{project_id}/nodes/{node_id}/generate-audio` | Generate one text-to-music preview for Audio nodes | editor |
+| `POST` | `/projects/{project_id}/nodes/{node_id}/generate-audio` | Generate one text-to-music or reference-audio edit preview for Audio nodes | editor |
 | `POST` | `/projects/{project_id}/nodes/{node_id}/generate-video` | Generate one video preview for Video nodes from prompt plus optional image/audio references | editor |
 | `POST` | `/projects/{project_id}/nodes/{node_id}/run` | Create generation task for one node | editor |
 
@@ -294,14 +294,15 @@ EVOLINK_VIDEO_TIMEOUT_SECONDS=240
 EVOLINK_VIDEO_MAX_RETRIES=1
 
 MUSIC_MODEL_PROVIDER=minimax
-MUSIC_MODEL_BASE_URL=https://api.minimax.io
+MUSIC_MODEL_BASE_URL=https://api.minimaxi.com/v1/music_generation
 MUSIC_MODEL_API_KEY=
 MUSIC_MODEL_NAME=music-2.6-free
-MINIMAX_BASE_URL=https://api.minimax.io
+MINIMAX_BASE_URL=https://api.minimaxi.com/v1/music_generation
 MINIMAX_API_KEY=
 MINIMAX_HTTPS_PROXY=
 MINIMAX_MUSIC_MODEL=music-2.6-free
-MINIMAX_MUSIC_OUTPUT_FORMAT=url
+MINIMAX_MUSIC_COVER_MODEL=music-cover-free
+MINIMAX_MUSIC_OUTPUT_FORMAT=hex
 MINIMAX_MUSIC_SAMPLE_RATE=44100
 MINIMAX_MUSIC_BITRATE=256000
 MINIMAX_MUSIC_FORMAT=mp3
@@ -383,13 +384,16 @@ Request:
 {
   "node_type": "audio",
   "input": {
-    "prompt": "K-pop cinematic MV chorus, bright synths, emotional female vocal, 120 BPM",
-    "lyrics": "[Verse]\nSnow lights fall around me\n[Chorus]\nWe run into the glow"
+    "prompt": "10-15 second test clip, K-pop cinematic MV hook, bright synths, 120 BPM",
+    "lyrics": "[Verse]\nSnow lights fall\n[Hook]\nWe run into the glow",
+    "reference_audio_url": null,
+    "reference_audio_b64": null,
+    "reference_audio_mime_type": null
   },
   "settings": {
     "provider": "minimax",
     "model": "music-2.6-free",
-    "output_format": "url",
+    "output_format": "hex",
     "sample_rate": 44100,
     "bitrate": 256000,
     "format": "mp3",
@@ -408,11 +412,11 @@ Response:
   "node_type": "audio",
   "provider": "minimax",
   "model": "music-2.6-free",
-  "prompt": "K-pop cinematic MV chorus, bright synths, emotional female vocal, 120 BPM",
-  "lyrics": "[Verse]\nSnow lights fall around me\n[Chorus]\nWe run into the glow",
+  "prompt": "10-15 second test clip, K-pop cinematic MV hook, bright synths, 120 BPM",
+  "lyrics": "[Verse]\nSnow lights fall\n[Hook]\nWe run into the glow",
   "audio": {
-    "url": "https://example.com/generated-music.mp3",
-    "hex": null,
+    "url": null,
+    "hex": "fffb906400...",
     "b64_audio": null,
     "mime_type": "audio/mpeg",
     "duration_ms": 25364,
@@ -425,7 +429,26 @@ Response:
 }
 ```
 
-The backend wrapper is `submitMiniMaxMusicWithRetry()` -> `submitMiniMaxMusicGenerationOnce()` and posts to the configured MiniMax `/v1/music_generation` endpoint. The web app never calls MiniMax directly and never receives provider credentials.
+For existing audio edit, the same local route sends the current Audio node media as a MiniMax cover reference. The frontend passes exactly one of `reference_audio_url` or `reference_audio_b64`, sets `settings.model` to `music-cover-free`, and keeps the edit prompt in `input.prompt`:
+
+```json
+{
+  "node_type": "audio",
+  "input": {
+    "prompt": "Make the current track brighter and more cinematic.",
+    "lyrics": "",
+    "reference_audio_url": null,
+    "reference_audio_b64": "UklGRg...",
+    "reference_audio_mime_type": "audio/mpeg"
+  },
+  "settings": {
+    "model": "music-cover-free",
+    "output_format": "hex"
+  }
+}
+```
+
+The backend wrapper is `submitMiniMaxMusicWithRetry()` -> `submitMiniMaxMusicGenerationOnce()` and posts to the configured MiniMax `/v1/music_generation` endpoint. For text-to-music it uses `music-2.6-free`; for existing-audio edit it uses `music-cover-free` plus `audio_url` or `audio_base64`. The web app never calls MiniMax directly and never receives provider credentials.
 
 Audio generation currently returns a local playback preview only. MiniMax URL outputs can expire, and this route does not claim object storage, signed URLs, reusable asset versions, queue workers, Audio Library persistence, or generation history writes yet.
 

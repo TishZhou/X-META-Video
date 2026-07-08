@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from functools import lru_cache
 from pathlib import Path
 from typing import Any, Protocol
@@ -236,7 +236,8 @@ class MiniMaxMusicProviderSettings:
     base_url: str | None = None
     api_key: str | None = None
     model: str | None = None
-    output_format: str = "url"
+    cover_model: str | None = None
+    output_format: str = "hex"
     sample_rate: int = 44100
     bitrate: int = 256000
     audio_format: str = "mp3"
@@ -253,7 +254,7 @@ class MiniMaxMusicProviderSettings:
             base_url=_first_env(
                 "MINIMAX_BASE_URL",
                 "MUSIC_MODEL_BASE_URL",
-                default="https://api.minimax.io",
+                default="https://api.minimaxi.com/v1/music_generation",
             ),
             api_key=_first_env("MINIMAX_API_KEY", "MUSIC_MODEL_API_KEY"),
             model=_first_env(
@@ -261,7 +262,11 @@ class MiniMaxMusicProviderSettings:
                 "MUSIC_MODEL_NAME",
                 default="music-2.6-free",
             ),
-            output_format=_first_env("MINIMAX_MUSIC_OUTPUT_FORMAT", default="url") or "url",
+            cover_model=_first_env(
+                "MINIMAX_MUSIC_COVER_MODEL",
+                default="music-cover-free",
+            ),
+            output_format=_first_env("MINIMAX_MUSIC_OUTPUT_FORMAT", default="hex") or "hex",
             sample_rate=_parse_int(
                 "MINIMAX_MUSIC_SAMPLE_RATE",
                 _first_env("MINIMAX_MUSIC_SAMPLE_RATE") or "44100",
@@ -317,6 +322,7 @@ class MiniMaxMusicProviderSettings:
             base_url=self.base_url,
             api_key=self.api_key,
             model=model,
+            cover_model=self.cover_model,
             output_format=output_format,
             sample_rate=settings.sample_rate or self.sample_rate,
             bitrate=settings.bitrate or self.bitrate,
@@ -335,6 +341,9 @@ class MiniMaxMusicProviderSettings:
             max_retries=self.max_retries,
             https_proxy=self.https_proxy,
         )
+
+    def with_cover_model(self) -> "MiniMaxMusicProviderSettings":
+        return replace(self, model=self.cover_model or "music-cover-free")
 
     def validate(self) -> None:
         if self.provider not in SUPPORTED_MUSIC_PROVIDERS:
@@ -665,10 +674,26 @@ def submitMiniMaxMusicWithRetry(
     settings: MiniMaxMusicProviderSettings,
     prompt: str,
     lyrics: str,
+    reference_audio_url: str | None = None,
+    reference_audio_b64: str | None = None,
     client: httpx.Client | None = None,
 ) -> GeneratedAudio:
     settings.validate()
-    if not settings.is_instrumental and not lyrics.strip() and not settings.lyrics_optimizer:
+    is_cover_model = _is_minimax_music_cover_model(settings.model)
+    has_reference_audio = bool(
+        (reference_audio_url and reference_audio_url.strip())
+        or (reference_audio_b64 and reference_audio_b64.strip())
+    )
+    if is_cover_model and not has_reference_audio:
+        raise ProviderConfigurationError(
+            "MiniMax music cover generation requires reference audio."
+        )
+    if (
+        not is_cover_model
+        and not settings.is_instrumental
+        and not lyrics.strip()
+        and not settings.lyrics_optimizer
+    ):
         raise ProviderConfigurationError(
             "Music generation requires lyrics unless instrumental mode or lyrics optimizer is enabled."
         )
@@ -676,17 +701,27 @@ def submitMiniMaxMusicWithRetry(
     payload: dict[str, object] = {
         "model": settings.model,
         "prompt": prompt,
-        "lyrics": lyrics,
-        "stream": False,
         "output_format": settings.output_format,
         "audio_setting": {
             "sample_rate": settings.sample_rate,
             "bitrate": settings.bitrate,
             "format": settings.audio_format,
         },
-        "lyrics_optimizer": settings.lyrics_optimizer,
-        "is_instrumental": settings.is_instrumental,
     }
+    if lyrics.strip():
+        payload["lyrics"] = lyrics
+    elif not is_cover_model:
+        payload["lyrics"] = lyrics
+
+    if reference_audio_url and reference_audio_url.strip():
+        payload["audio_url"] = reference_audio_url.strip()
+    if reference_audio_b64 and reference_audio_b64.strip():
+        payload["audio_base64"] = reference_audio_b64.strip()
+
+    if settings.lyrics_optimizer and not is_cover_model:
+        payload["lyrics_optimizer"] = settings.lyrics_optimizer
+    if settings.is_instrumental and not is_cover_model:
+        payload["is_instrumental"] = settings.is_instrumental
     attempts = max(0, settings.max_retries) + 1
     last_error: Exception | None = None
 
@@ -703,7 +738,9 @@ def submitMiniMaxMusicWithRetry(
             if not retryable or attempt == attempts - 1:
                 break
 
-    raise ProviderExecutionError("MiniMax music generation request failed.") from last_error
+    if last_error is not None:
+        raise last_error
+    raise ProviderExecutionError("MiniMax music generation request failed.")
 
 
 def submitMiniMaxMusicGenerationOnce(
@@ -732,11 +769,18 @@ def submitMiniMaxMusicGenerationOnce(
                 response = minimax_client.post(url, headers=headers, json=payload)
         response.raise_for_status()
     except httpx.HTTPStatusError as exc:
-        error = ProviderExecutionError("MiniMax music generation request failed.")
+        detail = _provider_error_detail(exc.response)
+        error = ProviderExecutionError(
+            f"MiniMax music generation request failed with status "
+            f"{exc.response.status_code}: {detail}"
+        )
         error.retryable = exc.response.status_code >= 500  # type: ignore[attr-defined]
         raise error from exc
     except httpx.HTTPError as exc:
-        error = ProviderExecutionError("MiniMax music generation request failed.")
+        error = ProviderExecutionError(
+            f"MiniMax music generation request failed: "
+            f"{exc.__class__.__name__}: {exc}"
+        )
         error.retryable = True  # type: ignore[attr-defined]
         raise error from exc
 
@@ -1025,6 +1069,10 @@ def _minimax_music_generation_url(base_url: str | None) -> str:
     return f"{normalized}/v1/music_generation"
 
 
+def _is_minimax_music_cover_model(model: str | None) -> bool:
+    return bool(model and model.strip().startswith("music-cover"))
+
+
 def _evolink_video_generation_url(base_url: str | None) -> str:
     assert base_url is not None
     normalized = base_url.rstrip("/")
@@ -1096,6 +1144,26 @@ def _extract_minimax_audio(
             extra_dict.get("music_size") or data_dict.get("size_bytes")
         ),
     )
+
+
+def _provider_error_detail(response: httpx.Response) -> str:
+    try:
+        payload = response.json()
+    except ValueError:
+        text = response.text.strip()
+        return text[:500] if text else "empty response body"
+
+    if isinstance(payload, dict):
+        for key in ("detail", "message", "error", "status_msg"):
+            value = payload.get(key)
+            if isinstance(value, str) and value.strip():
+                return value.strip()[:500]
+            if isinstance(value, dict):
+                nested = value.get("message") or value.get("msg") or value.get("detail")
+                if isinstance(nested, str) and nested.strip():
+                    return nested.strip()[:500]
+
+    return json.dumps(payload, ensure_ascii=False)[:500]
 
 
 def _extract_evolink_video(response_data: dict[str, Any]) -> VideoGenerationProviderResult:

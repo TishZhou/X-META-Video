@@ -240,11 +240,12 @@ const IMAGE_COMPOSITION_GENERATE_NOT_IMPLEMENTED =
   "Image Composition generation is not implemented in this text-to-image pass. Use the Image node for SeedDream image generation.";
 
 const DEFAULT_MUSIC_PROMPT =
-  "K-pop cinematic MV theme, bright synths, emotional chorus, 120 BPM, polished female vocal production.";
+  "10-15 second test clip, K-pop cinematic MV hook, bright synths, 120 BPM, polished female vocal.";
 const DEFAULT_MUSIC_LYRICS =
-  "[Verse]\nSnow lights fall around me\nFootsteps echo through the glow\n[Chorus]\nWe run into the night\nSinging until the stars ignite";
+  "[Verse]\nSnow lights fall\n[Hook]\nWe run into the glow";
 const MUSIC_NO_PERSISTENCE_LABEL =
   "Local audio preview only. Audio persistence, signed URLs, and Audio Library save are not implemented yet.";
+const MUSIC_EDIT_MODEL = "music-cover-free";
 const DEFAULT_VIDEO_PROMPT =
   "Cinematic MV clip, smooth camera movement, use the connected visual references, polished short-form video pacing.";
 const DEFAULT_VIDEO_DURATION_SECONDS = 15;
@@ -479,6 +480,82 @@ export function audioSourceFromWorkflowOutput(output?: WorkflowNodeOutput) {
   }
 
   return `data:${output.media.mimeType ?? "audio/mpeg"};base64,${encoded}`;
+}
+
+export function audioReferenceFromWorkflowOutput(output?: WorkflowNodeOutput) {
+  if (output?.media?.kind !== "audio") {
+    return null;
+  }
+
+  const audioUrl = output.media.url?.trim();
+  if (audioUrl && !audioUrl.startsWith("data:audio/")) {
+    return {
+      referenceAudioUrl: audioUrl,
+      referenceAudioB64: null,
+      referenceAudioMimeType: output.media.mimeType ?? null,
+    };
+  }
+
+  const dataUrlB64 = audioUrl ? base64FromAudioDataUrl(audioUrl) : null;
+  const b64Audio =
+    dataUrlB64 ?? base64FromAudioDataUrl(output.media.b64Audio ?? "") ??
+    output.media.b64Audio?.trim();
+  if (b64Audio) {
+    return {
+      referenceAudioUrl: null,
+      referenceAudioB64: b64Audio,
+      referenceAudioMimeType: output.media.mimeType ?? null,
+    };
+  }
+
+  const hexAudio = output.media.hex?.trim();
+  const encoded = hexAudio ? base64FromHexAudio(hexAudio) : null;
+  if (!encoded) {
+    return null;
+  }
+
+  return {
+    referenceAudioUrl: null,
+    referenceAudioB64: encoded,
+    referenceAudioMimeType: output.media.mimeType ?? null,
+  };
+}
+
+function base64FromAudioDataUrl(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed.startsWith("data:audio/")) {
+    return null;
+  }
+
+  const [, b64] = trimmed.split(",", 2);
+  return b64?.trim() || null;
+}
+
+export function audioDownloadFileName(node: WorkflowNode) {
+  const extension = audioFileExtension(node.output?.media?.mimeType);
+  const baseName =
+    node.title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "") || "audio-node";
+
+  return `${baseName}.${extension}`;
+}
+
+function audioFileExtension(mimeType?: string | null) {
+  switch (mimeType) {
+    case "audio/wav":
+    case "audio/x-wav":
+      return "wav";
+    case "audio/ogg":
+      return "ogg";
+    case "audio/mp4":
+    case "audio/aac":
+      return "m4a";
+    case "audio/mpeg":
+    default:
+      return "mp3";
+  }
 }
 
 export function videoSourceFromGeneratedVideo(video: GeneratedVideo) {
@@ -951,6 +1028,9 @@ export function WorkflowCanvasWorkspace({
       selectedConnectedLyrics ??
       DEFAULT_MUSIC_LYRICS)
     : "";
+  const selectedMusicSource = selectedMusicEditorNode
+    ? audioSourceFromWorkflowOutput(selectedMusicEditorNode.output)
+    : null;
   const selectedMusicGeneration = selectedMusicEditorNode
     ? (musicGenerations[selectedMusicEditorNode.id] ?? null)
     : null;
@@ -1553,16 +1633,160 @@ export function WorkflowCanvasWorkspace({
     setMusicLyrics((current) => ({ ...current, [nodeId]: value }));
   }
 
-  async function generateMusicNode(node: WorkflowNode) {
-    const prompt = (musicPrompts[node.id] ?? DEFAULT_MUSIC_PROMPT).trim();
-    const lyrics = (
-      musicLyrics[node.id] ??
-      getConnectedAudioLyrics(node, state, scriptInput, scriptOutcomes) ??
-      DEFAULT_MUSIC_LYRICS
-    ).trim();
+  function updateMusicNodeLocalOutput({
+    node,
+    provider,
+    model,
+    url,
+    hex,
+    b64Audio,
+    mimeType,
+    durationMs,
+    alt,
+    notice,
+  }: {
+    node: WorkflowNode;
+    provider: string;
+    model?: string | null;
+    url?: string | null;
+    hex?: string | null;
+    b64Audio?: string | null;
+    mimeType?: string | null;
+    durationMs?: number | null;
+    alt: string;
+    notice: string;
+  }) {
+    dispatch({
+      type: "updateNodeOutput",
+      nodeId: node.id,
+      status: "ready",
+      output: {
+        sourceNodeId: node.id,
+        dataType: "audio",
+        label: `${node.title} audio`,
+        provider,
+        model,
+        editable: false,
+        media: {
+          kind: "audio",
+          url,
+          hex,
+          b64Audio,
+          mimeType,
+          durationMs,
+          alt,
+        },
+      },
+      notice,
+    });
+  }
 
-    if (!prompt || !lyrics) {
-      const message = "Music style prompt and lyrics are required before generation.";
+  function uploadAudioForNode(node: WorkflowNode, file: File | null) {
+    if (!file) {
+      return;
+    }
+
+    if (!file.type.startsWith("audio/")) {
+      const message = "Upload an audio file before using it as the Audio node source.";
+      setMusicErrors((current) => ({ ...current, [node.id]: message }));
+      setMusicResponseOpen(true);
+      dispatch({
+        type: "setNodeStatus",
+        nodeId: node.id,
+        status: "blocked",
+        notice: message,
+      });
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = typeof reader.result === "string" ? reader.result : null;
+      if (!dataUrl) {
+        const message = "The uploaded audio could not be read.";
+        setMusicErrors((current) => ({ ...current, [node.id]: message }));
+        setMusicResponseOpen(true);
+        dispatch({
+          type: "setNodeStatus",
+          nodeId: node.id,
+          status: "blocked",
+          notice: message,
+        });
+        return;
+      }
+
+      setMusicGenerations((current) => {
+        const next = { ...current };
+        delete next[node.id];
+        return next;
+      });
+      setMusicErrors((current) => {
+        const next = { ...current };
+        delete next[node.id];
+        return next;
+      });
+      setMusicResponseOpen(false);
+      updateMusicNodeLocalOutput({
+        node,
+        provider: "local-upload",
+        model: file.name || "browser-file",
+        url: dataUrl,
+        hex: null,
+        b64Audio: null,
+        mimeType: file.type || "audio/mpeg",
+        durationMs: null,
+        alt: `${node.title} uploaded audio`,
+        notice:
+          `${node.title} uploaded locally. Playback, download, and AI edit are available on this node; durable audio storage is deferred.`,
+      });
+    };
+    reader.onerror = () => {
+      const message = "The uploaded audio could not be read.";
+      setMusicErrors((current) => ({ ...current, [node.id]: message }));
+      setMusicResponseOpen(true);
+      dispatch({
+        type: "setNodeStatus",
+        nodeId: node.id,
+        status: "blocked",
+        notice: message,
+      });
+    };
+    reader.readAsDataURL(file);
+  }
+
+  async function generateMusicNode(node: WorkflowNode) {
+    const referenceAudio = audioReferenceFromWorkflowOutput(node.output);
+    const editingExistingAudio = Boolean(referenceAudio);
+    const prompt = (musicPrompts[node.id] ?? DEFAULT_MUSIC_PROMPT).trim();
+    const lyrics = editingExistingAudio
+      ? (
+          musicGenerations[node.id]?.lyrics ??
+          musicLyrics[node.id] ??
+          ""
+        ).trim()
+      : (
+          musicLyrics[node.id] ??
+          getConnectedAudioLyrics(node, state, scriptInput, scriptOutcomes) ??
+          DEFAULT_MUSIC_LYRICS
+        ).trim();
+
+    if (!prompt || (!editingExistingAudio && !lyrics)) {
+      const message = editingExistingAudio
+        ? "Audio edit prompt is required before generation."
+        : "Music style prompt and lyrics are required before generation.";
+      setMusicErrors((current) => ({ ...current, [node.id]: message }));
+      setMusicResponseOpen(true);
+      dispatch({
+        type: "setNodeStatus",
+        nodeId: node.id,
+        status: "blocked",
+        notice: message,
+      });
+      return;
+    }
+
+    if (audioSourceFromWorkflowOutput(node.output) && !referenceAudio) {
+      const message = "Current audio could not be prepared as a MiniMax edit reference.";
       setMusicErrors((current) => ({ ...current, [node.id]: message }));
       setMusicResponseOpen(true);
       dispatch({
@@ -1585,69 +1809,43 @@ export function WorkflowCanvasWorkspace({
       type: "setNodeStatus",
       nodeId: node.id,
       status: "running",
-      notice: `${node.title} generation started through FastAPI MiniMax Music.`,
+      notice: editingExistingAudio
+        ? `${node.title} edit started through FastAPI MiniMax Music Cover.`
+        : `${node.title} generation started through FastAPI MiniMax Music.`,
     });
 
     try {
+      setMusicPrompts((current) => ({ ...current, [node.id]: prompt }));
+      setMusicLyrics((current) => ({ ...current, [node.id]: lyrics }));
       const result = await musicGenerationRunner({
         projectId: state.projectId,
         nodeId: node.id,
         prompt,
         lyrics,
+        referenceAudioUrl: referenceAudio?.referenceAudioUrl ?? null,
+        referenceAudioB64: referenceAudio?.referenceAudioB64 ?? null,
+        referenceAudioMimeType: referenceAudio?.referenceAudioMimeType ?? null,
+        settings: editingExistingAudio ? { model: MUSIC_EDIT_MODEL } : undefined,
       });
-      const outcomeTitle = `${node.title} outcome`;
-      const outcomeNodeId = createWorkflowOutputNodeId(node.id, "audio");
 
       setMusicGenerations((current) => ({ ...current, [node.id]: result }));
-      dispatch({
-        type: "setNodeStatus",
-        nodeId: node.id,
-        status: "ready",
-        notice: `${outcomeTitle} is ready as a local audio node.`,
-      });
-      dispatch({
-        type: "upsertOutputNode",
-        sourceNodeId: node.id,
-        nodeType: "audio",
-        title: outcomeTitle,
-        description:
-          "MiniMax text-to-music result. Local playback only; asset persistence is deferred.",
-        position: {
-          x: node.position.x + 360,
-          y: Math.max(80, node.position.y - 40),
-        },
-        output: {
-          sourceNodeId: node.id,
-          dataType: "audio",
-          label: `${node.title} music`,
-          provider: result.provider,
-          model: result.model,
-          editable: false,
-          media: {
-            kind: "audio",
-            url: result.audio.url,
-            hex: result.audio.hex,
-            b64Audio: result.audio.b64_audio,
-            mimeType: result.audio.mime_type,
-            durationMs: result.audio.duration_ms,
-            alt: `${node.title} generated audio`,
-          },
-        },
-        ports: [
-          {
-            key: "audio-out",
-            label: "Audio",
-            direction: "output",
-            dataType: "audio",
-          },
-        ],
+      updateMusicNodeLocalOutput({
+        node,
+        provider: result.provider,
+        model: result.model,
+        url: result.audio.url,
+        hex: result.audio.hex,
+        b64Audio: result.audio.b64_audio,
+        mimeType: result.audio.mime_type,
+        durationMs: result.audio.duration_ms,
+        alt: editingExistingAudio
+          ? `${node.title} edited audio`
+          : `${node.title} generated audio`,
         notice:
-          `${outcomeTitle} updated. Audio preview is not persisted to the asset library yet.`,
+          editingExistingAudio
+            ? `${node.title} edited on this node. Audio preview is not persisted to the asset library yet.`
+            : `${node.title} generated on this node. Audio preview is not persisted to the asset library yet.`,
       });
-      setMusicGenerations((current) => ({
-        ...current,
-        [outcomeNodeId]: result,
-      }));
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Music generation failed.";
@@ -2102,6 +2300,7 @@ export function WorkflowCanvasWorkspace({
                 <MusicNodeInlineEditor
                   busy={selectedMusicBusy}
                   connectedLyrics={selectedConnectedLyrics}
+                  currentAudioSource={selectedMusicSource}
                   error={selectedMusicError}
                   generation={selectedMusicGeneration}
                   lyrics={selectedMusicLyrics}
@@ -2109,6 +2308,9 @@ export function WorkflowCanvasWorkspace({
                   prompt={selectedMusicPrompt}
                   responseOpen={musicResponseOpen}
                   viewportZoom={state.viewport.zoom}
+                  onEdit={() => {
+                    void generateMusicNode(selectedMusicEditorNode);
+                  }}
                   onGenerate={() => {
                     void generateMusicNode(selectedMusicEditorNode);
                   }}
@@ -2119,6 +2321,9 @@ export function WorkflowCanvasWorkspace({
                     updateMusicPrompt(selectedMusicEditorNode.id, value)
                   }
                   onResponseOpenChange={setMusicResponseOpen}
+                  onUpload={(file) =>
+                    uploadAudioForNode(selectedMusicEditorNode, file)
+                  }
                   onUseConnectedLyrics={(value) =>
                     updateMusicLyrics(selectedMusicEditorNode.id, value)
                   }
@@ -2906,6 +3111,7 @@ export function ImageNodeFloatingEditor({
 type MusicNodeInlineEditorProps = {
   busy: boolean;
   connectedLyrics: string | null;
+  currentAudioSource: string | null;
   error: string | null;
   generation: MusicGenerationResponse | null;
   lyrics: string;
@@ -2913,16 +3119,19 @@ type MusicNodeInlineEditorProps = {
   prompt: string;
   responseOpen: boolean;
   viewportZoom: number;
+  onEdit: () => void;
   onGenerate: () => void;
   onLyricsChange: (lyrics: string) => void;
   onPromptChange: (prompt: string) => void;
   onResponseOpenChange: (open: boolean) => void;
+  onUpload: (file: File | null) => void;
   onUseConnectedLyrics: (lyrics: string) => void;
 };
 
 export function MusicNodeInlineEditor({
   busy,
   connectedLyrics,
+  currentAudioSource,
   error,
   generation,
   lyrics,
@@ -2930,14 +3139,18 @@ export function MusicNodeInlineEditor({
   prompt,
   responseOpen,
   viewportZoom,
+  onEdit,
   onGenerate,
   onLyricsChange,
   onPromptChange,
   onResponseOpenChange,
+  onUpload,
   onUseConnectedLyrics,
 }: MusicNodeInlineEditorProps) {
   const promptReady = prompt.trim().length > 0;
   const lyricsReady = lyrics.trim().length > 0;
+  const hasCurrentAudio = Boolean(currentAudioSource);
+  const uploadInputRef = useRef<HTMLInputElement>(null);
   const audioSource = generation
     ? audioSourceFromGeneratedAudio(generation.audio)
     : null;
@@ -3063,34 +3276,42 @@ export function MusicNodeInlineEditor({
         data-music-node-input-composer="true"
       >
         <label htmlFor="music-node-prompt" className="sr-only">
-          Music style prompt
+          {hasCurrentAudio ? "Audio edit prompt" : "Music style prompt"}
         </label>
         <Textarea
           id="music-node-prompt"
-          aria-label="Music style prompt"
+          aria-label={hasCurrentAudio ? "Audio edit prompt" : "Music style prompt"}
           className="min-h-16 resize-none border-0 bg-transparent px-0 text-sm shadow-none placeholder:text-neutral-400 focus-visible:ring-0"
           data-music-prompt-input="true"
           disabled={busy}
           onChange={(event) => onPromptChange(event.target.value)}
           onKeyDown={(event) => event.stopPropagation()}
-          placeholder="Describe genre, mood, tempo, vocal style, and scene..."
+          placeholder={
+            hasCurrentAudio
+              ? "Describe how to edit the current audio..."
+              : "Describe genre, mood, tempo, vocal style, and scene..."
+          }
           value={prompt}
         />
 
-        <label htmlFor="music-node-lyrics" className="sr-only">
-          Lyrics
-        </label>
-        <Textarea
-          id="music-node-lyrics"
-          aria-label="Lyrics"
-          className="mt-2 min-h-24 resize-none border-0 border-t border-neutral-200 bg-transparent px-0 pt-2 text-sm shadow-none placeholder:text-neutral-400 focus-visible:ring-0"
-          data-music-lyrics-input="true"
-          disabled={busy}
-          onChange={(event) => onLyricsChange(event.target.value)}
-          onKeyDown={(event) => event.stopPropagation()}
-          placeholder="[Verse]\nWrite lyrics or connect Script output..."
-          value={lyrics}
-        />
+        {hasCurrentAudio ? null : (
+          <>
+            <label htmlFor="music-node-lyrics" className="sr-only">
+              Lyrics
+            </label>
+            <Textarea
+              id="music-node-lyrics"
+              aria-label="Lyrics"
+              className="mt-2 min-h-24 resize-none border-0 border-t border-neutral-200 bg-transparent px-0 pt-2 text-sm shadow-none placeholder:text-neutral-400 focus-visible:ring-0"
+              data-music-lyrics-input="true"
+              disabled={busy}
+              onChange={(event) => onLyricsChange(event.target.value)}
+              onKeyDown={(event) => event.stopPropagation()}
+              placeholder="[Verse]\nWrite lyrics or connect Script output..."
+              value={lyrics}
+            />
+          </>
+        )}
 
         <div className="mt-3 flex items-center justify-between gap-3 border-t border-neutral-200 pt-3">
           <div className="flex min-w-0 items-center gap-2">
@@ -3105,9 +3326,33 @@ export function MusicNodeInlineEditor({
               defaultValue="configured"
               disabled={busy}
             >
-              <option value="configured">Configured music model</option>
+              <option value="configured">MiniMax music-2.6-free</option>
             </select>
-            {connectedLyrics ? (
+            <input
+              ref={uploadInputRef}
+              accept="audio/*"
+              aria-label="Upload audio source"
+              className="hidden"
+              data-music-upload-input="true"
+              disabled={busy}
+              onChange={(event) => {
+                onUpload(event.target.files?.[0] ?? null);
+                event.currentTarget.value = "";
+              }}
+              type="file"
+            />
+            <Button
+              className="h-9 rounded-lg px-3 text-xs"
+              data-music-upload-audio="true"
+              disabled={busy}
+              onClick={() => uploadInputRef.current?.click()}
+              type="button"
+              variant="outline"
+            >
+              <FolderDown aria-hidden="true" className="size-4" />
+              Upload
+            </Button>
+            {!hasCurrentAudio && connectedLyrics ? (
               <Button
                 className="h-9 rounded-lg px-3 text-xs"
                 data-music-use-connected-lyrics="true"
@@ -3123,17 +3368,22 @@ export function MusicNodeInlineEditor({
 
           <div className="flex items-center gap-2">
             <Button
-              aria-label="Generate Audio node"
+              aria-label={hasCurrentAudio ? "Edit Audio node" : "Generate Audio node"}
               className="h-9 rounded-lg px-4 text-xs"
               data-music-generate-loading={busy ? "true" : undefined}
-              disabled={busy || !promptReady || !lyricsReady}
+              data-music-reference-edit={hasCurrentAudio ? "true" : undefined}
+              disabled={busy || !promptReady || (!hasCurrentAudio && !lyricsReady)}
               onClick={() => {
                 onResponseOpenChange(true);
-                onGenerate();
+                if (hasCurrentAudio) {
+                  onEdit();
+                } else {
+                  onGenerate();
+                }
               }}
               type="button"
             >
-              {busy ? "Generating" : "Generate"}
+              {busy ? "Generating" : hasCurrentAudio ? "Edit audio" : "Generate"}
               {busy ? (
                 <Loader2 aria-hidden="true" className="size-4 animate-spin" />
               ) : (
@@ -3717,6 +3967,8 @@ export function WorkflowNodeCard({
   const videoOutputSource = videoSourceFromWorkflowOutput(node.output);
   const isSelfContainedImageNode =
     node.role === "source" && getImageGenerationNodeType(node.type) !== null;
+  const isSelfContainedAudioNode =
+    node.role === "source" && node.type === "audio";
 
   return (
     <article
@@ -3806,15 +4058,38 @@ export function WorkflowNodeCard({
         ) : audioOutputSource ? (
           <div
             className="rounded-md border border-neutral-200 bg-neutral-50 p-3"
-            data-audio-outcome-node="true"
+            data-audio-node-current={
+              isSelfContainedAudioNode ? "true" : undefined
+            }
+            data-audio-outcome-node={node.role === "outcome" ? "true" : undefined}
           >
             <audio
               aria-label={`${node.title} audio preview`}
               className="w-full"
               controls
-              data-audio-outcome-player="true"
+              data-audio-node-player={
+                isSelfContainedAudioNode ? "true" : undefined
+              }
+              data-audio-outcome-player={
+                node.role === "outcome" ? "true" : undefined
+              }
               src={audioOutputSource}
             />
+            <a
+              aria-label={`Download ${node.title} audio`}
+              className="mt-2 inline-flex h-8 items-center gap-2 rounded-md border border-neutral-200 bg-white px-2.5 text-[11px] font-medium text-neutral-700 shadow-sm transition hover:bg-neutral-100"
+              data-audio-node-download={
+                isSelfContainedAudioNode ? "true" : undefined
+              }
+              data-audio-outcome-download={
+                node.role === "outcome" ? "true" : undefined
+              }
+              download={audioDownloadFileName(node)}
+              href={audioOutputSource}
+            >
+              <ArrowDownToLine className="h-3.5 w-3.5" aria-hidden="true" />
+              Download
+            </a>
             <p
               className="mt-2 text-[11px] leading-4 text-neutral-500"
               data-audio-outcome-not-persisted="true"
@@ -3880,10 +4155,13 @@ export function WorkflowNodeCard({
           <div className="flex h-24 items-center justify-center">
             <Film aria-hidden="true" className="text-neutral-500" />
           </div>
-        ) : node.type === "audio" ? (
-          <div className="flex h-24 flex-col items-center justify-center gap-2 text-xs text-neutral-500">
-            <Mic2 aria-hidden="true" />
-            <span>Text to music</span>
+        ) : isSelfContainedAudioNode ? (
+          <div
+            className="flex h-24 flex-col items-center justify-center gap-2 rounded-md border border-dashed border-neutral-300 bg-neutral-50 text-xs text-neutral-500"
+            data-audio-node-empty-state="true"
+          >
+            <Mic2 aria-hidden="true" className="size-6 text-neutral-400" />
+            <span>No audio yet</span>
           </div>
         ) : (
           <div className="flex h-24 items-center justify-center">

@@ -39,6 +39,9 @@ export type RunMusicGenerationOptions = {
   nodeType?: MusicGenerationNodeType;
   prompt: string;
   lyrics: string;
+  referenceAudioUrl?: string | null;
+  referenceAudioB64?: string | null;
+  referenceAudioMimeType?: string | null;
   settings?: MusicGenerationSettings;
 };
 
@@ -48,6 +51,9 @@ export async function runMusicGeneration({
   nodeType = "audio",
   prompt,
   lyrics,
+  referenceAudioUrl = null,
+  referenceAudioB64 = null,
+  referenceAudioMimeType = null,
   settings,
 }: RunMusicGenerationOptions): Promise<MusicGenerationResponse> {
   return requestJson<MusicGenerationResponse>(
@@ -56,7 +62,13 @@ export async function runMusicGeneration({
       method: "POST",
       body: JSON.stringify({
         node_type: nodeType,
-        input: { prompt, lyrics },
+        input: {
+          prompt,
+          lyrics,
+          reference_audio_url: referenceAudioUrl,
+          reference_audio_b64: referenceAudioB64,
+          reference_audio_mime_type: referenceAudioMimeType,
+        },
         settings,
       }),
     },

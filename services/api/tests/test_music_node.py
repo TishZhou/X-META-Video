@@ -108,7 +108,7 @@ def test_generate_audio_node_returns_backend_minimax_evidence(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setenv("MINIMAX_API_KEY", "test-minimax-key")
-    monkeypatch.setenv("MINIMAX_BASE_URL", "https://api.minimax.io")
+    monkeypatch.setenv("MINIMAX_BASE_URL", "https://api.minimaxi.com/v1/music_generation")
     monkeypatch.setenv("MINIMAX_MUSIC_MODEL", "music-2.6-free")
     monkeypatch.setattr(
         "xmeta_api.main.submitMiniMaxMusicWithRetry",
@@ -153,6 +153,45 @@ def test_generate_audio_node_returns_backend_minimax_evidence(
     }
 
 
+def test_generate_audio_node_passes_reference_audio_to_cover_model(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    seen: dict[str, object] = {}
+
+    monkeypatch.setenv("MINIMAX_API_KEY", "test-minimax-key")
+    monkeypatch.setenv("MINIMAX_BASE_URL", "https://api.minimaxi.com/v1/music_generation")
+    monkeypatch.setenv("MINIMAX_MUSIC_MODEL", "music-2.6-free")
+
+    def fake_submit(**kwargs: object) -> GeneratedAudio:
+        seen.update(kwargs)
+        return GeneratedAudio(hex="fffb906400", mime_type="audio/mpeg")
+
+    monkeypatch.setattr("xmeta_api.main.submitMiniMaxMusicWithRetry", fake_submit)
+
+    response = client.post(
+        "/api/v1/projects/project-1/nodes/audio-1/generate-audio",
+        json={
+            "node_type": "audio",
+            "input": {
+                "prompt": "Make the current track brighter and more cinematic",
+                "lyrics": "",
+                "reference_audio_b64": "UklGRg==",
+                "reference_audio_mime_type": "audio/mpeg",
+            },
+            "settings": {"model": "music-cover-free"},
+        },
+    )
+
+    assert response.status_code == 200
+    assert seen["prompt"] == "Make the current track brighter and more cinematic"
+    assert seen["lyrics"] == ""
+    assert seen["reference_audio_b64"] == "UklGRg=="
+    settings = seen["settings"]
+    assert isinstance(settings, MiniMaxMusicProviderSettings)
+    assert settings.model == "music-cover-free"
+    assert response.json()["model"] == "music-cover-free"
+
+
 def test_generate_audio_node_fails_clearly_when_minimax_key_missing() -> None:
     response = client.post(
         "/api/v1/projects/project-1/nodes/audio-1/generate-audio",
@@ -193,10 +232,10 @@ def test_minimax_provider_posts_configured_payload_and_reads_url() -> None:
 
     audio = submitMiniMaxMusicWithRetry(
         settings=MiniMaxMusicProviderSettings(
-            base_url="https://api.minimax.io",
+            base_url="https://api.minimaxi.com/v1/music_generation",
             api_key="test-minimax-key",
             model="music-2.6-free",
-            output_format="url",
+            output_format="hex",
             sample_rate=44100,
             bitrate=256000,
             audio_format="mp3",
@@ -207,27 +246,71 @@ def test_minimax_provider_posts_configured_payload_and_reads_url() -> None:
         client=httpx.Client(transport=MiniMaxMusicTestTransport(handler)),
     )
 
-    assert seen["url"] == "https://api.minimax.io/v1/music_generation"
+    assert seen["url"] == "https://api.minimaxi.com/v1/music_generation"
     assert seen["authorization"] == "Bearer test-minimax-key"
     assert seen["payload"] == {
         "model": "music-2.6-free",
         "prompt": "K-pop, bright synths",
         "lyrics": "[Chorus]\nRun into the glow",
-        "stream": False,
-        "output_format": "url",
+        "output_format": "hex",
         "audio_setting": {
             "sample_rate": 44100,
             "bitrate": 256000,
             "format": "mp3",
         },
-        "lyrics_optimizer": False,
-        "is_instrumental": False,
     }
     assert audio.url == "https://audio.example/minimax.mp3"
     assert audio.duration_ms == 25364
     assert audio.sample_rate == 44100
     assert audio.channels == 2
     assert audio.size_bytes == 813651
+
+
+def test_minimax_provider_posts_cover_reference_audio_without_lyrics() -> None:
+    seen: dict[str, object] = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen["payload"] = json.loads(request.content)
+        return httpx.Response(
+            200,
+            json={
+                "data": {
+                    "audio": "fffb906400",
+                    "status": 2,
+                },
+                "base_resp": {"status_code": 0, "status_msg": "success"},
+            },
+        )
+
+    audio = submitMiniMaxMusicWithRetry(
+        settings=MiniMaxMusicProviderSettings(
+            base_url="https://api.minimaxi.com/v1/music_generation",
+            api_key="test-minimax-key",
+            model="music-cover-free",
+            output_format="hex",
+            sample_rate=44100,
+            bitrate=256000,
+            audio_format="mp3",
+            max_retries=0,
+        ),
+        prompt="Make the current track brighter and more cinematic",
+        lyrics="",
+        reference_audio_b64="UklGRg==",
+        client=httpx.Client(transport=MiniMaxMusicTestTransport(handler)),
+    )
+
+    assert seen["payload"] == {
+        "model": "music-cover-free",
+        "prompt": "Make the current track brighter and more cinematic",
+        "output_format": "hex",
+        "audio_setting": {
+            "sample_rate": 44100,
+            "bitrate": 256000,
+            "format": "mp3",
+        },
+        "audio_base64": "UklGRg==",
+    }
+    assert audio.hex == "fffb906400"
 
 
 def test_minimax_provider_accepts_hex_audio_response() -> None:
@@ -246,7 +329,7 @@ def test_minimax_provider_accepts_hex_audio_response() -> None:
 
     audio = submitMiniMaxMusicGenerationOnce(
         settings=MiniMaxMusicProviderSettings(
-            base_url="https://api.minimax.io/v1/music_generation",
+            base_url="https://api.minimaxi.com/v1/music_generation",
             api_key="test-minimax-key",
             model="music-2.6-free",
             output_format="hex",
@@ -275,7 +358,7 @@ def test_minimax_provider_rejects_response_without_audio() -> None:
     with pytest.raises(ProviderExecutionError, match="did not include audio"):
         submitMiniMaxMusicGenerationOnce(
             settings=MiniMaxMusicProviderSettings(
-                base_url="https://api.minimax.io",
+                base_url="https://api.minimaxi.com/v1/music_generation",
                 api_key="test-minimax-key",
                 model="music-2.6-free",
             ),
@@ -300,7 +383,7 @@ def test_minimax_provider_does_not_retry_client_errors() -> None:
     with pytest.raises(ProviderExecutionError, match="request failed"):
         submitMiniMaxMusicWithRetry(
             settings=MiniMaxMusicProviderSettings(
-                base_url="https://api.minimax.io",
+                base_url="https://api.minimaxi.com/v1/music_generation",
                 api_key="test-minimax-key",
                 model="music-2.6-free",
                 max_retries=2,

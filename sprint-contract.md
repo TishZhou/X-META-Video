@@ -1,12 +1,12 @@
-# Sprint Contract - Feature 5 Self-Contained Image Node
+# Sprint Contract - Feature 8 Audio Edit Completion
 
 ## Sprint Overview
 
-**Sprint:** feature-5-self-contained-image-node
-**Feature:** Feature 5, Character Image Node
-**Task:** image-node-self-contained-002
+**Sprint:** feature-8-audio-edit-completion
+**Feature:** Feature 8, Audio Node
+**Task:** text-to-music-audio-node-003
 **Status:** passing
-**Goal:** Convert Character Image, Prop / Asset, and Scene Image into self-contained image nodes. The node itself displays the current image and updates in place from connected text, typed prompt-only generation, local upload, or image-plus-prompt SeedDream edit.
+**Goal:** Complete the existing-audio branch of the Audio node. Empty Audio nodes continue to generate music from connected lyrics plus the inline prompt. Audio nodes with generated or uploaded audio must execute Edit audio through the local FastAPI backend by using the current audio as a MiniMax cover reference, then replace the source Audio node preview with the edited playable result.
 
 ## Write Scope
 
@@ -14,14 +14,13 @@
 - `services/api/xmeta_api/schemas.py`
 - `services/api/xmeta_api/providers.py`
 - `services/api/xmeta_api/main.py`
-- `services/api/tests/test_image_node.py`
-- `apps/web/src/lib/image-node/api.ts`
-- `apps/web/src/lib/workflow-canvas/types.ts`
-- `apps/web/src/lib/workflow-canvas/graph.ts`
+- `services/api/tests/test_music_node.py`
+- `apps/web/src/lib/music-node/api.ts`
 - `apps/web/src/components/xmeta/workflow-canvas/workflow-canvas-workspace.tsx`
 - `apps/web/src/components/xmeta/workflow-canvas/workflow-canvas-workspace.test.tsx`
+- `.env.example`
 - `docs/API.md`
-- `feature_tasks/5.json`
+- `feature_tasks/8.json`
 - `feature_list.json`
 - `sprint-contract.md`
 - `evaluator-rubric.md`
@@ -30,49 +29,39 @@
 
 Protected boundaries:
 
-- Preserve completed Script, Audio, and Video behavior unless a type-level change is strictly needed for image nodes.
-- Keep web-to-provider boundary local: frontend calls FastAPI only and never calls Doubao/SeedDream directly.
-- Do not expose provider secrets in frontend code, tests, docs, logs, or final notes.
-- Do not claim durable asset persistence, object storage, signed URLs, queue workers, generation history, or Asset Library save.
-- Image Composition full composition/9-grid generation remains later feature scope; only the shared image-node editor behavior is allowed here.
-- Mobile UI is out of scope.
+- Do not change Feature 5 Image node behavior or SeedDream route contracts.
+- Preserve completed Video node behavior.
+- The web app must call only local FastAPI; MiniMax keys and provider URLs stay server-side.
+- Durable audio persistence, object storage, signed URLs, task polling, Audio Library save, and true waveform/stem editing remain later scope.
+- Mobile UI polish is out of scope.
 
 ## In Scope
 
-- Treat source image nodes as the result-bearing image nodes instead of creating separate image outcome nodes.
-- Display empty, uploaded, generated, editing, and error states directly inside the image node card.
-- Seed image prompts from connected upstream text outputs when available.
-- Keep prompt-only generation for empty image nodes through the existing local SeedDream backend route.
-- Add local upload for a reference/current image, stored only in browser state as a data URL.
-- Add request fields for reference/current image data so existing-image nodes can send prompt plus image to the backend for SeedDream image editing.
-- Update backend schemas/provider tests so reference image fields are accepted and sent to SeedDream without exposing credentials.
-- Update focused tests and Browser QA around in-place image node behavior.
-
-## Out of Scope
-
-- Durable upload storage, object storage, signed URLs, Asset Library persistence, reusable asset IDs, generation history, task polling, and queue workers.
-- Live Doubao validation with a real API key.
-- Full Image Composition generation, storyboard 9-grid output, video generation, audio generation, export rendering, and mobile polish.
+- Add reference audio fields to shared/FastAPI music-generation contracts.
+- When reference audio is present, use MiniMax `music-cover-free` through the existing local `/generate-audio` route.
+- Support current audio references from URL, base64/data URL, or hex-generated Audio node media.
+- Make Edit audio execute generation and replace the selected Audio source node in place.
+- Remove the visible “AI audio editing is not implemented yet” message from the normal existing-audio edit path.
+- Keep upload replacement and local download behavior.
+- Add backend/frontend tests and live Browser E2E for the edit path.
 
 ## Acceptance Criteria
 
-1. Character Image, Prop / Asset, and Scene Image source nodes show an empty image placeholder when no image exists.
-2. Connected upstream text can seed the prompt used by the image node without overwriting user edits unexpectedly.
-3. Empty image nodes generate an image from typed/connected prompt and update the same node.
-4. Existing generated or uploaded image nodes send prompt plus current image reference for SeedDream image editing and update the same node.
-5. Local upload updates the selected image node preview and is labeled local-only/not persisted.
-6. Generate does not create a separate image outcome node.
-7. Backend request/contract supports reference image data and still returns provider/model evidence.
-8. All unimplemented persistence/storage/history capabilities are visibly labeled.
-9. Verification includes backend image tests, focused/full web tests, typecheck/build, and rendered Browser QA.
+1. Empty Audio node generation still uses `music-2.6-free`, connected lyrics plus prompt, and renders playable output on the source node.
+2. Existing Audio node edit uses current audio as reference and `music-cover-free` through local FastAPI only.
+3. Edit audio replaces the selected Audio source node output in place with a playable `<audio controls>` preview.
+4. Edit audio retains visible provider/model evidence and local Download.
+5. Uploading audio still updates the selected source Audio node locally.
+6. If provider/API fails, Browser E2E pauses with the exact error instead of using a mock.
+7. Feature 5 Image and Feature 9 Video tests remain passing.
 
 ## Sprint Log
 
 | Phase | Outcome |
 | --- | --- |
-| Baseline | Confirmed `D:\X-META-Video`, read startup docs, Feature 5 task state, recent commits, and reference screenshots. |
-| Startup | `.\init.ps1` passed before implementation and reran web tests: 9 files / 52 tests. |
-| Planning | Scope is constrained to self-contained image-node behavior and SeedDream text/image request shape. Completed Feature 8 Audio and Feature 9 Video surfaces are protected. |
-| Implementation | Added optional reference image fields to shared/FastAPI contracts, forwarded references to SeedDream as the backend `image` payload field, made image generation update the selected source node output, added local upload, connected text prompt seeding, source-node image empty/current states, and removed the old separate image outcome creation path for Character Image, Prop / Asset, and Scene Image nodes. |
-| Verification | Passed image-node pytest 10 tests, full API pytest 52 tests, focused workspace test 29 tests, graph test 7 tests, full web tests 55 tests, web typecheck, web build, Browser QA on `http://localhost:3000/workspace`, and final `.\init.ps1`. |
-| Closeout | Feature 5 task `image-node-self-contained-002` accepted as passing. Durable asset persistence, signed URLs, queue workers, generation history, Asset Library save, live Doubao execution, Image Composition generation, and mobile polish remain later scope. |
+| Baseline | Confirmed `D:\X-META-Video`, read `AGENTS.md`, `docs/PRODUCT.md`, `docs/ARCHITECTURE.md`, `feature_list.json`, `feature_tasks/8.json`, and recent commits. |
+| Startup | `.\init.ps1` passed before implementation and reran web tests: 9 files / 57 tests. |
+| Planning | MiniMax docs show `music-cover-free` supports reference audio via `audio_url` or `audio_base64`; this sprint completes Audio edit by routing existing audio through that model. |
+| Implementation | Added music reference-audio contracts, routed FastAPI cover/edit requests to MiniMax `music-cover-free`, derived edit references from current Audio node media in the frontend, and made Edit audio replace the same source node with the edited playable result. |
+| Verification | Passed focused music pytest, focused workflow tests, web typecheck, full API pytest, API ruff, full web tests, web build, live Browser E2E for generate-then-edit, and final `.\init.ps1`. |
+| Browser E2E | Passed on `http://localhost:3000/workspace` with local FastAPI on 8000 and domestic MiniMax: Generate produced `minimax / music-2.6-free`; Edit audio then returned `minimax / music-cover-free`, replaced the source Audio node data URL length from `7626231` to `7440103`, kept playable controls/download, and produced no console warn/error logs. |
