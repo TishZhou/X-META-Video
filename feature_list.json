@@ -27,18 +27,18 @@
                          "id":  2,
                          "title":  "Workflow Canvas Foundation",
                          "status":  "passing",
-                         "current_task":  "workflow-canvas-008",
+                         "current_task":  "canvas-viewport-stability-v1",
                          "current_task_status":  "passing",
-                         "user_visible_behavior":  "Users can work on a Figma-like white canvas with nodes, edges, drag, free-percentage zoom, selection, a single bottom add entry with explicit input/output node flow labels, and restorable layout state.",
+                         "user_visible_behavior":  "Users can work on a Figma-like white canvas with connectable nodes, including a General Data source for local text inputs and truthfully unavailable Image/Audio attachments, selectable edges, drag, free-percentage zoom, restorable layout state, and a stable canvas view that does not recenter on browser or visual-viewport resize.",
                          "task_file":  "feature_tasks/2.json"
                      },
                      {
                          "id":  3,
                          "title":  "Script Node",
                          "status":  "passing",
-                         "current_task":  "script-node-011",
+                         "current_task":  "text-node-task-3-mv-look-development-v1",
                          "current_task_status":  "passing",
-                         "user_visible_behavior":  "Users can choose dedicated Text Node tasks for IP world-view development or per-character appearance, personality, and voice profiles, with reusable editable outcomes and backend-confirmed execution evidence.",
+                         "user_visible_behavior":  "Users can choose Text tasks for IP world-view development, per-character appearance/personality/voice profiles, or MV-specific outfit and visual-look development from a character profile plus MV brief; each returns an editable reusable outcome with backend-confirmed execution evidence.",
                          "task_file":  "feature_tasks/3.json"
                      },
                      {
@@ -54,9 +54,9 @@
                          "id":  5,
                          "title":  "Image Node",
                          "status":  "passing",
-                         "current_task":  "image-node-self-contained-002",
+                         "current_task":  "image-task-1-model-generation-v1",
                          "current_task_status":  "passing",
-                         "user_visible_behavior":  "Users can use one self-contained Image node for generated images: connected text, prompt-only generation, upload, and image-plus-prompt edit all update the selected Image node itself, with the model selector showing SeedDream 5.0.",
+                         "user_visible_behavior":  "Users can use one self-contained Image node for generated images: connected text, prompt-only generation, upload, and image-plus-prompt edit all update the selected Image node itself, with the model selector showing SeedDream 5.0. Image Task 1 accepts character appearance plus personality/action text, calls the server-side image model, and creates one non-persisted, borderless pure Data image output with an automatic source-to-result edge.",
                          "task_file":  "feature_tasks/5.json"
                      },
                      {

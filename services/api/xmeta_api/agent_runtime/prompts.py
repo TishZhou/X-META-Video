@@ -55,6 +55,24 @@ def build_character_profiles_prompt(content: str) -> str:
     )
 
 
+def build_mv_look_development_prompt(*, character_profile: str, mv_brief: str) -> str:
+    return _build_text_generation_prompt(
+        task_instructions=(
+            "Develop an MV-specific visual look from the supplied character profile and MV "
+            "brief. Preserve stable identity anchors such as face shape, recognizable hair, "
+            "and defining traits. Describe the MV-integrated outfit, silhouette, materials, "
+            "color palette, hair and makeup treatment, and visual-character details. Add "
+            "accessories or props only when they serve the brief; do not assume the input "
+            "already includes an outfit or accessories. Keep the result as reusable, editable "
+            "natural text for image-prompt development, without claiming image locking, asset "
+            "generation, durable storage, or persistence.\n"
+            f"Character profile:\n{character_profile}\n"
+            f"MV brief:\n{mv_brief}"
+        ),
+        content="Use the two inputs above as the source of truth.",
+    )
+
+
 def build_script_prompt(script_input: ScriptInput) -> str:
     fields = [
         ("MV world description", script_input.world_description),
@@ -144,14 +162,26 @@ def render_prompt_template(
     elif template_id in {
         PromptTemplateId.TEXT_IP_WORLDVIEW_V1,
         PromptTemplateId.TEXT_CHARACTER_PROFILES_V1,
+        PromptTemplateId.TEXT_MV_LOOK_DEVELOPMENT_V1,
     }:
-        content = inputs["content"]
-        if not isinstance(content, str):
-            raise TypeError("content must be a string.")
+        content = inputs.get("content")
         if template_id == PromptTemplateId.TEXT_IP_WORLDVIEW_V1:
+            if not isinstance(content, str):
+                raise TypeError("content must be a string.")
             prompt = build_ip_worldview_prompt(content)
-        else:
+        elif template_id == PromptTemplateId.TEXT_CHARACTER_PROFILES_V1:
+            if not isinstance(content, str):
+                raise TypeError("content must be a string.")
             prompt = build_character_profiles_prompt(content)
+        else:
+            character_profile = inputs["character_profile"]
+            mv_brief = inputs["mv_brief"]
+            if not isinstance(character_profile, str) or not isinstance(mv_brief, str):
+                raise TypeError("character_profile and mv_brief must be strings.")
+            prompt = build_mv_look_development_prompt(
+                character_profile=character_profile,
+                mv_brief=mv_brief,
+            )
     else:
         prompt_value = inputs["prompt"]
         if not isinstance(prompt_value, str):

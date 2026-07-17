@@ -70,6 +70,20 @@ DEFAULT_TASK_PROFILES = (
         retry_limit=0,
     ),
     TaskProfile(
+        task_id=TaskId.TEXT_MV_LOOK_DEVELOPMENT_GENERATE,
+        node_kind=NodeKind.TEXT,
+        required_inputs=("character_profile", "mv_brief"),
+        memory_reads=(
+            MemoryScope.CHARACTER_BIBLE,
+            MemoryScope.MV_BIBLE,
+            MemoryScope.STYLE_RULES,
+        ),
+        prompt_template_id=PromptTemplateId.TEXT_MV_LOOK_DEVELOPMENT_V1,
+        output_type="TextContent:mv_look",
+        validator_id=ValidatorId.MV_LOOK_TEXT,
+        retry_limit=0,
+    ),
+    TaskProfile(
         task_id=TaskId.IMAGE_CHARACTER_GENERATE,
         node_kind=NodeKind.IMAGE,
         required_inputs=("prompt",),

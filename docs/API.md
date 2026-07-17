@@ -144,13 +144,13 @@ The MVP Text node accepts one canonical editable text input. Its Generate button
 
 ### Text Node Task Generation
 
-The Text node Generate button calls this route for both supported tasks:
+The Text node Generate button calls this route for its three supported tasks:
 
 ```txt
 POST /api/v1/projects/{project_id}/nodes/{node_id}/generate-text
 ```
 
-`task` is exactly `ip_worldview` or `character_profiles`. `input.content` is the one canonical payload passed between Text agents and shown in the editable outcome; compact execution details stay in `metadata` instead of being duplicated into the user-visible text.
+`task` is `ip_worldview`, `character_profiles`, or `mv_look_development`. Tasks 1 and 2 use `input.content` as their canonical editable text payload. Task 3 uses separate `input.character_profile` and `input.mv_brief` fields, so the visual identity source and MV direction remain inspectable without forcing a delimiter format.
 
 Task 1 manual brief request:
 
@@ -186,6 +186,23 @@ Task 2 request using a connected live Task 1 outcome:
 }
 ```
 
+Task 3 request for one character's MV-specific look:
+
+```json
+{
+  "task": "mv_look_development",
+  "input": {
+    "character_profile": "Mira has red-brown braids, sharp facial contours, a calm leader temperament, and a mature low vocal tone.",
+    "mv_brief": "废土风 MV",
+    "source": {
+      "type": "manual"
+    }
+  }
+}
+```
+
+Task 3 requires both fields. It returns editable text for MV-integrated outfit/styling and visual-character direction, such as silhouette, material, palette, hair/makeup, and appropriate accessories/props. It preserves the supplied identity anchors and does not assume the profile already contains clothing or accessories. This text result is not an image asset, face-lock result, or persisted wardrobe.
+
 Before making the Task 2 request, the web app resolves one source in this order:
 
 1. A connected, live outcome whose metadata declares `task=ip_worldview` and `data_type=script`.
@@ -218,7 +235,7 @@ Successful response:
 }
 ```
 
-Task 1 returns `data_type=script` with prompt template `text.ip_worldview.v1`. Task 2 returns `data_type=character` with prompt template `text.character_profiles.v1`. Task 2 output is natural editable plain text in any clear presentation format: it does not require JSON, a schema, fixed labels, or delimiter tags. It should cover every named character from Task 1 and include appearance, personality/action, and voice/timbre information. Output validation checks those content elements globally without enforcing organization and recognizes natural synonym families: appearance/visual/look plus 外貌、外观、视觉、造型、发型、穿搭; personality/action/temperament/movement plus 性格、动作、个性、气质、肢体; and voice/timbre/vocal/tone plus 声线、音色、嗓音、唱腔、人声.
+Task 1 returns `data_type=script` with prompt template `text.ip_worldview.v1`. Task 2 returns `data_type=character` with prompt template `text.character_profiles.v1`. Task 3 returns `data_type=mv_look` with prompt template `text.mv_look_development.v1`. Task 2 output is natural editable plain text in any clear presentation format: it does not require JSON, a schema, fixed labels, or delimiter tags. It should cover every named character from Task 1 and include appearance, personality/action, and voice/timbre information. Output validation checks those content elements globally without enforcing organization and recognizes natural synonym families: appearance/visual/look plus 外貌、外观、视觉、造型、发型、穿搭; personality/action/temperament/movement plus 性格、动作、个性、气质、肢体; and voice/timbre/vocal/tone plus 声线、音色、嗓音、唱腔、人声.
 
 ### Script Node Dialogue
 For `node_type=script`, the chat endpoint accepts the current input, optional text-provider settings, prior dialogue history, and the latest user message:

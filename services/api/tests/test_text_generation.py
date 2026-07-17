@@ -57,6 +57,13 @@ class FakeTextProvider:
                 "她的个性坚定而克制，肢体表现沉稳舒展；人声为成熟中低音，"
                 "唱腔带有稳定的胸腔共鸣。"
             )
+        if "Develop an MV-specific visual look" in prompt:
+            return (
+                "MV outfit and styling: Mira wears a distressed leather corset, layered "
+                "utility coat, and oxidized metal belt for the wasteland MV. Visual identity: "
+                "keep her red-brown braids and sharp face silhouette, with cold dark-red makeup "
+                "and weathered bronze materials."
+            )
         return (
             "IP叙事定位：冰核梦境中的羁绊唤醒故事。\n"
             "核心主题：温柔记忆与舞台生命力。\n"
@@ -93,6 +100,7 @@ def test_runtime_registers_separate_text_task_profiles() -> None:
     registry = create_default_task_registry()
     worldview = registry.get(TaskId.TEXT_IP_WORLDVIEW_GENERATE)
     characters = registry.get(TaskId.TEXT_CHARACTER_PROFILES_GENERATE)
+    mv_look = registry.get(TaskId.TEXT_MV_LOOK_DEVELOPMENT_GENERATE)
 
     assert worldview.prompt_template_id == PromptTemplateId.TEXT_IP_WORLDVIEW_V1
     assert characters.prompt_template_id == PromptTemplateId.TEXT_CHARACTER_PROFILES_V1
@@ -100,6 +108,9 @@ def test_runtime_registers_separate_text_task_profiles() -> None:
     assert characters.validator_id == ValidatorId.CHARACTER_PROFILES_TEXT
     assert worldview.output_type == "TextContent:script"
     assert characters.output_type == "TextContent:character"
+    assert mv_look.prompt_template_id == PromptTemplateId.TEXT_MV_LOOK_DEVELOPMENT_V1
+    assert mv_look.validator_id == ValidatorId.MV_LOOK_TEXT
+    assert mv_look.output_type == "TextContent:mv_look"
 
 
 def test_generate_text_task_1_returns_canonical_content_and_compact_metadata(
@@ -179,6 +190,45 @@ def test_generate_text_task_2_preserves_connected_task_1_source(
     assert "fixed labels" in provider.prompts[-1]
     assert "[Character:" not in provider.prompts[-1]
     assert "named character positioning" not in provider.prompts[-1]
+
+
+def test_generate_text_task_3_uses_separate_profile_and_mv_brief(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    provider = install_fake_provider(monkeypatch)
+    response = client.post(
+        "/api/v1/projects/project-1/nodes/script-3/generate-text",
+        json={
+            "task": "mv_look_development",
+            "input": {
+                "character_profile": "Mira has red-brown braids, a sharp face, calm leadership, and a low vocal tone.",
+                "mv_brief": "wasteland MV",
+                "source": {"type": "manual"},
+            },
+        },
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["metadata"]["task"] == "mv_look_development"
+    assert body["metadata"]["data_type"] == "mv_look"
+    assert body["metadata"]["prompt_template_id"] == "text.mv_look_development.v1"
+    assert "outfit and styling" in body["content"]
+    assert "Visual identity" in body["content"]
+    assert "Character profile:" in provider.prompts[-1]
+    assert "MV brief:" in provider.prompts[-1]
+
+
+def test_generate_text_task_3_requires_both_inputs() -> None:
+    response = client.post(
+        "/api/v1/projects/project-1/nodes/script-3/generate-text",
+        json={
+            "task": "mv_look_development",
+            "input": {"character_profile": "Mira profile", "source": {"type": "manual"}},
+        },
+    )
+
+    assert response.status_code == 422
 
 
 def test_generate_text_rejects_empty_content_and_incomplete_task_1_source() -> None:

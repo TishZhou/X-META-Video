@@ -58,6 +58,44 @@ describe("workflow graph state", () => {
     expect(deleted.selection).toEqual({ kind: "empty" });
   });
 
+  it("changes a Data source output type and removes incompatible old connections", () => {
+    const initial = createInitialWorkflowGraphState();
+    const withData = workflowGraphReducer(initial, {
+      type: "addNode",
+      nodeType: "data",
+      position: { x: 240, y: 320 },
+    });
+    const connected = workflowGraphReducer(withData, {
+      type: "connect",
+      sourcePortId: "data-4:data-out",
+      targetPortId: "script-1:brief-in",
+    });
+    const imageData = workflowGraphReducer(connected, {
+      type: "setDataNodeKind",
+      nodeId: "data-4",
+      kind: "image",
+    });
+
+    expect(imageData.nodes.find((node) => node.id === "data-4")?.ports).toMatchObject([
+      {
+        id: "data-4:data-out",
+        label: "Image",
+        dataType: "image",
+        available: false,
+      },
+    ]);
+    expect(imageData.edges.some((edge) => edge.sourceNodeId === "data-4")).toBe(false);
+    expect(imageData.notice).toContain("not available");
+
+    const unavailable = workflowGraphReducer(imageData, {
+      type: "connect",
+      sourcePortId: "data-4:data-out",
+      targetPortId: "composition-3:scene-in",
+    });
+    expect(unavailable.edges).toEqual(imageData.edges);
+    expect(unavailable.notice).toContain("unavailable until a local attachment");
+  });
+
   it("creates compatible first-class edges and rejects duplicates or invalid ports", () => {
     const state = createInitialWorkflowGraphState();
     const scriptOutput = "script-1:script-out";
@@ -255,6 +293,57 @@ describe("workflow graph state", () => {
         model: "gpt-5.4-mini",
       },
     });
+  });
+
+  it("connects an Image Task result once and keeps that edge stable on rerun", () => {
+    const withImage = workflowGraphReducer(createInitialWorkflowGraphState(), {
+      type: "addNode",
+      nodeType: "image",
+      position: { x: 520, y: 320 },
+    });
+    const outputNodeId = createWorkflowOutputNodeId("image-4", "image");
+    const taskResult = {
+      type: "upsertOutputNode" as const,
+      sourceNodeId: "image-4",
+      nodeType: "data" as const,
+      title: "Character base image result",
+      description: "Generated through the Image API.",
+      position: { x: 900, y: 320 },
+      output: {
+        sourceNodeId: "image-4",
+        dataType: "image" as const,
+        label: "Task 1 character base image",
+        provider: "doubao-seedream",
+        model: "doubao-seedream-5-0-260128",
+        editable: false,
+      },
+      ports: [
+        {
+          key: "image-out",
+          label: "Image",
+          direction: "output" as const,
+          dataType: "image" as const,
+        },
+      ],
+    };
+    const completed = workflowGraphReducer(withImage, taskResult);
+    const rerun = workflowGraphReducer(completed, taskResult);
+
+    expect(completed.nodes.find((node) => node.id === outputNodeId)).toMatchObject({
+      type: "data",
+      role: "outcome",
+      output: { provider: "doubao-seedream", dataType: "image" },
+    });
+    expect(completed.edges.at(-1)).toMatchObject({
+      sourceNodeId: "image-4",
+      sourcePortId: "image-4:image-out",
+      targetNodeId: outputNodeId,
+      targetPortId: `${outputNodeId}:source-in`,
+      dataType: "image",
+    });
+    expect(rerun.nodes).toHaveLength(completed.nodes.length);
+    expect(rerun.edges).toHaveLength(completed.edges.length);
+    expect(rerun.edges.filter((edge) => edge.targetNodeId === outputNodeId)).toHaveLength(1);
   });
 
   it("rejects stale connection requests that reference missing ports", () => {

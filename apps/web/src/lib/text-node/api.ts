@@ -38,7 +38,9 @@ export type RunTextGenerationOptions = {
   projectId: string;
   nodeId: string;
   task: TextGenerationTask;
-  content: string;
+  content?: string;
+  characterProfile?: string;
+  mvBrief?: string;
   source: TextGenerationInputSource;
   settings?: ScriptNodeSettings;
 };
@@ -48,6 +50,8 @@ export async function runTextGeneration({
   nodeId,
   task,
   content,
+  characterProfile,
+  mvBrief,
   source,
   settings,
 }: RunTextGenerationOptions): Promise<TextGenerationResponse> {
@@ -57,7 +61,12 @@ export async function runTextGeneration({
       method: "POST",
       body: JSON.stringify({
         task,
-        input: { content, source },
+        input: {
+          content,
+          character_profile: characterProfile,
+          mv_brief: mvBrief,
+          source,
+        },
         settings,
       }),
     },

@@ -36,6 +36,7 @@ export type ScriptNodeSettings = {
 export const TEXT_GENERATION_TASKS = [
   "ip_worldview",
   "character_profiles",
+  "mv_look_development",
 ] as const;
 
 export type TextGenerationTask = (typeof TEXT_GENERATION_TASKS)[number];
@@ -55,7 +56,9 @@ export type TextGenerationInputSource = {
 };
 
 export type TextGenerationInput = {
-  content: string;
+  content?: string;
+  character_profile?: string;
+  mv_brief?: string;
   source: TextGenerationInputSource;
 };
 
@@ -67,7 +70,7 @@ export type TextGenerationRequest = {
 
 export type TextGenerationMetadata = {
   task: TextGenerationTask;
-  data_type: "script" | "character";
+  data_type: "script" | "character" | "mv_look";
   input_source: TextGenerationInputSource;
   prompt_template_id: string;
 };

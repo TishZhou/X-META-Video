@@ -2,16 +2,23 @@
 
 ## Verified Now
 
+- Image Task 1 model output is passing: the task combines appearance and personality/action into a server-side `character_image` request and renders the live returned media in a downstream pure Data node. The image itself has no visible card/image border and is shown uncropped at its original aspect ratio; source/result ports and their one automatic edge remain visible. Browser E2E produced a real `doubao-seedream / doubao-seedream-5-0-260128` result at 5 nodes / 3 edges. Full Web 70 tests, API/Runtime 27 tests, Ruff, typecheck, production build, `init.ps1`, and diff check passed; independent evaluation accepted 157/160.
+
+- Canvas viewport stability is passing: `/workspace` initializes its fitted graph viewport only on mount. Later window or visual-viewport resizes update responsive editor layout without resetting canvas pan/zoom. In-app Browser Task 1 E2E ended at 5 nodes / 3 edges with the Image source-to-result line and supplied local preview visible; console logs were empty. Web 70 tests, typecheck, production build, `init.ps1`, and diff check passed; independent evaluation accepted at 158/160.
+
 - Repository root: `D:\X-META-Video`
 - Feature 1 Web Design, Feature 2 Workflow Canvas Foundation, the previously accepted Feature 3 Script baseline, Feature 5 Image Node, Feature 8 Audio Node, Feature 9 Video Node, and Feature 16 Agent Runtime Foundation remain recorded as `passing`.
-- Feature 3 `script-node-011` Text Node Task Choice V1 is `passing`. Automated verification, live-provider execution, Codex in-app Browser E2E, and independent evaluation all passed; the final score is 156/160.
+- Feature 3 `text-node-task-3-mv-look-development-v1` is `passing`. Automated verification, live-provider execution, Codex in-app Browser E2E, and independent evaluation all passed; the final score is 147/160.
+- Feature 2 `general-data-source-node-v1` is `passing` at 151/160. Data source nodes provide editable local text as compatible `brief` input; Image/Audio are deliberately disabled until file attachment support is implemented.
+- Feature 5 `image-node-character-base-task-v1` is `passing` at 160/160. Image Task 1 collects character appearance plus personality/action text, then uses the supplied `provided-character-base-task-1.png` only as a clearly labeled local, non-persisted preview in one automatic source-to-result edge; it makes no provider-generation claim.
 - No Computer Use, Chrome, or standalone Playwright was used. The verified workspace remains open in the Codex in-app Browser as the deliverable tab.
 
 ## Feature 3 Text Node Task Choice State
 
-- Visible Text nodes keep the internal workflow type `script` for compatibility and expose exactly two node-local tasks through a shadcn Select.
+- Visible Text nodes keep the internal workflow type `script` for compatibility and expose exactly three node-local tasks through a shadcn Select.
 - Task 1 `ip_worldview` expands a brief into IP/narrative positioning, world rules/dimensions, and named character positioning; it returns an editable `script` outcome.
 - Task 2 `character_profiles` consumes connected Task 1, then same-node Task 1, then manual text. It returns an editable natural-language `character` outcome covering appearance, personality/action, and voice/timbre without requiring JSON, fixed labels, or delimiter tags.
+- Task 3 `mv_look_development` consumes separate manual `character_profile` and `mv_brief` text, then returns an editable `mv_look` outcome. It preserves stated identity anchors and proposes MV-specific outfit/styling, silhouette, materials/palette, hair/makeup, and only contextually useful accessories; it does not claim an image, face-lock result, asset, or persistence.
 - Generate uses `POST /api/v1/projects/{project_id}/nodes/{node_id}/generate-text`; `/chat` remains only for unchanged AI modify/dialogue behavior.
 - One canonical editable `content` value drives both the user-visible result and downstream transfer. Compact metadata carries task, data type, source, prompt-template, provider, and model without duplicating the long text.
 - Deleted outcome nodes are not valid cached sources. Task 1 and Task 2 results use separate non-overlapping canvas positions.
@@ -76,7 +83,7 @@
 - The Add menu exposes one Image generation node instead of separate Character Image, Prop / Asset, and Scene Image nodes.
 - The Image source node can generate from prompt-only SeedDream, upload a local image, or edit current image plus prompt through the local FastAPI SeedDream route.
 - The image editor model selector displays `SeedDream 5.0`.
-- This session did not change Feature 5 provider behavior.
+- Image Task 1 `character_base_image` adds node-local Text-style character appearance and personality/action inputs. Completing it creates/updates exactly one `Character base image result` connected from the selected Image source. The supplied PNG is labeled `Provided local preview`; it is neither a provider generation nor an asset-library persistence implementation. Prompt, Upload, and Generate controls remain unchanged for the existing task.
 
 ## Environment
 

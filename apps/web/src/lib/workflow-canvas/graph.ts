@@ -1,6 +1,7 @@
 import type {
   ConnectionResult,
   WorkflowDataType,
+  DataNodeKind,
   WorkflowEdge,
   WorkflowGraphState,
   WorkflowNode,
@@ -23,6 +24,19 @@ type NodeTemplate = {
 };
 
 export const workflowNodeTemplates = [
+  {
+    type: "data",
+    title: "Data",
+    description: "Provides local text, image, or audio input to compatible nodes.",
+    ports: [
+      {
+        key: "data-out",
+        label: "Text",
+        direction: "output",
+        dataType: "brief",
+      },
+    ],
+  },
   {
     type: "script",
     title: "Text",
@@ -47,6 +61,12 @@ export const workflowNodeTemplates = [
         label: "Characters",
         direction: "output",
         dataType: "character",
+      },
+      {
+        key: "mv-look-out",
+        label: "MV look",
+        direction: "output",
+        dataType: "mv_look",
       },
     ],
   },
@@ -86,6 +106,7 @@ export const workflowNodeTemplates = [
           "script",
           "storyboard",
           "character",
+          "mv_look",
           "asset",
           "scene",
         ],
@@ -226,6 +247,7 @@ const nodeTemplateByType = new Map(
 
 export type WorkflowGraphAction =
   | { type: "addNode"; nodeType: WorkflowNodeType; position: WorkflowPoint }
+  | { type: "setDataNodeKind"; nodeId: string; kind: DataNodeKind }
   | {
       type: "upsertOutputNode";
       sourceNodeId: string;
@@ -364,10 +386,30 @@ export function workflowGraphReducer(
         selection: { kind: "node", id: node.id },
         draftStatus: "dirty",
         notice:
-          node.type === "script"
+          node.type === "data"
+            ? "Data node added. Enter text, or choose Image/Audio to see its current attachment status."
+            : node.type === "script"
             ? "Text node added. Choose a text task and enter or connect its input."
             : `${node.title} placeholder added. Generation is deferred to later features.`,
         nextNodeIndex: state.nextNodeIndex + 1,
+      };
+    }
+
+    case "setDataNodeKind": {
+      const port = dataNodeOutputPort(action.nodeId, action.kind);
+      return {
+        ...state,
+        nodes: state.nodes.map((node) =>
+          node.id === action.nodeId && node.type === "data"
+            ? { ...node, ports: [port] }
+            : node,
+        ),
+        edges: state.edges.filter((edge) => edge.sourceNodeId !== action.nodeId),
+        draftStatus: "dirty",
+        notice:
+          action.kind === "text"
+            ? "Data node now provides editable local text."
+            : `${action.kind === "image" ? "Image" : "Audio"} attachment is not available in this local canvas yet.`,
       };
     }
 
@@ -378,12 +420,12 @@ export function workflowGraphReducer(
       );
       const existing = state.nodes.find((node) => node.id === outputNodeId);
       const sourceNode = findNode(state.nodes, action.sourceNodeId);
-      const shouldAutoConnectTextOutcome =
+      const shouldAutoConnectOutcome =
         sourceNode?.role === "source" &&
-        sourceNode.type === "script" &&
-        action.nodeType === "script";
+        ((sourceNode.type === "script" && action.nodeType === "script") ||
+          (sourceNode.type === "image" && action.nodeType === "data"));
       const portDefinitions =
-        shouldAutoConnectTextOutcome &&
+        shouldAutoConnectOutcome &&
         !action.ports.some((port) => port.key === "source-in")
           ? [
               {
@@ -411,7 +453,7 @@ export function workflowGraphReducer(
           nodeId: outputNodeId,
         })),
       };
-      const sourcePort = shouldAutoConnectTextOutcome
+      const sourcePort = shouldAutoConnectOutcome
         ? sourceNode.ports.find(
             (port) =>
               port.direction === "output" &&
@@ -615,6 +657,20 @@ export function workflowGraphReducer(
   }
 }
 
+function dataNodeOutputPort(nodeId: string, kind: DataNodeKind): WorkflowPort {
+  const dataType: WorkflowDataType = kind === "text" ? "brief" : kind;
+  const label = kind === "text" ? "Text" : kind === "image" ? "Image" : "Audio";
+  return {
+    id: `${nodeId}:data-out`,
+    nodeId,
+    key: "data-out",
+    label,
+    direction: "output",
+    dataType,
+    available: kind === "text",
+  };
+}
+
 export function connectPorts(
   nodes: WorkflowNode[],
   edges: WorkflowEdge[],
@@ -637,6 +693,20 @@ export function connectPorts(
     return {
       ok: false,
       reason: "Connections must start at an output and end at an input.",
+    };
+  }
+
+  if (sourcePort.available === false) {
+    return {
+      ok: false,
+      reason: `${sourcePort.label} is unavailable until a local attachment is supported. No media is attached.`,
+    };
+  }
+
+  if (targetPort.available === false) {
+    return {
+      ok: false,
+      reason: `${targetPort.label} is currently unavailable for connections.`,
     };
   }
 

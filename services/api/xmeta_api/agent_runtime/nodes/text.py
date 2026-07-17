@@ -27,11 +27,13 @@ ProfileResolver = Callable[[TaskId | str], TaskProfile]
 TEXT_GENERATION_PROFILES = {
     TextGenerationTask.IP_WORLDVIEW: TaskId.TEXT_IP_WORLDVIEW_GENERATE,
     TextGenerationTask.CHARACTER_PROFILES: TaskId.TEXT_CHARACTER_PROFILES_GENERATE,
+    TextGenerationTask.MV_LOOK_DEVELOPMENT: TaskId.TEXT_MV_LOOK_DEVELOPMENT_GENERATE,
 }
 
 TEXT_GENERATION_DATA_TYPES = {
     TextGenerationTask.IP_WORLDVIEW: TextDataType.SCRIPT,
     TextGenerationTask.CHARACTER_PROFILES: TextDataType.CHARACTER,
+    TextGenerationTask.MV_LOOK_DEVELOPMENT: TextDataType.MV_LOOK,
 }
 
 
@@ -120,14 +122,22 @@ class TextNodeExecutor:
         prompt = self._prompt_compiler.compile(
             profile=profile,
             project_id=project_id,
-            inputs={"content": request.input.content},
+            inputs={
+                "content": request.input.content,
+                "character_profile": request.input.character_profile,
+                "mv_brief": request.input.mv_brief,
+            },
         ).text
         content = run_with_task_retry(
             profile=profile,
             operation=lambda: provider.chat(
-                script_input=ScriptInput(world_description=request.input.content),
+                script_input=ScriptInput(
+                    world_description=request.input.content
+                    or f"Character profile: {request.input.character_profile}\nMV brief: {request.input.mv_brief}"
+                ),
                 history=[],
-                user_message=request.input.content,
+                user_message=request.input.content
+                or f"Character profile: {request.input.character_profile}\nMV brief: {request.input.mv_brief}",
                 prompt=prompt,
             ),
         )

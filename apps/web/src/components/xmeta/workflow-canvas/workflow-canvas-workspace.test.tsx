@@ -188,6 +188,15 @@ describe("WorkflowCanvasWorkspace", () => {
       "\u751f\u6210\u4e00\u4e2a\u51b0\u96ea\u76f8\u5173\u7684mv\u7684\u4e16\u754c\u89c2",
     );
     expect(html).not.toContain("Script Node API Ready");
+    expect(html).toContain('data-text-node-inline-editor="true"');
+    expect(html).toContain("pointer-events-none absolute z-30 flex flex-col");
+    expect(html).toContain("pointer-events-auto rounded-xl");
+    expect(html).toContain('aria-label="Workflow connections"');
+    expect(html).toContain("pointer-events-none absolute left-0 top-0");
+    expect(html).toContain('data-workflow-edge-layer="unbounded"');
+    expect(html).toContain('style="overflow:visible"');
+    expect(html).toContain('data-workflow-edge-hit="true"');
+    expect(html).toContain('pointer-events="stroke"');
     expect(html).toContain('data-script-node-inline-editor="true"');
     expect(html).toContain('data-script-node-input-composer="true"');
     expect(html).toContain('data-script-model-select="true"');
@@ -219,10 +228,11 @@ describe("WorkflowCanvasWorkspace", () => {
     expect(getScriptResponseModeForAction("generate")).toBe("generation");
   });
 
-  it("exposes exactly two Text tasks and resolves Task 2 input by priority", () => {
+  it("exposes three Text tasks and resolves Task 2 input by priority", () => {
     expect(TEXT_TASK_OPTIONS.map((option) => option.id)).toEqual([
       "ip_worldview",
       "character_profiles",
+      "mv_look_development",
     ]);
 
     let graph = workflowGraphReducer(createInitialWorkflowGraphState(), {

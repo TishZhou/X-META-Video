@@ -83,6 +83,23 @@ def validate_output(validator_id: ValidatorId, output: object) -> None:
         )
         return
 
+    if validator_id == ValidatorId.MV_LOOK_TEXT:
+        _validate_text_elements(
+            output,
+            validator_label="MV look development",
+            required_elements={
+                "outfit/styling": (
+                    "outfit", "wardrobe", "costume", "styling", "look", "attire",
+                    "穿搭", "服装", "造型", "装造", "服饰", "衣", "妆",
+                ),
+                "visual identity": (
+                    "visual", "identity", "silhouette", "palette", "material", "hair",
+                    "外形", "视觉", "轮廓", "色彩", "材质", "发型", "妆容", "五官",
+                ),
+            },
+        )
+        return
+
     if validator_id == ValidatorId.GENERATED_IMAGE:
         if not isinstance(output, GeneratedImage) or not (output.url or output.b64_json):
             raise RuntimeOutputValidationError("Image task did not return an image.")

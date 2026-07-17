@@ -82,6 +82,7 @@ import {
 } from "@/lib/workflow-canvas/graph";
 import type {
   WorkflowDataType,
+  DataNodeKind,
   WorkflowGraphState,
   WorkflowNode,
   WorkflowNodeOutput,
@@ -125,6 +126,7 @@ const MIN_INITIAL_ZOOM = 0.5;
 const MAX_INITIAL_ZOOM = 1;
 
 const nodeIcons = {
+  data: CircleDot,
   script: Wand2,
   storyboard: Frame,
   image: Image,
@@ -135,6 +137,7 @@ const nodeIcons = {
 } satisfies Record<WorkflowNodeType, typeof Wand2>;
 
 const nodeTitles = {
+  data: "Data node",
   script: "Text node",
   storyboard: "Storyboard node",
   image: "Image node",
@@ -165,19 +168,39 @@ type ImageGenerationRunner = typeof runImageGeneration;
 type MusicGenerationRunner = typeof runMusicGeneration;
 type VideoGenerationRunner = typeof runVideoGeneration;
 type TextOutcomeMap = Record<string, string>;
+type MvLookInput = {
+  characterProfile: string;
+  mvBrief: string;
+};
 export type TextNodeDraft = {
   task: TextGenerationTask;
   input: ScriptNodeInput;
+  mvLookInput?: MvLookInput;
 };
 export type TextNodeDraftMap = Record<string, TextNodeDraft>;
+export type DataNodeDraft = {
+  kind: DataNodeKind;
+  text: string;
+};
+export type DataNodeDraftMap = Record<string, DataNodeDraft>;
+const emptyDataNodeDraft: DataNodeDraft = { kind: "text", text: "" };
 type TextNodeInputContext = ScriptNodeInput | TextNodeDraftMap;
 export type TextTaskInputResolution = {
   content: string;
   source: TextGenerationInputSource;
   label: string;
+  characterProfile?: string;
+  mvBrief?: string;
 };
 type ImageGenerationMap = Record<string, ImageGenerationResponse>;
 type ImagePromptMap = Record<string, string>;
+type ImageTask = "prompt_generation" | "character_base_image";
+export type ImageTaskDraft = {
+  task: ImageTask;
+  appearance: string;
+  personalityAction: string;
+};
+type ImageTaskDraftMap = Record<string, ImageTaskDraft>;
 type MusicGenerationMap = Record<string, MusicGenerationResponse>;
 type MusicInputMap = Record<string, string>;
 type VideoGenerationMap = Record<string, VideoGenerationResponse>;
@@ -212,6 +235,15 @@ export const TEXT_TASK_OPTIONS = [
     outcomeTitle: "Character profiles outcome",
     outcomeDescription:
       "Editable appearance, personality, action, and voice profiles.",
+  },
+  {
+    id: "mv_look_development",
+    label: "Task 3 · MV outfit & visual look",
+    inputLabel: "Character profile and MV brief",
+    placeholder: "Describe the character profile for this MV look.",
+    outcomeTitle: "MV look development outcome",
+    outcomeDescription:
+      "Editable MV-specific outfit, styling, and visual identity.",
   },
 ] as const satisfies ReadonlyArray<{
   id: TextGenerationTask;
@@ -261,9 +293,56 @@ const defaultImageEditorFrame: ImageEditorFrame = {
   height: 520,
 };
 
+const emptyImageTaskDraft: ImageTaskDraft = {
+  task: "prompt_generation",
+  appearance: "",
+  personalityAction: "",
+};
+
+export const IMAGE_TASK_OPTIONS = [
+  { id: "prompt_generation", label: "Prompt generation & edit" },
+  { id: "character_base_image", label: "Task 1 · Character base image" },
+] as const satisfies ReadonlyArray<{ id: ImageTask; label: string }>;
+
+function getImageTaskDraft(
+  drafts: ImageTaskDraftMap,
+  nodeId: string,
+): ImageTaskDraft {
+  return drafts[nodeId] ?? emptyImageTaskDraft;
+}
+
+function imageTaskOutcomePorts() {
+  return [
+    {
+      key: "image-out",
+      label: "Image",
+      direction: "output" as const,
+      dataType: "image" as const,
+    },
+  ];
+}
+
+function calculateImageTaskOutcomePosition(sourcePosition: WorkflowPoint) {
+  return { x: sourcePosition.x + NODE_WIDTH + 96, y: sourcePosition.y };
+}
+
+export function buildCharacterBaseImageTaskPrompt({
+  appearance,
+  personalityAction,
+}: Pick<ImageTaskDraft, "appearance" | "personalityAction">) {
+  return [
+    "Create a full-body character base image for an AI video workflow.",
+    "Keep the stated visual identity stable across framing and future scenes.",
+    `Character appearance: ${appearance.trim()}`,
+    `Personality and action language: ${personalityAction.trim()}`,
+    "Deliver a polished, production-ready character reference image.",
+  ].join("\n\n");
+}
+
 const emptyTextNodeDraft: TextNodeDraft = {
   task: "ip_worldview",
   input: { ...DEFAULT_SCRIPT_NODE_INPUT },
+  mvLookInput: { characterProfile: "", mvBrief: "" },
 };
 
 function getTextNodeDraft(
@@ -273,6 +352,10 @@ function getTextNodeDraft(
   return drafts[nodeId] ?? emptyTextNodeDraft;
 }
 
+function getMvLookInput(draft: TextNodeDraft): MvLookInput {
+  return draft.mvLookInput ?? { characterProfile: "", mvBrief: "" };
+}
+
 function findTextTaskOption(task: TextGenerationTask) {
   return (
     TEXT_TASK_OPTIONS.find((option) => option.id === task) ??
@@ -280,7 +363,7 @@ function findTextTaskOption(task: TextGenerationTask) {
   );
 }
 
-function textOutcomePorts(dataType: "script" | "character") {
+function textOutcomePorts(dataType: "script" | "character" | "mv_look") {
   return [
     {
       key: "source-in",
@@ -290,8 +373,18 @@ function textOutcomePorts(dataType: "script" | "character") {
       accepts: [dataType],
     },
     {
-      key: dataType === "script" ? "script-out" : "profiles-out",
-      label: dataType === "script" ? "World view" : "Characters",
+      key:
+        dataType === "script"
+          ? "script-out"
+          : dataType === "character"
+            ? "profiles-out"
+            : "mv-look-out",
+      label:
+        dataType === "script"
+          ? "World view"
+          : dataType === "character"
+            ? "Characters"
+            : "MV look",
       direction: "output" as const,
       dataType,
     },
@@ -320,6 +413,13 @@ const DEFAULT_VIDEO_PROMPT =
 const DEFAULT_VIDEO_DURATION_SECONDS = 15;
 const MIN_VIDEO_DURATION_SECONDS = 1;
 const MAX_VIDEO_DURATION_SECONDS = 60;
+const SUPPORTED_ADD_NODE_TYPES = new Set<WorkflowNodeType>([
+  "data",
+  "script",
+  "image",
+  "audio",
+  "video",
+]);
 const VIDEO_NO_PERSISTENCE_LABEL =
   "Local video preview only. Video persistence, signed URLs, task polling, and Video Library save are not implemented yet.";
 
@@ -434,7 +534,7 @@ export function calculateTextOutcomePosition({
   canvasHeight = CANVAS_HEIGHT,
 }: {
   sourcePosition: WorkflowPoint;
-  dataType: "script" | "character";
+  dataType: "script" | "character" | "mv_look";
   canvasWidth?: number;
   canvasHeight?: number;
 }) {
@@ -824,10 +924,40 @@ export function resolveTextTaskInput(
   state: WorkflowGraphState,
   drafts: TextNodeDraftMap,
   outcomes: TextOutcomeMap,
+  dataDrafts: DataNodeDraftMap = {},
 ): TextTaskInputResolution {
   const draft = getTextNodeDraft(drafts, node.id);
   const manualContent = draft.input.world_description.trim();
+  if (draft.task === "mv_look_development") {
+    const mvLookInput = getMvLookInput(draft);
+    const characterProfile = mvLookInput.characterProfile.trim();
+    const mvBrief = mvLookInput.mvBrief.trim();
+    return {
+      content: [characterProfile, mvBrief].filter(Boolean).join("\n\n"),
+      characterProfile,
+      mvBrief,
+      source: { type: "manual" },
+      label: "Manual character profile + MV brief",
+    };
+  }
   if (draft.task === "ip_worldview") {
+    const dataEdge = state.edges.find((edge) => {
+      if (edge.targetNodeId !== node.id || edge.dataType !== "brief") {
+        return false;
+      }
+      const sourceNode = findNode(state.nodes, edge.sourceNodeId);
+      return sourceNode?.type === "data" && sourceNode.role === "source";
+    });
+    const connectedDataText = dataEdge
+      ? dataDrafts[dataEdge.sourceNodeId]?.text.trim()
+      : "";
+    if (connectedDataText) {
+      return {
+        content: connectedDataText,
+        source: { type: "manual" },
+        label: "Connected local Data text",
+      };
+    }
     return {
       content: manualContent,
       source: { type: "manual" },
@@ -1189,6 +1319,7 @@ export function WorkflowCanvasWorkspace({
       input: defaultScriptInput,
     },
   });
+  const [dataNodeDrafts, setDataNodeDrafts] = useState<DataNodeDraftMap>({});
   const [textOutcomes, setTextOutcomes] = useState<TextOutcomeMap>({});
   const [scriptDialogueMessages, setScriptDialogueMessages] = useState<
     ScriptDialogueMessage[]
@@ -1210,6 +1341,9 @@ export function WorkflowCanvasWorkspace({
     defaultImageEditorFrame,
   );
   const [imagePrompts, setImagePrompts] = useState<ImagePromptMap>({});
+  const [imageTaskDrafts, setImageTaskDrafts] = useState<ImageTaskDraftMap>(
+    {},
+  );
   const [imageGenerations, setImageGenerations] = useState<ImageGenerationMap>(
     {},
   );
@@ -1253,16 +1387,24 @@ export function WorkflowCanvasWorkspace({
     selectedNode?.type === "script" && selectedNode.role === "source"
       ? selectedNode
       : null;
+  const selectedDataNode =
+    selectedNode?.type === "data" && selectedNode.role === "source"
+      ? selectedNode
+      : null;
+  const selectedDataDraft = selectedDataNode
+    ? (dataNodeDrafts[selectedDataNode.id] ?? emptyDataNodeDraft)
+    : emptyDataNodeDraft;
   const selectedTextDraft = selectedScriptNode
     ? getTextNodeDraft(textNodeDrafts, selectedScriptNode.id)
     : emptyTextNodeDraft;
   const scriptInput = selectedTextDraft.input;
   const selectedTextInputResolution = selectedScriptNode
-    ? resolveTextTaskInput(
+      ? resolveTextTaskInput(
         selectedScriptNode,
         state,
         textNodeDrafts,
         textOutcomes,
+        dataNodeDrafts,
       )
     : {
         content: "",
@@ -1274,6 +1416,9 @@ export function WorkflowCanvasWorkspace({
     isFloatingImageEditorNodeType(selectedNode.type)
       ? selectedNode
       : null;
+  const selectedImageTaskDraft = selectedImageEditorNode
+    ? getImageTaskDraft(imageTaskDrafts, selectedImageEditorNode.id)
+    : emptyImageTaskDraft;
   const selectedConnectedImagePrompt = selectedImageEditorNode
     ? getConnectedImagePrompt(
         selectedImageEditorNode,
@@ -1375,31 +1520,27 @@ export function WorkflowCanvasWorkspace({
   const hasScriptOutcome = Object.keys(textOutcomes).length > 0;
 
   useEffect(() => {
-    function applyResponsiveViewport() {
+    function updateWorkspaceLayout() {
       setWorkspaceViewportWidth(window.innerWidth);
-      dispatch({
-        type: "setViewport",
-        viewport: calculateInitialCanvasViewport(
-          window.innerWidth,
-          window.innerHeight,
-        ),
-        markDirty: false,
-      });
     }
 
-    applyResponsiveViewport();
-    const firstCalibration = window.setTimeout(applyResponsiveViewport, 0);
-    const secondCalibration = window.setTimeout(applyResponsiveViewport, 250);
-    window.addEventListener("resize", applyResponsiveViewport);
-    window.visualViewport?.addEventListener("resize", applyResponsiveViewport);
+    updateWorkspaceLayout();
+    dispatch({
+      type: "setViewport",
+      viewport: calculateInitialCanvasViewport(
+        window.innerWidth,
+        window.innerHeight,
+      ),
+      markDirty: false,
+    });
+    window.addEventListener("resize", updateWorkspaceLayout);
+    window.visualViewport?.addEventListener("resize", updateWorkspaceLayout);
 
     return () => {
-      window.clearTimeout(firstCalibration);
-      window.clearTimeout(secondCalibration);
-      window.removeEventListener("resize", applyResponsiveViewport);
+      window.removeEventListener("resize", updateWorkspaceLayout);
       window.visualViewport?.removeEventListener(
         "resize",
-        applyResponsiveViewport,
+        updateWorkspaceLayout,
       );
     };
   }, []);
@@ -1519,7 +1660,7 @@ export function WorkflowCanvasWorkspace({
   }
 
   function startNodeDrag(
-    event: ReactPointerEvent<HTMLButtonElement>,
+    event: ReactPointerEvent<HTMLElement>,
     node: WorkflowNode,
   ) {
     const point = getCanvasPoint(event);
@@ -1545,6 +1686,14 @@ export function WorkflowCanvasWorkspace({
     port: WorkflowPort,
   ) {
     event.stopPropagation();
+
+    if (port.available === false) {
+      dispatch({
+        type: "setNotice",
+        notice: `${port.label} is unavailable until local file attachment is implemented. No media is attached.`,
+      });
+      return;
+    }
 
     if (port.direction !== "output") {
       dispatch({
@@ -1593,6 +1742,22 @@ export function WorkflowCanvasWorkspace({
     });
   }
 
+  function updateMvLookInput(field: "characterProfile" | "mvBrief", value: string) {
+    if (!selectedScriptNode) {
+      return;
+    }
+    setTextNodeDrafts((current) => {
+      const draft = getTextNodeDraft(current, selectedScriptNode.id);
+      return {
+        ...current,
+        [selectedScriptNode.id]: {
+          ...draft,
+          mvLookInput: { ...getMvLookInput(draft), [field]: value },
+        },
+      };
+    });
+  }
+
   function updateTextTask(task: TextGenerationTask) {
     if (!selectedScriptNode) {
       return;
@@ -1607,6 +1772,37 @@ export function WorkflowCanvasWorkspace({
     setScriptError(null);
   }
 
+  function updateDataNodeKind(kind: DataNodeKind) {
+    if (!selectedDataNode) {
+      return;
+    }
+    setDataNodeDrafts((current) => ({
+      ...current,
+      [selectedDataNode.id]: {
+        ...(current[selectedDataNode.id] ?? emptyDataNodeDraft),
+        kind,
+      },
+    }));
+    dispatch({ type: "setDataNodeKind", nodeId: selectedDataNode.id, kind });
+  }
+
+  function updateDataNodeText(text: string) {
+    if (!selectedDataNode) {
+      return;
+    }
+    setDataNodeDrafts((current) => ({
+      ...current,
+      [selectedDataNode.id]: {
+        ...(current[selectedDataNode.id] ?? emptyDataNodeDraft),
+        text,
+      },
+    }));
+    dispatch({
+      type: "setNotice",
+      notice: "Data text edited locally. Durable persistence is deferred.",
+    });
+  }
+
   async function generateScriptNode() {
     if (!selectedScriptNode) {
       setScriptError("Select a Text node before running generation.");
@@ -1618,12 +1814,15 @@ export function WorkflowCanvasWorkspace({
       state,
       textNodeDrafts,
       textOutcomes,
+      dataNodeDrafts,
     );
     const taskOption = findTextTaskOption(selectedTextDraft.task);
     if (!inputResolution.content) {
       const message =
         selectedTextDraft.task === "character_profiles"
           ? "Task 2 needs a connected Task 1 outcome, a same-node Task 1 outcome, or pasted content."
+          : selectedTextDraft.task === "mv_look_development"
+            ? "Task 3 needs both a character profile and an MV brief."
           : "A brief idea is required before generation.";
       setScriptError(message);
       setScriptTask({
@@ -1666,6 +1865,8 @@ export function WorkflowCanvasWorkspace({
         nodeId: selectedScriptNode.id,
         task: selectedTextDraft.task,
         content: inputResolution.content,
+        characterProfile: inputResolution.characterProfile,
+        mvBrief: inputResolution.mvBrief,
         source: inputResolution.source,
         settings: findScriptModelOption(scriptModel).settings,
       });
@@ -1748,6 +1949,104 @@ export function WorkflowCanvasWorkspace({
 
   function updateImagePrompt(nodeId: string, value: string) {
     setImagePrompts((current) => ({ ...current, [nodeId]: value }));
+  }
+
+  function updateImageTaskDraft(
+    nodeId: string,
+    update: Partial<ImageTaskDraft>,
+  ) {
+    setImageTaskDrafts((current) => ({
+      ...current,
+      [nodeId]: { ...getImageTaskDraft(current, nodeId), ...update },
+    }));
+  }
+
+  async function completeCharacterBaseImageTask(node: WorkflowNode) {
+    const draft = getImageTaskDraft(imageTaskDrafts, node.id);
+
+    if (!draft.appearance.trim() || !draft.personalityAction.trim()) {
+      const message =
+        "Character appearance and personality/action are required for Task 1.";
+      setImageErrors((current) => ({ ...current, [node.id]: message }));
+      setImageResponseOpen(true);
+      dispatch({
+        type: "setNodeStatus",
+        nodeId: node.id,
+        status: "blocked",
+        notice: message,
+      });
+      return;
+    }
+
+    const prompt = buildCharacterBaseImageTaskPrompt(draft);
+    setImageBusyNodeId(node.id);
+    setImageErrors((current) => {
+      const next = { ...current };
+      delete next[node.id];
+      return next;
+    });
+    setImageResponseOpen(true);
+    dispatch({
+      type: "setNodeStatus",
+      nodeId: node.id,
+      status: "running",
+      notice: "Task 1 character base image generation started through FastAPI SeedDream.",
+    });
+
+    try {
+      const result = await imageGenerationRunner({
+        projectId: state.projectId,
+        nodeId: node.id,
+        nodeType: "character_image",
+        prompt,
+        referenceImageUrl: null,
+        referenceImageB64: null,
+        referenceImageMimeType: null,
+      });
+      setImageGenerations((current) => ({ ...current, [node.id]: result }));
+      dispatch({ type: "setNodeStatus", nodeId: node.id, status: "ready" });
+      dispatch({
+        type: "upsertOutputNode",
+        sourceNodeId: node.id,
+        nodeType: "data",
+        title: "Character base image result",
+        description:
+          "Character base image generated through the configured Image API; asset persistence is not implemented.",
+        position: calculateImageTaskOutcomePosition(node.position),
+        output: {
+          sourceNodeId: node.id,
+          dataType: "image",
+          label: "Task 1 character base image",
+          provider: result.provider,
+          model: result.model,
+          editable: false,
+          media: {
+            kind: "image",
+            url: result.image.url,
+            b64Json: result.image.b64_json,
+            mimeType: result.image.mime_type,
+            alt: "Generated Task 1 character base image",
+          },
+        },
+        ports: imageTaskOutcomePorts(),
+        notice:
+          "Task 1 character base image is ready. Local preview is not persisted to the asset library yet.",
+      });
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Task 1 character base image generation failed.";
+      setImageErrors((current) => ({ ...current, [node.id]: message }));
+      dispatch({
+        type: "setNodeStatus",
+        nodeId: node.id,
+        status: "blocked",
+        notice: message,
+      });
+    } finally {
+      setImageBusyNodeId(null);
+    }
   }
 
   function showImageNotImplemented(node: WorkflowNode, message: string) {
@@ -2560,10 +2859,16 @@ export function WorkflowCanvasWorkspace({
                       ? getTextNodeDraft(textNodeDrafts, node.id).input
                       : null
                   }
+                  dataDraft={
+                    node.type === "data" && node.role === "source"
+                      ? (dataNodeDrafts[node.id] ?? emptyDataNodeDraft)
+                      : null
+                  }
                   textInputConnected={hasConnectedTextInput(node, state)}
                   textOutcomeText={
                     node.output?.dataType === "script" ||
-                    node.output?.dataType === "character"
+                    node.output?.dataType === "character" ||
+                    node.output?.dataType === "mv_look"
                       ? (textOutcomes[node.id] ?? null)
                       : null
                   }
@@ -2611,6 +2916,7 @@ export function WorkflowCanvasWorkspace({
                   error={scriptError}
                   historyOpen={scriptHistoryOpen}
                   input={scriptInput}
+                  mvLookInput={getMvLookInput(selectedTextDraft)}
                   inputResolution={selectedTextInputResolution}
                   messages={scriptDialogueMessages}
                   backendExecution={scriptBackendExecution}
@@ -2628,12 +2934,22 @@ export function WorkflowCanvasWorkspace({
                   }}
                   onHistoryOpenChange={setScriptHistoryOpen}
                   onInputChange={updateScriptInput}
+                  onMvLookInputChange={updateMvLookInput}
                   onModelChange={setScriptModel}
                   onTaskChange={updateTextTask}
                   onRevise={openScriptConversationMode}
                   onSendMessage={() => {
                     void sendScriptDialogueMessage();
                   }}
+                />
+              ) : null}
+              {selectedDataNode ? (
+                <DataNodeInlineEditor
+                  draft={selectedDataDraft}
+                  node={selectedDataNode}
+                  viewportZoom={state.viewport.zoom}
+                  onKindChange={updateDataNodeKind}
+                  onTextChange={updateDataNodeText}
                 />
               ) : null}
               {selectedMusicEditorNode ? (
@@ -2680,14 +2996,21 @@ export function WorkflowCanvasWorkspace({
                   node={selectedImageEditorNode}
                   prompt={selectedImagePrompt}
                   responseOpen={imageResponseOpen}
+                  taskDraft={selectedImageTaskDraft}
                   viewportZoom={state.viewport.zoom}
                   onClose={() => setImageEditorOpen(false)}
                   onFrameChange={setImageEditorFrame}
                   onGenerate={() => {
                     void generateImageNode(selectedImageEditorNode);
                   }}
+                  onCompleteCharacterBaseTask={() => {
+                    void completeCharacterBaseImageTask(selectedImageEditorNode);
+                  }}
                   onPromptChange={(value) =>
                     updateImagePrompt(selectedImageEditorNode.id, value)
+                  }
+                  onTaskDraftChange={(update) =>
+                    updateImageTaskDraft(selectedImageEditorNode.id, update)
                   }
                   onResponseOpenChange={setImageResponseOpen}
                   onUpload={(file) =>
@@ -2750,7 +3073,9 @@ export function WorkflowCanvasWorkspace({
             selection={state.selection}
             showAddMenu={showAddMenu}
             showZoomControl={showZoomControl}
-            templates={workflowNodeTemplates}
+            templates={workflowNodeTemplates.filter((template) =>
+              SUPPORTED_ADD_NODE_TYPES.has(template.type),
+            )}
             zoom={state.viewport.zoom}
             onAddNode={addNode}
             onDelete={() => dispatch({ type: "deleteSelection" })}
@@ -2826,7 +3151,7 @@ type CanvasDockProps = {
   selection: WorkflowSelection;
   showAddMenu: boolean;
   showZoomControl: boolean;
-  templates: typeof workflowNodeTemplates;
+  templates: ReadonlyArray<(typeof workflowNodeTemplates)[number]>;
   restoreDisabled: boolean;
   zoom: number;
   onAddNode: (nodeType: WorkflowNodeType) => void;
@@ -3076,6 +3401,7 @@ type ScriptNodeInlineEditorProps = {
   error: string | null;
   historyOpen: boolean;
   input: ScriptNodeInput;
+  mvLookInput?: MvLookInput;
   inputResolution: TextTaskInputResolution;
   messages: ScriptDialogueMessage[];
   responseMode: ScriptResponseMode;
@@ -3092,11 +3418,94 @@ type ScriptNodeInlineEditorProps = {
     field: Field,
     value: ScriptNodeInput[Field],
   ) => void;
+  onMvLookInputChange?: (
+    field: "characterProfile" | "mvBrief",
+    value: string,
+  ) => void;
   onModelChange: (model: ScriptModelSelection) => void;
   onTaskChange: (task: TextGenerationTask) => void;
   onRevise: () => void;
   onSendMessage: () => void;
 };
+
+type DataNodeInlineEditorProps = {
+  draft: DataNodeDraft;
+  node: WorkflowNode;
+  viewportZoom: number;
+  onKindChange: (kind: DataNodeKind) => void;
+  onTextChange: (text: string) => void;
+};
+
+export function DataNodeInlineEditor({
+  draft,
+  node,
+  viewportZoom,
+  onKindChange,
+  onTextChange,
+}: DataNodeInlineEditorProps) {
+  const editorWidth = 360;
+  const left = node.position.x + NODE_WIDTH + 28;
+  const top = node.position.y;
+
+  return (
+    <section
+      aria-label="Data node editor"
+      className="pointer-events-none absolute z-30"
+      data-data-node-inline-editor="true"
+      style={{
+        left,
+        top,
+        width: editorWidth,
+        transform: `scale(${getInlineEditorCompensationScale(viewportZoom)})`,
+        transformOrigin: "top left",
+      }}
+      onPointerDown={(event) => event.stopPropagation()}
+    >
+      <div className="pointer-events-auto flex flex-col gap-3 rounded-xl border border-neutral-200 bg-white p-4 text-neutral-950 shadow-lg">
+        <div>
+          <p className="text-sm font-semibold">General data source</p>
+          <p className="mt-1 text-xs leading-5 text-neutral-500">
+            Local canvas input only. Durable persistence is deferred.
+          </p>
+        </div>
+        <label className="flex flex-col gap-1.5 text-xs font-medium text-neutral-700">
+          Data type
+          <select
+            aria-label="Data type"
+            className="h-9 rounded-md border border-neutral-200 bg-white px-2 text-sm text-neutral-900"
+            data-data-node-kind-select="true"
+            onChange={(event) => onKindChange(event.target.value as DataNodeKind)}
+            value={draft.kind}
+          >
+            <option value="text">Text</option>
+            <option value="image">Image</option>
+            <option value="audio">Audio</option>
+          </select>
+        </label>
+        {draft.kind === "text" ? (
+          <label className="flex flex-col gap-1.5 text-xs font-medium text-neutral-700">
+            Text content
+            <Textarea
+              aria-label="Data text content"
+              className="min-h-28 resize-y text-sm"
+              data-data-node-textarea="true"
+              onChange={(event) => onTextChange(event.target.value)}
+              placeholder="Write a reusable brief, lyric, or prompt."
+              value={draft.text}
+            />
+          </label>
+        ) : (
+          <div
+            className="rounded-lg border border-dashed border-neutral-300 bg-neutral-50 p-3 text-xs leading-5 text-neutral-600"
+            data-data-node-attachment-unavailable="true"
+          >
+            {draft.kind === "image" ? "Image" : "Audio"} file attachment is not implemented yet. No media is attached or ready to use.
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
 
 export function ScriptNodeInlineEditor({
   backendExecution,
@@ -3105,6 +3514,7 @@ export function ScriptNodeInlineEditor({
   error,
   historyOpen,
   input,
+  mvLookInput = { characterProfile: "", mvBrief: "" },
   inputResolution,
   messages,
   responseMode,
@@ -3118,13 +3528,20 @@ export function ScriptNodeInlineEditor({
   onGenerate,
   onHistoryOpenChange,
   onInputChange,
+  onMvLookInputChange,
   onModelChange,
   onTaskChange,
   onRevise,
   onSendMessage,
 }: ScriptNodeInlineEditorProps) {
   const taskOption = findTextTaskOption(textTask);
-  const promptReady = inputResolution.content.length > 0;
+  const promptReady =
+    textTask === "mv_look_development"
+      ? Boolean(
+          inputResolution.characterProfile?.trim() &&
+            inputResolution.mvBrief?.trim(),
+        )
+      : inputResolution.content.length > 0;
   const directOutputPending =
     busy &&
     task.status === "running" &&
@@ -3149,7 +3566,7 @@ export function ScriptNodeInlineEditor({
 
   return (
     <div
-      className="absolute z-30 flex flex-col"
+      className="pointer-events-none absolute z-30 flex flex-col"
       style={{
         left,
         top,
@@ -3163,7 +3580,10 @@ export function ScriptNodeInlineEditor({
       onPointerDown={(event) => event.stopPropagation()}
     >
       {historyOpen ? (
-        <div className="mb-3" data-script-node-history="true">
+        <div
+          className="pointer-events-auto mb-3"
+          data-script-node-history="true"
+        >
           <ScriptOutputTabs
             backendExecution={backendExecution}
             conversationMode={conversationMode}
@@ -3178,7 +3598,7 @@ export function ScriptNodeInlineEditor({
       ) : null}
 
       <section
-        className="rounded-xl border border-neutral-200 bg-white/95 p-3 text-neutral-950 shadow-[0_20px_60px_rgba(15,23,42,0.14)] backdrop-blur"
+        className="pointer-events-auto rounded-xl border border-neutral-200 bg-white/95 p-3 text-neutral-950 shadow-[0_20px_60px_rgba(15,23,42,0.14)] backdrop-blur"
         data-script-node-input-composer="true"
         data-text-node-input-composer="true"
       >
@@ -3220,24 +3640,52 @@ export function ScriptNodeInlineEditor({
           </p>
         </div>
 
-        <label
-          htmlFor="script-node-world-input"
-          className="text-xs font-medium"
-        >
-          {taskOption.inputLabel}
-        </label>
-        <Textarea
-          id="script-node-world-input"
-          value={input.world_description}
-          onChange={(event) =>
-            onInputChange("world_description", event.target.value)
-          }
-          placeholder={taskOption.placeholder}
-          disabled={busy}
-          aria-label={taskOption.inputLabel}
-          onKeyDown={(event) => event.stopPropagation()}
-          className="min-h-20 resize-none border-0 bg-transparent px-0 text-sm shadow-none placeholder:text-neutral-400 focus-visible:ring-0"
-        />
+        {textTask === "mv_look_development" ? (
+          <div className="grid gap-3">
+            <label htmlFor="text-node-character-profile" className="text-xs font-medium">
+              Character profile
+            </label>
+            <Textarea
+              id="text-node-character-profile"
+              value={mvLookInput.characterProfile}
+              onChange={(event) => onMvLookInputChange?.("characterProfile", event.target.value)}
+              placeholder="Concrete appearance, personality, and voice/timbre description."
+              disabled={busy}
+              aria-label="Character profile"
+              onKeyDown={(event) => event.stopPropagation()}
+              className="min-h-20 resize-none border-0 bg-transparent px-0 text-sm shadow-none placeholder:text-neutral-400 focus-visible:ring-0"
+            />
+            <label htmlFor="text-node-mv-brief" className="text-xs font-medium">
+              MV brief
+            </label>
+            <Textarea
+              id="text-node-mv-brief"
+              value={mvLookInput.mvBrief}
+              onChange={(event) => onMvLookInputChange?.("mvBrief", event.target.value)}
+              placeholder="For example: 废土风 MV."
+              disabled={busy}
+              aria-label="MV brief"
+              onKeyDown={(event) => event.stopPropagation()}
+              className="min-h-16 resize-none border-0 bg-transparent px-0 text-sm shadow-none placeholder:text-neutral-400 focus-visible:ring-0"
+            />
+          </div>
+        ) : (
+          <>
+            <label htmlFor="script-node-world-input" className="text-xs font-medium">
+              {taskOption.inputLabel}
+            </label>
+            <Textarea
+              id="script-node-world-input"
+              value={input.world_description}
+              onChange={(event) => onInputChange("world_description", event.target.value)}
+              placeholder={taskOption.placeholder}
+              disabled={busy}
+              aria-label={taskOption.inputLabel}
+              onKeyDown={(event) => event.stopPropagation()}
+              className="min-h-20 resize-none border-0 bg-transparent px-0 text-sm shadow-none placeholder:text-neutral-400 focus-visible:ring-0"
+            />
+          </>
+        )}
 
         <div className="mt-3 flex items-center justify-between gap-3 border-t border-neutral-200 pt-3">
           <div className="flex items-center gap-2">
@@ -3294,7 +3742,7 @@ export function ScriptNodeInlineEditor({
               data-script-generate-loading={
                 directOutputPending ? "true" : undefined
               }
-              disabled={busy}
+              disabled={busy || (textTask === "mv_look_development" && !promptReady)}
               onClick={onGenerate}
               type="button"
             >
@@ -3324,11 +3772,14 @@ type ImageNodeFloatingEditorProps = {
   node: WorkflowNode;
   prompt: string;
   responseOpen: boolean;
+  taskDraft?: ImageTaskDraft;
   viewportZoom: number;
+  onCompleteCharacterBaseTask?: () => void;
   onClose: () => void;
   onFrameChange: (frame: ImageEditorFrame) => void;
   onGenerate: () => void;
   onPromptChange: (prompt: string) => void;
+  onTaskDraftChange?: (update: Partial<ImageTaskDraft>) => void;
   onResponseOpenChange: (open: boolean) => void;
   onUpload: (file: File | null) => void;
   onUseConnectedPrompt: (prompt: string) => void;
@@ -3343,14 +3794,22 @@ export function ImageNodeFloatingEditor({
   node,
   prompt,
   responseOpen,
+  taskDraft = emptyImageTaskDraft,
   viewportZoom,
+  onCompleteCharacterBaseTask = () => undefined,
   onGenerate,
   onPromptChange,
+  onTaskDraftChange = () => undefined,
   onResponseOpenChange,
   onUpload,
   onUseConnectedPrompt,
 }: ImageNodeFloatingEditorProps) {
   const promptReady = prompt.trim().length > 0;
+  const isCharacterBaseTask =
+    node.type === "image" && taskDraft.task === "character_base_image";
+  const characterTaskReady = Boolean(
+    taskDraft.appearance.trim() && taskDraft.personalityAction.trim(),
+  );
   const hasCurrentImage = Boolean(currentImageSource);
   const uploadInputRef = useRef<HTMLInputElement>(null);
   const imageSource = generation
@@ -3429,6 +3888,91 @@ export function ImageNodeFloatingEditor({
         className="rounded-xl border border-neutral-200 bg-white/95 p-3 text-neutral-950 shadow-[0_20px_60px_rgba(15,23,42,0.14)] backdrop-blur"
         data-image-node-input-composer="true"
       >
+        {node.type === "image" ? (
+          <div className="mb-3 flex flex-col gap-1.5">
+            <label htmlFor={`image-task-select-${node.id}`} className="text-xs font-medium">
+              Image task
+            </label>
+            <Select
+              onValueChange={(task) =>
+                onTaskDraftChange({ task: task as ImageTask })
+              }
+              value={taskDraft.task}
+            >
+              <SelectTrigger
+                aria-label="Image task"
+                data-image-task-select="true"
+                id={`image-task-select-${node.id}`}
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  {IMAGE_TASK_OPTIONS.map((task) => (
+                    <SelectItem key={task.id} value={task.id}>
+                      {task.label}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </div>
+        ) : null}
+
+        {isCharacterBaseTask ? (
+          <div className="flex flex-col gap-3" data-image-character-base-inputs="true">
+            <p className="text-xs leading-5 text-neutral-500">
+              Generate a character base image from these task inputs through the configured Image API.
+            </p>
+            <label htmlFor={`image-task-appearance-${node.id}`} className="text-xs font-medium">
+              Character appearance
+            </label>
+            <Textarea
+              aria-label="Character appearance"
+              className="min-h-20 resize-none border-0 bg-transparent px-0 text-sm shadow-none placeholder:text-neutral-400 focus-visible:ring-0"
+              disabled={busy}
+              id={`image-task-appearance-${node.id}`}
+              onChange={(event) =>
+                onTaskDraftChange({ appearance: event.target.value })
+              }
+              onKeyDown={(event) => event.stopPropagation()}
+              placeholder="Describe stable facial features, hair, outfit, accessories, and rendering details."
+              value={taskDraft.appearance}
+            />
+            <label htmlFor={`image-task-personality-${node.id}`} className="text-xs font-medium">
+              Personality / action description
+            </label>
+            <Textarea
+              aria-label="Personality / action description"
+              className="min-h-20 resize-none border-0 bg-transparent px-0 text-sm shadow-none placeholder:text-neutral-400 focus-visible:ring-0"
+              disabled={busy}
+              id={`image-task-personality-${node.id}`}
+              onChange={(event) =>
+                onTaskDraftChange({ personalityAction: event.target.value })
+              }
+              onKeyDown={(event) => event.stopPropagation()}
+              placeholder="Describe the character's temperament, stage presence, and repeatable movement language."
+              value={taskDraft.personalityAction}
+            />
+            <div className="flex items-center justify-between gap-3 border-t border-neutral-200 pt-3">
+              <p className="text-xs text-neutral-500" data-image-task-no-persistence="true">
+                Generated preview only; asset persistence is not implemented yet.
+              </p>
+              <Button
+                aria-label="Complete Image Task 1"
+                className="h-9 shrink-0 rounded-lg px-4 text-xs"
+                data-image-task-complete="true"
+                disabled={busy || !characterTaskReady}
+                onClick={onCompleteCharacterBaseTask}
+                type="button"
+              >
+                Complete Task 1
+                <Sparkles aria-hidden="true" className="size-4" />
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <>
         <label htmlFor={`image-node-prompt-${node.id}`} className="sr-only">
           Image prompt
         </label>
@@ -3521,6 +4065,8 @@ export function ImageNodeFloatingEditor({
             )}
           </Button>
         </div>
+          </>
+        )}
       </section>
     </div>
   );
@@ -4373,6 +4919,7 @@ export function formatWorkflowOutputExecutionLabel(
 
 type WorkflowNodeCardProps = {
   node: WorkflowNode;
+  dataDraft?: DataNodeDraft | null;
   textInput: ScriptNodeInput | null;
   textInputConnected?: boolean;
   textOutcomeText: string | null;
@@ -4380,7 +4927,7 @@ type WorkflowNodeCardProps = {
   pendingPort: WorkflowPort | null;
   onTextOutcomeTextChange: (nodeId: string, value: string) => void;
   onDragStart: (
-    event: ReactPointerEvent<HTMLButtonElement>,
+    event: ReactPointerEvent<HTMLElement>,
     node: WorkflowNode,
   ) => void;
   onSelect: (selection: WorkflowSelection) => void;
@@ -4392,6 +4939,7 @@ type WorkflowNodeCardProps = {
 
 export function WorkflowNodeCard({
   node,
+  dataDraft = null,
   textInput,
   textInputConnected = false,
   textOutcomeText,
@@ -4421,6 +4969,64 @@ export function WorkflowNodeCard({
     node.role === "source" && getImageGenerationNodeType(node.type) !== null;
   const isSelfContainedAudioNode =
     node.role === "source" && node.type === "audio";
+  const isPureDataImageOutcome =
+    node.type === "data" &&
+    node.role === "outcome" &&
+    node.output?.dataType === "image" &&
+    Boolean(imageOutputSource);
+
+  if (isPureDataImageOutcome) {
+    return (
+      <figure
+        aria-label={`${node.title} data outcome`}
+        className="absolute"
+        data-data-image-outcome="true"
+        data-workflow-node={node.type}
+        data-workflow-node-role={node.role}
+        data-workflow-output-data-type={node.output?.dataType}
+        onPointerDown={(event) => onDragStart(event, node)}
+        onClick={() => onSelect({ kind: "node", id: node.id })}
+        style={{
+          left: node.position.x,
+          top: node.position.y,
+          width: NODE_WIDTH,
+        }}
+      >
+        <img
+          alt={node.output?.media?.alt ?? `${node.title} image`}
+          className="block h-auto w-full object-contain"
+          data-data-image-outcome-preview="true"
+          src={imageOutputSource!}
+        />
+        <figcaption className="sr-only">
+          {node.title}. {formatWorkflowOutputExecutionLabel(node.output)}. Local
+          preview only; not saved to the asset library yet.
+        </figcaption>
+        {inputs.map((port, index) => (
+          <PortButton
+            key={port.id}
+            port={port}
+            index={index}
+            compatible={
+              pendingPort?.direction === "output" &&
+              pendingPort.nodeId !== port.nodeId &&
+              (port.accepts ?? [port.dataType]).includes(pendingPort.dataType)
+            }
+            onConnectionStart={onPortConnectionStart}
+          />
+        ))}
+        {outputs.map((port, index) => (
+          <PortButton
+            key={port.id}
+            port={port}
+            index={index}
+            compatible={pendingPort?.id === port.id}
+            onConnectionStart={onPortConnectionStart}
+          />
+        ))}
+      </figure>
+    );
+  }
 
   return (
     <article
@@ -4463,7 +5069,8 @@ export function WorkflowNodeCard({
             className="block truncate text-xs text-neutral-500"
             data-script-outcome-provider={
               node.output?.dataType === "script" ||
-              node.output?.dataType === "character"
+              node.output?.dataType === "character" ||
+              node.output?.dataType === "mv_look"
                 ? "true"
                 : undefined
             }
@@ -4488,7 +5095,8 @@ export function WorkflowNodeCard({
         ) : null}
 
         {node.output?.dataType === "script" ||
-        node.output?.dataType === "character" ? (
+        node.output?.dataType === "character" ||
+        node.output?.dataType === "mv_look" ? (
           <ScriptOutcomeNodeEditor
             node={node}
             text={textOutcomeText}
@@ -4577,7 +5185,9 @@ export function WorkflowNodeCard({
                 src={imageOutputSource}
               />
             </div>
-            <p className="mt-2 text-[11px] leading-4 text-neutral-500">
+            <p
+              className="mt-2 text-[11px] leading-4 text-neutral-500"
+            >
               Local preview only; not saved to the asset library yet.
             </p>
           </div>
@@ -4588,6 +5198,27 @@ export function WorkflowNodeCard({
           >
             <Image aria-hidden="true" className="size-6 text-neutral-400" />
             <span>No image yet</span>
+          </div>
+        ) : node.type === "data" && node.role === "source" ? (
+          <div
+            className="flex h-24 flex-col justify-center rounded-md border border-dashed border-neutral-300 bg-neutral-50 p-3 text-xs text-neutral-600"
+            data-data-node-preview={dataDraft?.kind ?? "text"}
+          >
+            {dataDraft?.kind === "text" ? (
+              <>
+                <span className="font-semibold text-neutral-950">Local text input</span>
+                <span className="mt-1 line-clamp-2">
+                  {dataDraft.text || "No text entered yet."}
+                </span>
+              </>
+            ) : (
+              <>
+                <span className="font-semibold text-neutral-950">
+                  {dataDraft?.kind === "image" ? "Image" : "Audio"} source
+                </span>
+                <span className="mt-1">Attachment unavailable; no media attached.</span>
+              </>
+            )}
           </div>
         ) : node.type === "script" ? (
           <div className="max-h-28 overflow-hidden text-xs leading-5 text-neutral-700">
@@ -4680,6 +5311,7 @@ function PortButton({
   onConnectionStart,
 }: PortButtonProps) {
   const leftSide = port.direction === "input";
+  const unavailable = port.available === false;
 
   return (
     <button
@@ -4687,14 +5319,19 @@ function PortButton({
       className={cn(
         "absolute flex size-5 items-center justify-center rounded-full border bg-white text-[0px] shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-950/20",
         leftSide ? "-left-2.5" : "-right-2.5",
-        compatible
+        unavailable
+          ? "cursor-not-allowed border-neutral-200 bg-neutral-100 text-neutral-400 opacity-70"
+          : compatible
           ? "border-neutral-950 bg-neutral-950 text-white"
           : "border-neutral-300 hover:border-neutral-950",
       )}
       style={{ top: PORT_TOP + index * PORT_GAP }}
-      aria-label={`${port.direction} ${port.label} ${port.dataType} port`}
+      aria-label={`${port.direction} ${port.label} ${port.dataType} port${unavailable ? " unavailable" : ""}`}
+      aria-disabled={unavailable}
+      disabled={unavailable}
       data-workflow-port-direction={port.direction}
       data-workflow-port-id={port.id}
+      data-workflow-port-unavailable={unavailable ? "true" : undefined}
       onPointerDown={(event) => onConnectionStart(event, port)}
     >
       <CircleDot aria-hidden="true" />
@@ -4719,10 +5356,12 @@ function WorkflowEdges({
 
   return (
     <svg
-      className="absolute left-0 top-0"
+      className="pointer-events-none absolute left-0 top-0"
       width={CANVAS_WIDTH}
       height={CANVAS_HEIGHT}
+      style={{ overflow: "visible" }}
       aria-label="Workflow connections"
+      data-workflow-edge-layer="unbounded"
     >
       {state.edges.map((edge) => {
         const sourceNode = findNode(state.nodes, edge.sourceNodeId);
@@ -4748,9 +5387,11 @@ function WorkflowEdges({
               stroke="transparent"
               strokeWidth="18"
               fill="none"
-              className="cursor-pointer"
+              className="pointer-events-auto cursor-pointer"
               data-workflow-edge-hit="true"
               onClick={() => onSelect({ kind: "edge", id: edge.id })}
+              onPointerDown={(event) => event.stopPropagation()}
+              pointerEvents="stroke"
             />
             <path
               d={path}

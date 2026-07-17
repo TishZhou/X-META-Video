@@ -58,6 +58,7 @@ temp/
 !docs/**/*.jpg
 !docs/**/*.jpeg
 !docs/**/*.webp
+!apps/web/public/provided-character-base-task-1.png
 
 # OS / editor
 .DS_Store

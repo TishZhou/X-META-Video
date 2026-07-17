@@ -39,11 +39,13 @@ class ScriptSettings(BaseModel):
 class TextGenerationTask(StrEnum):
     IP_WORLDVIEW = "ip_worldview"
     CHARACTER_PROFILES = "character_profiles"
+    MV_LOOK_DEVELOPMENT = "mv_look_development"
 
 
 class TextDataType(StrEnum):
     SCRIPT = "script"
     CHARACTER = "character"
+    MV_LOOK = "mv_look"
 
 
 class TextInputSourceType(StrEnum):
@@ -73,7 +75,9 @@ class TextGenerationInputSource(BaseModel):
 class TextGenerationInput(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
-    content: str = Field(..., min_length=1, max_length=50000)
+    content: str | None = Field(default=None, min_length=1, max_length=50000)
+    character_profile: str | None = Field(default=None, min_length=1, max_length=50000)
+    mv_brief: str | None = Field(default=None, min_length=1, max_length=20000)
     source: TextGenerationInputSource
 
 
@@ -83,6 +87,17 @@ class TextGenerationRequest(BaseModel):
     task: TextGenerationTask
     input: TextGenerationInput
     settings: ScriptSettings = Field(default_factory=ScriptSettings)
+
+    @model_validator(mode="after")
+    def validate_task_inputs(self) -> "TextGenerationRequest":
+        if self.task == TextGenerationTask.MV_LOOK_DEVELOPMENT:
+            if not self.input.character_profile or not self.input.mv_brief:
+                raise ValueError(
+                    "MV look development requires character_profile and mv_brief."
+                )
+        elif not self.input.content:
+            raise ValueError("This Text task requires content.")
+        return self
 
 
 class TextGenerationMetadata(BaseModel):

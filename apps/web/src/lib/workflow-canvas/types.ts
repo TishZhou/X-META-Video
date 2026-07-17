@@ -4,6 +4,7 @@ import type {
 } from "@xmeta/shared-contracts";
 
 export type WorkflowNodeType =
+  | "data"
   | "script"
   | "storyboard"
   | "image"
@@ -17,12 +18,15 @@ export type WorkflowDataType =
   | "script"
   | "storyboard"
   | "character"
+  | "mv_look"
   | "asset"
   | "scene"
   | "image"
   | "audio"
   | "video"
   | "export";
+
+export type DataNodeKind = "text" | "image" | "audio";
 
 export type WorkflowPortDirection = "input" | "output";
 
@@ -44,6 +48,7 @@ export type WorkflowPortDefinition = {
   direction: WorkflowPortDirection;
   dataType: WorkflowDataType;
   accepts?: WorkflowDataType[];
+  available?: boolean;
 };
 
 export type WorkflowPort = WorkflowPortDefinition & {

@@ -13,6 +13,25 @@
   ],
   "small_features": [
     {
+      "id": "image-node-character-base-task-v1",
+      "title": "Add character-base-image task to Image node",
+      "status": "passing",
+      "user_visible_behavior": "Users can select Task 1 on an Image node, enter a character appearance and personality/action description, and receive the supplied local character-base image in one connected result node.",
+      "acceptance_criteria": [
+        "The Image task selector includes Task 1 Character base image.",
+        "Task 1 has separate editable character appearance and personality/action text inputs.",
+        "Completion renders the supplied image as an explicitly provided local preview, not a model result or persisted asset.",
+        "Completion creates one compatible source-to-result edge and rerunning does not duplicate the result or edge.",
+        "Existing Image prompt, upload, and edit controls remain available."
+      ],
+      "verification": [
+        "2026-07-17 init.ps1 passed: Web 10 files / 69 tests.",
+        "2026-07-17 Web typecheck, production build, and git diff --check passed.",
+        "2026-07-17 Codex in-app Browser E2E passed: Add Image, select Task 1, enter both descriptions, complete, verify provided image and automatic edge, rerun without duplication, and confirm existing prompt/upload/edit controls remain available.",
+        "2026-07-17 independent evaluator accepted 160/160."
+      ]
+    },
+    {
       "id": "text-to-image-nodes-001",
       "title": "Implement SeedDream text-to-image graph foundation",
       "status": "passing",

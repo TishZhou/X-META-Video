@@ -19,11 +19,10 @@ Before writing code:
 If baseline verification is failing, repair that first before adding new scope. If docs and code diverge, treat docs as target behavior and current code as implementation reality.
 
 ## Agent Loop
-- **Main Agent + 2 Subagents**: Main Agent to do planning and write `sprint-contract.md`, then coding subagent should follow the plan. At the end, evaluator subagent will use verify skill first then should fill out the `evaluator-rubric.md` and hand it to the Main agent. Then Main agent start a new round in our loop, give solution plan to the coding agent and run `.\scripts\initialize-evaluator-rubric.ps1`. We keep this loop until evaluator accepts over 140. 5 rounds is a limit.
+- **Agent loop**: Main Agent to do planning and write `sprint-contract.md`, then coding subagent should follow the plan. At the end, evaluator subagent will use verify skill first then should fill out the `evaluator-rubric.md` and hand it to the Main agent. Then Main agent start a new round in our loop, give solution plan to the coding agent and run `.\scripts\initialize-evaluator-rubric.ps1`. We keep this loop until evaluator accepts over 140. 5 rounds is a limit. This is basic 3 agent task, yuo can add up to 5 sub agents but still follow the plan - act - verify loop.
 
 ## Working Rules
 - **Mark every button/fucntion that is not done** For every button/function showed in the fronted, it should be either done with completed backend or have a pop up window told you that is not done yet.
-- **One feature at a time**: Pick exactly one unfinished feature from `feature_list.json` 
 - **Verification required**: Don't claim done without running verification commands and always do End to End test.
 - **Stay in scope**: Don't modify files unrelated to the current feature
 - **Leave clean state**: clean all the temporary tests or ducments.
@@ -33,11 +32,10 @@ If baseline verification is failing, repair that first before adding new scope. 
 - **Maintainess and Concise Code**: When we build, we should make the code clean and reusable, don't write repeated content.
 - **Use shadcn skill and uiux-pro max skill** to use tripld UI components in our repo, if we need to use components like toolbar that we don't have in our tripld UI component, then use shadcn interactive components. make it interactive as much as possible.
 - **Don't pay attention to Mobiel end UI**
-
+- **End to End Verification as a real user**
+- **Don't maintain old version code after change, keep code clean and concise**
 ## Required Artifacts
 - `docs/ARCHITECTURE.md`: layer boundaries and data flow
-- `feature_list.json`: Feature state tracker (source of truth)
-- `/feature_tasks`: deatialed feature task
 - `progress.md`: Session continuity log
 - `init.ps1`: Standard startup and verification path
 - `session-handoff.md`: information from last last session
