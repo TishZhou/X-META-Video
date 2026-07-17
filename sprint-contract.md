@@ -20,6 +20,8 @@
 - Shared text-generation rules live once in the common prompt layer; each task profile owns only its task-specific instructions.
 - Task 2 input priority is: connected Task 1 outcome, same-node Task 1 outcome, then manually entered/pasted content.
 - The internal workflow node type remains `script` in V1 to preserve downstream canvas/API compatibility; user-visible naming becomes Text.
+- A generated Text outcome is a first-class graph result: generation creates or preserves one deterministic source-to-outcome edge instead of relying on visual proximity alone.
+- A Text source node shows `Input connected` whenever an incoming edge carries the pure `text` data type; it must not imply a connection for another compatible non-text input.
 
 ## Write Scope
 
@@ -42,6 +44,7 @@
 - Feature 3 planning, evaluation, progress, and handoff artifacts
 - `docs/API.md`
 - focused DOM interaction-test dependencies/configuration if required
+- deterministic Text outcome-edge reducer coverage and Text-input connection rendering coverage
 
 Protected boundaries:
 
@@ -65,6 +68,8 @@ Protected boundaries:
 10. Relevant API/Agent Runtime/Web tests, typecheck, build, Ruff, JSON validation, diff check, local API smoke, and final `init.ps1` pass.
 11. Browser E2E is performed click by click with normal user controls: select each task, enter/use input, generate, inspect outcome, connect/use Task 1 for Task 2, edit output, verify provider/model evidence, error state, keyboard Select behavior, viewport fit, screenshots, console errors, and failed requests.
 12. Independent evaluator score exceeds 140/160, and mandatory Codex in-app Browser E2E completes.
+13. Generating Task 1 or Task 2 automatically renders exactly one deterministic edge from the Text source to its matching outcome node; regeneration does not duplicate that edge.
+14. A Text source node with an incoming pure `text` edge visibly says `Input connected`, while an unconnected Text source retains its existing empty-input wording.
 
 ## QA Inventory
 

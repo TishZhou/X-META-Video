@@ -31,6 +31,7 @@ import {
   createScriptBackendExecution,
   formatScriptBackendExecutionLabel,
   formatScriptNodePreview,
+  hasConnectedTextInput,
   formatWorkflowOutputExecutionLabel,
   formatTemplateIoLabel,
   getConnectedAudioLyrics,
@@ -1824,6 +1825,32 @@ describe("WorkflowCanvasWorkspace", () => {
     ).toEqual({
       heading: "Confirmed Text",
       body: "Sample Script Title: A structured MV world summary. 1 storyboard shots ready.",
+    });
+  });
+
+  it("shows connected copy only when a Text source receives text data", () => {
+    const initial = createInitialWorkflowGraphState();
+    const withSecondTextNode = workflowGraphReducer(initial, {
+      type: "addNode",
+      nodeType: "script",
+      position: { x: 820, y: 140 },
+    });
+    const connected = workflowGraphReducer(withSecondTextNode, {
+      type: "connect",
+      sourcePortId: "script-1:script-out",
+      targetPortId: "script-4:brief-in",
+    });
+    const textNode = connected.nodes.find((node) => node.id === "script-4");
+
+    expect(textNode).toBeDefined();
+    expect(hasConnectedTextInput(textNode!, connected)).toBe(true);
+    expect(formatScriptNodePreview(null, null, true)).toEqual({
+      heading: "Text input",
+      body: "Input connected",
+    });
+    expect(formatScriptNodePreview(null, null)).toEqual({
+      heading: "Text input",
+      body: "No text input yet.",
     });
   });
 });

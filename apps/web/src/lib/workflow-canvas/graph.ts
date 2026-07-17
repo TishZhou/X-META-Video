@@ -377,6 +377,25 @@ export function workflowGraphReducer(
         action.output.dataType,
       );
       const existing = state.nodes.find((node) => node.id === outputNodeId);
+      const sourceNode = findNode(state.nodes, action.sourceNodeId);
+      const shouldAutoConnectTextOutcome =
+        sourceNode?.role === "source" &&
+        sourceNode.type === "script" &&
+        action.nodeType === "script";
+      const portDefinitions =
+        shouldAutoConnectTextOutcome &&
+        !action.ports.some((port) => port.key === "source-in")
+          ? [
+              {
+                key: "source-in",
+                label: "Source",
+                direction: "input" as const,
+                dataType: action.output.dataType,
+                accepts: [action.output.dataType],
+              },
+              ...action.ports,
+            ]
+          : action.ports;
       const outputNode: WorkflowNode = {
         id: outputNodeId,
         type: action.nodeType,
@@ -386,12 +405,34 @@ export function workflowGraphReducer(
         status: "ready",
         position: existing?.position ?? action.position,
         output: action.output,
-        ports: action.ports.map((port) => ({
+        ports: portDefinitions.map((port) => ({
           ...port,
           id: `${outputNodeId}:${port.key}`,
           nodeId: outputNodeId,
         })),
       };
+      const sourcePort = shouldAutoConnectTextOutcome
+        ? sourceNode.ports.find(
+            (port) =>
+              port.direction === "output" &&
+              port.dataType === action.output.dataType,
+          )
+        : undefined;
+      const targetPort = outputNode.ports.find(
+        (port) => port.direction === "input" && port.key === "source-in",
+      );
+      const alreadyConnected =
+        sourcePort &&
+        targetPort &&
+        state.edges.some(
+          (edge) =>
+            edge.sourcePortId === sourcePort.id &&
+            edge.targetPortId === targetPort.id,
+        );
+      const generatedEdge =
+        sourcePort && targetPort && !alreadyConnected
+          ? makeEdge(sourcePort, targetPort, state.nextEdgeIndex)
+          : null;
 
       return {
         ...state,
@@ -400,11 +441,15 @@ export function workflowGraphReducer(
               node.id === outputNodeId ? outputNode : node,
             )
           : [...state.nodes, outputNode],
+        edges: generatedEdge ? [...state.edges, generatedEdge] : state.edges,
         selection: { kind: "node", id: outputNodeId },
         draftStatus: "dirty",
         notice:
           action.notice ??
           `${action.title} is ready as a local editable output node.`,
+        nextEdgeIndex: generatedEdge
+          ? state.nextEdgeIndex + 1
+          : state.nextEdgeIndex,
       };
     }
 

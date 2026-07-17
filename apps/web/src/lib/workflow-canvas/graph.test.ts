@@ -184,6 +184,14 @@ describe("workflow graph state", () => {
     });
 
     expect(withOutput.nodes).toHaveLength(state.nodes.length + 1);
+    expect(withOutput.edges).toHaveLength(state.edges.length + 1);
+    expect(withOutput.edges.at(-1)).toMatchObject({
+      sourceNodeId: "script-1",
+      sourcePortId: "script-1:script-out",
+      targetNodeId: outputNodeId,
+      targetPortId: `${outputNodeId}:source-in`,
+      dataType: "script",
+    });
     expect(withOutput.selection).toEqual({ kind: "node", id: outputNodeId });
     expect(withOutput.nodes.find((node) => node.id === outputNodeId)).toMatchObject({
       role: "outcome",
@@ -196,6 +204,12 @@ describe("workflow graph state", () => {
         editable: true,
       },
       ports: [
+        {
+          id: `${outputNodeId}:source-in`,
+          nodeId: outputNodeId,
+          dataType: "script",
+          direction: "input",
+        },
         {
           id: `${outputNodeId}:script-out`,
           nodeId: outputNodeId,
@@ -231,6 +245,8 @@ describe("workflow graph state", () => {
     });
 
     expect(updated.nodes).toHaveLength(withOutput.nodes.length);
+    expect(updated.edges).toHaveLength(withOutput.edges.length);
+    expect(updated.nextEdgeIndex).toBe(withOutput.nextEdgeIndex);
     expect(updated.nodes.find((node) => node.id === outputNodeId)).toMatchObject({
       title: "Updated Script outcome",
       position: { x: 500, y: 120 },

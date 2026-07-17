@@ -283,6 +283,13 @@ function findTextTaskOption(task: TextGenerationTask) {
 function textOutcomePorts(dataType: "script" | "character") {
   return [
     {
+      key: "source-in",
+      label: "Source",
+      direction: "input" as const,
+      dataType,
+      accepts: [dataType],
+    },
+    {
       key: dataType === "script" ? "script-out" : "profiles-out",
       label: dataType === "script" ? "World view" : "Characters",
       direction: "output" as const,
@@ -778,6 +785,7 @@ export function clampImageEditorFrame(
 export function formatScriptNodePreview(
   input: ScriptNodeInput | null,
   output: ScriptNodeOutput | null,
+  textInputConnected = false,
 ) {
   if (output) {
     const shotCount = output.storyboard_direction.shots.length;
@@ -790,8 +798,25 @@ export function formatScriptNodePreview(
 
   return {
     heading: "Text input",
-    body: input?.world_description.trim() || "No text input yet.",
+    body:
+      input?.world_description.trim() ||
+      (textInputConnected ? "Input connected" : "No text input yet."),
   };
+}
+
+export function hasConnectedTextInput(
+  node: WorkflowNode,
+  state: WorkflowGraphState,
+) {
+  return (
+    node.role === "source" &&
+    node.type === "script" &&
+    state.edges.some(
+      (edge) =>
+        edge.targetNodeId === node.id &&
+        (edge.dataType === "brief" || edge.dataType === "script"),
+    )
+  );
 }
 
 export function resolveTextTaskInput(
@@ -2535,6 +2560,7 @@ export function WorkflowCanvasWorkspace({
                       ? getTextNodeDraft(textNodeDrafts, node.id).input
                       : null
                   }
+                  textInputConnected={hasConnectedTextInput(node, state)}
                   textOutcomeText={
                     node.output?.dataType === "script" ||
                     node.output?.dataType === "character"
@@ -4348,6 +4374,7 @@ export function formatWorkflowOutputExecutionLabel(
 type WorkflowNodeCardProps = {
   node: WorkflowNode;
   textInput: ScriptNodeInput | null;
+  textInputConnected?: boolean;
   textOutcomeText: string | null;
   selected: boolean;
   pendingPort: WorkflowPort | null;
@@ -4366,6 +4393,7 @@ type WorkflowNodeCardProps = {
 export function WorkflowNodeCard({
   node,
   textInput,
+  textInputConnected = false,
   textOutcomeText,
   selected,
   pendingPort,
@@ -4377,7 +4405,11 @@ export function WorkflowNodeCard({
   const Icon = nodeIcons[node.type];
   const inputs = node.ports.filter((port) => port.direction === "input");
   const outputs = node.ports.filter((port) => port.direction === "output");
-  const scriptPreview = formatScriptNodePreview(textInput, null);
+  const scriptPreview = formatScriptNodePreview(
+    textInput,
+    null,
+    textInputConnected,
+  );
   const nodeSubtitle = node.output?.provider
     ? formatWorkflowOutputExecutionLabel(node.output)
     : node.id;

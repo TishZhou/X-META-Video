@@ -98,6 +98,9 @@ describe("WorkflowCanvasWorkspace Text node interactions", () => {
       content: "Four girls awaken a frozen dream world.",
       source: { type: "manual" },
     });
+    expect(
+      container.querySelectorAll('[data-workflow-edge-hit="true"]'),
+    ).toHaveLength(3);
 
     const task1Card = container.querySelector<HTMLElement>(
       '[data-workflow-node-role="outcome"][data-workflow-output-data-type="script"]',
