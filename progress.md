@@ -8,8 +8,8 @@ Record major decisions and progress each session. Keep the current verified stat
 - Standard startup path: `.\init.ps1`
 - Standard web verification path: `corepack pnpm --filter @xmeta/web test`
 - Current highest-priority unfinished feature: Feature 4, Storyboard Node.
-- Current active feature: Feature 16 Agent Runtime Foundation is passing after the node-file split was independently accepted at 148/150.
-- Current Agent Runtime foundation: existing Text, Image, Audio, and Video generation routes enter through `agent_runtime/runtime.py`; node-specific execution lives in `nodes/text.py`, `nodes/image.py`, `nodes/audio.py`, and `nodes/video.py`; seven current task profiles declare typed inputs, scoped memory reads, prompt templates, outputs, validators, and bounded Runtime retry metadata.
+- Current active feature: Feature 16 Agent Runtime Foundation is passing after final compatibility-shim removal was independently accepted at 149/150.
+- Current Agent Runtime foundation: existing Text, Image, Audio, and Video generation routes enter through `agent_runtime/runtime.py`; node-specific execution lives in `nodes/text.py`, `nodes/image.py`, `nodes/audio.py`, and `nodes/video.py`; obsolete `handlers.py`, `xmeta_api/prompt.py`, and `xmeta_api/runner.py` compatibility modules are deleted; seven current task profiles declare typed inputs, scoped memory reads, prompt templates, outputs, validators, and bounded Runtime retry metadata.
 - Current Agent Runtime memory boundary: `EmptyProjectMemoryReader` is intentionally empty and non-durable. PostgreSQL-backed approved memory, worker execution, one-click orchestration, and canvas graph rewiring are not claimed.
 - Current reset status: Feature 2 and Feature 3 have been removed from the active plan, their task files have been deleted, old web implementation files have been cleared while preserving minimal app structure, and the remaining feature plan has now been renumbered so old Features 4-17 are new Features 2-15.
 - Current feature numbering: Feature 1 remains Web Design and is now recorded as `passing`; Feature 2 is Workflow Canvas Foundation and is now `passing`; old Features 5-17 shifted to new Features 3-15.
@@ -34,6 +34,17 @@ Record major decisions and progress each session. Keep the current verified stat
 - Current blocker: none for Feature 9. Browser E2E passed with an intercepted local FastAPI Ark task-only response; live Ark execution was not attempted because `ARK_API_KEY` is empty.
 
 ## Session Log
+
+### Session 055
+
+- Date: 2026-07-17
+- Goal: Complete the Agent Runtime migration without retaining old compatibility files or forwarding APIs.
+- Completed: Deleted `agent_runtime/handlers.py`, `xmeta_api/prompt.py`, and `xmeta_api/runner.py`; removed the package-level `run_script_task_sync` wrapper and unused Prompt/Retry re-exports; migrated tests to final `runtime.py` and `prompts.py` imports; and updated architecture documentation to describe only the final module layout.
+- Verification run: Exact import search returned zero active old-path references; fresh-process module discovery returned `None` for all deleted modules; focused Agent Runtime pytest passed 17 tests; full API pytest passed 72 tests; Ruff passed; full Web tests passed 9 files / 58 tests; JSON validation, `git diff --check`, local Uvicorn/OpenAPI and Script route smoke, and final `./init.ps1` passed.
+- Evaluation: Independent evaluator accepted round 1 at 149/150 with no blocking defect.
+- Provider evidence: No external model was called; local smoke proved route/Runtime integration and truthful unsupported-provider error mapping only.
+- Boundary note: No frontend, main API, provider, Task Profile, prompt implementation, Memory, validator, retry, or persistence implementation changed. The user-owned `AGENTS.md` change remains external.
+- Next step: Add future tasks only through the final Agent Runtime module paths, or continue Feature 4 Storyboard Node.
 
 ### Session 054
 

@@ -65,6 +65,31 @@
         "Protected frontend, provider, main API, profile, prompt, memory, and validator boundaries had no implementation diff.",
         "Independent evaluator accepted round 1 at 148/150."
       ]
+    },
+    {
+      "id": "agent-runtime-003",
+      "title": "Remove Agent Runtime compatibility shims",
+      "status": "passing",
+      "scope": [
+        "Delete agent_runtime/handlers.py after migrating all imports to runtime.py or the package-level Runtime export.",
+        "Delete the old xmeta_api/prompt.py and xmeta_api/runner.py compatibility modules.",
+        "Remove the package-level run_script_task_sync wrapper and obsolete compatibility-only exports.",
+        "Update tests and architecture documentation to reference only the final Agent Runtime module layout.",
+        "Preserve current FastAPI routes, request/response models, provider behavior, Task Profiles, prompt output, validators, retries, and canvas behavior."
+      ],
+      "verification": [
+        "Search the repository for imports of deleted compatibility modules and require zero results outside historical logs.",
+        "Run focused Agent Runtime pytest, full API pytest, Ruff, and full web tests.",
+        "Run JSON validation, git diff --check, local API smoke, and final .\\init.ps1."
+      ],
+      "evidence": [
+        "Deleted agent_runtime/handlers.py, xmeta_api/prompt.py, and xmeta_api/runner.py instead of retaining compatibility shims.",
+        "Removed the package-level Script execution wrapper and unused Prompt/Retry forwarding exports; all live imports now use the final modules.",
+        "Fresh-process module discovery returned None for all three deleted module paths, and exact repository import search returned zero active references.",
+        "Focused Agent Runtime pytest passed 17 tests; full API pytest passed 72 tests; Ruff passed; full Web tests passed 9 files / 58 tests.",
+        "JSON validation, git diff --check, local Uvicorn/OpenAPI and Script route smoke, and final init.ps1 passed without external model calls.",
+        "Independent evaluator accepted round 1 at 149/150."
+      ]
     }
   ]
 }

@@ -19,20 +19,19 @@ from xmeta_api.agent_runtime import (
     create_default_task_registry,
 )
 from xmeta_api.agent_runtime.memory import ProjectMemoryReader
-from xmeta_api.agent_runtime.handlers import AgentRuntime as CompatibilityAgentRuntime
 from xmeta_api.agent_runtime.nodes import (
     AudioNodeExecutor,
     ImageNodeExecutor,
     TextNodeExecutor,
     VideoNodeExecutor,
 )
+from xmeta_api.agent_runtime.prompts import build_script_prompt
 from xmeta_api.agent_runtime.runtime import AgentRuntime as FacadeAgentRuntime
 from xmeta_api.agent_runtime.validators import (
     RuntimeOutputValidationError,
     validate_output,
 )
 from xmeta_api.main import app
-from xmeta_api.prompt import build_script_prompt as compatibility_build_script_prompt
 from xmeta_api.providers import (
     ArkSeedanceVideoProviderSettings,
     MiniMaxMusicProviderSettings,
@@ -97,9 +96,8 @@ class DialogueProvider:
         return self.reply
 
 
-def test_runtime_facade_owns_agent_runtime_and_compatibility_import_is_stable() -> None:
+def test_package_exports_runtime_facade_from_final_module() -> None:
     assert AgentRuntime is FacadeAgentRuntime
-    assert CompatibilityAgentRuntime is FacadeAgentRuntime
     assert AgentRuntime.__module__ == "xmeta_api.agent_runtime.runtime"
 
 
@@ -146,7 +144,7 @@ def test_empty_memory_reader_is_truthful_and_prompt_remains_compatible() -> None
     )
 
     assert compiled.memory == {}
-    assert compiled.text == compatibility_build_script_prompt(script_input)
+    assert compiled.text == build_script_prompt(script_input)
 
 
 def test_prompt_compiler_requests_and_uses_only_profile_memory_scopes() -> None:

@@ -137,9 +137,9 @@
                          "id":  16,
                          "title":  "Agent Runtime Foundation",
                          "status":  "passing",
-                         "current_task":  "agent-runtime-002",
+                         "current_task":  "agent-runtime-003",
                          "current_task_status":  "passing",
-                         "user_visible_behavior":  "Existing text, image, audio, and video node generation keeps the same API behavior while backend agent execution is organized behind reusable task profiles, prompt compilation, memory-selection contracts, and node handlers.",
+                         "user_visible_behavior":  "Existing text, image, audio, and video node generation keeps the same API behavior while backend agent execution is organized behind reusable task profiles, prompt compilation, memory-selection contracts, and dedicated node executors.",
                          "task_file":  "feature_tasks/16.json"
                      }
                  ]
