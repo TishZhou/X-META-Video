@@ -25,11 +25,23 @@ type NodeTemplate = {
 export const workflowNodeTemplates = [
   {
     type: "script",
-    title: "Script",
-    description: "Expands an MV world prompt into storyboard, characters, and scenes.",
+    title: "Text",
+    description:
+      "Runs a selected text task and creates reusable editable outcomes.",
     ports: [
-      { key: "brief-in", label: "World", direction: "input", dataType: "brief" },
-      { key: "script-out", label: "Script", direction: "output", dataType: "script" },
+      {
+        key: "brief-in",
+        label: "Text",
+        direction: "input",
+        dataType: "brief",
+        accepts: ["brief", "script"],
+      },
+      {
+        key: "script-out",
+        label: "World view",
+        direction: "output",
+        dataType: "script",
+      },
       {
         key: "profiles-out",
         label: "Characters",
@@ -61,22 +73,36 @@ export const workflowNodeTemplates = [
   {
     type: "image",
     title: "Image",
-    description: "Generates or edits one image from connected text, prompt, or image reference.",
+    description:
+      "Generates or edits one image from connected text, prompt, or image reference.",
     ports: [
       {
         key: "image-prompt-in",
         label: "Prompt",
         direction: "input",
         dataType: "brief",
-        accepts: ["brief", "script", "storyboard", "character", "asset", "scene"],
+        accepts: [
+          "brief",
+          "script",
+          "storyboard",
+          "character",
+          "asset",
+          "scene",
+        ],
       },
-      { key: "image-out", label: "Image", direction: "output", dataType: "image" },
+      {
+        key: "image-out",
+        label: "Image",
+        direction: "output",
+        dataType: "image",
+      },
     ],
   },
   {
     type: "composition",
     title: "Image Composition",
-    description: "Combines characters, assets, and scenes into storyboard keyframes.",
+    description:
+      "Combines characters, assets, and scenes into storyboard keyframes.",
     ports: [
       {
         key: "character-in",
@@ -99,7 +125,12 @@ export const workflowNodeTemplates = [
         dataType: "asset",
         accepts: ["asset", "image"],
       },
-      { key: "image-out", label: "Keyframe", direction: "output", dataType: "image" },
+      {
+        key: "image-out",
+        label: "Keyframe",
+        direction: "output",
+        dataType: "image",
+      },
     ],
   },
   {
@@ -114,13 +145,19 @@ export const workflowNodeTemplates = [
         dataType: "script",
         accepts: ["script", "storyboard"],
       },
-      { key: "audio-out", label: "Audio", direction: "output", dataType: "audio" },
+      {
+        key: "audio-out",
+        label: "Audio",
+        direction: "output",
+        dataType: "audio",
+      },
     ],
   },
   {
     type: "video",
     title: "Video",
-    description: "Generates one video clip from prompt, images, and optional audio.",
+    description:
+      "Generates one video clip from prompt, images, and optional audio.",
     ports: [
       {
         key: "prompt-in",
@@ -143,8 +180,18 @@ export const workflowNodeTemplates = [
         dataType: "video",
         accepts: ["video"],
       },
-      { key: "audio-in", label: "Audio", direction: "input", dataType: "audio" },
-      { key: "video-out", label: "Clip", direction: "output", dataType: "video" },
+      {
+        key: "audio-in",
+        label: "Audio",
+        direction: "input",
+        dataType: "audio",
+      },
+      {
+        key: "video-out",
+        label: "Clip",
+        direction: "output",
+        dataType: "video",
+      },
     ],
   },
   {
@@ -153,8 +200,18 @@ export const workflowNodeTemplates = [
     description: "Collects selected clips and audio for later final rendering.",
     ports: [
       { key: "video-in", label: "Clip", direction: "input", dataType: "video" },
-      { key: "audio-mix-in", label: "Audio", direction: "input", dataType: "audio" },
-      { key: "export-out", label: "Final", direction: "output", dataType: "export" },
+      {
+        key: "audio-mix-in",
+        label: "Audio",
+        direction: "input",
+        dataType: "audio",
+      },
+      {
+        key: "export-out",
+        label: "Final",
+        direction: "output",
+        dataType: "export",
+      },
     ],
   },
 ] as const satisfies NodeTemplate[];
@@ -196,7 +253,12 @@ export type WorkflowGraphAction =
   | { type: "saveSnapshot" }
   | { type: "restoreSnapshot"; snapshot?: WorkflowSnapshot }
   | { type: "setNotice"; notice: string }
-  | { type: "setNodeStatus"; nodeId: string; status: WorkflowNodeStatus; notice?: string };
+  | {
+      type: "setNodeStatus";
+      nodeId: string;
+      status: WorkflowNodeStatus;
+      notice?: string;
+    };
 
 export function createWorkflowNode(
   nodeType: WorkflowNodeType,
@@ -230,7 +292,13 @@ export function createWorkflowNode(
 export function createWorkflowSnapshot(
   state: Pick<
     WorkflowGraphState,
-    "version" | "projectId" | "workflowId" | "nodes" | "edges" | "selection" | "viewport"
+    | "version"
+    | "projectId"
+    | "workflowId"
+    | "nodes"
+    | "edges"
+    | "selection"
+    | "viewport"
   >,
 ): WorkflowSnapshot {
   return {
@@ -251,7 +319,10 @@ export function createInitialWorkflowGraphState(): WorkflowGraphState {
   const initialNodes = [script, storyboard, composition];
   const scriptOut = findPort(initialNodes, `${script.id}:script-out`);
   const storyboardIn = findPort(initialNodes, `${storyboard.id}:script-in`);
-  const storyboardOut = findPort(initialNodes, `${storyboard.id}:storyboard-out`);
+  const storyboardOut = findPort(
+    initialNodes,
+    `${storyboard.id}:storyboard-out`,
+  );
   const compositionIn = findPort(initialNodes, `${composition.id}:scene-in`);
   const edges = [
     makeEdge(scriptOut, storyboardIn, 1),
@@ -267,7 +338,8 @@ export function createInitialWorkflowGraphState(): WorkflowGraphState {
     selection: { kind: "node", id: script.id },
     viewport: { x: 0, y: 0, zoom: 1 },
     draftStatus: "clean",
-    notice: "Local draft canvas. FastAPI workflow persistence is not connected yet.",
+    notice:
+      "Local draft canvas. FastAPI workflow persistence is not connected yet.",
     savedSnapshot: null,
     nextNodeIndex: 4,
     nextEdgeIndex: 3,
@@ -291,7 +363,10 @@ export function workflowGraphReducer(
         nodes: [...state.nodes, node],
         selection: { kind: "node", id: node.id },
         draftStatus: "dirty",
-        notice: `${node.title} placeholder added. Generation is deferred to later features.`,
+        notice:
+          node.type === "script"
+            ? "Text node added. Choose a text task and enter or connect its input."
+            : `${node.title} placeholder added. Generation is deferred to later features.`,
         nextNodeIndex: state.nextNodeIndex + 1,
       };
     }
@@ -354,7 +429,9 @@ export function workflowGraphReducer(
       return {
         ...state,
         nodes: state.nodes.map((node) =>
-          node.id === action.nodeId ? { ...node, position: action.position } : node,
+          node.id === action.nodeId
+            ? { ...node, position: action.position }
+            : node,
         ),
         draftStatus: "dirty",
       };
@@ -396,7 +473,8 @@ export function workflowGraphReducer(
         nodes: state.nodes.filter((node) => node.id !== deletedNodeId),
         edges: state.edges.filter(
           (edge) =>
-            edge.sourceNodeId !== deletedNodeId && edge.targetNodeId !== deletedNodeId,
+            edge.sourceNodeId !== deletedNodeId &&
+            edge.targetNodeId !== deletedNodeId,
         ),
         selection: { kind: "empty" },
         draftStatus: "dirty",
@@ -451,7 +529,8 @@ export function workflowGraphReducer(
         ...state,
         savedSnapshot: snapshot,
         draftStatus: "saved",
-        notice: "Local graph snapshot saved. Durable FastAPI persistence is deferred.",
+        notice:
+          "Local graph snapshot saved. Durable FastAPI persistence is deferred.",
       };
     }
 
@@ -504,16 +583,23 @@ export function connectPorts(
   if (!sourcePort || !targetPort) {
     return {
       ok: false,
-      reason: "That connection references a missing port. Refresh the canvas state and try again.",
+      reason:
+        "That connection references a missing port. Refresh the canvas state and try again.",
     };
   }
 
   if (sourcePort.direction !== "output" || targetPort.direction !== "input") {
-    return { ok: false, reason: "Connections must start at an output and end at an input." };
+    return {
+      ok: false,
+      reason: "Connections must start at an output and end at an input.",
+    };
   }
 
   if (sourcePort.nodeId === targetPort.nodeId) {
-    return { ok: false, reason: "Self connections are blocked for placeholder nodes." };
+    return {
+      ok: false,
+      reason: "Self connections are blocked for placeholder nodes.",
+    };
   }
 
   const accepts = targetPort.accepts ?? [targetPort.dataType];
@@ -528,7 +614,8 @@ export function connectPorts(
 
   const duplicate = edges.some(
     (edge) =>
-      edge.sourcePortId === sourcePort.id && edge.targetPortId === targetPort.id,
+      edge.sourcePortId === sourcePort.id &&
+      edge.targetPortId === targetPort.id,
   );
 
   if (duplicate) {

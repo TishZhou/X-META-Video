@@ -16,6 +16,8 @@ from ..schemas import (
     ScriptInput,
     ScriptNodeState,
     TaskState,
+    TextGenerationRequest,
+    TextGenerationResponse,
     VideoGenerationRequest,
     VideoGenerationResponse,
 )
@@ -99,6 +101,25 @@ class AgentRuntime:
             history=history,
             user_message=user_message,
             mode=mode,
+        )
+
+    def run_text_generation(
+        self,
+        *,
+        project_id: str,
+        node_id: str,
+        provider: ScriptProvider,
+        provider_name: str,
+        model: str | None,
+        request: TextGenerationRequest,
+    ) -> TextGenerationResponse:
+        return self._text.run_text_generation(
+            project_id=project_id,
+            node_id=node_id,
+            provider=provider,
+            provider_name=provider_name,
+            model=model,
+            request=request,
         )
 
     def run_image_generation(

@@ -35,11 +35,14 @@ from .schemas import (
     TaskResult,
     TaskState,
     TaskStatus,
+    TextGenerationRequest,
+    TextGenerationResponse,
     VideoGenerationRequest,
     VideoGenerationResponse,
     VideoGenerationSettings,
 )
 from .store import store
+from .agent_runtime.validators import RuntimeOutputValidationError
 
 
 app = FastAPI(title="X-META Video API", version="0.1.0")
@@ -160,6 +163,38 @@ def chat_script_node(
         message=assistant_message,
         history=[*request.history, user_message, assistant_message],
     )
+
+
+@app.post(
+    "/api/v1/projects/{project_id}/nodes/{node_id}/generate-text",
+    response_model=TextGenerationResponse,
+)
+def generate_text_node(
+    project_id: str,
+    node_id: str,
+    request: TextGenerationRequest,
+) -> TextGenerationResponse:
+    try:
+        settings = _resolve_script_provider_settings(request.settings)
+        provider = get_script_provider(settings)
+        return agent_runtime.run_text_generation(
+            project_id=project_id,
+            node_id=node_id,
+            provider=provider,
+            provider_name=settings.provider,
+            model=settings.model,
+            request=request,
+        )
+    except ProviderConfigurationError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=str(exc),
+        ) from exc
+    except (ProviderExecutionError, RuntimeOutputValidationError) as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=str(exc),
+        ) from exc
 
 
 @app.post(

@@ -7,8 +7,8 @@ Record major decisions and progress each session. Keep the current verified stat
 - Repository root: `D:\X-META-Video`
 - Standard startup path: `.\init.ps1`
 - Standard web verification path: `corepack pnpm --filter @xmeta/web test`
-- Current highest-priority unfinished feature: Feature 4, Storyboard Node.
-- Current active feature: Feature 16 Agent Runtime Foundation is passing after final compatibility-shim removal was independently accepted at 149/150.
+- Current highest-priority task just completed: Feature 3 `script-node-011`, accepted at 156/160 after automated, live-provider, and Codex in-app Browser E2E verification.
+- Current active task: none. Text Node Task Choice V1 is passing; both production Text tasks, free-form Task 2 semantic output, canonical handoff, editable outcomes, and browser-visible execution evidence are verified.
 - Current Agent Runtime foundation: existing Text, Image, Audio, and Video generation routes enter through `agent_runtime/runtime.py`; node-specific execution lives in `nodes/text.py`, `nodes/image.py`, `nodes/audio.py`, and `nodes/video.py`; obsolete `handlers.py`, `xmeta_api/prompt.py`, and `xmeta_api/runner.py` compatibility modules are deleted; seven current task profiles declare typed inputs, scoped memory reads, prompt templates, outputs, validators, and bounded Runtime retry metadata.
 - Current Agent Runtime memory boundary: `EmptyProjectMemoryReader` is intentionally empty and non-durable. PostgreSQL-backed approved memory, worker execution, one-click orchestration, and canvas graph rewiring are not claimed.
 - Current reset status: Feature 2 and Feature 3 have been removed from the active plan, their task files have been deleted, old web implementation files have been cleared while preserving minimal app structure, and the remaining feature plan has now been renumbered so old Features 4-17 are new Features 2-15.
@@ -18,7 +18,10 @@ Record major decisions and progress each session. Keep the current verified stat
 - Current design-system foundation: `web-design-002` defines shared style, layout, motion, responsive, accessibility, and product state language directly in frontend code under `apps/web/src/lib/design-system.ts`, `apps/web/src/components/xmeta/design-primitives.tsx`, `apps/web/src/index.css`, and `apps/web/tailwind.config.ts`.
 - Current app foundation: `web-design-004` implements the global shell, shared page containers, and wider desktop layout rhythm while preserving the root TriplD landing composition.
 - Current workspace canvas revision: `/workspace` now uses a Figma-like white dotted work surface with a floating project bar, a persistent `Local workflow only / Script + media AI enabled / persistence deferred` boundary label, a single bottom `Add node` entry with explicit `Input -> Output` node flow labels, default nodes fitted into the first viewport, blank-canvas drag panning, one combined toolbar-inline Canvas zoom range slider, drag-line port connections, and no duplicated left node palette or right monitoring/Inspector panel.
-- Current Script Node revision: Feature 3 uses one AI chat-style MV world-view input (`world_description`) bound directly under the selected Script node, keeps `AI modify` / Send as conversational chat, and uses Generate for direct natural text output.
+- Current Text Node revision: Feature 3 keeps the internal `script` type for compatibility, exposes exactly two visible Text tasks, keeps `AI modify` / Send unchanged, and routes Generate through typed `/generate-text` task execution.
+- Current Text Task 1 revision: a brief produces editable IP narrative positioning, world rules/dimensions, and named character positioning as a reusable `script` outcome.
+- Current Text Task 2 revision: connected Task 1, same-node Task 1, then manual input priority produces editable natural text covering per-character appearance, personality/action, and voice/timbre as a reusable `character` outcome; no JSON, delimiter tags, or fixed labels are required.
+- Current Text transfer boundary: one canonical editable `content` value is shown to users and reused downstream; compact task/data/source/template/provider metadata is kept separately, with no duplicate long payload.
 - Current Script Node provider revision: Feature 3 product provider paths are `openai` and `openai-compatible`, defaulting to `openai` / `gpt-5.4-mini`; automated tests inject internal test fakes without exposing a fallback provider option in the UI or provider config.
 - Current Script Node direct-output revision: Feature 3 `script-node-010` adds `mode: "direct_output"` to the Script chat API so Generate asks for plain editable natural text instead of structured JSON, then renders that returned text inside a deterministic editable `Script outcome` node on the canvas.
 - Current Script Node reusable-output revision: Workflow nodes now distinguish source nodes from outcome nodes and carry reusable output metadata (`sourceNodeId`, `dataType`, `provider`, `model`, `editable`) for later image, video, audio, and export node renderers.
@@ -34,6 +37,27 @@ Record major decisions and progress each session. Keep the current verified stat
 - Current blocker: none for Feature 9. Browser E2E passed with an intercepted local FastAPI Ark task-only response; live Ark execution was not attempted because `ARK_API_KEY` is empty.
 
 ## Session Log
+
+### Session 057
+
+- Date: 2026-07-17
+- Goal: Relax Task 2 output formatting and complete the mandatory Text Node E2E through the Codex in-app Browser.
+- Completed: Removed rigid character block/field-label requirements; retained only appearance, personality/action, and voice/timbre semantic coverage; expanded natural Chinese/English synonyms after a live `视觉造型` false negative; kept canonical content and compact transfer metadata unchanged.
+- Codex Browser E2E: On the user-opened `/workspace` tab, generated a real Task 1 result with `openai / gpt-5.4-mini`, edited it, selected Task 2 through the shadcn dropdown, confirmed `Same-node Task 1 outcome`, observed loading and a live 502 error state, restarted the revised API, and retried to a 200 success. Task 2 returned 1,651 free-form characters with Mira, Luna, Iris, and Zora plus all three required element families and no rigid tags. Both outcomes remained editable, provider-labelled, and non-overlapping. 1280x720 and 1600x900 screenshots passed visual review; console warn/error logs were empty.
+- Verification: Focused backend 8/8; full backend 80/80; Ruff; full Web 63/63; typecheck; production build; OpenAPI; docs truth; JSON; diff-check; and final `init.ps1` passed.
+- Evaluation: Independent Revision 3/4 evaluator accepted at 156/160 with no blocking defect.
+- Boundary: Browser live handoff used the same-node Task 1 outcome; connected priority is covered by reducer tests, and keyboard Select behavior is covered by the real jsdom interaction test.
+
+### Session 056
+
+- Date: 2026-07-17
+- Goal: Add the first two production Text Node tasks: brief to IP/world view/character positioning, then Task 1 output to per-character appearance, personality/action, and voice/timbre profiles.
+- Completed: Added a node-local shadcn task Select, dedicated typed `/generate-text` API, two stable Agent Runtime profiles/prompts/validators, canonical content transfer with connected -> same-node -> manual priority, editable `script` and `character` outcomes, honest non-persistence/provider evidence, stale-deleted-outcome fallback, non-overlapping result placement, current API documentation, and a real jsdom Workspace interaction test.
+- Verification run: Focused Text API 7/7; full API 79/79; Ruff; focused jsdom 1/1; full Web 10 files / 63 tests; typecheck; production build; JSON validation; diff check; docs truth search; typed OpenAPI inspection; and final `./init.ps1` all passed.
+- Live provider evidence: Restarted current-code FastAPI used `openai / gpt-5.4-mini`; Task 1 returned 6580 characters with Mira, Luna, Iris, and Zora; Task 2 consumed the exact Task 1 content and returned four complete character blocks with four appearance, personality/action, and voice/timbre fields; both responses were `persisted:false`.
+- Evaluation: Round 1 scored 126/160 and found stale docs, shallow Task 2 validation, and insufficient interaction coverage. Round 2 closed those defects and finalized at 143/160 after hygiene cleanup.
+- Blocker: Mandatory Codex in-app Browser E2E could not start. Fresh setup attempts in both evaluation rounds failed before browser selection/navigation with `Cannot redefine property: process`. Per user instruction, no Computer Use, Chrome, or standalone Playwright substitute was used, so the task remains `blocked` rather than `passing`.
+- Next step: Retry the documented click-by-click inventory when the Codex Browser runtime is repaired; if it passes, update the task from blocked to passing and commit/push the verified state.
 
 ### Session 055
 

@@ -36,6 +36,8 @@ import {
   type ScriptNodeInput,
   type ScriptNodeOutput,
   type ScriptTaskStatusResponse,
+  type TextGenerationInputSource,
+  type TextGenerationTask,
   type VideoGenerationResponse,
 } from "@xmeta/shared-contracts";
 import {
@@ -52,6 +54,14 @@ import { ReactFlowProvider } from "@xyflow/react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { AIResponseTyping } from "@/components/uitripled/ai-response-typing-shadcnui";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -82,12 +92,16 @@ import type {
 } from "@/lib/workflow-canvas/types";
 import { runImageGeneration } from "@/lib/image-node/api";
 import { runMusicGeneration } from "@/lib/music-node/api";
-import { runScriptDialogue, runScriptDirectOutput } from "@/lib/script-node/api";
+import { runScriptDialogue } from "@/lib/script-node/api";
+import { runTextGeneration } from "@/lib/text-node/api";
 import { runVideoGeneration } from "@/lib/video-node/api";
 import { cn } from "@/lib/utils";
 
 const NODE_WIDTH = 288;
 const NODE_HEIGHT = 178;
+const TEXT_OUTCOME_ESTIMATED_HEIGHT = 280;
+const TEXT_OUTCOME_GAP = 52;
+const TEXT_OUTCOME_TOP_GAP = 62;
 const SCRIPT_INLINE_EDITOR_WIDTH = 820;
 const SCRIPT_INLINE_EDITOR_GAP = 72;
 const SCRIPT_RESPONSE_PANEL_HEIGHT = 288;
@@ -121,7 +135,7 @@ const nodeIcons = {
 } satisfies Record<WorkflowNodeType, typeof Wand2>;
 
 const nodeTitles = {
-  script: "Script node",
+  script: "Text node",
   storyboard: "Storyboard node",
   image: "Image node",
   composition: "Composition node",
@@ -146,11 +160,22 @@ type ConnectionDragState = {
 } | null;
 
 type ScriptDialogueRunner = typeof runScriptDialogue;
-type ScriptGenerationRunner = typeof runScriptDirectOutput;
+type TextGenerationRunner = typeof runTextGeneration;
 type ImageGenerationRunner = typeof runImageGeneration;
 type MusicGenerationRunner = typeof runMusicGeneration;
 type VideoGenerationRunner = typeof runVideoGeneration;
-type ScriptOutcomeMap = Record<string, string>;
+type TextOutcomeMap = Record<string, string>;
+export type TextNodeDraft = {
+  task: TextGenerationTask;
+  input: ScriptNodeInput;
+};
+export type TextNodeDraftMap = Record<string, TextNodeDraft>;
+type TextNodeInputContext = ScriptNodeInput | TextNodeDraftMap;
+export type TextTaskInputResolution = {
+  content: string;
+  source: TextGenerationInputSource;
+  label: string;
+};
 type ImageGenerationMap = Record<string, ImageGenerationResponse>;
 type ImagePromptMap = Record<string, string>;
 type MusicGenerationMap = Record<string, MusicGenerationResponse>;
@@ -160,10 +185,6 @@ type VideoInputMap = Record<string, string>;
 
 const DEFAULT_SCRIPT_WORLD_DESCRIPTION =
   "\u751f\u6210\u4e00\u4e2a\u51b0\u96ea\u76f8\u5173\u7684mv\u7684\u4e16\u754c\u89c2";
-const SCRIPT_WORLD_DESCRIPTION_PLACEHOLDER =
-  "\u63cf\u8ff0\u4f60\u7684\u5267\u60c5\u7247\u6bb5\u3001\u6545\u4e8b\u548c\u4e16\u754c\u89c2\u6784\u60f3";
-const SCRIPT_WORLD_DESCRIPTION_LABEL =
-  "\u5267\u60c5\u7247\u6bb5\u3001\u6545\u4e8b\u548c\u4e16\u754c\u89c2\u6784\u60f3";
 const SCRIPT_REVISE_STATUS_LABEL = "AI\u4fee\u6539\u4e2d";
 const SCRIPT_DIALOGUE_READY_LABEL = "AI\u5bf9\u8bdd";
 const SCRIPT_REVISE_LABEL = "AI\u4fee\u6539";
@@ -172,23 +193,34 @@ const SCRIPT_GENERATE_LABEL = "\u751f\u6210";
 const SCRIPT_GENERATING_LABEL = "\u751f\u6210\u4e2d";
 const SCRIPT_CONVERSATION_GUIDE =
   "\u6211\u4f1a\u5148\u5e2e\u4f60\u628a\u6545\u4e8b\u6838\u5fc3\u3001\u89d2\u8272\u5173\u7cfb\u548c\u60c5\u7eea\u8f6c\u6298\u95ee\u6e05\u695a\u3002\u5148\u544a\u8bc9\u6211\u4f60\u60f3\u5f3a\u5316\u54ea\u4e00\u90e8\u5206\uff1a\u4e16\u754c\u89c2\u3001\u4eba\u7269\u51b2\u7a81\u3001\u5206\u955c\u8282\u594f\uff0c\u8fd8\u662f\u7ed3\u5c3e\u60c5\u7eea\uff1f";
-const SCRIPT_OUTCOME_TITLE = "Script outcome";
-const SCRIPT_OUTCOME_DESCRIPTION =
-  "Editable direct text generated from the Script node.";
-const SCRIPT_OUTCOME_PORTS = [
+export const TEXT_TASK_OPTIONS = [
   {
-    key: "script-out",
-    label: "Script",
-    direction: "output",
-    dataType: "script",
+    id: "ip_worldview",
+    label: "IP narrative & world view",
+    inputLabel: "Brief idea",
+    placeholder:
+      "Describe the core idea, mood, setting, and intended characters.",
+    outcomeTitle: "IP world-view outcome",
+    outcomeDescription:
+      "Editable IP narrative, world view, and character positioning.",
   },
   {
-    key: "profiles-out",
-    label: "Characters",
-    direction: "output",
-    dataType: "character",
+    id: "character_profiles",
+    label: "Character profiles & voices",
+    inputLabel: "Task 1 output or manual fallback",
+    placeholder: "Connect or paste Task 1 output to develop each character.",
+    outcomeTitle: "Character profiles outcome",
+    outcomeDescription:
+      "Editable appearance, personality, action, and voice profiles.",
   },
-] as const;
+] as const satisfies ReadonlyArray<{
+  id: TextGenerationTask;
+  label: string;
+  inputLabel: string;
+  placeholder: string;
+  outcomeTitle: string;
+  outcomeDescription: string;
+}>;
 
 const defaultScriptInput: ScriptNodeInput = {
   ...DEFAULT_SCRIPT_NODE_INPUT,
@@ -228,6 +260,36 @@ const defaultImageEditorFrame: ImageEditorFrame = {
   width: 430,
   height: 520,
 };
+
+const emptyTextNodeDraft: TextNodeDraft = {
+  task: "ip_worldview",
+  input: { ...DEFAULT_SCRIPT_NODE_INPUT },
+};
+
+function getTextNodeDraft(
+  drafts: TextNodeDraftMap,
+  nodeId: string,
+): TextNodeDraft {
+  return drafts[nodeId] ?? emptyTextNodeDraft;
+}
+
+function findTextTaskOption(task: TextGenerationTask) {
+  return (
+    TEXT_TASK_OPTIONS.find((option) => option.id === task) ??
+    TEXT_TASK_OPTIONS[0]
+  );
+}
+
+function textOutcomePorts(dataType: "script" | "character") {
+  return [
+    {
+      key: dataType === "script" ? "script-out" : "profiles-out",
+      label: dataType === "script" ? "World view" : "Characters",
+      direction: "output" as const,
+      dataType,
+    },
+  ];
+}
 
 const defaultImagePrompts = {
   image:
@@ -326,6 +388,91 @@ export function getInlineEditorCompensationScale(zoom: number) {
   return Number((1 / zoom).toFixed(3));
 }
 
+export function calculateTextInlineEditorCanvasLeft({
+  nodeX,
+  nodeWidth,
+  editorWidth,
+  viewportX,
+  viewportWidth,
+  zoom,
+  padding = 16,
+}: {
+  nodeX: number;
+  nodeWidth: number;
+  editorWidth: number;
+  viewportX: number;
+  viewportWidth: number;
+  zoom: number;
+  padding?: number;
+}) {
+  const safeZoom = zoom > 0 ? zoom : 1;
+  const desiredScreenCenter = viewportX + (nodeX + nodeWidth / 2) * safeZoom;
+  const minimumScreenCenter = padding + editorWidth / 2;
+  const maximumScreenCenter = Math.max(
+    minimumScreenCenter,
+    viewportWidth - padding - editorWidth / 2,
+  );
+  const clampedScreenCenter = Math.min(
+    Math.max(desiredScreenCenter, minimumScreenCenter),
+    maximumScreenCenter,
+  );
+
+  return (clampedScreenCenter - viewportX) / safeZoom - editorWidth / 2;
+}
+
+export function calculateTextOutcomePosition({
+  sourcePosition,
+  dataType,
+  canvasWidth = CANVAS_WIDTH,
+  canvasHeight = CANVAS_HEIGHT,
+}: {
+  sourcePosition: WorkflowPoint;
+  dataType: "script" | "character";
+  canvasWidth?: number;
+  canvasHeight?: number;
+}) {
+  const padding = 16;
+  const maxX = Math.max(padding, canvasWidth - NODE_WIDTH - padding);
+  const maxY = Math.max(
+    80,
+    canvasHeight - TEXT_OUTCOME_ESTIMATED_HEIGHT - padding,
+  );
+  const scriptPosition = {
+    x: Math.min(Math.max(sourcePosition.x, padding), maxX),
+    y: Math.min(
+      Math.max(
+        sourcePosition.y + NODE_HEIGHT + TEXT_OUTCOME_TOP_GAP,
+        80,
+      ),
+      maxY,
+    ),
+  };
+
+  if (dataType === "script") {
+    return scriptPosition;
+  }
+
+  const rightX = scriptPosition.x + NODE_WIDTH + TEXT_OUTCOME_GAP;
+  if (rightX <= maxX) {
+    return { x: rightX, y: scriptPosition.y };
+  }
+
+  const belowY =
+    scriptPosition.y + TEXT_OUTCOME_ESTIMATED_HEIGHT + TEXT_OUTCOME_GAP;
+  return {
+    x: scriptPosition.x,
+    y:
+      belowY <= maxY
+        ? belowY
+        : Math.max(
+            80,
+            scriptPosition.y -
+              TEXT_OUTCOME_ESTIMATED_HEIGHT -
+              TEXT_OUTCOME_GAP,
+          ),
+  };
+}
+
 export function isEditableKeyboardTarget(target: EventTarget | null) {
   const element = target as { closest?: (selector: string) => unknown } | null;
 
@@ -353,7 +500,9 @@ export function getImageGenerationNodeType(
   return null;
 }
 
-export function getImageOutputDataType(_type: WorkflowNodeType): WorkflowDataType {
+export function getImageOutputDataType(
+  _type: WorkflowNodeType,
+): WorkflowDataType {
   return "image";
 }
 
@@ -498,7 +647,8 @@ export function audioReferenceFromWorkflowOutput(output?: WorkflowNodeOutput) {
 
   const dataUrlB64 = audioUrl ? base64FromAudioDataUrl(audioUrl) : null;
   const b64Audio =
-    dataUrlB64 ?? base64FromAudioDataUrl(output.media.b64Audio ?? "") ??
+    dataUrlB64 ??
+    base64FromAudioDataUrl(output.media.b64Audio ?? "") ??
     output.media.b64Audio?.trim();
   if (b64Audio) {
     return {
@@ -587,9 +737,7 @@ export function base64FromHexAudio(hexAudio: string) {
     );
   }
 
-  return typeof globalThis.btoa === "function"
-    ? globalThis.btoa(binary)
-    : null;
+  return typeof globalThis.btoa === "function" ? globalThis.btoa(binary) : null;
 }
 
 export function clampImageEditorFrame(
@@ -635,22 +783,106 @@ export function formatScriptNodePreview(
     const shotCount = output.storyboard_direction.shots.length;
 
     return {
-      heading: "Confirmed Script",
+      heading: "Confirmed Text",
       body: `${output.title}: ${output.world_overview} ${shotCount} storyboard shots ready.`,
     };
   }
 
   return {
-    heading: "World view",
-    body: input?.world_description.trim() || "No world prompt yet.",
+    heading: "Text input",
+    body: input?.world_description.trim() || "No text input yet.",
   };
+}
+
+export function resolveTextTaskInput(
+  node: WorkflowNode,
+  state: WorkflowGraphState,
+  drafts: TextNodeDraftMap,
+  outcomes: TextOutcomeMap,
+): TextTaskInputResolution {
+  const draft = getTextNodeDraft(drafts, node.id);
+  const manualContent = draft.input.world_description.trim();
+  if (draft.task === "ip_worldview") {
+    return {
+      content: manualContent,
+      source: { type: "manual" },
+      label: "Manual brief idea",
+    };
+  }
+
+  const connectedTask1Edge = state.edges.find((edge) => {
+    if (edge.targetNodeId !== node.id) {
+      return false;
+    }
+    const sourceNode = findNode(state.nodes, edge.sourceNodeId);
+    return (
+      sourceNode?.role === "outcome" &&
+      sourceNode.output?.task === "ip_worldview" &&
+      sourceNode.output.dataType === "script"
+    );
+  });
+  if (connectedTask1Edge) {
+    const connectedContent = outcomes[connectedTask1Edge.sourceNodeId]?.trim();
+    if (connectedContent) {
+      return {
+        content: connectedContent,
+        source: {
+          type: "connected_task_1",
+          source_node_id: connectedTask1Edge.sourceNodeId,
+          source_task: "ip_worldview",
+        },
+        label: "Connected Task 1 outcome",
+      };
+    }
+  }
+
+  const sameNodeTask1OutcomeId = createWorkflowOutputNodeId(node.id, "script");
+  const sameNodeTask1Outcome = findNode(state.nodes, sameNodeTask1OutcomeId);
+  const sameNodeContent = outcomes[sameNodeTask1OutcomeId]?.trim();
+  if (
+    sameNodeContent &&
+    sameNodeTask1Outcome?.role === "outcome" &&
+    sameNodeTask1Outcome.output?.dataType === "script" &&
+    sameNodeTask1Outcome.output.task === "ip_worldview"
+  ) {
+    return {
+      content: sameNodeContent,
+      source: {
+        type: "same_node_task_1",
+        source_node_id: sameNodeTask1OutcomeId,
+        source_task: "ip_worldview",
+      },
+      label: "Same-node Task 1 outcome",
+    };
+  }
+
+  return {
+    content: manualContent,
+    source: { type: "manual" },
+    label: "Manual pasted content",
+  };
+}
+
+function textInputForSourceNode(
+  sourceNode: WorkflowNode,
+  inputContext: TextNodeInputContext,
+) {
+  const directInput = (inputContext as ScriptNodeInput).world_description;
+  if (typeof directInput === "string") {
+    return directInput.trim();
+  }
+
+  return getTextNodeDraft(
+    inputContext as TextNodeDraftMap,
+    sourceNode.id,
+  ).input.world_description.trim();
 }
 
 export function getConnectedAudioLyrics(
   node: WorkflowNode,
   state: WorkflowGraphState,
-  scriptInput: ScriptNodeInput,
-  scriptOutcomes: ScriptOutcomeMap,
+  textInputs: TextNodeInputContext,
+  textOutcomes: TextOutcomeMap,
 ) {
   const incomingTextEdge = state.edges.find(
     (edge) =>
@@ -668,7 +900,7 @@ export function getConnectedAudioLyrics(
   }
 
   if (sourceNode.output?.dataType === "script") {
-    return scriptOutcomes[sourceNode.id]?.trim() || null;
+    return textOutcomes[sourceNode.id]?.trim() || null;
   }
 
   if (sourceNode.type === "script") {
@@ -677,8 +909,8 @@ export function getConnectedAudioLyrics(
       "script",
     );
     return (
-      scriptOutcomes[scriptOutcomeNodeId]?.trim() ||
-      scriptInput.world_description.trim() ||
+      textOutcomes[scriptOutcomeNodeId]?.trim() ||
+      textInputForSourceNode(sourceNode, textInputs) ||
       null
     );
   }
@@ -693,8 +925,8 @@ export function getConnectedAudioLyrics(
 export function getConnectedImagePrompt(
   node: WorkflowNode,
   state: WorkflowGraphState,
-  scriptInput: ScriptNodeInput,
-  scriptOutcomes: ScriptOutcomeMap,
+  textInputs: TextNodeInputContext,
+  textOutcomes: TextOutcomeMap,
 ) {
   const incomingTextEdge = state.edges.find(
     (edge) =>
@@ -716,14 +948,14 @@ export function getConnectedImagePrompt(
     return null;
   }
 
-  return getConnectedTextFromNode(sourceNode, scriptInput, scriptOutcomes);
+  return getConnectedTextFromNode(sourceNode, textInputs, textOutcomes);
 }
 
 export function getConnectedVideoInputs(
   node: WorkflowNode,
   state: WorkflowGraphState,
-  scriptInput: ScriptNodeInput,
-  scriptOutcomes: ScriptOutcomeMap,
+  textInputs: TextNodeInputContext,
+  textOutcomes: TextOutcomeMap,
 ) {
   const promptEdge = state.edges.find(
     (edge) =>
@@ -736,7 +968,7 @@ export function getConnectedVideoInputs(
     ? findNode(state.nodes, promptEdge.sourceNodeId)
     : null;
   const prompt = promptSourceNode
-    ? getConnectedTextFromNode(promptSourceNode, scriptInput, scriptOutcomes)
+    ? getConnectedTextFromNode(promptSourceNode, textInputs, textOutcomes)
     : null;
   const imageUrls = new Set<string>();
   const videoUrls = new Set<string>();
@@ -784,11 +1016,14 @@ export function getConnectedVideoInputs(
 
 function getConnectedTextFromNode(
   sourceNode: WorkflowNode,
-  scriptInput: ScriptNodeInput,
-  scriptOutcomes: ScriptOutcomeMap,
+  textInputs: TextNodeInputContext,
+  textOutcomes: TextOutcomeMap,
 ) {
-  if (sourceNode.output?.dataType === "script") {
-    return scriptOutcomes[sourceNode.id]?.trim() || null;
+  if (
+    sourceNode.output?.dataType === "script" ||
+    sourceNode.output?.dataType === "character"
+  ) {
+    return textOutcomes[sourceNode.id]?.trim() || null;
   }
 
   if (sourceNode.type === "script") {
@@ -797,8 +1032,8 @@ function getConnectedTextFromNode(
       "script",
     );
     return (
-      scriptOutcomes[scriptOutcomeNodeId]?.trim() ||
-      scriptInput.world_description.trim() ||
+      textOutcomes[scriptOutcomeNodeId]?.trim() ||
+      textInputForSourceNode(sourceNode, textInputs) ||
       null
     );
   }
@@ -903,13 +1138,13 @@ export function WorkflowCanvasWorkspace({
   imageGenerationRunner = runImageGeneration,
   musicGenerationRunner = runMusicGeneration,
   scriptDialogueRunner = runScriptDialogue,
-  scriptGenerationRunner = runScriptDirectOutput,
+  textGenerationRunner = runTextGeneration,
   videoGenerationRunner = runVideoGeneration,
 }: {
   imageGenerationRunner?: ImageGenerationRunner;
   musicGenerationRunner?: MusicGenerationRunner;
   scriptDialogueRunner?: ScriptDialogueRunner;
-  scriptGenerationRunner?: ScriptGenerationRunner;
+  textGenerationRunner?: TextGenerationRunner;
   videoGenerationRunner?: VideoGenerationRunner;
 } = {}) {
   const [state, dispatch] = useReducer(
@@ -923,9 +1158,13 @@ export function WorkflowCanvasWorkspace({
   const [panState, setPanState] = useState<PanState>(null);
   const [connectionDrag, setConnectionDrag] =
     useState<ConnectionDragState>(null);
-  const [scriptInput, setScriptInput] =
-    useState<ScriptNodeInput>(defaultScriptInput);
-  const [scriptOutcomes, setScriptOutcomes] = useState<ScriptOutcomeMap>({});
+  const [textNodeDrafts, setTextNodeDrafts] = useState<TextNodeDraftMap>({
+    "script-1": {
+      task: "ip_worldview",
+      input: defaultScriptInput,
+    },
+  });
+  const [textOutcomes, setTextOutcomes] = useState<TextOutcomeMap>({});
   const [scriptDialogueMessages, setScriptDialogueMessages] = useState<
     ScriptDialogueMessage[]
   >([]);
@@ -975,6 +1214,7 @@ export function WorkflowCanvasWorkspace({
   const [videoErrors, setVideoErrors] = useState<Record<string, string>>({});
   const [videoBusyNodeId, setVideoBusyNodeId] = useState<string | null>(null);
   const [videoResponseOpen, setVideoResponseOpen] = useState(false);
+  const [workspaceViewportWidth, setWorkspaceViewportWidth] = useState(1600);
   const canvasRef = useRef<HTMLDivElement>(null);
   const selectedNode =
     state.selection.kind === "node"
@@ -988,16 +1228,33 @@ export function WorkflowCanvasWorkspace({
     selectedNode?.type === "script" && selectedNode.role === "source"
       ? selectedNode
       : null;
+  const selectedTextDraft = selectedScriptNode
+    ? getTextNodeDraft(textNodeDrafts, selectedScriptNode.id)
+    : emptyTextNodeDraft;
+  const scriptInput = selectedTextDraft.input;
+  const selectedTextInputResolution = selectedScriptNode
+    ? resolveTextTaskInput(
+        selectedScriptNode,
+        state,
+        textNodeDrafts,
+        textOutcomes,
+      )
+    : {
+        content: "",
+        source: { type: "manual" as const },
+        label: "Manual input",
+      };
   const selectedImageEditorNode =
-    selectedNode?.role === "source" && isFloatingImageEditorNodeType(selectedNode.type)
+    selectedNode?.role === "source" &&
+    isFloatingImageEditorNodeType(selectedNode.type)
       ? selectedNode
       : null;
   const selectedConnectedImagePrompt = selectedImageEditorNode
     ? getConnectedImagePrompt(
         selectedImageEditorNode,
         state,
-        scriptInput,
-        scriptOutcomes,
+        textNodeDrafts,
+        textOutcomes,
       )
     : null;
   const selectedImagePrompt = selectedImageEditorNode
@@ -1025,8 +1282,8 @@ export function WorkflowCanvasWorkspace({
     ? getConnectedAudioLyrics(
         selectedMusicEditorNode,
         state,
-        scriptInput,
-        scriptOutcomes,
+        textNodeDrafts,
+        textOutcomes,
       )
     : null;
   const selectedMusicPrompt = selectedMusicEditorNode
@@ -1057,8 +1314,8 @@ export function WorkflowCanvasWorkspace({
     ? getConnectedVideoInputs(
         selectedVideoEditorNode,
         state,
-        scriptInput,
-        scriptOutcomes,
+        textNodeDrafts,
+        textOutcomes,
       )
     : null;
   const selectedVideoPrompt = selectedVideoEditorNode
@@ -1090,10 +1347,11 @@ export function WorkflowCanvasWorkspace({
       return null;
     }
   }, [connectionDrag, state.nodes]);
-  const hasScriptOutcome = Object.keys(scriptOutcomes).length > 0;
+  const hasScriptOutcome = Object.keys(textOutcomes).length > 0;
 
   useEffect(() => {
     function applyResponsiveViewport() {
+      setWorkspaceViewportWidth(window.innerWidth);
       dispatch({
         type: "setViewport",
         viewport: calculateInitialCanvasViewport(
@@ -1295,38 +1553,76 @@ export function WorkflowCanvasWorkspace({
     field: Field,
     value: ScriptNodeInput[Field],
   ) {
-    setScriptInput((current) => ({ ...current, [field]: value }));
+    if (!selectedScriptNode) {
+      return;
+    }
+    setTextNodeDrafts((current) => {
+      const draft = getTextNodeDraft(current, selectedScriptNode.id);
+      return {
+        ...current,
+        [selectedScriptNode.id]: {
+          ...draft,
+          input: { ...draft.input, [field]: value },
+        },
+      };
+    });
+  }
+
+  function updateTextTask(task: TextGenerationTask) {
+    if (!selectedScriptNode) {
+      return;
+    }
+    setTextNodeDrafts((current) => ({
+      ...current,
+      [selectedScriptNode.id]: {
+        ...getTextNodeDraft(current, selectedScriptNode.id),
+        task,
+      },
+    }));
+    setScriptError(null);
   }
 
   async function generateScriptNode() {
     if (!selectedScriptNode) {
-      setScriptError("Select a Script node before running generation.");
+      setScriptError("Select a Text node before running generation.");
       return;
     }
 
-    if (!scriptInput.world_description.trim()) {
-      setScriptError("MV world description is required before generation.");
+    const inputResolution = resolveTextTaskInput(
+      selectedScriptNode,
+      state,
+      textNodeDrafts,
+      textOutcomes,
+    );
+    const taskOption = findTextTaskOption(selectedTextDraft.task);
+    if (!inputResolution.content) {
+      const message =
+        selectedTextDraft.task === "character_profiles"
+          ? "Task 2 needs a connected Task 1 outcome, a same-node Task 1 outcome, or pasted content."
+          : "A brief idea is required before generation.";
+      setScriptError(message);
+      setScriptTask({
+        task_id: "text-generation-validation-blocked",
+        project_id: state.projectId,
+        node_id: selectedScriptNode.id,
+        status: "failed",
+        error: message,
+      });
+      setScriptHistoryOpen(true);
       dispatch({
         type: "setNodeStatus",
         nodeId: selectedScriptNode.id,
         status: "blocked",
-        notice: "Script generation blocked: MV world description is required.",
+        notice: `Text generation blocked: ${message}`,
       });
       return;
     }
 
-    const conversationHistory = scriptConversationMode ? scriptDialogueMessages : [];
-    const directOutputMessage = buildScriptDirectOutputMessage(
-      scriptInput,
-      conversationHistory.length > 0,
-    );
-
     setScriptBusy(true);
     setScriptError(null);
     setScriptBackendExecution(null);
-    setScriptHistoryOpen(scriptConversationMode && scriptDialogueMessages.length > 0);
     setScriptTask({
-      task_id: "direct-output-pending",
+      task_id: "text-generation-pending",
       project_id: state.projectId,
       node_id: selectedScriptNode.id,
       status: "running",
@@ -1336,17 +1632,17 @@ export function WorkflowCanvasWorkspace({
       type: "setNodeStatus",
       nodeId: selectedScriptNode.id,
       status: "running",
-      notice: "Script generation task started through FastAPI.",
+      notice: `${taskOption.label} started through the dedicated FastAPI Text route.`,
     });
 
     try {
-      const result = await scriptGenerationRunner({
+      const result = await textGenerationRunner({
         projectId: state.projectId,
         nodeId: selectedScriptNode.id,
-        input: scriptInput,
+        task: selectedTextDraft.task,
+        content: inputResolution.content,
+        source: inputResolution.source,
         settings: findScriptModelOption(scriptModel).settings,
-        history: conversationHistory,
-        message: directOutputMessage,
       });
       const backendExecution = createScriptBackendExecution(
         result.provider,
@@ -1354,11 +1650,11 @@ export function WorkflowCanvasWorkspace({
       );
       const outcomeNodeId = createWorkflowOutputNodeId(
         selectedScriptNode.id,
-        "script",
+        result.metadata.data_type,
       );
 
       setScriptTask({
-        task_id: "direct-output-succeeded",
+        task_id: "text-generation-succeeded",
         project_id: result.project_id,
         node_id: result.node_id,
         status: "succeeded",
@@ -1367,42 +1663,43 @@ export function WorkflowCanvasWorkspace({
         model: result.model,
       });
       setScriptBackendExecution(backendExecution);
-      setScriptOutcomes((current) => ({
+      setTextOutcomes((current) => ({
         ...current,
-        [outcomeNodeId]: result.message.content,
+        [outcomeNodeId]: result.content,
       }));
       dispatch({
         type: "setNodeStatus",
         nodeId: selectedScriptNode.id,
         status: "ready",
-        notice:
-          "Script direct output is ready as an editable canvas node.",
+        notice: `${taskOption.label} is ready as an editable Text outcome.`,
       });
       dispatch({
         type: "upsertOutputNode",
         sourceNodeId: selectedScriptNode.id,
         nodeType: "script",
-        title: SCRIPT_OUTCOME_TITLE,
-        description: SCRIPT_OUTCOME_DESCRIPTION,
-        position: {
-          x: selectedScriptNode.position.x + 360,
-          y: Math.max(80, selectedScriptNode.position.y - 96),
-        },
+        title: taskOption.outcomeTitle,
+        description: taskOption.outcomeDescription,
+        position: calculateTextOutcomePosition({
+          sourcePosition: selectedScriptNode.position,
+          dataType: result.metadata.data_type,
+        }),
         output: {
           sourceNodeId: selectedScriptNode.id,
-          dataType: "script",
-          label: "Script output",
+          dataType: result.metadata.data_type,
+          label: taskOption.label,
+          task: result.metadata.task,
+          inputSource: result.metadata.input_source,
+          promptTemplateId: result.metadata.prompt_template_id,
           provider: backendExecution?.provider ?? result.provider,
           model: backendExecution?.model ?? result.model,
           editable: true,
         },
-        ports: SCRIPT_OUTCOME_PORTS.map((port) => ({ ...port })),
-        notice:
-          "Script direct output node updated. Local edits are not persisted yet.",
+        ports: textOutcomePorts(result.metadata.data_type),
+        notice: "Text outcome updated. Local edits are not persisted yet.",
       });
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "Script generation failed.";
+        error instanceof Error ? error.message : "Text generation failed.";
 
       setScriptTask({
         task_id: "failed",
@@ -1412,6 +1709,7 @@ export function WorkflowCanvasWorkspace({
         error: message,
       });
       setScriptError(message);
+      setScriptHistoryOpen(true);
       dispatch({
         type: "setNodeStatus",
         nodeId: selectedScriptNode.id,
@@ -1533,8 +1831,7 @@ export function WorkflowCanvasWorkspace({
         b64Json: null,
         mimeType: file.type || "image/png",
         alt: `${node.title} uploaded image`,
-        notice:
-          `${node.title} uploaded locally. It can be used as a SeedDream edit reference; durable asset storage is deferred.`,
+        notice: `${node.title} uploaded locally. It can be used as a SeedDream edit reference; durable asset storage is deferred.`,
       });
     };
     reader.onerror = () => {
@@ -1561,7 +1858,7 @@ export function WorkflowCanvasWorkspace({
 
     const prompt = (
       imagePrompts[node.id] ??
-      getConnectedImagePrompt(node, state, scriptInput, scriptOutcomes) ??
+      getConnectedImagePrompt(node, state, textNodeDrafts, textOutcomes) ??
       getDefaultImagePrompt(node.type)
     ).trim();
 
@@ -1615,8 +1912,7 @@ export function WorkflowCanvasWorkspace({
         b64Json: result.image.b64_json,
         mimeType: result.image.mime_type,
         alt: `${node.title} ${editedExistingImage ? "edited" : "generated"} image`,
-        notice:
-          `${node.title} ${editedExistingImage ? "edited" : "generated"} on this node. Image preview is not persisted to the asset library yet.`,
+        notice: `${node.title} ${editedExistingImage ? "edited" : "generated"} on this node. Image preview is not persisted to the asset library yet.`,
       });
     } catch (error) {
       const message =
@@ -1696,7 +1992,8 @@ export function WorkflowCanvasWorkspace({
     }
 
     if (!file.type.startsWith("audio/")) {
-      const message = "Upload an audio file before using it as the Audio node source.";
+      const message =
+        "Upload an audio file before using it as the Audio node source.";
       setMusicErrors((current) => ({ ...current, [node.id]: message }));
       setMusicResponseOpen(true);
       dispatch({
@@ -1745,8 +2042,7 @@ export function WorkflowCanvasWorkspace({
         mimeType: file.type || "audio/mpeg",
         durationMs: null,
         alt: `${node.title} uploaded audio`,
-        notice:
-          `${node.title} uploaded locally. Playback, download, and AI edit are available on this node; durable audio storage is deferred.`,
+        notice: `${node.title} uploaded locally. Playback, download, and AI edit are available on this node; durable audio storage is deferred.`,
       });
     };
     reader.onerror = () => {
@@ -1768,14 +2064,10 @@ export function WorkflowCanvasWorkspace({
     const editingExistingAudio = Boolean(referenceAudio);
     const prompt = (musicPrompts[node.id] ?? DEFAULT_MUSIC_PROMPT).trim();
     const lyrics = editingExistingAudio
-      ? (
-          musicGenerations[node.id]?.lyrics ??
-          musicLyrics[node.id] ??
-          ""
-        ).trim()
+      ? (musicGenerations[node.id]?.lyrics ?? musicLyrics[node.id] ?? "").trim()
       : (
           musicLyrics[node.id] ??
-          getConnectedAudioLyrics(node, state, scriptInput, scriptOutcomes) ??
+          getConnectedAudioLyrics(node, state, textNodeDrafts, textOutcomes) ??
           DEFAULT_MUSIC_LYRICS
         ).trim();
 
@@ -1795,7 +2087,8 @@ export function WorkflowCanvasWorkspace({
     }
 
     if (audioSourceFromWorkflowOutput(node.output) && !referenceAudio) {
-      const message = "Current audio could not be prepared as a MiniMax edit reference.";
+      const message =
+        "Current audio could not be prepared as a MiniMax edit reference.";
       setMusicErrors((current) => ({ ...current, [node.id]: message }));
       setMusicResponseOpen(true);
       dispatch({
@@ -1834,7 +2127,9 @@ export function WorkflowCanvasWorkspace({
         referenceAudioUrl: referenceAudio?.referenceAudioUrl ?? null,
         referenceAudioB64: referenceAudio?.referenceAudioB64 ?? null,
         referenceAudioMimeType: referenceAudio?.referenceAudioMimeType ?? null,
-        settings: editingExistingAudio ? { model: MUSIC_EDIT_MODEL } : undefined,
+        settings: editingExistingAudio
+          ? { model: MUSIC_EDIT_MODEL }
+          : undefined,
       });
 
       setMusicGenerations((current) => ({ ...current, [node.id]: result }));
@@ -1850,10 +2145,9 @@ export function WorkflowCanvasWorkspace({
         alt: editingExistingAudio
           ? `${node.title} edited audio`
           : `${node.title} generated audio`,
-        notice:
-          editingExistingAudio
-            ? `${node.title} edited on this node. Audio preview is not persisted to the asset library yet.`
-            : `${node.title} generated on this node. Audio preview is not persisted to the asset library yet.`,
+        notice: editingExistingAudio
+          ? `${node.title} edited on this node. Audio preview is not persisted to the asset library yet.`
+          : `${node.title} generated on this node. Audio preview is not persisted to the asset library yet.`,
       });
     } catch (error) {
       const message =
@@ -1883,8 +2177,8 @@ export function WorkflowCanvasWorkspace({
     const connectedInputs = getConnectedVideoInputs(
       node,
       state,
-      scriptInput,
-      scriptOutcomes,
+      textNodeDrafts,
+      textOutcomes,
     );
     const prompt = (
       videoPrompts[node.id] ??
@@ -2029,8 +2323,7 @@ export function WorkflowCanvasWorkspace({
             dataType: "video",
           },
         ],
-        notice:
-          `${outcomeTitle} updated. Video preview is not persisted to the asset library yet.`,
+        notice: `${outcomeTitle} updated. Video preview is not persisted to the asset library yet.`,
       });
       setVideoGenerations((current) => ({
         ...current,
@@ -2054,18 +2347,18 @@ export function WorkflowCanvasWorkspace({
 
   async function sendScriptDialogueMessage() {
     if (!selectedScriptNode) {
-      setScriptError("Select a Script node before starting AI dialogue.");
+      setScriptError("Select a Text node before starting AI dialogue.");
       return;
     }
 
     const messageText = scriptInput.world_description.trim();
     if (!messageText) {
-      setScriptError("MV world description is required before AI dialogue.");
+      setScriptError("Text input is required before AI dialogue.");
       dispatch({
         type: "setNodeStatus",
         nodeId: selectedScriptNode.id,
         status: "blocked",
-        notice: "Script AI dialogue blocked: message is required.",
+        notice: "Text AI dialogue blocked: message is required.",
       });
       return;
     }
@@ -2094,7 +2387,7 @@ export function WorkflowCanvasWorkspace({
       type: "setNodeStatus",
       nodeId: selectedScriptNode.id,
       status: "running",
-      notice: "Script AI dialogue request sent to FastAPI.",
+      notice: "Text AI dialogue request sent to FastAPI.",
     });
 
     try {
@@ -2125,11 +2418,11 @@ export function WorkflowCanvasWorkspace({
         nodeId: selectedScriptNode.id,
         status: hasScriptOutcome ? "ready" : "placeholder",
         notice:
-          "Script AI dialogue reply received. Use Generate for direct text output.",
+          "Text AI dialogue reply received. Use Generate for the selected Text task.",
       });
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "Script AI dialogue failed.";
+        error instanceof Error ? error.message : "Text AI dialogue failed.";
 
       setScriptTask({
         task_id: "dialogue-failed",
@@ -2191,7 +2484,7 @@ export function WorkflowCanvasWorkspace({
             className="pointer-events-none absolute left-4 top-16 z-30 max-w-[calc(100vw-2rem)] rounded-lg border border-neutral-200 bg-white/90 px-3 py-1.5 text-xs text-neutral-600 shadow-sm backdrop-blur"
             data-workspace-boundary-label="true"
           >
-            Local workflow only / Script + media AI enabled / persistence deferred
+            Local workflow only / Text + media AI enabled / persistence deferred
           </div>
 
           <div
@@ -2237,14 +2530,15 @@ export function WorkflowCanvasWorkspace({
                 <WorkflowNodeCard
                   key={node.id}
                   node={node}
-                  scriptInput={
+                  textInput={
                     node.type === "script" && node.role === "source"
-                      ? scriptInput
+                      ? getTextNodeDraft(textNodeDrafts, node.id).input
                       : null
                   }
-                  scriptOutcomeText={
-                    node.output?.dataType === "script"
-                      ? scriptOutcomes[node.id] ?? null
+                  textOutcomeText={
+                    node.output?.dataType === "script" ||
+                    node.output?.dataType === "character"
+                      ? (textOutcomes[node.id] ?? null)
                       : null
                   }
                   selected={
@@ -2252,15 +2546,15 @@ export function WorkflowCanvasWorkspace({
                     state.selection.id === node.id
                   }
                   pendingPort={pendingPort}
-                  onScriptOutcomeTextChange={(nodeId, value) => {
-                    setScriptOutcomes((current) => ({
+                  onTextOutcomeTextChange={(nodeId, value) => {
+                    setTextOutcomes((current) => ({
                       ...current,
                       [nodeId]: value,
                     }));
                     dispatch({
                       type: "setNotice",
                       notice:
-                        "Script direct output edited locally. Durable persistence is deferred.",
+                        "Text outcome edited locally. Durable persistence is deferred.",
                     });
                   }}
                   onDragStart={startNodeDrag}
@@ -2291,12 +2585,16 @@ export function WorkflowCanvasWorkspace({
                   error={scriptError}
                   historyOpen={scriptHistoryOpen}
                   input={scriptInput}
+                  inputResolution={selectedTextInputResolution}
                   messages={scriptDialogueMessages}
                   backendExecution={scriptBackendExecution}
                   responseMode={scriptResponseMode}
                   node={selectedScriptNode}
                   model={scriptModel}
                   task={scriptTask}
+                  textTask={selectedTextDraft.task}
+                  viewportWidth={workspaceViewportWidth}
+                  viewportX={state.viewport.x}
                   viewportZoom={state.viewport.zoom}
                   onGenerate={() => {
                     setScriptResponseMode("generation");
@@ -2305,6 +2603,7 @@ export function WorkflowCanvasWorkspace({
                   onHistoryOpenChange={setScriptHistoryOpen}
                   onInputChange={updateScriptInput}
                   onModelChange={setScriptModel}
+                  onTaskChange={updateTextTask}
                   onRevise={openScriptConversationMode}
                   onSendMessage={() => {
                     void sendScriptDialogueMessage();
@@ -2751,11 +3050,15 @@ type ScriptNodeInlineEditorProps = {
   error: string | null;
   historyOpen: boolean;
   input: ScriptNodeInput;
+  inputResolution: TextTaskInputResolution;
   messages: ScriptDialogueMessage[];
   responseMode: ScriptResponseMode;
   model: ScriptModelSelection;
   node: WorkflowNode;
   task: ScriptTaskStatusResponse;
+  textTask: TextGenerationTask;
+  viewportWidth: number;
+  viewportX: number;
   viewportZoom: number;
   onGenerate: () => void;
   onHistoryOpenChange: (open: boolean) => void;
@@ -2764,6 +3067,7 @@ type ScriptNodeInlineEditorProps = {
     value: ScriptNodeInput[Field],
   ) => void;
   onModelChange: (model: ScriptModelSelection) => void;
+  onTaskChange: (task: TextGenerationTask) => void;
   onRevise: () => void;
   onSendMessage: () => void;
 };
@@ -2775,23 +3079,42 @@ export function ScriptNodeInlineEditor({
   error,
   historyOpen,
   input,
+  inputResolution,
   messages,
   responseMode,
   model,
   node,
   task,
+  textTask,
+  viewportWidth,
+  viewportX,
   viewportZoom,
   onGenerate,
   onHistoryOpenChange,
   onInputChange,
   onModelChange,
+  onTaskChange,
   onRevise,
   onSendMessage,
 }: ScriptNodeInlineEditorProps) {
-  const promptReady = input.world_description.trim().length > 0;
+  const taskOption = findTextTaskOption(textTask);
+  const promptReady = inputResolution.content.length > 0;
   const directOutputPending =
-    busy && task.status === "running" && task.task_id === "direct-output-pending";
-  const left = node.position.x - (SCRIPT_INLINE_EDITOR_WIDTH - NODE_WIDTH) / 2;
+    busy &&
+    task.status === "running" &&
+    task.task_id === "text-generation-pending";
+  const editorWidth = Math.min(
+    SCRIPT_INLINE_EDITOR_WIDTH,
+    Math.max(320, viewportWidth - 32),
+  );
+  const left = calculateTextInlineEditorCanvasLeft({
+    nodeX: node.position.x,
+    nodeWidth: NODE_WIDTH,
+    editorWidth,
+    viewportX,
+    viewportWidth,
+    zoom: viewportZoom,
+  });
   const top = node.position.y + NODE_HEIGHT + SCRIPT_INLINE_EDITOR_GAP;
 
   function handleAiRevise() {
@@ -2804,12 +3127,13 @@ export function ScriptNodeInlineEditor({
       style={{
         left,
         top,
-        width: SCRIPT_INLINE_EDITOR_WIDTH,
+        width: editorWidth,
         transform: `scale(${getInlineEditorCompensationScale(viewportZoom)})`,
         transformOrigin: "top center",
       }}
       data-script-node-inline-editor="true"
-      aria-label="Script node inline editor"
+      data-text-node-inline-editor="true"
+      aria-label="Text node inline editor"
       onPointerDown={(event) => event.stopPropagation()}
     >
       {historyOpen ? (
@@ -2830,9 +3154,51 @@ export function ScriptNodeInlineEditor({
       <section
         className="rounded-xl border border-neutral-200 bg-white/95 p-3 text-neutral-950 shadow-[0_20px_60px_rgba(15,23,42,0.14)] backdrop-blur"
         data-script-node-input-composer="true"
+        data-text-node-input-composer="true"
       >
-        <label htmlFor="script-node-world-input" className="sr-only">
-          {SCRIPT_WORLD_DESCRIPTION_LABEL}
+        <div className="mb-3 flex items-end justify-between gap-4">
+          <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+            <label htmlFor="text-task-select" className="text-xs font-medium">
+              Text task
+            </label>
+            <Select
+              disabled={busy}
+              onValueChange={(value) =>
+                onTaskChange(value as TextGenerationTask)
+              }
+              value={textTask}
+            >
+              <SelectTrigger
+                aria-label="Text task"
+                data-text-task-select="true"
+                id="text-task-select"
+              >
+                <SelectValue>{taskOption.label}</SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  {TEXT_TASK_OPTIONS.map((option) => (
+                    <SelectItem key={option.id} value={option.id}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </div>
+          <p
+            className="max-w-64 text-right text-xs text-neutral-500"
+            data-text-effective-input-source={inputResolution.source.type}
+          >
+            Input source: {inputResolution.label}
+          </p>
+        </div>
+
+        <label
+          htmlFor="script-node-world-input"
+          className="text-xs font-medium"
+        >
+          {taskOption.inputLabel}
         </label>
         <Textarea
           id="script-node-world-input"
@@ -2840,9 +3206,9 @@ export function ScriptNodeInlineEditor({
           onChange={(event) =>
             onInputChange("world_description", event.target.value)
           }
-          placeholder={SCRIPT_WORLD_DESCRIPTION_PLACEHOLDER}
+          placeholder={taskOption.placeholder}
           disabled={busy}
-          aria-label={SCRIPT_WORLD_DESCRIPTION_LABEL}
+          aria-label={taskOption.inputLabel}
           onKeyDown={(event) => event.stopPropagation()}
           className="min-h-20 resize-none border-0 bg-transparent px-0 text-sm shadow-none placeholder:text-neutral-400 focus-visible:ring-0"
         />
@@ -2850,11 +3216,11 @@ export function ScriptNodeInlineEditor({
         <div className="mt-3 flex items-center justify-between gap-3 border-t border-neutral-200 pt-3">
           <div className="flex items-center gap-2">
             <label htmlFor="script-model-select" className="sr-only">
-              Script model
+              Text model
             </label>
             <select
               id="script-model-select"
-              aria-label="Script model"
+              aria-label="Text model"
               className="h-9 rounded-lg border border-neutral-200 bg-white px-3 text-xs font-medium text-neutral-700 shadow-sm"
               data-script-model-select="true"
               disabled={busy}
@@ -2884,7 +3250,7 @@ export function ScriptNodeInlineEditor({
           <div className="flex items-center gap-2">
             {conversationMode ? (
               <Button
-                aria-label="Send Script dialogue message"
+                aria-label="Send Text AI dialogue message"
                 className="h-9 rounded-lg px-3 text-xs"
                 data-script-dialogue-send="true"
                 disabled={busy || !promptReady}
@@ -2897,14 +3263,18 @@ export function ScriptNodeInlineEditor({
               </Button>
             ) : null}
             <Button
-              aria-label="Generate Script node"
+              aria-label="Generate Text node"
               className="h-9 rounded-lg px-4 text-xs"
-              data-script-generate-loading={directOutputPending ? "true" : undefined}
-              disabled={busy || !promptReady}
+              data-script-generate-loading={
+                directOutputPending ? "true" : undefined
+              }
+              disabled={busy}
               onClick={onGenerate}
               type="button"
             >
-              {directOutputPending ? SCRIPT_GENERATING_LABEL : SCRIPT_GENERATE_LABEL}
+              {directOutputPending
+                ? SCRIPT_GENERATING_LABEL
+                : SCRIPT_GENERATE_LABEL}
               {directOutputPending ? (
                 <Loader2 aria-hidden="true" className="size-4 animate-spin" />
               ) : (
@@ -3015,7 +3385,8 @@ export function ImageNodeFloatingEditor({
                     Backend: {generation.provider} / {generation.model}
                   </p>
                   <p className="mt-1" data-image-not-persisted="true">
-                    Local preview only. Asset persistence is not implemented yet.
+                    Local preview only. Asset persistence is not implemented
+                    yet.
                   </p>
                 </div>
               </div>
@@ -3047,7 +3418,10 @@ export function ImageNodeFloatingEditor({
 
         <div className="mt-3 flex items-center justify-between gap-3 border-t border-neutral-200 pt-3">
           <div className="flex min-w-0 items-center gap-2">
-            <label htmlFor={`image-model-select-${node.id}`} className="sr-only">
+            <label
+              htmlFor={`image-model-select-${node.id}`}
+              className="sr-only"
+            >
               Image model
             </label>
             <select
@@ -3298,7 +3672,9 @@ export function MusicNodeInlineEditor({
         </label>
         <Textarea
           id="music-node-prompt"
-          aria-label={hasCurrentAudio ? "Audio edit prompt" : "Music style prompt"}
+          aria-label={
+            hasCurrentAudio ? "Audio edit prompt" : "Music style prompt"
+          }
           className="min-h-16 resize-none border-0 bg-transparent px-0 text-sm shadow-none placeholder:text-neutral-400 focus-visible:ring-0"
           data-music-prompt-input="true"
           disabled={busy}
@@ -3325,7 +3701,7 @@ export function MusicNodeInlineEditor({
               disabled={busy}
               onChange={(event) => onLyricsChange(event.target.value)}
               onKeyDown={(event) => event.stopPropagation()}
-              placeholder="[Verse]\nWrite lyrics or connect Script output..."
+              placeholder="[Verse]\nWrite lyrics or connect Text output..."
               value={lyrics}
             />
           </>
@@ -3386,11 +3762,15 @@ export function MusicNodeInlineEditor({
 
           <div className="flex items-center gap-2">
             <Button
-              aria-label={hasCurrentAudio ? "Edit Audio node" : "Generate Audio node"}
+              aria-label={
+                hasCurrentAudio ? "Edit Audio node" : "Generate Audio node"
+              }
               className="h-9 rounded-lg px-4 text-xs"
               data-music-generate-loading={busy ? "true" : undefined}
               data-music-reference-edit={hasCurrentAudio ? "true" : undefined}
-              disabled={busy || !promptReady || (!hasCurrentAudio && !lyricsReady)}
+              disabled={
+                busy || !promptReady || (!hasCurrentAudio && !lyricsReady)
+              }
               onClick={() => {
                 onResponseOpenChange(true);
                 if (hasCurrentAudio) {
@@ -3401,7 +3781,11 @@ export function MusicNodeInlineEditor({
               }}
               type="button"
             >
-              {busy ? "Generating" : hasCurrentAudio ? "Edit audio" : "Generate"}
+              {busy
+                ? "Generating"
+                : hasCurrentAudio
+                  ? "Edit audio"
+                  : "Generate"}
               {busy ? (
                 <Loader2 aria-hidden="true" className="size-4 animate-spin" />
               ) : (
@@ -3441,11 +3825,14 @@ export function ScriptOutputTabs({
   const statusLabel =
     responseMode === "revise" && !error && task.status === "running"
       ? SCRIPT_REVISE_STATUS_LABEL
-      : responseMode === "revise" && !error && (conversationMode || hasDialogueMessages)
+      : responseMode === "revise" &&
+          !error &&
+          (conversationMode || hasDialogueMessages)
         ? SCRIPT_DIALOGUE_READY_LABEL
         : getScriptResponseStatusLabel(task, null, error);
   const statusDetail = error ?? task.error ?? null;
-  const backendExecutionLabel = formatScriptBackendExecutionLabel(backendExecution);
+  const backendExecutionLabel =
+    formatScriptBackendExecutionLabel(backendExecution);
   const assistantTitle = SCRIPT_REVISE_LABEL;
 
   return (
@@ -3457,7 +3844,7 @@ export function ScriptOutputTabs({
       <div className="flex items-start justify-between gap-3 border-b border-neutral-200 px-4 py-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <p className="text-sm font-semibold">Storyboard AI</p>
+            <p className="text-sm font-semibold">Text AI</p>
             <Badge
               className={cn(
                 "border-neutral-200 bg-neutral-50 text-neutral-600",
@@ -3488,7 +3875,7 @@ export function ScriptOutputTabs({
         </div>
         {onHide ? (
           <Button
-            aria-label="Hide Script response"
+            aria-label="Hide Text response"
             className="h-8 rounded-lg px-3 text-xs"
             onClick={onHide}
             type="button"
@@ -3503,25 +3890,25 @@ export function ScriptOutputTabs({
         className="flex-1 overflow-y-auto p-4"
         data-script-node-output-scroll="true"
       >
-        {hasDialogueMessages
-          ? messages.map((message, index) =>
-              message.role === "user" ? (
-                <UserPromptBubble key={`${message.role}-${index}`}>
-                  {message.content}
-                </UserPromptBubble>
-              ) : (
-                <AssistantResponseBubble
-                  key={`${message.role}-${index}`}
-                  subtitle={backendExecutionLabel}
-                  title={assistantTitle}
-                >
-                  <p className="whitespace-pre-line">{message.content}</p>
-                </AssistantResponseBubble>
-              ),
-            )
-          : promptText ? (
-              <UserPromptBubble>{promptText}</UserPromptBubble>
-            ) : null}
+        {hasDialogueMessages ? (
+          messages.map((message, index) =>
+            message.role === "user" ? (
+              <UserPromptBubble key={`${message.role}-${index}`}>
+                {message.content}
+              </UserPromptBubble>
+            ) : (
+              <AssistantResponseBubble
+                key={`${message.role}-${index}`}
+                subtitle={backendExecutionLabel}
+                title={assistantTitle}
+              >
+                <p className="whitespace-pre-line">{message.content}</p>
+              </AssistantResponseBubble>
+            ),
+          )
+        ) : promptText ? (
+          <UserPromptBubble>{promptText}</UserPromptBubble>
+        ) : null}
 
         {conversationMode && !hasDialogueMessages && !statusDetail ? (
           <AssistantResponseBubble title={SCRIPT_REVISE_LABEL}>
@@ -3531,7 +3918,9 @@ export function ScriptOutputTabs({
 
         {statusLabel === "Error" && statusDetail ? (
           <AssistantResponseBubble title="AI">
-            <p className="text-red-700">{statusDetail}</p>
+            <p className="text-red-700" data-text-node-error="true">
+              {statusDetail}
+            </p>
           </AssistantResponseBubble>
         ) : null}
 
@@ -3545,7 +3934,6 @@ export function ScriptOutputTabs({
             />
           </AssistantResponseBubble>
         ) : null}
-
       </div>
     </section>
   );
@@ -3751,9 +4139,10 @@ export function VideoNodeFloatingEditor({
                 subtitle={`Backend: ${generation.provider} / ${generation.model}`}
               >
                 <p data-video-provider-task="true">
-                  Provider task {generation.provider_task_id ?? generation.task_id} was
-                  accepted, but no playable video URL is available yet. Task polling is
-                  not implemented in this Video node pass.
+                  Provider task{" "}
+                  {generation.provider_task_id ?? generation.task_id} was
+                  accepted, but no playable video URL is available yet. Task
+                  polling is not implemented in this Video node pass.
                 </p>
               </AssistantResponseBubble>
             ) : (
@@ -3839,7 +4228,8 @@ export function VideoNodeFloatingEditor({
               className="h-9 rounded-lg px-4 text-xs"
               data-video-generate-loading={busy ? "true" : undefined}
               disabled={
-                busy || (!promptReady && imageUrlCount === 0 && videoUrlCount === 0)
+                busy ||
+                (!promptReady && imageUrlCount === 0 && videoUrlCount === 0)
               }
               onClick={() => {
                 onResponseOpenChange(true);
@@ -3925,25 +4315,27 @@ export function ScriptOutcomeNodeEditor({
   const outputText = text ?? "";
 
   return (
-    <div data-script-outcome-node="true">
+    <div data-script-outcome-node="true" data-text-outcome-node="true">
       <label htmlFor={`${node.id}-text`} className="sr-only">
-        Script direct output
+        Text outcome
       </label>
       <Textarea
         id={`${node.id}-text`}
-        aria-label="Script direct output"
+        aria-label="Text outcome"
         className="min-h-40 resize-none border-0 bg-transparent p-0 text-xs leading-5 text-neutral-800 shadow-none focus-visible:ring-0"
         data-script-outcome-textarea="true"
         onChange={(event) => onTextChange(event.target.value)}
         onKeyDown={(event) => event.stopPropagation()}
-        placeholder="Generate direct Script text to edit it here."
+        placeholder="Generate Text content to edit it here."
         value={outputText}
       />
     </div>
   );
 }
 
-export function formatWorkflowOutputExecutionLabel(output?: WorkflowNodeOutput) {
+export function formatWorkflowOutputExecutionLabel(
+  output?: WorkflowNodeOutput,
+) {
   if (!output?.provider) {
     return "Backend: waiting for server confirmation";
   }
@@ -3955,11 +4347,11 @@ export function formatWorkflowOutputExecutionLabel(output?: WorkflowNodeOutput) 
 
 type WorkflowNodeCardProps = {
   node: WorkflowNode;
-  scriptInput: ScriptNodeInput | null;
-  scriptOutcomeText: string | null;
+  textInput: ScriptNodeInput | null;
+  textOutcomeText: string | null;
   selected: boolean;
   pendingPort: WorkflowPort | null;
-  onScriptOutcomeTextChange: (nodeId: string, value: string) => void;
+  onTextOutcomeTextChange: (nodeId: string, value: string) => void;
   onDragStart: (
     event: ReactPointerEvent<HTMLButtonElement>,
     node: WorkflowNode,
@@ -3973,11 +4365,11 @@ type WorkflowNodeCardProps = {
 
 export function WorkflowNodeCard({
   node,
-  scriptInput,
-  scriptOutcomeText,
+  textInput,
+  textOutcomeText,
   selected,
   pendingPort,
-  onScriptOutcomeTextChange,
+  onTextOutcomeTextChange,
   onDragStart,
   onSelect,
   onPortConnectionStart,
@@ -3985,7 +4377,7 @@ export function WorkflowNodeCard({
   const Icon = nodeIcons[node.type];
   const inputs = node.ports.filter((port) => port.direction === "input");
   const outputs = node.ports.filter((port) => port.direction === "output");
-  const scriptPreview = formatScriptNodePreview(scriptInput, null);
+  const scriptPreview = formatScriptNodePreview(textInput, null);
   const nodeSubtitle = node.output?.provider
     ? formatWorkflowOutputExecutionLabel(node.output)
     : node.id;
@@ -4008,6 +4400,8 @@ export function WorkflowNodeCard({
         running && "ring-2 ring-neutral-950/10",
       )}
       data-workflow-node={node.type}
+      data-workflow-node-role={node.role}
+      data-workflow-output-data-type={node.output?.dataType}
       data-workflow-node-running={running ? "true" : undefined}
       style={{
         left: node.position.x,
@@ -4036,7 +4430,10 @@ export function WorkflowNodeCard({
           <span
             className="block truncate text-xs text-neutral-500"
             data-script-outcome-provider={
-              node.output?.dataType === "script" ? "true" : undefined
+              node.output?.dataType === "script" ||
+              node.output?.dataType === "character"
+                ? "true"
+                : undefined
             }
           >
             {nodeSubtitle}
@@ -4058,11 +4455,12 @@ export function WorkflowNodeCard({
           </div>
         ) : null}
 
-        {node.output?.dataType === "script" ? (
+        {node.output?.dataType === "script" ||
+        node.output?.dataType === "character" ? (
           <ScriptOutcomeNodeEditor
             node={node}
-            text={scriptOutcomeText}
-            onTextChange={(value) => onScriptOutcomeTextChange(node.id, value)}
+            text={textOutcomeText}
+            onTextChange={(value) => onTextOutcomeTextChange(node.id, value)}
           />
         ) : videoOutputSource ? (
           <div
@@ -4089,7 +4487,9 @@ export function WorkflowNodeCard({
             data-audio-node-current={
               isSelfContainedAudioNode ? "true" : undefined
             }
-            data-audio-outcome-node={node.role === "outcome" ? "true" : undefined}
+            data-audio-outcome-node={
+              node.role === "outcome" ? "true" : undefined
+            }
           >
             <audio
               aria-label={`${node.title} audio preview`}
@@ -4130,7 +4530,9 @@ export function WorkflowNodeCard({
             data-image-node-current={
               isSelfContainedImageNode ? "true" : undefined
             }
-            data-image-outcome-node={node.role === "outcome" ? "true" : undefined}
+            data-image-outcome-node={
+              node.role === "outcome" ? "true" : undefined
+            }
           >
             <div className="overflow-hidden rounded-md border border-neutral-200 bg-neutral-50">
               <img

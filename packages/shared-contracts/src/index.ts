@@ -33,6 +33,56 @@ export type ScriptNodeSettings = {
   temperature?: number;
 };
 
+export const TEXT_GENERATION_TASKS = [
+  "ip_worldview",
+  "character_profiles",
+] as const;
+
+export type TextGenerationTask = (typeof TEXT_GENERATION_TASKS)[number];
+
+export const TEXT_INPUT_SOURCE_TYPES = [
+  "manual",
+  "same_node_task_1",
+  "connected_task_1",
+] as const;
+
+export type TextInputSourceType = (typeof TEXT_INPUT_SOURCE_TYPES)[number];
+
+export type TextGenerationInputSource = {
+  type: TextInputSourceType;
+  source_node_id?: string | null;
+  source_task?: TextGenerationTask | null;
+};
+
+export type TextGenerationInput = {
+  content: string;
+  source: TextGenerationInputSource;
+};
+
+export type TextGenerationRequest = {
+  task: TextGenerationTask;
+  input: TextGenerationInput;
+  settings?: ScriptNodeSettings;
+};
+
+export type TextGenerationMetadata = {
+  task: TextGenerationTask;
+  data_type: "script" | "character";
+  input_source: TextGenerationInputSource;
+  prompt_template_id: string;
+};
+
+export type TextGenerationResponse = {
+  project_id: string;
+  node_id: string;
+  node_type: "script";
+  provider: string;
+  model?: string | null;
+  content: string;
+  metadata: TextGenerationMetadata;
+  persisted: false;
+};
+
 export type ScriptCharacterProfile = {
   name: string;
   overview: string;

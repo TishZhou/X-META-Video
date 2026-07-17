@@ -20,6 +20,69 @@ def validate_output(validator_id: ValidatorId, output: object) -> None:
             raise RuntimeOutputValidationError("Text task must return non-empty text.")
         return
 
+    if validator_id == ValidatorId.IP_WORLDVIEW_TEXT:
+        _validate_text_elements(
+            output,
+            validator_label="IP world-view",
+            required_elements={
+                "narrative positioning": ("narrative", "叙事"),
+                "world view": ("world", "世界"),
+                "character positioning": ("character", "角色", "人物"),
+            },
+        )
+        return
+
+    if validator_id == ValidatorId.CHARACTER_PROFILES_TEXT:
+        _validate_text_elements(
+            output,
+            validator_label="Character profiles",
+            required_elements={
+                "appearance": (
+                    "appearance",
+                    "visual",
+                    "look",
+                    "外貌",
+                    "外观",
+                    "视觉",
+                    "造型",
+                    "形象",
+                    "发型",
+                    "穿搭",
+                    "服装",
+                    "服饰",
+                    "妆容",
+                ),
+                "personality/action": (
+                    "personality",
+                    "action",
+                    "temperament",
+                    "movement",
+                    "demeanor",
+                    "gesture",
+                    "性格",
+                    "动作",
+                    "个性",
+                    "气质",
+                    "肢体",
+                    "姿态",
+                    "举止",
+                ),
+                "voice/timbre": (
+                    "voice",
+                    "timbre",
+                    "vocal",
+                    "tone",
+                    "声线",
+                    "音色",
+                    "嗓音",
+                    "唱腔",
+                    "人声",
+                    "声部",
+                ),
+            },
+        )
+        return
+
     if validator_id == ValidatorId.GENERATED_IMAGE:
         if not isinstance(output, GeneratedImage) or not (output.url or output.b64_json):
             raise RuntimeOutputValidationError("Image task did not return an image.")
@@ -42,3 +105,23 @@ def validate_output(validator_id: ValidatorId, output: object) -> None:
         return
 
     raise RuntimeOutputValidationError(f"Unknown validator '{validator_id}'.")
+
+
+def _validate_text_elements(
+    output: object,
+    *,
+    validator_label: str,
+    required_elements: dict[str, tuple[str, ...]],
+) -> None:
+    if not isinstance(output, str) or not output.strip():
+        raise RuntimeOutputValidationError(f"{validator_label} task must return non-empty text.")
+    normalized = output.casefold()
+    missing = [
+        label
+        for label, markers in required_elements.items()
+        if not any(marker.casefold() in normalized for marker in markers)
+    ]
+    if missing:
+        raise RuntimeOutputValidationError(
+            f"{validator_label} task is missing required elements: {', '.join(missing)}."
+        )

@@ -4,7 +4,7 @@
                            "title":  "Script Node",
                            "status":  "passing"
                        },
-    "planning_status":  "script_node_direct_text_outcome_passing",
+    "planning_status":  "text_node_task_choice_passing",
     "notes":  [
                   "Feature 3 implements the Script Node MV world-description input/output interaction and API contract only.",
                   "The current Script Node input is a single AI chat-style world-view description.",
@@ -265,6 +265,34 @@
                                                     "2026-07-07 browser-comment corepack pnpm --filter @xmeta/web test passed: 9 files / 43 tests.",
                                                     "2026-07-07 browser-comment corepack pnpm --filter @xmeta/web typecheck passed.",
                                                     "2026-07-07 browser-comment corepack pnpm --filter @xmeta/web build passed and included /workspace."
+                                                ]
+                           },
+                           {
+                               "id":  "script-node-011",
+                               "title":  "Add two production Text Node tasks and reusable upstream transfer",
+                               "status":  "passing",
+                               "user_visible_behavior":  "Users can choose an IP world-view task or a character appearance/personality/voice task on each Text Node, generate an editable outcome through FastAPI, and feed Task 1 content into Task 2 through a canvas connection without duplicating the long output payload.",
+                               "acceptance_criteria":  [
+                                                           "An accessible shadcn Select exposes exactly the two requested Text tasks.",
+                                                           "Task 1 expands a brief into IP narrative positioning, world-view rules, and named character positioning.",
+                                                           "Task 2 expands Task 1 output into per-character appearance, personality/action, and voice/timbre descriptions.",
+                                                           "Dedicated typed FastAPI and Agent Runtime contracts execute both tasks and return provider/model evidence.",
+                                                           "Shared prompt rules are centralized while task-specific prompts and validators remain separate.",
+                                                           "One canonical editable content value is rendered to the user and transferred downstream with compact task/data/source metadata.",
+                                                           "Task 2 prioritizes connected Task 1 output, then same-node Task 1 output, then manual input, and visibly identifies the source.",
+                                                           "Task/input state is isolated per Text source node and compatible outcome data types remain reusable downstream.",
+                                    "Focused/full backend and Web verification plus click-by-click Browser E2E pass, and the independent evaluator scores over 140/160."
+                                                       ],
+                               "verification":  [
+                                                    "2026-07-17 baseline .\\init.ps1 passed before implementation and reran Web tests: 9 files / 58 tests.",
+                             "2026-07-17 Round 2 focused Text API tests passed 7/7; full API tests passed 79/79; Ruff passed.",
+                             "2026-07-17 Round 2 focused jsdom interaction passed 1/1; full Web tests passed 10 files / 63 tests; typecheck and production build passed.",
+                             "2026-07-17 restarted live provider chain passed through openai / gpt-5.4-mini: Task 1 returned 6580 characters with all four names; Task 2 consumed the exact Task 1 content and returned four complete appearance, personality/action, and voice/timbre blocks.",
+                             "2026-07-17 JSON validation, git diff check, typed OpenAPI inspection, API documentation truth search, and final init.ps1 passed.",
+                             "2026-07-17 independent evaluator Round 2 finalized at 143/160 after hygiene cleanup, but rejected acceptance because mandatory Codex in-app Browser E2E could not start: Cannot redefine property: process. No alternate browser or computer-control surface was used.",
+                             "2026-07-17 Revision 3/4 removed rigid Task 2 output tags, expanded natural Chinese/English semantic markers, and passed focused backend 8/8, full backend 80/80, Ruff, full Web 63/63, typecheck, production build, OpenAPI, docs, JSON, diff-check, and final init.ps1.",
+                             "2026-07-17 Codex in-app Browser E2E passed on the user-opened /workspace tab: real Task 1 generation and edit, same-node Task 1 handoff, visible loading and live error states, successful Task 2 retry through openai / gpt-5.4-mini, all four names plus appearance/personality-action/voice content, no rigid tags, editable non-overlapping outcomes, viewport screenshots, empty console warn/error logs, and final API 200.",
+                             "2026-07-17 independent evaluator accepted Revision 3/4 at 156/160 with no blocking defect."
                                                 ]
                            }
                        ]

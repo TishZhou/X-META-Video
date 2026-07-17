@@ -36,9 +36,9 @@
                          "id":  3,
                          "title":  "Script Node",
                          "status":  "passing",
-                         "current_task":  "script-node-010",
+                         "current_task":  "script-node-011",
                          "current_task_status":  "passing",
-                         "user_visible_behavior":  "Users can use AI modify conversation mode, then Generate an editable direct-text Script outcome node on the canvas with backend-confirmed provider/model evidence, visible loading animation, simplified node cards, and only configured live provider paths.",
+                         "user_visible_behavior":  "Users can choose dedicated Text Node tasks for IP world-view development or per-character appearance, personality, and voice profiles, with reusable editable outcomes and backend-confirmed execution evidence.",
                          "task_file":  "feature_tasks/3.json"
                      },
                      {

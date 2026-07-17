@@ -24,6 +24,9 @@ import {
   base64FromHexAudio,
   buildScriptDirectOutputMessage,
   calculateDraggedNodePosition,
+  calculateInitialCanvasViewport,
+  calculateTextInlineEditorCanvasLeft,
+  calculateTextOutcomePosition,
   clampImageEditorFrame,
   createScriptBackendExecution,
   formatScriptBackendExecutionLabel,
@@ -43,9 +46,11 @@ import {
   ImageNodeFloatingEditor,
   isEditableKeyboardTarget,
   isFloatingImageEditorNodeType,
+  resolveTextTaskInput,
   ScriptOutcomeNodeEditor,
   ScriptNodeInlineEditor,
   ScriptOutputTabs,
+  TEXT_TASK_OPTIONS,
   MusicNodeInlineEditor,
   VideoNodeFloatingEditor,
   videoSourceFromGeneratedVideo,
@@ -109,7 +114,7 @@ describe("WorkflowCanvasWorkspace", () => {
     expect(html).toContain('data-workspace-bottom-toolbar="true"');
     expect(html).toContain('data-workspace-boundary-label="true"');
     expect(html).toContain("Local workflow only");
-    expect(html).toContain("Script + media AI enabled");
+    expect(html).toContain("Text + media AI enabled");
     expect(html).toContain("persistence deferred");
     expect(html).not.toContain("AI disabled");
     expect(html).not.toContain("Node palette");
@@ -188,9 +193,11 @@ describe("WorkflowCanvasWorkspace", () => {
     expect(html).toContain("Server configured model");
     expect(html).not.toContain("gpt-5.4-mini");
     expect(html).toContain('data-script-ai-revise="true"');
-    expect(html).toContain(
-      "\u63cf\u8ff0\u4f60\u7684\u5267\u60c5\u7247\u6bb5\u3001\u6545\u4e8b\u548c\u4e16\u754c\u89c2\u6784\u60f3",
-    );
+    expect(html).toContain("Describe the core idea, mood, setting");
+    expect(html).toContain('aria-label="Text task"');
+    expect(html).toContain('data-text-task-select="true"');
+    expect(html).toContain("IP narrative &amp; world view");
+    expect(html).toContain("Input source: Manual brief idea");
     expect(html).toContain("AI\u4fee\u6539");
     expect(html).toContain("\u751f\u6210");
     expect(html).not.toContain('data-script-dialogue-send="true"');
@@ -209,6 +216,221 @@ describe("WorkflowCanvasWorkspace", () => {
   it("maps Script AI modify and Generate actions to distinct response modes", () => {
     expect(getScriptResponseModeForAction("revise")).toBe("revise");
     expect(getScriptResponseModeForAction("generate")).toBe("generation");
+  });
+
+  it("exposes exactly two Text tasks and resolves Task 2 input by priority", () => {
+    expect(TEXT_TASK_OPTIONS.map((option) => option.id)).toEqual([
+      "ip_worldview",
+      "character_profiles",
+    ]);
+
+    let graph = workflowGraphReducer(createInitialWorkflowGraphState(), {
+      type: "addNode",
+      nodeType: "script",
+      position: { x: 920, y: 180 },
+    });
+    graph = workflowGraphReducer(graph, {
+      type: "upsertOutputNode",
+      sourceNodeId: "script-1",
+      nodeType: "script",
+      title: "IP world-view outcome",
+      description: "Task 1 output",
+      position: { x: 520, y: 90 },
+      output: {
+        sourceNodeId: "script-1",
+        dataType: "script",
+        label: "IP narrative & world view",
+        task: "ip_worldview",
+        inputSource: { type: "manual" },
+        editable: true,
+      },
+      ports: [
+        {
+          key: "script-out",
+          label: "World view",
+          direction: "output",
+          dataType: "script",
+        },
+      ],
+    });
+    graph = workflowGraphReducer(graph, {
+      type: "upsertOutputNode",
+      sourceNodeId: "script-4",
+      nodeType: "script",
+      title: "Same-node IP world-view outcome",
+      description: "Task 1 output",
+      position: { x: 1260, y: 90 },
+      output: {
+        sourceNodeId: "script-4",
+        dataType: "script",
+        label: "IP narrative & world view",
+        task: "ip_worldview",
+        inputSource: { type: "manual" },
+        editable: true,
+      },
+      ports: [
+        {
+          key: "script-out",
+          label: "World view",
+          direction: "output",
+          dataType: "script",
+        },
+      ],
+    });
+    const connectedOutcomeId = createWorkflowOutputNodeId("script-1", "script");
+    const sameNodeOutcomeId = createWorkflowOutputNodeId("script-4", "script");
+    graph = workflowGraphReducer(graph, {
+      type: "connect",
+      sourcePortId: `${connectedOutcomeId}:script-out`,
+      targetPortId: "script-4:brief-in",
+    });
+    const task2Node = graph.nodes.find((node) => node.id === "script-4");
+    const drafts = {
+      "script-1": {
+        task: "ip_worldview" as const,
+        input: { world_description: "Task 1 brief" },
+      },
+      "script-4": {
+        task: "character_profiles" as const,
+        input: { world_description: "Manual pasted fallback" },
+      },
+    };
+    const outcomes = {
+      [connectedOutcomeId]: "Connected Task 1 content",
+      [sameNodeOutcomeId]: "Same-node Task 1 content",
+    };
+
+    expect(task2Node).toBeDefined();
+    expect(resolveTextTaskInput(task2Node!, graph, drafts, outcomes)).toEqual({
+      content: "Connected Task 1 content",
+      source: {
+        type: "connected_task_1",
+        source_node_id: connectedOutcomeId,
+        source_task: "ip_worldview",
+      },
+      label: "Connected Task 1 outcome",
+    });
+
+    const disconnected = {
+      ...graph,
+      edges: graph.edges.filter((edge) => edge.targetNodeId !== "script-4"),
+    };
+    expect(
+      resolveTextTaskInput(task2Node!, disconnected, drafts, outcomes).source
+        .type,
+    ).toBe("same_node_task_1");
+    const deletedSameNodeOutcome = workflowGraphReducer(
+      {
+        ...disconnected,
+        selection: { kind: "node", id: sameNodeOutcomeId },
+      },
+      { type: "deleteSelection" },
+    );
+    expect(
+      resolveTextTaskInput(
+        task2Node!,
+        deletedSameNodeOutcome,
+        drafts,
+        outcomes,
+      ),
+    ).toEqual({
+      content: "Manual pasted fallback",
+      source: { type: "manual" },
+      label: "Manual pasted content",
+    });
+    expect(
+      resolveTextTaskInput(task2Node!, disconnected, drafts, {
+        [connectedOutcomeId]: "Connected Task 1 content",
+      }),
+    ).toEqual({
+      content: "Manual pasted fallback",
+      source: { type: "manual" },
+      label: "Manual pasted content",
+    });
+    expect(drafts["script-1"].input.world_description).toBe("Task 1 brief");
+    expect(drafts["script-4"].input.world_description).toBe(
+      "Manual pasted fallback",
+    );
+  });
+
+  it("clamps the Text inline editor inside realistic desktop viewports", () => {
+    expect(
+      calculateTextInlineEditorCanvasLeft({
+        nodeX: 160,
+        nodeWidth: 288,
+        editorWidth: 820,
+        viewportX: 0,
+        viewportWidth: 1600,
+        zoom: 1,
+      }),
+    ).toBe(16);
+    expect(
+      calculateTextInlineEditorCanvasLeft({
+        nodeX: 1100,
+        nodeWidth: 288,
+        editorWidth: 820,
+        viewportX: 0,
+        viewportWidth: 1280,
+        zoom: 1,
+      }),
+    ).toBe(444);
+  });
+
+  it("places Task 1 and Task 2 outcomes in separate visible slots", () => {
+    const graph = createInitialWorkflowGraphState();
+    const sourceNode = graph.nodes.find((node) => node.id === "script-1");
+
+    expect(sourceNode).toBeDefined();
+    const task1Position = calculateTextOutcomePosition({
+      sourcePosition: sourceNode!.position,
+      dataType: "script",
+    });
+    const task2Position = calculateTextOutcomePosition({
+      sourcePosition: sourceNode!.position,
+      dataType: "character",
+    });
+
+    expect(task1Position).toEqual({ x: 160, y: 450 });
+    expect(task2Position).toEqual({ x: 500, y: 450 });
+    expect(task1Position.x + 288).toBeLessThan(task2Position.x);
+    for (const initialNode of graph.nodes) {
+      const overlapsTask1 =
+        task1Position.x < initialNode.position.x + 288 &&
+        task1Position.x + 288 > initialNode.position.x &&
+        task1Position.y < initialNode.position.y + 178 &&
+        task1Position.y + 280 > initialNode.position.y;
+      const overlapsTask2 =
+        task2Position.x < initialNode.position.x + 288 &&
+        task2Position.x + 288 > initialNode.position.x &&
+        task2Position.y < initialNode.position.y + 178 &&
+        task2Position.y + 280 > initialNode.position.y;
+
+      expect(overlapsTask1).toBe(false);
+      expect(overlapsTask2).toBe(false);
+    }
+
+    const viewport = calculateInitialCanvasViewport(1280, 720);
+    for (const position of [task1Position, task2Position]) {
+      expect(viewport.x + position.x * viewport.zoom).toBeGreaterThanOrEqual(0);
+      expect(
+        viewport.x + (position.x + 288) * viewport.zoom,
+      ).toBeLessThanOrEqual(1280);
+      expect(viewport.y + position.y * viewport.zoom).toBeGreaterThanOrEqual(0);
+      expect(
+        viewport.y + (position.y + 280) * viewport.zoom,
+      ).toBeLessThanOrEqual(720);
+    }
+
+    const rightEdgeTask1 = calculateTextOutcomePosition({
+      sourcePosition: { x: 2050, y: 210 },
+      dataType: "script",
+    });
+    const rightEdgeTask2 = calculateTextOutcomePosition({
+      sourcePosition: { x: 2050, y: 210 },
+      dataType: "character",
+    });
+    expect(rightEdgeTask1.x).toBe(rightEdgeTask2.x);
+    expect(rightEdgeTask1.y + 280).toBeLessThan(rightEdgeTask2.y);
   });
 
   it("formats Script backend execution evidence for AI replies", () => {
@@ -233,7 +455,9 @@ describe("WorkflowCanvasWorkspace", () => {
       nodeType: "image",
       position: { x: 880, y: 120 },
     });
-    const imageNode = graph.nodes.find((candidate) => candidate.type === "image");
+    const imageNode = graph.nodes.find(
+      (candidate) => candidate.type === "image",
+    );
     const generation = {
       project_id: "local-project",
       node_id: "scene-4",
@@ -306,7 +530,9 @@ describe("WorkflowCanvasWorkspace", () => {
     expect(html).toContain("Edit image");
     expect(html).toContain('data-generated-image-preview="true"');
     expect(html).toContain("https://image.example/scene.png");
-    expect(html).toContain("Backend: doubao-seedream / doubao-seedream-5-0-260128");
+    expect(html).toContain(
+      "Backend: doubao-seedream / doubao-seedream-5-0-260128",
+    );
     expect(html).toContain("Asset persistence is not implemented yet");
   });
 
@@ -342,7 +568,10 @@ describe("WorkflowCanvasWorkspace", () => {
       position: { x: 860, y: 120 },
     });
     const audioNode = withAudio.nodes.find((node) => node.type === "audio");
-    const scriptOutcomeNodeId = createWorkflowOutputNodeId("script-1", "script");
+    const scriptOutcomeNodeId = createWorkflowOutputNodeId(
+      "script-1",
+      "script",
+    );
 
     expect(audioNode).toBeDefined();
 
@@ -396,7 +625,10 @@ describe("WorkflowCanvasWorkspace", () => {
       position: { x: 860, y: 120 },
     });
     const imageNode = withImage.nodes.find((node) => node.type === "image");
-    const scriptOutcomeNodeId = createWorkflowOutputNodeId("script-1", "script");
+    const scriptOutcomeNodeId = createWorkflowOutputNodeId(
+      "script-1",
+      "script",
+    );
 
     expect(imageNode).toBeDefined();
 
@@ -485,7 +717,9 @@ describe("WorkflowCanvasWorkspace", () => {
     expect(html).toContain('data-generated-audio-preview="true"');
     expect(html).toContain("https://audio.example/generated.mp3");
     expect(html).toContain("Backend: minimax / music-2.6-free");
-    expect(html).toContain("Audio persistence, signed URLs, and Audio Library save");
+    expect(html).toContain(
+      "Audio persistence, signed URLs, and Audio Library save",
+    );
     expect(html).not.toContain('data-music-node-drag-handle="true"');
     expect(html).not.toContain('data-music-node-resize-handle="true"');
   });
@@ -713,7 +947,10 @@ describe("WorkflowCanvasWorkspace", () => {
     const videoNode = withVideo.nodes.find(
       (node) => node.type === "video" && node.role === "source",
     );
-    const scriptOutcomeNodeId = createWorkflowOutputNodeId("script-1", "script");
+    const scriptOutcomeNodeId = createWorkflowOutputNodeId(
+      "script-1",
+      "script",
+    );
     const imageOutcomeNodeId = createWorkflowOutputNodeId("image-4", "image");
     const audioOutcomeNodeId = createWorkflowOutputNodeId("audio-5", "audio");
     const videoOutcomeNodeId = createWorkflowOutputNodeId("video-6", "video");
@@ -912,7 +1149,9 @@ describe("WorkflowCanvasWorkspace", () => {
     expect(html).toContain('data-script-node-output-scroll="true"');
     expect(html).not.toContain("Agent generated answer for the chat history.");
     expect(html).not.toContain("A structured MV world summary.");
-    expect(html).not.toContain("soft opening, travel beat, neon performance payoff");
+    expect(html).not.toContain(
+      "soft opening, travel beat, neon performance payoff",
+    );
     expect(html).not.toContain("Shot 1");
     expect(html).not.toContain("Direction");
     expect(html).not.toContain(
@@ -965,11 +1204,11 @@ describe("WorkflowCanvasWorkspace", () => {
     const html = renderToStaticMarkup(
       <WorkflowNodeCard
         node={node}
-        scriptInput={null}
-        scriptOutcomeText="A direct editable script result without JSON."
+        textInput={null}
+        textOutcomeText="A direct editable script result without JSON."
         selected={true}
         pendingPort={null}
-        onScriptOutcomeTextChange={() => undefined}
+        onTextOutcomeTextChange={() => undefined}
         onDragStart={() => undefined}
         onSelect={() => undefined}
         onPortConnectionStart={() => undefined}
@@ -1017,11 +1256,11 @@ describe("WorkflowCanvasWorkspace", () => {
     const html = renderToStaticMarkup(
       <WorkflowNodeCard
         node={node}
-        scriptInput={null}
-        scriptOutcomeText={null}
+        textInput={null}
+        textOutcomeText={null}
         selected={true}
         pendingPort={null}
-        onScriptOutcomeTextChange={() => undefined}
+        onTextOutcomeTextChange={() => undefined}
         onDragStart={() => undefined}
         onSelect={() => undefined}
         onPortConnectionStart={() => undefined}
@@ -1037,8 +1276,12 @@ describe("WorkflowCanvasWorkspace", () => {
     expect(html).toContain('data-image-outcome-node="true"');
     expect(html).toContain('data-image-outcome-preview="true"');
     expect(html).toContain("data:image/png;base64,iVBORw0KGgo=");
-    expect(html).toContain("Backend: doubao-seedream / doubao-seedream-5-0-260128");
-    expect(html).toContain("Local preview only; not saved to the asset library yet.");
+    expect(html).toContain(
+      "Backend: doubao-seedream / doubao-seedream-5-0-260128",
+    );
+    expect(html).toContain(
+      "Local preview only; not saved to the asset library yet.",
+    );
   });
 
   it("renders self-contained source image nodes with generated previews", () => {
@@ -1047,7 +1290,9 @@ describe("WorkflowCanvasWorkspace", () => {
       nodeType: "image",
       position: { x: 520, y: 240 },
     });
-    const imageNode = graph.nodes.find((candidate) => candidate.type === "image");
+    const imageNode = graph.nodes.find(
+      (candidate) => candidate.type === "image",
+    );
 
     expect(imageNode).toBeDefined();
 
@@ -1091,11 +1336,11 @@ describe("WorkflowCanvasWorkspace", () => {
     const html = renderToStaticMarkup(
       <WorkflowNodeCard
         node={updatedNode!}
-        scriptInput={null}
-        scriptOutcomeText={null}
+        textInput={null}
+        textOutcomeText={null}
         selected={true}
         pendingPort={null}
-        onScriptOutcomeTextChange={() => undefined}
+        onTextOutcomeTextChange={() => undefined}
         onDragStart={() => undefined}
         onSelect={() => undefined}
         onPortConnectionStart={() => undefined}
@@ -1141,11 +1386,11 @@ describe("WorkflowCanvasWorkspace", () => {
     const html = renderToStaticMarkup(
       <WorkflowNodeCard
         node={node}
-        scriptInput={null}
-        scriptOutcomeText={null}
+        textInput={null}
+        textOutcomeText={null}
         selected={true}
         pendingPort={null}
-        onScriptOutcomeTextChange={() => undefined}
+        onTextOutcomeTextChange={() => undefined}
         onDragStart={() => undefined}
         onSelect={() => undefined}
         onPortConnectionStart={() => undefined}
@@ -1161,7 +1406,9 @@ describe("WorkflowCanvasWorkspace", () => {
     expect(html).toContain('download="audio-outcome.mp3"');
     expect(html).toContain("https://audio.example/generated.mp3");
     expect(html).toContain("Backend: minimax / music-2.6-free");
-    expect(html).toContain("Audio persistence, signed URLs, and Audio Library save");
+    expect(html).toContain(
+      "Audio persistence, signed URLs, and Audio Library save",
+    );
   });
 
   it("renders self-contained source Audio nodes with playable generated audio", () => {
@@ -1170,7 +1417,9 @@ describe("WorkflowCanvasWorkspace", () => {
       nodeType: "audio",
       position: { x: 520, y: 240 },
     });
-    const audioNode = graph.nodes.find((candidate) => candidate.type === "audio");
+    const audioNode = graph.nodes.find(
+      (candidate) => candidate.type === "audio",
+    );
 
     expect(audioNode).toBeDefined();
 
@@ -1211,11 +1460,11 @@ describe("WorkflowCanvasWorkspace", () => {
     const html = renderToStaticMarkup(
       <WorkflowNodeCard
         node={updatedNode!}
-        scriptInput={null}
-        scriptOutcomeText={null}
+        textInput={null}
+        textOutcomeText={null}
         selected={true}
         pendingPort={null}
-        onScriptOutcomeTextChange={() => undefined}
+        onTextOutcomeTextChange={() => undefined}
         onDragStart={() => undefined}
         onSelect={() => undefined}
         onPortConnectionStart={() => undefined}
@@ -1265,11 +1514,11 @@ describe("WorkflowCanvasWorkspace", () => {
     const html = renderToStaticMarkup(
       <WorkflowNodeCard
         node={node}
-        scriptInput={null}
-        scriptOutcomeText={null}
+        textInput={null}
+        textOutcomeText={null}
         selected={true}
         pendingPort={null}
-        onScriptOutcomeTextChange={() => undefined}
+        onTextOutcomeTextChange={() => undefined}
         onDragStart={() => undefined}
         onSelect={() => undefined}
         onPortConnectionStart={() => undefined}
@@ -1321,18 +1570,20 @@ describe("WorkflowCanvasWorkspace", () => {
 
   it("renders a loading animation on the Script node while generation runs", () => {
     const graph = createInitialWorkflowGraphState();
-    const scriptNode = graph.nodes.find((candidate) => candidate.type === "script");
+    const scriptNode = graph.nodes.find(
+      (candidate) => candidate.type === "script",
+    );
 
     expect(scriptNode).toBeDefined();
 
     const html = renderToStaticMarkup(
       <WorkflowNodeCard
         node={{ ...scriptNode!, status: "running" }}
-        scriptInput={{ world_description: "A snow MV world" }}
-        scriptOutcomeText={null}
+        textInput={{ world_description: "A snow MV world" }}
+        textOutcomeText={null}
         selected={true}
         pendingPort={null}
-        onScriptOutcomeTextChange={() => undefined}
+        onTextOutcomeTextChange={() => undefined}
         onDragStart={() => undefined}
         onSelect={() => undefined}
         onPortConnectionStart={() => undefined}
@@ -1348,9 +1599,11 @@ describe("WorkflowCanvasWorkspace", () => {
 
   it("renders direct Generate button loading state only for direct output generation", () => {
     const graph = createInitialWorkflowGraphState();
-    const scriptNode = graph.nodes.find((candidate) => candidate.type === "script");
+    const scriptNode = graph.nodes.find(
+      (candidate) => candidate.type === "script",
+    );
     const task: ScriptTaskStatusResponse = {
-      task_id: "direct-output-pending",
+      task_id: "text-generation-pending",
       project_id: "local-project",
       node_id: "script-1",
       status: "running",
@@ -1367,16 +1620,25 @@ describe("WorkflowCanvasWorkspace", () => {
         error={null}
         historyOpen={false}
         input={{ world_description: "A snow MV world" }}
+        inputResolution={{
+          content: "A snow MV world",
+          source: { type: "manual" },
+          label: "Manual brief idea",
+        }}
         messages={[]}
         responseMode="generation"
         model="configured"
         node={scriptNode!}
         task={task}
+        textTask="ip_worldview"
+        viewportWidth={1600}
+        viewportX={0}
         viewportZoom={1}
         onGenerate={() => undefined}
         onHistoryOpenChange={() => undefined}
         onInputChange={() => undefined}
         onModelChange={() => undefined}
+        onTaskChange={() => undefined}
         onRevise={() => undefined}
         onSendMessage={() => undefined}
       />,
@@ -1385,6 +1647,55 @@ describe("WorkflowCanvasWorkspace", () => {
     expect(html).toContain('data-script-generate-loading="true"');
     expect(html).toContain("\u751f\u6210\u4e2d");
     expect(html).toContain("animate-spin");
+  });
+
+  it("keeps empty Task 2 generation actionable and identifies manual fallback", () => {
+    const graph = createInitialWorkflowGraphState();
+    const textNode = graph.nodes.find((candidate) => candidate.type === "script");
+    const html = renderToStaticMarkup(
+      <ScriptNodeInlineEditor
+        backendExecution={null}
+        busy={false}
+        conversationMode={false}
+        error={null}
+        historyOpen={false}
+        input={{ world_description: "" }}
+        inputResolution={{
+          content: "",
+          source: { type: "manual" },
+          label: "Manual pasted content",
+        }}
+        messages={[]}
+        responseMode="generation"
+        model="configured"
+        node={textNode!}
+        task={{
+          task_id: "not-started",
+          project_id: "local-project",
+          node_id: "script-1",
+          status: "queued",
+          error: null,
+        }}
+        textTask="character_profiles"
+        viewportWidth={1600}
+        viewportX={0}
+        viewportZoom={1}
+        onGenerate={() => undefined}
+        onHistoryOpenChange={() => undefined}
+        onInputChange={() => undefined}
+        onModelChange={() => undefined}
+        onTaskChange={() => undefined}
+        onRevise={() => undefined}
+        onSendMessage={() => undefined}
+      />,
+    );
+    const generateButton =
+      html.match(/<button[^>]*aria-label="Generate Text node"[^>]*>/)?.[0] ?? "";
+
+    expect(html).toContain("Character profiles &amp; voices");
+    expect(html).toContain("Input source: Manual pasted content");
+    expect(html).toContain("Connect or paste Task 1 output");
+    expect(generateButton).not.toContain('disabled=""');
   });
 
   it("shows generation errors in the response panel status area", () => {
@@ -1410,7 +1721,7 @@ describe("WorkflowCanvasWorkspace", () => {
     expect(html).toContain('data-script-node-response-status="true"');
     expect(html).toContain("Error");
     expect(html).toContain("Provider unavailable");
-    expect(html).toContain('aria-label="Hide Script response"');
+    expect(html).toContain('aria-label="Hide Text response"');
     expect(getScriptResponseStatusLabel(task, null, task.error)).toBe("Error");
   });
 
@@ -1429,7 +1740,8 @@ describe("WorkflowCanvasWorkspace", () => {
       },
       {
         role: "assistant",
-        content: "Provider reply: I would add conflict before the chorus payoff.",
+        content:
+          "Provider reply: I would add conflict before the chorus payoff.",
       },
     ];
     const html = renderToStaticMarkup(
@@ -1510,7 +1822,7 @@ describe("WorkflowCanvasWorkspace", () => {
         makeScriptOutput(),
       ),
     ).toEqual({
-      heading: "Confirmed Script",
+      heading: "Confirmed Text",
       body: "Sample Script Title: A structured MV world summary. 1 storyboard shots ready.",
     });
   });

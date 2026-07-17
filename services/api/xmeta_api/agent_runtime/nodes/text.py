@@ -9,6 +9,11 @@ from ...schemas import (
     ScriptInput,
     ScriptNodeState,
     TaskState,
+    TextDataType,
+    TextGenerationMetadata,
+    TextGenerationRequest,
+    TextGenerationResponse,
+    TextGenerationTask,
 )
 from ...store import InMemoryScriptStore
 from ..compiler import PromptCompiler
@@ -18,6 +23,16 @@ from ..validators import validate_output
 
 
 ProfileResolver = Callable[[TaskId | str], TaskProfile]
+
+TEXT_GENERATION_PROFILES = {
+    TextGenerationTask.IP_WORLDVIEW: TaskId.TEXT_IP_WORLDVIEW_GENERATE,
+    TextGenerationTask.CHARACTER_PROFILES: TaskId.TEXT_CHARACTER_PROFILES_GENERATE,
+}
+
+TEXT_GENERATION_DATA_TYPES = {
+    TextGenerationTask.IP_WORLDVIEW: TextDataType.SCRIPT,
+    TextGenerationTask.CHARACTER_PROFILES: TextDataType.CHARACTER,
+}
 
 
 class TextNodeExecutor:
@@ -90,3 +105,44 @@ class TextNodeExecutor:
         )
         validate_output(profile.validator_id, assistant_text)
         return assistant_text
+
+    def run_text_generation(
+        self,
+        *,
+        project_id: str,
+        node_id: str,
+        provider: ScriptProvider,
+        provider_name: str,
+        model: str | None,
+        request: TextGenerationRequest,
+    ) -> TextGenerationResponse:
+        profile = self._profile_resolver(TEXT_GENERATION_PROFILES[request.task])
+        prompt = self._prompt_compiler.compile(
+            profile=profile,
+            project_id=project_id,
+            inputs={"content": request.input.content},
+        ).text
+        content = run_with_task_retry(
+            profile=profile,
+            operation=lambda: provider.chat(
+                script_input=ScriptInput(world_description=request.input.content),
+                history=[],
+                user_message=request.input.content,
+                prompt=prompt,
+            ),
+        )
+        validate_output(profile.validator_id, content)
+        return TextGenerationResponse(
+            project_id=project_id,
+            node_id=node_id,
+            provider=provider_name,
+            model=model,
+            content=content.strip(),
+            metadata=TextGenerationMetadata(
+                task=request.task,
+                data_type=TEXT_GENERATION_DATA_TYPES[request.task],
+                input_source=request.input.source,
+                prompt_template_id=profile.prompt_template_id.value,
+            ),
+            persisted=False,
+        )

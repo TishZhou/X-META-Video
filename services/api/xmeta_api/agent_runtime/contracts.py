@@ -16,6 +16,8 @@ class NodeKind(StrEnum):
 class TaskId(StrEnum):
     TEXT_SCRIPT_GENERATE = "text.script.generate"
     TEXT_SCRIPT_DIALOGUE = "text.script.dialogue"
+    TEXT_IP_WORLDVIEW_GENERATE = "text.ip_worldview.generate"
+    TEXT_CHARACTER_PROFILES_GENERATE = "text.character_profiles.generate"
     IMAGE_CHARACTER_GENERATE = "image.character.generate"
     IMAGE_PROP_GENERATE = "image.prop.generate"
     IMAGE_SCENE_GENERATE = "image.scene.generate"
@@ -37,6 +39,8 @@ class MemoryScope(StrEnum):
 class PromptTemplateId(StrEnum):
     SCRIPT_GENERATE_V1 = "script.generate.v1"
     SCRIPT_DIALOGUE_V1 = "script.dialogue.v1"
+    TEXT_IP_WORLDVIEW_V1 = "text.ip_worldview.v1"
+    TEXT_CHARACTER_PROFILES_V1 = "text.character_profiles.v1"
     IMAGE_PASSTHROUGH_V1 = "image.passthrough.v1"
     AUDIO_PASSTHROUGH_V1 = "audio.passthrough.v1"
     VIDEO_PASSTHROUGH_V1 = "video.passthrough.v1"
@@ -45,6 +49,8 @@ class PromptTemplateId(StrEnum):
 class ValidatorId(StrEnum):
     SCRIPT_OUTPUT = "script_output"
     NON_EMPTY_TEXT = "non_empty_text"
+    IP_WORLDVIEW_TEXT = "ip_worldview_text"
+    CHARACTER_PROFILES_TEXT = "character_profiles_text"
     GENERATED_IMAGE = "generated_image"
     GENERATED_AUDIO = "generated_audio"
     GENERATED_VIDEO = "generated_video"

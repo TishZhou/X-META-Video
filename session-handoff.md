@@ -3,9 +3,22 @@
 ## Verified Now
 
 - Repository root: `D:\X-META-Video`
-- Feature 1 Web Design, Feature 2 Workflow Canvas Foundation, Feature 3 Script Node, Feature 5 Image Node, Feature 8 Audio Node, Feature 9 Video Node, and Feature 16 Agent Runtime Foundation are recorded as `passing`.
-- Current active feature: Feature 16 Agent Runtime Foundation is accepted after final compatibility-shim removal at 149/150.
-- Next broader unfinished feature remains Feature 4 Storyboard Node unless the user selects another media/export task.
+- Feature 1 Web Design, Feature 2 Workflow Canvas Foundation, the previously accepted Feature 3 Script baseline, Feature 5 Image Node, Feature 8 Audio Node, Feature 9 Video Node, and Feature 16 Agent Runtime Foundation remain recorded as `passing`.
+- Feature 3 `script-node-011` Text Node Task Choice V1 is `passing`. Automated verification, live-provider execution, Codex in-app Browser E2E, and independent evaluation all passed; the final score is 156/160.
+- No Computer Use, Chrome, or standalone Playwright was used. The verified workspace remains open in the Codex in-app Browser as the deliverable tab.
+
+## Feature 3 Text Node Task Choice State
+
+- Visible Text nodes keep the internal workflow type `script` for compatibility and expose exactly two node-local tasks through a shadcn Select.
+- Task 1 `ip_worldview` expands a brief into IP/narrative positioning, world rules/dimensions, and named character positioning; it returns an editable `script` outcome.
+- Task 2 `character_profiles` consumes connected Task 1, then same-node Task 1, then manual text. It returns an editable natural-language `character` outcome covering appearance, personality/action, and voice/timbre without requiring JSON, fixed labels, or delimiter tags.
+- Generate uses `POST /api/v1/projects/{project_id}/nodes/{node_id}/generate-text`; `/chat` remains only for unchanged AI modify/dialogue behavior.
+- One canonical editable `content` value drives both the user-visible result and downstream transfer. Compact metadata carries task, data type, source, prompt-template, provider, and model without duplicating the long text.
+- Deleted outcome nodes are not valid cached sources. Task 1 and Task 2 results use separate non-overlapping canvas positions.
+- Automated evidence: focused Text API 8/8; full API 80/80; Ruff; focused jsdom interaction; full Web 10 files / 63 tests; typecheck; build; JSON; diff; docs truth search; typed OpenAPI; and final `init.ps1` passed.
+- Live Codex Browser evidence: `openai / gpt-5.4-mini`; Task 1 generated and remained editable, Task 2 visibly used the same-node Task 1 outcome, and the successful retry returned 1,651 free-form characters with Mira, Luna, Iris, and Zora plus appearance, personality/action, and voice/timbre content. Both outcomes were editable, provider-labelled, and non-overlapping; viewport screenshots and console logs passed.
+- Independent evaluation: Round 1 126/160; Round 2 143/160 but Browser-blocked; Revision 3/4 final 156/160 and accepted with no blocking defect.
+- Next best step: begin the next node vertical while reusing the shared Text generation contract and keeping task-specific behavior in Agent Runtime profiles.
 
 ## Feature 16 Agent Runtime State
 

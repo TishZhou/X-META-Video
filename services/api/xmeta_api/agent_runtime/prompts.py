@@ -7,6 +7,54 @@ from ..schemas import ScriptDialogueMessage, ScriptDialogueMode, ScriptInput
 from .contracts import MemoryScope, PromptTemplateId
 
 
+TEXT_GENERATION_COMMON_RULES = (
+    "Return editable plain text in the input's primary language. "
+    "Do not return JSON, markdown fences, provider data, duplicated source text, "
+    "or claims that media generation, durable storage, or persistence is complete. "
+    "Use concrete, internally consistent production language that downstream creative "
+    "tasks can reuse without extra explanatory commentary."
+)
+
+
+def _build_text_generation_prompt(*, task_instructions: str, content: str) -> str:
+    return (
+        "You are the Text Node agent inside X-META Video.\n"
+        f"Shared rules: {TEXT_GENERATION_COMMON_RULES}\n"
+        f"Task instructions: {task_instructions}\n"
+        f"Canonical input:\n{content}\n"
+        "Editable output:"
+    )
+
+
+def build_ip_worldview_prompt(content: str) -> str:
+    return _build_text_generation_prompt(
+        task_instructions=(
+            "Expand the brief into an IP narrative and world-view document. Include "
+            "explicit labeled sections for IP/narrative positioning, core theme, world "
+            "rules or dimensions, and named character positioning. Keep character roles, "
+            "abilities, relationships, and story function mutually consistent."
+        ),
+        content=content,
+    )
+
+
+def build_character_profiles_prompt(content: str) -> str:
+    return _build_text_generation_prompt(
+        task_instructions=(
+            "Use the supplied Task 1 world-view content as the source of truth. Cover every "
+            "named character from that source without omission. For each character, include "
+            "concrete appearance/visual look details (外貌、视觉造型、发型、穿搭), "
+            "personality/temperament and action/movement language "
+            "(性格、个性、气质、动作、肢体), and a distinct voice/vocal tone/timbre "
+            "description (声线、嗓音、人声、唱腔、音色) suitable for voice generation. "
+            "Write natural, editable plain text in any clear format; these concepts are content "
+            "guidance, not required labels. Do not require fixed labels, delimiters, JSON, or "
+            "another schema."
+        ),
+        content=content,
+    )
+
+
 def build_script_prompt(script_input: ScriptInput) -> str:
     fields = [
         ("MV world description", script_input.world_description),
@@ -93,6 +141,17 @@ def render_prompt_template(
             user_message=user_message,
             mode=mode,
         )
+    elif template_id in {
+        PromptTemplateId.TEXT_IP_WORLDVIEW_V1,
+        PromptTemplateId.TEXT_CHARACTER_PROFILES_V1,
+    }:
+        content = inputs["content"]
+        if not isinstance(content, str):
+            raise TypeError("content must be a string.")
+        if template_id == PromptTemplateId.TEXT_IP_WORLDVIEW_V1:
+            prompt = build_ip_worldview_prompt(content)
+        else:
+            prompt = build_character_profiles_prompt(content)
     else:
         prompt_value = inputs["prompt"]
         if not isinstance(prompt_value, str):

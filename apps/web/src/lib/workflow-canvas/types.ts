@@ -1,3 +1,8 @@
+import type {
+  TextGenerationInputSource,
+  TextGenerationTask,
+} from "@xmeta/shared-contracts";
+
 export type WorkflowNodeType =
   | "script"
   | "storyboard"
@@ -21,7 +26,11 @@ export type WorkflowDataType =
 
 export type WorkflowPortDirection = "input" | "output";
 
-export type WorkflowNodeStatus = "placeholder" | "running" | "ready" | "blocked";
+export type WorkflowNodeStatus =
+  | "placeholder"
+  | "running"
+  | "ready"
+  | "blocked";
 export type WorkflowNodeRole = "source" | "outcome";
 
 export type WorkflowPoint = {
@@ -58,6 +67,9 @@ export type WorkflowNodeOutput = {
   sourceNodeId: string;
   dataType: WorkflowDataType;
   label: string;
+  task?: TextGenerationTask;
+  inputSource?: TextGenerationInputSource;
+  promptTemplateId?: string;
   provider?: string | null;
   model?: string | null;
   editable: boolean;

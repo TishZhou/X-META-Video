@@ -36,6 +36,73 @@ class ScriptSettings(BaseModel):
     temperature: float | None = Field(default=None, ge=0, le=2)
 
 
+class TextGenerationTask(StrEnum):
+    IP_WORLDVIEW = "ip_worldview"
+    CHARACTER_PROFILES = "character_profiles"
+
+
+class TextDataType(StrEnum):
+    SCRIPT = "script"
+    CHARACTER = "character"
+
+
+class TextInputSourceType(StrEnum):
+    MANUAL = "manual"
+    SAME_NODE_TASK_1 = "same_node_task_1"
+    CONNECTED_TASK_1 = "connected_task_1"
+
+
+class TextGenerationInputSource(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    type: TextInputSourceType
+    source_node_id: str | None = Field(default=None, min_length=1)
+    source_task: TextGenerationTask | None = None
+
+    @model_validator(mode="after")
+    def validate_task_1_source(self) -> "TextGenerationInputSource":
+        if self.type == TextInputSourceType.MANUAL:
+            return self
+        if not self.source_node_id:
+            raise ValueError("Task 1 input sources require source_node_id.")
+        if self.source_task != TextGenerationTask.IP_WORLDVIEW:
+            raise ValueError("Task 1 input sources must identify the ip_worldview task.")
+        return self
+
+
+class TextGenerationInput(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    content: str = Field(..., min_length=1, max_length=50000)
+    source: TextGenerationInputSource
+
+
+class TextGenerationRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    task: TextGenerationTask
+    input: TextGenerationInput
+    settings: ScriptSettings = Field(default_factory=ScriptSettings)
+
+
+class TextGenerationMetadata(BaseModel):
+    task: TextGenerationTask
+    data_type: TextDataType
+    input_source: TextGenerationInputSource
+    prompt_template_id: str
+
+
+class TextGenerationResponse(BaseModel):
+    project_id: str
+    node_id: str
+    node_type: str = "script"
+    provider: str
+    model: str | None = None
+    content: str
+    metadata: TextGenerationMetadata
+    persisted: bool = False
+
+
 class ScriptNodeSaveRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 

@@ -100,6 +100,7 @@ Workflow APIs support the canvas-based node editor.
 | `GET` | `/projects/{project_id}/nodes/{node_id}` | Load node input/output state | member |
 | `PATCH` | `/projects/{project_id}/nodes/{node_id}` | Save node input, settings, or selected output | editor |
 | `POST` | `/projects/{project_id}/nodes/{node_id}/chat` | Send one backend-connected Script node AI dialogue turn | editor |
+| `POST` | `/projects/{project_id}/nodes/{node_id}/generate-text` | Run one selected Text node task and return editable text | editor |
 | `POST` | `/projects/{project_id}/nodes/{node_id}/generate-image` | Generate or edit one image preview for Character Image, Prop / Asset, or Scene Image nodes | editor |
 | `POST` | `/projects/{project_id}/nodes/{node_id}/generate-audio` | Generate one text-to-music or reference-audio edit preview for Audio nodes | editor |
 | `POST` | `/projects/{project_id}/nodes/{node_id}/generate-video` | Generate one video preview for Video nodes from prompt plus optional image/audio references | editor |
@@ -139,7 +140,85 @@ For `node_type=script`, `input` uses this shape:
 }
 ```
 
-The MVP Script Node intentionally accepts one world-view description from the AI chat input. The backend prompt builder expands that single input into downstream-ready structure.
+The MVP Text node accepts one canonical editable text input. Its Generate button uses the dedicated typed Text task route below; AI modify remains a separate dialogue action.
+
+### Text Node Task Generation
+
+The Text node Generate button calls this route for both supported tasks:
+
+```txt
+POST /api/v1/projects/{project_id}/nodes/{node_id}/generate-text
+```
+
+`task` is exactly `ip_worldview` or `character_profiles`. `input.content` is the one canonical payload passed between Text agents and shown in the editable outcome; compact execution details stay in `metadata` instead of being duplicated into the user-visible text.
+
+Task 1 manual brief request:
+
+```json
+{
+  "task": "ip_worldview",
+  "input": {
+    "content": "Four girls awaken an ice dream world through song and dance.",
+    "source": {
+      "type": "manual"
+    }
+  },
+  "settings": {
+    "provider": "openai-compatible",
+    "model": "gpt-5.4-mini"
+  }
+}
+```
+
+Task 2 request using a connected live Task 1 outcome:
+
+```json
+{
+  "task": "character_profiles",
+  "input": {
+    "content": "IP narrative, world rules, and named character positioning from Task 1.",
+    "source": {
+      "type": "connected_task_1",
+      "source_node_id": "script-1:script-outcome",
+      "source_task": "ip_worldview"
+    }
+  }
+}
+```
+
+Before making the Task 2 request, the web app resolves one source in this order:
+
+1. A connected, live outcome whose metadata declares `task=ip_worldview` and `data_type=script`.
+2. A live Task 1 outcome belonging to the same Text node.
+3. The manually pasted Text node input.
+
+The corresponding source values are `connected_task_1`, `same_node_task_1`, and `manual`. Non-manual sources require both `source_node_id` and `source_task=ip_worldview`. Cached text whose graph outcome node was deleted is not a live source and must fall back to manual input.
+
+Successful response:
+
+```json
+{
+  "project_id": "project_123",
+  "node_id": "script-1",
+  "node_type": "script",
+  "provider": "openai-compatible",
+  "model": "gpt-5.4-mini",
+  "content": "Editable generated text shown in the outcome node.",
+  "metadata": {
+    "task": "character_profiles",
+    "data_type": "character",
+    "input_source": {
+      "type": "same_node_task_1",
+      "source_node_id": "script-1:script-outcome",
+      "source_task": "ip_worldview"
+    },
+    "prompt_template_id": "text.character_profiles.v1"
+  },
+  "persisted": false
+}
+```
+
+Task 1 returns `data_type=script` with prompt template `text.ip_worldview.v1`. Task 2 returns `data_type=character` with prompt template `text.character_profiles.v1`. Task 2 output is natural editable plain text in any clear presentation format: it does not require JSON, a schema, fixed labels, or delimiter tags. It should cover every named character from Task 1 and include appearance, personality/action, and voice/timbre information. Output validation checks those content elements globally without enforcing organization and recognizes natural synonym families: appearance/visual/look plus 外貌、外观、视觉、造型、发型、穿搭; personality/action/temperament/movement plus 性格、动作、个性、气质、肢体; and voice/timbre/vocal/tone plus 声线、音色、嗓音、唱腔、人声.
 
 ### Script Node Dialogue
 For `node_type=script`, the chat endpoint accepts the current input, optional text-provider settings, prior dialogue history, and the latest user message:
@@ -185,33 +264,10 @@ Response:
 
 The web app must display the returned `provider` and `model` beside Script AI replies and generated direct-text output. A frontend model selector label is not proof of live LLM execution.
 
-The dialogue endpoint is a request/response backend AI chat path for Feature 3. Use `mode=dialogue` for normal AI modify turns and `mode=direct_output` when Generate should produce editable natural text for a canvas outcome node. It does not ask the model for JSON in direct-output mode.
-
-### Script Node Direct Text Outcome
-The current web Generate action uses `POST /chat` with `mode=direct_output` and renders the returned assistant message as editable natural text in a canvas outcome node. The direct-output path must not ask the model for JSON or a fixed schema.
-
-Direct-output request:
-
-```json
-{
-  "input": {
-    "world_description": "A sweet summer MV world with two girls, a desert jeep, and a neon stage."
-  },
-  "settings": {
-    "provider": "openai-compatible",
-    "model": "gpt-5.4-mini"
-  },
-  "history": [
-    { "role": "user", "content": "Make the chorus feel more dramatic." },
-    { "role": "assistant", "content": "Add a conflict beat before the chorus payoff." }
-  ],
-  "message": "Directly write the Script node result as editable natural text. Do not return JSON.",
-  "mode": "direct_output"
-}
-```
+The `/chat` endpoint is only the request/response AI modify and dialogue path. The current Text node Generate action does not use `/chat`; it uses `/generate-text` so task identity, input provenance, output data type, and prompt-template metadata remain typed and inspectable.
 
 ### Script Node Structured Output Contract
-The older `/run` task path still returns structured JSON under `output` for compatibility and backend tests, but the current task10 web Generate flow does not use this path because direct text avoids JSON truncation risk:
+The older `/run` task path still returns structured JSON under `output` for compatibility and backend tests, but the current Text node Generate flow does not use this path:
 
 ```json
 {
