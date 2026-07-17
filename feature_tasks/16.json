@@ -38,6 +38,33 @@
         "JSON validation, full git diff --check, and final .\\init.ps1 passed.",
         "Independent evaluator accepted round 2 at 147/150."
       ]
+    },
+    {
+      "id": "agent-runtime-002",
+      "title": "Split node executors into dedicated modules",
+      "status": "passing",
+      "scope": [
+        "Add agent_runtime/runtime.py as the unified AgentRuntime facade.",
+        "Add agent_runtime/nodes/text.py, image.py, audio.py, and video.py with node-specific execution ownership.",
+        "Keep agent_runtime/handlers.py as a compatibility import only so existing callers do not break.",
+        "Preserve all public FastAPI routes, request/response models, prompt compilation, memory selection, validators, retries, and provider call semantics.",
+        "Do not change frontend files, provider implementations, Task Profiles, prompts, or persistent-state behavior.",
+        "Add focused structural and behavior regression tests for the split modules."
+      ],
+      "verification": [
+        "Run focused Agent Runtime pytest coverage.",
+        "Run the full services/api pytest suite and Ruff checks.",
+        "Run full web tests to prove API/canvas compatibility.",
+        "Run JSON validation, git diff --check, live local API smoke, and final .\\init.ps1."
+      ],
+      "evidence": [
+        "Added agent_runtime/runtime.py as the unified facade and moved Text, Image, Audio, and Video execution into dedicated nodes/text.py, nodes/image.py, nodes/audio.py, and nodes/video.py modules.",
+        "Reduced handlers.py to compatibility re-exports while preserving package-level and legacy AgentRuntime import identity.",
+        "Focused Agent Runtime pytest passed 17 tests; full API pytest passed 72 tests; Ruff passed; full web tests passed 9 files / 58 tests.",
+        "JSON validation, git diff --check, final init.ps1, and local Uvicorn/OpenAPI smoke passed without external model calls.",
+        "Protected frontend, provider, main API, profile, prompt, memory, and validator boundaries had no implementation diff.",
+        "Independent evaluator accepted round 1 at 148/150."
+      ]
     }
   ]
 }

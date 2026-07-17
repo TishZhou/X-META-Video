@@ -1,62 +1,57 @@
-# Evaluator Rubric - Feature 16 Agent Runtime Foundation
+# Evaluator Rubric - Feature 16 Agent Runtime Node Split
 
-Updated: 2026-07-17 round 2
+Updated: 2026-07-17 agent-runtime-002 independent evaluation round 1
 
 ## Evaluation Scope
 
-- Role: independent evaluator for Feature 16 `agent-runtime-001`.
-- Scope reviewed: the complete Agent Runtime package, FastAPI route integration, compatibility imports, task profiles, memory selection, prompt compilation, typed validation, bounded Runtime retry, existing provider boundary, focused/regression tests, architecture documentation, and repository hygiene.
-- Protected boundaries: canvas topology remains user-authored; no frontend behavior, public route, provider HTTP payload, credential, retry, or supported-model changes are permitted.
-- `AGENTS.md` is treated as an external shared change and was not modified or scored as Feature 16 implementation.
+- Role: independent evaluator for Feature 16 `agent-runtime-002`.
+- Scope reviewed: `runtime.py`, `nodes/text.py`, `nodes/image.py`, `nodes/audio.py`, `nodes/video.py`, compatibility imports, focused regression tests, architecture documentation, and protected-boundary diffs.
+- Protected boundaries: no frontend behavior, public FastAPI route, provider implementation, Task Profile, prompt, Memory, validator, or persistent-state changes were permitted.
+- `AGENTS.md` was treated as the user's external uncommitted change and was neither modified nor scored as implementation.
 
 ## Scorecard
 
 | Criterion | Points | Current | Evidence |
 | --- | ---: | ---: | --- |
-| Scope fit and boundary isolation | 15 | 15 | No frontend files changed. Runtime executes only the user-selected node task and does not mutate canvas topology. Provider HTTP and credential logic remains in `providers.py`. |
-| Module organization and contracts | 20 | 19 | Contracts, profiles, registry, memory, compiler, prompts, retry, validators, and handlers have clear ownership, with compatibility exports for old imports. Typed handlers still reference current provider-specific settings classes rather than a provider-neutral gateway protocol. |
-| Task-profile completeness | 20 | 19 | Seven profiles cover all current Script/dialogue, character/prop/scene image, music, and video tasks across all four node kinds. Each declares inputs, memory scopes, template, output, validator, and retry limit; focused tests assert identity coverage and default retry policy, though not every exact field tuple. |
-| Memory-scope enforcement and truthfulness | 20 | 20 | Compiler requests only declared scopes and filters an over-returning reader. The default reader returns no memory and does not imply approved, durable, or database-backed project memory exists. |
-| Prompt and API compatibility | 20 | 19 | Empty-memory Script prompt equality, dialogue compilation, image/audio/video passthrough inputs, response shapes, Script failed-state behavior, and task-id-only video behavior are covered. Durable or non-empty production memory remains intentionally unavailable. |
-| Provider and route contract preservation | 20 | 20 | All current FastAPI paths and response contracts remain unchanged. Existing SeedDream, MiniMax, Ark Seedance, and Script tests pass; dialogue provider failures still map to 502. No provider implementation changed. |
-| Validation and retry truthfulness | 15 | 15 | `run_with_task_retry` consumes an explicitly configured bounded retry limit. All shipped profiles use zero Runtime retries, preserving existing provider retry semantics and call counts. Empty text/image/audio/video results are rejected by typed validators. |
-| Verification and test depth | 15 | 15 | Focused Runtime tests expanded from 5 to 15 and now cover retry, dialogue, Script failure state, route 502, audio, queued video, and invalid validators. Full API, Ruff, web, JSON, diff, live-server smoke, and final startup checks passed. |
-| Repository and artifact hygiene | 5 | 5 | Full `git diff --check` passes, JSON is valid, no temporary files or frontend edits were introduced, and the external `AGENTS.md` change remains untouched. |
+| Scope fit and boundary isolation | 15 | 15 | The diff is limited to the planned Agent Runtime split, tests, architecture, and sprint artifacts; protected code has no diff. |
+| Module organization and contracts | 20 | 20 | `runtime.py` is the unified facade; four node kinds have dedicated executors; `handlers.py` is compatibility-only. |
+| Task-profile completeness | 20 | 20 | Registry and profiles are unchanged; the full API suite proves all seven existing task identities remain usable. |
+| Memory-scope enforcement and truthfulness | 20 | 20 | The existing compiler and Memory reader are injected unchanged into every executor; no persistence or one-click orchestration is claimed. |
+| Prompt and API compatibility | 20 | 20 | Prompt input maps, response construction, facade method names, and root/legacy imports are preserved. |
+| Provider and route contract preservation | 20 | 20 | Provider and `main.py` diffs are empty; existing executors receive the same settings and keyword arguments. |
+| Validation and retry truthfulness | 15 | 15 | Each node executor retains `run_with_task_retry` and typed validation in the same execution order. |
+| Verification and test depth | 15 | 14 | Focused, full API, full Web, Ruff, JSON, diff, startup, and local-process API smoke all passed; no live provider call was needed for this structural refactor. |
+| Repository and artifact hygiene | 5 | 4 | Diff check is clean and no temporary process remains; final status/artifact completion and commit are intentionally left to the main agent. |
 
-Current score: 147 / 150
+Current score: 148 / 150
 
 ## Acceptance Evidence
 
-- `xmeta_api.agent_runtime` is the route-level execution entry point for current Text, Image, Audio, and Video node tasks.
-- `TaskId`, `NodeKind`, `MemoryScope`, `PromptTemplateId`, `ValidatorId`, immutable `TaskProfile`, registry, compiler, validators, and retry runner establish reusable contracts.
-- The default registry contains all seven currently implemented task identities and all four current node kinds.
-- Prompt compilation rejects missing declared inputs and injects only memory returned for the selected profile's declared scopes.
-- `EmptyProjectMemoryReader` truthfully represents the current non-durable MVP; PostgreSQL memory, approval workflows, worker execution, one-click generation, and graph rewiring are not claimed.
-- Script prompt/execution ownership is in Agent Runtime, while `xmeta_api.prompt` and `xmeta_api.runner` preserve previous imports.
-- FastAPI resolves current settings and injects existing provider operations into typed Runtime handlers; provider payload construction and provider-level retry remain unchanged.
-- Runtime retry is executable and bounded for a custom profile, while all production profiles set `retry_limit=0` to avoid stacking retries over existing providers.
-- Focused tests prove dialogue prompt compilation, Script failed task state, HTTP 502 mapping, audio input preservation, task-id-only video honesty, and rejection of empty typed outputs.
-- No `apps/web` file changed, and the complete frontend suite remains green.
+- `xmeta_api.agent_runtime.runtime.AgentRuntime` is the package-level Runtime class and delegates Text, Image, Audio, and Video work without implementing node-specific generation.
+- `TextNodeExecutor`, `ImageNodeExecutor`, `AudioNodeExecutor`, and `VideoNodeExecutor` own the corresponding execution methods in separate modules.
+- `xmeta_api.agent_runtime.handlers.AgentRuntime` remains identical to the facade class, preserving the previous import path.
+- Script task state transitions, dialogue calls, prompt compilation, profile lookup, Runtime retries, typed validation, response fields, and provider call arguments remain equivalent to the previous aggregated handler.
+- No `apps/web`, `providers.py`, `main.py`, profiles, prompts, Memory, or validator file changed.
+- Architecture documentation truthfully describes the facade/delegation boundary and retains the non-durable Memory/provider limitations.
 
 ## Verification Evidence
 
-- `\.venv\Scripts\python.exe -m pytest services\api\tests\test_agent_runtime.py -q` passed: 15 tests, with one existing Starlette/httpx deprecation warning.
-- `\.venv\Scripts\python.exe -m pytest services\api\tests -q` passed: 70 tests, with the same existing deprecation warning.
-- `\.venv\Scripts\python.exe -m ruff check services\api` passed.
-- `corepack pnpm --filter @xmeta/web test` passed: 9 files / 58 tests.
-- PowerShell `ConvertFrom-Json` validation passed for `feature_list.json` and `feature_tasks/16.json`.
-- Full `git diff --check` passed; line-ending conversion notices were informational only.
-- Live local Uvicorn smoke passed with dotenv disabled: `/openapi.json` returned 200 with 8 paths, and Image generation returned the expected truthful 503 naming missing `DOUBAO_API_KEY` without leaking a key.
-- Final `.\init.ps1` passed: dependencies were current and the standard verification reran 9 web test files / 58 tests successfully.
+- Focused Agent Runtime: `.\.venv\Scripts\python.exe -m pytest services\api\tests\test_agent_runtime.py -q` -> 17 passed.
+- Full API: `.\.venv\Scripts\python.exe -m pytest services\api\tests -q` -> 72 passed.
+- Ruff: `.\.venv\Scripts\python.exe -m ruff check services\api` -> all checks passed.
+- Full Web: `pnpm --filter @xmeta/web test` -> 9 files / 58 tests passed.
+- JSON: `feature_list.json` and `feature_tasks/16.json` parsed successfully with `python -m json.tool`.
+- Whitespace: `git diff --check` passed; only line-ending conversion warnings were emitted.
+- Protected-boundary check: frontend, provider, main API, profiles, prompts, Memory, and validators all had empty diffs.
+- Local-process API smoke: Uvicorn served OpenAPI 200 with 8 paths; a real PATCH saved Script node version 1; POST run returned the expected truthful 503 for an explicitly unsupported provider. No model/provider request was made.
+- Final startup: `.\init.ps1` passed and reran 9 Web files / 58 tests.
 
 ## Findings
 
-- No open acceptance-blocking findings.
-- Residual: all external model executions in verification used injected fakes/custom HTTP transports, or the live local server's deliberate missing-config path. No production provider credential was used and no live external generation is claimed.
-- Residual: project memory remains empty and non-durable by design. Future persistent memory must enforce approval, tenant/project scope, and exact asset versions before replacing the current reader.
-- Residual: if a future profile enables Runtime retries, exception classification should be considered so permanent configuration/client errors are not retried; current profiles are zero, so current behavior and provider retry semantics are preserved.
-- Residual: handlers currently use provider-specific settings types. A provider-neutral gateway protocol may be useful when multiple model adapters are introduced, but it is not required for this compatibility-focused foundation.
+- No acceptance-blocking defects found.
+- The local smoke deliberately tested the API integration and error boundary without external credentials; it is not evidence of live model execution and is not represented as such.
+- The only uncommitted file outside sprint scope is the user-owned `AGENTS.md`; it must remain excluded from the feature commit.
 
 ## Verdict
 
-Accepted at 147 / 150 for Feature 16 `agent-runtime-001`. The second round resolves the prior mandatory diff failure, makes bounded Runtime retry executable without changing current provider retry behavior, and adds the missing handler, failure, route-mapping, queued-video, and validator coverage.
+ACCEPTED. Score 148/150 exceeds the required threshold of strictly greater than 140. The node-file split is behavior-preserving, appropriately bounded, independently verified, and ready for the main agent to finalize artifacts and commit.

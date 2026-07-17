@@ -19,6 +19,14 @@ from xmeta_api.agent_runtime import (
     create_default_task_registry,
 )
 from xmeta_api.agent_runtime.memory import ProjectMemoryReader
+from xmeta_api.agent_runtime.handlers import AgentRuntime as CompatibilityAgentRuntime
+from xmeta_api.agent_runtime.nodes import (
+    AudioNodeExecutor,
+    ImageNodeExecutor,
+    TextNodeExecutor,
+    VideoNodeExecutor,
+)
+from xmeta_api.agent_runtime.runtime import AgentRuntime as FacadeAgentRuntime
 from xmeta_api.agent_runtime.validators import (
     RuntimeOutputValidationError,
     validate_output,
@@ -87,6 +95,22 @@ class DialogueProvider:
         del script_input, history, user_message
         self.prompts.append(prompt)
         return self.reply
+
+
+def test_runtime_facade_owns_agent_runtime_and_compatibility_import_is_stable() -> None:
+    assert AgentRuntime is FacadeAgentRuntime
+    assert CompatibilityAgentRuntime is FacadeAgentRuntime
+    assert AgentRuntime.__module__ == "xmeta_api.agent_runtime.runtime"
+
+
+def test_node_executors_own_node_specific_execution() -> None:
+    assert (
+        TextNodeExecutor.run_script_task_sync.__module__
+        == "xmeta_api.agent_runtime.nodes.text"
+    )
+    assert ImageNodeExecutor.run_generation.__module__ == "xmeta_api.agent_runtime.nodes.image"
+    assert AudioNodeExecutor.run_generation.__module__ == "xmeta_api.agent_runtime.nodes.audio"
+    assert VideoNodeExecutor.run_generation.__module__ == "xmeta_api.agent_runtime.nodes.video"
 
 
 def test_default_registry_declares_contracts_for_each_current_node_kind() -> None:

@@ -4,13 +4,14 @@
 
 - Repository root: `D:\X-META-Video`
 - Feature 1 Web Design, Feature 2 Workflow Canvas Foundation, Feature 3 Script Node, Feature 5 Image Node, Feature 8 Audio Node, Feature 9 Video Node, and Feature 16 Agent Runtime Foundation are recorded as `passing`.
-- Current active feature: Feature 16 Agent Runtime Foundation is accepted at 147/150 after two evaluator rounds.
+- Current active feature: Feature 16 Agent Runtime Foundation is accepted after the node-file split at 148/150.
 - Next broader unfinished feature remains Feature 4 Storyboard Node unless the user selects another media/export task.
 
 ## Feature 16 Agent Runtime State
 
-- Current Text, Image, Audio, and Video generation routes delegate node execution to `services/api/xmeta_api/agent_runtime`.
-- Agent Runtime owns task contracts, seven current Task Profiles, registry lookup, scoped memory selection, Prompt compilation, bounded Runtime retry, typed result validation, and node handlers.
+- Current Text, Image, Audio, and Video generation routes delegate through `services/api/xmeta_api/agent_runtime/runtime.py`.
+- `runtime.py` is the unified facade; Text, Image, Audio, and Video execution lives separately in `nodes/text.py`, `nodes/image.py`, `nodes/audio.py`, and `nodes/video.py`; `handlers.py` remains a legacy compatibility import.
+- Agent Runtime owns task contracts, seven current Task Profiles, registry lookup, scoped memory selection, Prompt compilation, bounded Runtime retry, typed result validation, and node executors.
 - The canvas graph remains user-authored. Agent Runtime does not add, remove, reconnect, or automatically run canvas nodes.
 - All shipped Task Profiles use `retry_limit=0`, preserving existing provider-level retry behavior. The Runtime consumes nonzero limits and a focused test proves one bounded retry can recover from a transient failure.
 - `EmptyProjectMemoryReader` is intentionally empty and non-durable. Future project memory must add approval, tenant/project scope, and exact asset-version enforcement.
@@ -79,6 +80,12 @@
 - `ARK_API_KEY` is still empty locally, so live Ark execution was not attempted.
 
 ## Verification Evidence
+
+- Agent Runtime node split focused pytest passed: 17 tests.
+- Full API pytest passed: 72 tests; Ruff passed.
+- Full web tests passed: 9 files / 58 tests.
+- JSON validation, full `git diff --check`, local Uvicorn/OpenAPI smoke, and final `./init.ps1` passed.
+- Independent evaluator accepted the node split at 148/150.
 
 - Feature 16 Agent Runtime focused pytest passed: 15 tests.
 - Full API pytest passed: 70 tests; Ruff passed.

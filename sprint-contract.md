@@ -1,24 +1,24 @@
-# Sprint Contract - Feature 16 Agent Runtime Foundation
+# Sprint Contract - Feature 16 Agent Runtime Node Split
 
 ## Sprint Overview
 
-**Sprint:** feature-16-agent-runtime-foundation
+**Sprint:** feature-16-agent-runtime-node-split
 
 **Feature:** Feature 16, Agent Runtime Foundation
 
-**Task:** agent-runtime-001
+**Task:** agent-runtime-002
 
 **Status:** passing
-**Goal:** Organize the existing backend text, image, audio, and video node execution behind a reusable Agent Runtime module so future canvas-node task profiles, prompt compilation, memory selection, validation, and model routing can evolve without duplicating route or provider logic.
+
+**Goal:** Split the current aggregated Agent Runtime node handlers into dedicated Text, Image, Audio, and Video executor modules while preserving the unified Runtime entry point and every existing API/provider behavior.
 
 ## Write Scope
 
-- `services/api/xmeta_api/agent_runtime/**`
-- `services/api/xmeta_api/main.py`
-- `services/api/xmeta_api/prompt.py`
-- `services/api/xmeta_api/runner.py`
+- `services/api/xmeta_api/agent_runtime/runtime.py`
+- `services/api/xmeta_api/agent_runtime/handlers.py`
+- `services/api/xmeta_api/agent_runtime/nodes/**`
+- `services/api/xmeta_api/agent_runtime/__init__.py`
 - `services/api/tests/test_agent_runtime.py`
-- Existing backend node tests only when imports must follow the new ownership boundary
 - `docs/ARCHITECTURE.md`
 - `feature_tasks/16.json`
 - `feature_list.json`
@@ -29,41 +29,38 @@
 
 Protected boundaries:
 
-- Do not change the canvas UI or frontend node behavior.
-- Do not change public FastAPI route paths or request/response payloads.
-- Do not change provider HTTP payload semantics, credentials, retry behavior, or supported model names.
-- Do not claim durable project memory, PostgreSQL persistence, worker execution, one-click workflow orchestration, or automatic canvas rewiring exists.
-- Keep user-authored canvas connections authoritative; Agent Runtime executes a selected node task and does not alter graph topology.
+- Do not modify frontend code or canvas behavior.
+- Do not modify provider implementations, settings, payloads, credentials, supported models, or retry semantics.
+- Do not modify public FastAPI route paths or request/response contracts.
+- Do not add persistent Memory, one-click workflow execution, automatic graph rewiring, or new business Task Profiles.
+- Preserve the external uncommitted `AGENTS.md` change without editing or committing it.
 
 ## In Scope
 
-- Add one reusable Agent Runtime package with task profiles for currently implemented node tasks.
-- Define explicit task identity, node kind, required inputs, memory scopes, prompt-template identity, output identity, validator identity, and retry limits.
-- Add a replaceable project-memory reader contract and a truthful empty/default implementation for the current MVP.
-- Move Script prompt compilation and Script task execution into the new module.
-- Route current text, image, audio, and video generation through typed Agent Runtime handlers.
-- Preserve compatibility for existing imports and all existing backend/frontend behavior.
-- Add focused contract and route-regression tests.
+- Move the `AgentRuntime` facade into `runtime.py`.
+- Move Text, Image, Audio, and Video execution logic into one dedicated module per node kind under `nodes/`.
+- Keep dependency injection explicit so node modules receive profiles, Prompt Compiler, providers/executors, stores, and typed requests.
+- Reduce `handlers.py` to a compatibility re-export.
+- Add import-boundary and behavior-regression tests.
 
 ## Acceptance Criteria
 
-1. `xmeta_api.agent_runtime` is the single backend entry point for current node-agent execution and exposes registered task profiles for text, image, audio, and video.
-2. Every registered task profile declares its node kind, prompt template, memory reads, output type, validator, and bounded retry policy.
-3. Prompt compilation reads only the memory scopes declared by the selected profile.
-4. Current FastAPI endpoints retain their exact paths and response shapes and still call the existing providers with equivalent inputs.
-5. Provider-specific implementation remains outside Agent Runtime and existing provider tests continue to pass.
-6. No frontend files change and full web tests remain passing.
-7. Focused Agent Runtime tests, full API tests, Ruff, JSON validation, diff checks, and final startup verification pass with evidence recorded.
+1. `runtime.py` is the unified Agent Runtime facade used by package exports and FastAPI.
+2. Text, Image, Audio, and Video execution logic lives in separate `nodes/*.py` files.
+3. `handlers.py` contains no node execution implementation and preserves the previous import path.
+4. Existing task profile lookup, Memory scoping, Prompt compilation, bounded Runtime retries, typed validation, and response construction remain equivalent.
+5. Current provider call counts and request arguments remain unchanged.
+6. No frontend or provider implementation files change.
+7. Focused/full API tests, Ruff, full web tests, JSON validation, diff check, local API smoke, and final startup verification pass.
+8. Independent evaluator score exceeds 140/150.
 
 ## Sprint Log
 
 | Phase | Outcome |
 | --- | --- |
-| Baseline | Confirmed `D:\\X-META-Video`, read required product/architecture/state files, and verified a clean `main` branch. |
-| Startup | `./init.ps1` passed before implementation and reran web tests: 9 files / 58 tests. |
-| Planning | Scoped one backend-only feature around organizing existing execution, preserving public contracts and provider behavior. |
-| Implementation | Round 1 created the Agent Runtime package, moved Script prompt/execution ownership, and routed existing generation endpoints through typed handlers. |
-| Evaluation round 1 | Scored 137/150. Functional checks passed; revision required for task-level retry semantics, focused handler/validator coverage, and sprint-contract whitespace. |
-| Revision round 2 | Runtime now consumes bounded retry metadata; current profiles use zero Runtime retries to preserve provider behavior; focused coverage expanded to 15 tests. |
-| Verification | Agent Runtime 15 passed; full API 70 passed; Ruff passed; web 58 passed; JSON, live local Uvicorn smoke, full diff check, and final `./init.ps1` passed. |
-| Evaluation round 2 | Accepted at 147/150 with no open acceptance-blocking findings. |
+| Baseline | Confirmed repository root, read required product/architecture/state files, and preserved the external `AGENTS.md` change. |
+| Startup | `./init.ps1` passed before implementation and reran 9 web test files / 58 tests. |
+| Planning | Scoped a behavior-preserving node-module split inside Feature 16. |
+| Implementation | Added `runtime.py` as the stable facade, split Text/Image/Audio/Video execution into dedicated `nodes/*.py` modules, and reduced `handlers.py` to compatibility exports. |
+| Verification | Focused Runtime 17 passed; full API 72 passed; Ruff passed; Web 9 files / 58 tests passed; JSON, diff check, local API smoke, and final startup passed. |
+| Evaluation | Independent evaluator accepted round 1 at 148/150. |

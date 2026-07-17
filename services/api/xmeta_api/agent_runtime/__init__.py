@@ -13,7 +13,6 @@ from .contracts import (
     TaskProfile,
     ValidatorId,
 )
-from .handlers import AgentRuntime
 from .memory import EmptyProjectMemoryReader, ProjectMemoryReader
 from .prompts import build_script_dialogue_prompt, build_script_prompt
 from .registry import (
@@ -22,6 +21,7 @@ from .registry import (
     create_default_task_registry,
 )
 from .retry import run_with_task_retry
+from .runtime import AgentRuntime
 
 
 agent_runtime = AgentRuntime()

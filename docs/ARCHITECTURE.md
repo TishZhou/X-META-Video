@@ -118,6 +118,11 @@ FastAPI route -> Agent Runtime task profile -> memory selection -> prompt compil
               -> Model Gateway/provider -> typed validation -> existing API response
 ```
 
+The package keeps one public `runtime.py` facade and delegates node-specific execution to
+`nodes/text.py`, `nodes/image.py`, `nodes/audio.py`, and `nodes/video.py`. `handlers.py` is a
+compatibility import only. This keeps the FastAPI integration stable while allowing each canvas
+node kind to evolve independently behind the same Runtime boundary.
+
 Current project memory is intentionally an empty, process-local MVP boundary. The runtime
 defines a replaceable `ProjectMemoryReader`, but it does not claim that approved project memory,
 PostgreSQL persistence, worker execution, or one-click workflow orchestration already exists.
