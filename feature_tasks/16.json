@@ -1,0 +1,43 @@
+{
+  "parent_feature": {
+    "id": 16,
+    "title": "Agent Runtime Foundation",
+    "status": "passing"
+  },
+  "planning_status": "passing",
+  "notes": [
+    "Keep this feature backend-only. The canvas graph remains user-authored and the web UI is not changed.",
+    "Provider-specific HTTP, credentials, and model payload logic remain in the Model Gateway boundary rather than moving into agent-runtime.",
+    "Current process-local storage remains an explicitly non-durable MVP boundary; this task defines a replaceable memory reader contract without claiming PostgreSQL memory exists."
+  ],
+  "small_features": [
+    {
+      "id": "agent-runtime-001",
+      "title": "Organize current node execution behind Agent Runtime",
+      "status": "passing",
+      "scope": [
+        "Create a backend xmeta_api/agent_runtime module with explicit contracts, task profile registry, memory reader boundary, prompt compilation, and typed node handlers.",
+        "Register the currently implemented text, image, audio, and video tasks without changing their public FastAPI request or response contracts.",
+        "Move Script prompt and execution ownership into agent-runtime while retaining thin compatibility imports if existing callers rely on the old modules.",
+        "Route current FastAPI generation endpoints through agent-runtime handlers while leaving provider-specific implementation in xmeta_api/providers.py.",
+        "Add focused backend tests for profile lookup, memory selection, prompt compilation, and preserved route behavior.",
+        "Document the Agent Runtime and Model Gateway boundary in docs/ARCHITECTURE.md."
+      ],
+      "verification": [
+        "Run focused Agent Runtime pytest coverage.",
+        "Run the full services/api pytest suite and Ruff checks.",
+        "Run the existing web test suite to prove public contracts and the canvas remain unaffected.",
+        "Run JSON validation, git diff --check, and final .\\init.ps1."
+      ],
+      "evidence": [
+        "Added services/api/xmeta_api/agent_runtime with contracts, seven current task profiles, registry, scoped memory reader, prompt compiler, bounded retry, validators, and typed text/image/audio/video handlers.",
+        "Existing Script prompt and runner modules now provide compatibility exports while FastAPI routes delegate current node execution to agent_runtime.",
+        "Provider-specific HTTP payloads, credentials, supported models, and provider retry behavior remain in xmeta_api/providers.py and were not changed.",
+        "Focused Agent Runtime pytest passed 15 tests; full API pytest passed 70 tests; Ruff passed; full web tests passed 9 files / 58 tests.",
+        "Live local Uvicorn smoke returned OpenAPI 200 with 8 paths and an expected truthful missing-provider-config 503; no external provider credential or live generation was used.",
+        "JSON validation, full git diff --check, and final .\\init.ps1 passed.",
+        "Independent evaluator accepted round 2 at 147/150."
+      ]
+    }
+  ]
+}

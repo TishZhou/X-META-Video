@@ -1,0 +1,113 @@
+from __future__ import annotations
+
+from .contracts import (
+    MemoryScope,
+    NodeKind,
+    PromptTemplateId,
+    TaskId,
+    TaskProfile,
+    ValidatorId,
+)
+
+
+DEFAULT_TASK_PROFILES = (
+    TaskProfile(
+        task_id=TaskId.TEXT_SCRIPT_GENERATE,
+        node_kind=NodeKind.TEXT,
+        required_inputs=("script_input",),
+        memory_reads=(
+            MemoryScope.PROJECT_BIBLE,
+            MemoryScope.CHARACTER_BIBLE,
+            MemoryScope.MV_BIBLE,
+        ),
+        prompt_template_id=PromptTemplateId.SCRIPT_GENERATE_V1,
+        output_type="ScriptOutput",
+        validator_id=ValidatorId.SCRIPT_OUTPUT,
+        retry_limit=0,
+    ),
+    TaskProfile(
+        task_id=TaskId.TEXT_SCRIPT_DIALOGUE,
+        node_kind=NodeKind.TEXT,
+        required_inputs=("script_input", "history", "user_message", "mode"),
+        memory_reads=(
+            MemoryScope.PROJECT_BIBLE,
+            MemoryScope.CHARACTER_BIBLE,
+            MemoryScope.MV_BIBLE,
+        ),
+        prompt_template_id=PromptTemplateId.SCRIPT_DIALOGUE_V1,
+        output_type="ScriptDialogueMessage",
+        validator_id=ValidatorId.NON_EMPTY_TEXT,
+        retry_limit=0,
+    ),
+    TaskProfile(
+        task_id=TaskId.IMAGE_CHARACTER_GENERATE,
+        node_kind=NodeKind.IMAGE,
+        required_inputs=("prompt",),
+        memory_reads=(
+            MemoryScope.PROJECT_BIBLE,
+            MemoryScope.CHARACTER_BIBLE,
+            MemoryScope.STYLE_RULES,
+            MemoryScope.SELECTED_ASSETS,
+        ),
+        prompt_template_id=PromptTemplateId.IMAGE_PASSTHROUGH_V1,
+        output_type="GeneratedImage",
+        validator_id=ValidatorId.GENERATED_IMAGE,
+        retry_limit=0,
+    ),
+    TaskProfile(
+        task_id=TaskId.IMAGE_PROP_GENERATE,
+        node_kind=NodeKind.IMAGE,
+        required_inputs=("prompt",),
+        memory_reads=(
+            MemoryScope.PROJECT_BIBLE,
+            MemoryScope.MV_BIBLE,
+            MemoryScope.STYLE_RULES,
+            MemoryScope.SELECTED_ASSETS,
+        ),
+        prompt_template_id=PromptTemplateId.IMAGE_PASSTHROUGH_V1,
+        output_type="GeneratedImage",
+        validator_id=ValidatorId.GENERATED_IMAGE,
+        retry_limit=0,
+    ),
+    TaskProfile(
+        task_id=TaskId.IMAGE_SCENE_GENERATE,
+        node_kind=NodeKind.IMAGE,
+        required_inputs=("prompt",),
+        memory_reads=(
+            MemoryScope.PROJECT_BIBLE,
+            MemoryScope.MV_BIBLE,
+            MemoryScope.STYLE_RULES,
+            MemoryScope.CONTINUITY,
+        ),
+        prompt_template_id=PromptTemplateId.IMAGE_PASSTHROUGH_V1,
+        output_type="GeneratedImage",
+        validator_id=ValidatorId.GENERATED_IMAGE,
+        retry_limit=0,
+    ),
+    TaskProfile(
+        task_id=TaskId.AUDIO_MUSIC_GENERATE,
+        node_kind=NodeKind.AUDIO,
+        required_inputs=("prompt", "lyrics"),
+        memory_reads=(MemoryScope.MV_BIBLE, MemoryScope.MUSIC_BRIEF),
+        prompt_template_id=PromptTemplateId.AUDIO_PASSTHROUGH_V1,
+        output_type="GeneratedAudio",
+        validator_id=ValidatorId.GENERATED_AUDIO,
+        retry_limit=0,
+    ),
+    TaskProfile(
+        task_id=TaskId.VIDEO_CLIP_GENERATE,
+        node_kind=NodeKind.VIDEO,
+        required_inputs=("prompt",),
+        memory_reads=(
+            MemoryScope.CHARACTER_BIBLE,
+            MemoryScope.MV_BIBLE,
+            MemoryScope.SHOT_CONTEXT,
+            MemoryScope.SELECTED_ASSETS,
+            MemoryScope.CONTINUITY,
+        ),
+        prompt_template_id=PromptTemplateId.VIDEO_PASSTHROUGH_V1,
+        output_type="VideoGenerationProviderResult",
+        validator_id=ValidatorId.GENERATED_VIDEO,
+        retry_limit=0,
+    ),
+)

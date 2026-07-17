@@ -1,6 +1,6 @@
 {
     "project":  "X-META Video",
-    "last_updated":  "2026-07-08",
+    "last_updated":  "2026-07-17",
     "rules":  {
                   "single_active_feature":  true,
                   "passing_requires_evidence":  true,
@@ -132,6 +132,15 @@
                          "status":  "not_started",
                          "user_visible_behavior":  "Users can log in, select a workspace, and access projects, assets, tasks, and history through production account and role boundaries.",
                          "task_file":  "feature_tasks/15.json"
+                     },
+                     {
+                         "id":  16,
+                         "title":  "Agent Runtime Foundation",
+                         "status":  "passing",
+                         "current_task":  "agent-runtime-001",
+                         "current_task_status":  "passing",
+                         "user_visible_behavior":  "Existing text, image, audio, and video node generation keeps the same API behavior while backend agent execution is organized behind reusable task profiles, prompt compilation, memory-selection contracts, and node handlers.",
+                         "task_file":  "feature_tasks/16.json"
                      }
                  ]
 }

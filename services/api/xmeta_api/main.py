@@ -5,7 +5,7 @@ import os
 from fastapi import FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 
-from .prompt import build_script_dialogue_prompt
+from .agent_runtime import agent_runtime
 from .providers import (
     ArkSeedanceVideoProviderSettings,
     MiniMaxMusicProviderSettings,
@@ -18,7 +18,6 @@ from .providers import (
     submitMiniMaxMusicWithRetry,
     submitSeedreamWithRetry,
 )
-from .runner import run_script_task_sync
 from .schemas import (
     ImageGenerationRequest,
     ImageGenerationResponse,
@@ -104,7 +103,12 @@ def run_script_node(project_id: str, node_id: str) -> TaskState:
         provider=settings.provider,
         model=settings.model,
     )
-    return run_script_task_sync(store=store, provider=provider, task=task, node=node)
+    return agent_runtime.run_script_task_sync(
+        store=store,
+        provider=provider,
+        task=task,
+        node=node,
+    )
 
 
 @app.post(
@@ -125,17 +129,13 @@ def chat_script_node(
     try:
         settings = _resolve_script_provider_settings(node.settings)
         provider = get_script_provider(settings)
-        prompt = build_script_dialogue_prompt(
+        assistant_text = agent_runtime.run_script_dialogue(
+            project_id=project_id,
+            provider=provider,
             script_input=node.input,
             history=request.history,
             user_message=request.message,
             mode=request.mode,
-        )
-        assistant_text = provider.chat(
-            script_input=node.input,
-            history=request.history,
-            user_message=request.message,
-            prompt=prompt,
         )
     except ProviderConfigurationError as exc:
         raise HTTPException(
@@ -173,12 +173,12 @@ def generate_image_node(
 ) -> ImageGenerationResponse:
     try:
         settings = _resolve_seedream_provider_settings(request.settings)
-        image = submitSeedreamWithRetry(
+        return agent_runtime.run_image_generation(
+            project_id=project_id,
+            node_id=node_id,
+            request=request,
             settings=settings,
-            prompt=request.input.prompt,
-            reference_image_url=request.input.reference_image_url,
-            reference_image_b64=request.input.reference_image_b64,
-            reference_image_mime_type=request.input.reference_image_mime_type,
+            execute=submitSeedreamWithRetry,
         )
     except ProviderConfigurationError as exc:
         raise HTTPException(
@@ -190,18 +190,6 @@ def generate_image_node(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail=str(exc),
         ) from exc
-
-    assert settings.model is not None
-    return ImageGenerationResponse(
-        project_id=project_id,
-        node_id=node_id,
-        node_type=request.node_type,
-        provider=settings.provider,
-        model=settings.model,
-        prompt=request.input.prompt,
-        image=image,
-        persisted=False,
-    )
 
 
 @app.post(
@@ -220,12 +208,12 @@ def generate_audio_node(
         )
         if has_reference_audio and not request.settings.model:
             settings = settings.with_cover_model()
-        audio = submitMiniMaxMusicWithRetry(
+        return agent_runtime.run_audio_generation(
+            project_id=project_id,
+            node_id=node_id,
+            request=request,
             settings=settings,
-            prompt=request.input.prompt,
-            lyrics=request.input.lyrics,
-            reference_audio_url=request.input.reference_audio_url,
-            reference_audio_b64=request.input.reference_audio_b64,
+            execute=submitMiniMaxMusicWithRetry,
         )
     except ProviderConfigurationError as exc:
         raise HTTPException(
@@ -237,19 +225,6 @@ def generate_audio_node(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail=str(exc),
         ) from exc
-
-    assert settings.model is not None
-    return MusicGenerationResponse(
-        project_id=project_id,
-        node_id=node_id,
-        node_type=request.node_type,
-        provider=settings.provider,
-        model=settings.model,
-        prompt=request.input.prompt,
-        lyrics=request.input.lyrics,
-        audio=audio,
-        persisted=False,
-    )
 
 
 @app.post(
@@ -263,13 +238,12 @@ def generate_video_node(
 ) -> VideoGenerationResponse:
     try:
         settings = _resolve_ark_seedance_video_provider_settings(request.settings)
-        result = submitArkSeedanceVideoWithRetry(
+        return agent_runtime.run_video_generation(
+            project_id=project_id,
+            node_id=node_id,
+            request=request,
             settings=settings,
-            prompt=request.input.prompt,
-            image_urls=request.input.image_urls,
-            video_urls=request.input.video_urls,
-            audio_urls=request.input.audio_urls,
-            duration_seconds=request.input.duration_seconds,
+            execute=submitArkSeedanceVideoWithRetry,
         )
     except ProviderConfigurationError as exc:
         raise HTTPException(
@@ -281,24 +255,6 @@ def generate_video_node(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail=str(exc),
         ) from exc
-
-    return VideoGenerationResponse(
-        task_id=result.provider_task_id,
-        project_id=project_id,
-        node_id=node_id,
-        node_type=request.node_type,
-        provider=settings.provider,
-        model=settings.model or "",
-        prompt=request.input.prompt,
-        image_urls=request.input.image_urls,
-        video_urls=request.input.video_urls,
-        audio_urls=request.input.audio_urls,
-        duration=request.input.duration_seconds,
-        duration_seconds=request.input.duration_seconds,
-        video=result.video,
-        provider_task_id=result.provider_task_id,
-        persisted=False,
-    )
 
 
 def _resolve_script_provider_settings(

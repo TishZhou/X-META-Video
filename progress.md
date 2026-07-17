@@ -8,7 +8,9 @@ Record major decisions and progress each session. Keep the current verified stat
 - Standard startup path: `.\init.ps1`
 - Standard web verification path: `corepack pnpm --filter @xmeta/web test`
 - Current highest-priority unfinished feature: Feature 4, Storyboard Node.
-- Current active feature: Feature 9 Video Node Ark Seedance API revision is passing after rendered Browser E2E.
+- Current active feature: Feature 16 Agent Runtime Foundation is passing after independent round-2 evaluation at 147/150.
+- Current Agent Runtime foundation: existing Text, Image, Audio, and Video generation routes delegate to `services/api/xmeta_api/agent_runtime`; seven current task profiles declare typed inputs, scoped memory reads, prompt templates, outputs, validators, and bounded Runtime retry metadata.
+- Current Agent Runtime memory boundary: `EmptyProjectMemoryReader` is intentionally empty and non-durable. PostgreSQL-backed approved memory, worker execution, one-click orchestration, and canvas graph rewiring are not claimed.
 - Current reset status: Feature 2 and Feature 3 have been removed from the active plan, their task files have been deleted, old web implementation files have been cleared while preserving minimal app structure, and the remaining feature plan has now been renumbered so old Features 4-17 are new Features 2-15.
 - Current feature numbering: Feature 1 remains Web Design and is now recorded as `passing`; Feature 2 is Workflow Canvas Foundation and is now `passing`; old Features 5-17 shifted to new Features 3-15.
 - Current web baseline: `/` renders the `web-design-004` app foundation with a global `AppShell`, global top bar, TriplD wave hero, feature preview, creation entry cards, and shared 88rem desktop page containers.
@@ -32,6 +34,17 @@ Record major decisions and progress each session. Keep the current verified stat
 - Current blocker: none for Feature 9. Browser E2E passed with an intercepted local FastAPI Ark task-only response; live Ark execution was not attempted because `ARK_API_KEY` is empty.
 
 ## Session Log
+
+### Session 053
+
+- Date: 2026-07-17
+- Goal: Organize existing backend node-agent execution behind a reusable Agent Runtime module without changing the user-authored canvas graph, frontend behavior, public API contracts, or provider payload semantics.
+- Completed: Added Agent Runtime contracts, seven current task profiles, registry, scoped Memory Reader, Prompt Compiler, Script prompt ownership, typed text/image/audio/video handlers, output validators, and executable bounded task retry. Existing Script prompt/runner imports remain compatible; FastAPI routes now delegate current generation execution to Agent Runtime; provider-specific implementation remains in `providers.py`.
+- Revision loop: Independent evaluation round 1 scored 137/150 and required truthful retry semantics, broader handler/validator tests, and whitespace cleanup. Round 2 set all shipped profiles to zero Runtime retries, added a tested custom-profile retry path, expanded focused coverage from 5 to 15 tests, and passed at 147/150.
+- Verification run: Agent Runtime pytest passed 15 tests; full API pytest passed 70 tests; Ruff passed; full web tests passed 9 files / 58 tests; JSON validation passed; full `git diff --check` passed; live local Uvicorn OpenAPI smoke returned 200 with 8 paths and an expected missing-config 503; final `./init.ps1` passed.
+- Provider evidence: External generation was exercised only through fakes/custom HTTP transports or missing-config local paths; no live external generation is claimed.
+- Known risk: Project memory remains empty and non-durable; future enabled Runtime retries need exception classification; handlers still use current provider-specific settings types.
+- Next step: Add future canvas-node Task Profiles inside Agent Runtime, or continue Feature 4 Storyboard Node using this execution foundation.
 
 ### Session 052
 

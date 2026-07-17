@@ -102,6 +102,28 @@ Rules:
 - Services write history when user-visible creative state changes.
 - Services use repositories for persistence and do not import React or route objects.
 
+### Agent Runtime (`services/api/xmeta_api/agent_runtime`)
+Agent Runtime is the backend execution boundary for a user-selected canvas-node task. The
+canvas graph and its connections remain user-authored; Agent Runtime does not add, remove,
+rewire, or auto-run nodes.
+
+Each registered task profile declares a stable task identity, node kind, required inputs,
+allowed project-memory scopes, prompt-template identity, output identity, validator, and a
+bounded task retry policy. The runtime selects only the declared memory scopes, compiles the
+provider prompt, invokes the injected Model Gateway operation, validates the typed result, and
+returns the existing API response model.
+
+```txt
+FastAPI route -> Agent Runtime task profile -> memory selection -> prompt compilation
+              -> Model Gateway/provider -> typed validation -> existing API response
+```
+
+Current project memory is intentionally an empty, process-local MVP boundary. The runtime
+defines a replaceable `ProjectMemoryReader`, but it does not claim that approved project memory,
+PostgreSQL persistence, worker execution, or one-click workflow orchestration already exists.
+Provider HTTP payload construction, credentials, provider retries, and model-specific response
+parsing remain in `xmeta_api/providers.py`.
+
 ### Persistence, Queue, Worker, and Storage
 PostgreSQL stores durable business state. Redis stores queue and short-lived state. Object storage stores binary artifacts. Workers execute long-running jobs.
 

@@ -1,52 +1,62 @@
-# Evaluator Rubric - Feature 9 Ark Seedance Video API
+# Evaluator Rubric - Feature 16 Agent Runtime Foundation
 
-Updated: 2026-07-08
+Updated: 2026-07-17 round 2
 
 ## Evaluation Scope
 
-- Role: Main-agent evaluator pass for Feature 9 `video-node-001-api-switch`.
-- Scope reviewed: shared/FastAPI video contracts, Ark Seedance provider payload, reference-video input support, Video node editor evidence, task-only truthfulness, Feature 5/8 boundary preservation, and rendered Browser E2E.
-- Protected boundaries: Feature 5 Image node and Feature 8 Audio node provider behavior remain outside this revision.
+- Role: independent evaluator for Feature 16 `agent-runtime-001`.
+- Scope reviewed: the complete Agent Runtime package, FastAPI route integration, compatibility imports, task profiles, memory selection, prompt compilation, typed validation, bounded Runtime retry, existing provider boundary, focused/regression tests, architecture documentation, and repository hygiene.
+- Protected boundaries: canvas topology remains user-authored; no frontend behavior, public route, provider HTTP payload, credential, retry, or supported-model changes are permitted.
+- `AGENTS.md` is treated as an external shared change and was not modified or scored as Feature 16 implementation.
 
 ## Scorecard
 
 | Criterion | Points | Current | Evidence |
 | --- | ---: | ---: | --- |
-| Scope fit and isolation | 20 | 19 | Changes stayed in Video node contracts, provider, docs, env, and tests; Image/Audio provider code unchanged. |
-| Ark backend contract | 35 | 34 | FastAPI posts raw HTTP to Ark `contents/generations/tasks` with `model`, `content`, `generate_audio`, `ratio`, `duration`, and `watermark`; no Python SDK path. |
-| Reference media mapping | 25 | 24 | `image_urls`, `video_urls`, and `audio_urls` map to Ark `reference_image`, `reference_video`, and `reference_audio`; audio requires image or video. |
-| Video node UX truthfulness | 25 | 24 | Editor labels Ark Seedance, shows reference-video count, keeps local FastAPI boundary, and marks task-id-only responses as not playable until polling exists. |
-| Verification depth | 35 | 34 | Backend focused/full tests, ruff, focused/full web tests, typecheck, build, and rendered Browser E2E passed. |
-| Artifact hygiene | 10 | 9 | API docs, env example, sprint contract, feature task/list, progress, and handoff updated; `.env` was updated without printing values. |
+| Scope fit and boundary isolation | 15 | 15 | No frontend files changed. Runtime executes only the user-selected node task and does not mutate canvas topology. Provider HTTP and credential logic remains in `providers.py`. |
+| Module organization and contracts | 20 | 19 | Contracts, profiles, registry, memory, compiler, prompts, retry, validators, and handlers have clear ownership, with compatibility exports for old imports. Typed handlers still reference current provider-specific settings classes rather than a provider-neutral gateway protocol. |
+| Task-profile completeness | 20 | 19 | Seven profiles cover all current Script/dialogue, character/prop/scene image, music, and video tasks across all four node kinds. Each declares inputs, memory scopes, template, output, validator, and retry limit; focused tests assert identity coverage and default retry policy, though not every exact field tuple. |
+| Memory-scope enforcement and truthfulness | 20 | 20 | Compiler requests only declared scopes and filters an over-returning reader. The default reader returns no memory and does not imply approved, durable, or database-backed project memory exists. |
+| Prompt and API compatibility | 20 | 19 | Empty-memory Script prompt equality, dialogue compilation, image/audio/video passthrough inputs, response shapes, Script failed-state behavior, and task-id-only video behavior are covered. Durable or non-empty production memory remains intentionally unavailable. |
+| Provider and route contract preservation | 20 | 20 | All current FastAPI paths and response contracts remain unchanged. Existing SeedDream, MiniMax, Ark Seedance, and Script tests pass; dialogue provider failures still map to 502. No provider implementation changed. |
+| Validation and retry truthfulness | 15 | 15 | `run_with_task_retry` consumes an explicitly configured bounded retry limit. All shipped profiles use zero Runtime retries, preserving existing provider retry semantics and call counts. Empty text/image/audio/video results are rejected by typed validators. |
+| Verification and test depth | 15 | 15 | Focused Runtime tests expanded from 5 to 15 and now cover retry, dialogue, Script failure state, route 502, audio, queued video, and invalid validators. Full API, Ruff, web, JSON, diff, live-server smoke, and final startup checks passed. |
+| Repository and artifact hygiene | 5 | 5 | Full `git diff --check` passes, JSON is valid, no temporary files or frontend edits were introduced, and the external `AGENTS.md` change remains untouched. |
 
-Current score: 144 / 150
+Current score: 147 / 150
 
 ## Acceptance Evidence
 
-- `VideoGenerationInput` and `VideoGenerationResponse` now include `video_urls`.
-- FastAPI `/api/v1/projects/{project_id}/nodes/{node_id}/generate-video` resolves `ArkSeedanceVideoProviderSettings` and calls `submitArkSeedanceVideoWithRetry()`.
-- The Ark provider builds a `content` array with text, reference image, reference video, and reference audio entries matching the supplied curl-style API.
-- `.env.example` and gitignored `.env` now use `VIDEO_MODEL_PROVIDER=volcengine-ark`, `ARK_BASE_URL`, `ARK_API_KEY`, `ARK_VIDEO_MODEL`, `ARK_VIDEO_RATIO`, `ARK_VIDEO_GENERATE_AUDIO`, `ARK_VIDEO_WATERMARK`, timeout, and retry keys.
-- The Video source node has a `Reference video` input port and sends collected upstream video output URLs as `video_urls`.
-- Task-id-only responses remain visible as accepted provider tasks without rendering a fake video player.
+- `xmeta_api.agent_runtime` is the route-level execution entry point for current Text, Image, Audio, and Video node tasks.
+- `TaskId`, `NodeKind`, `MemoryScope`, `PromptTemplateId`, `ValidatorId`, immutable `TaskProfile`, registry, compiler, validators, and retry runner establish reusable contracts.
+- The default registry contains all seven currently implemented task identities and all four current node kinds.
+- Prompt compilation rejects missing declared inputs and injects only memory returned for the selected profile's declared scopes.
+- `EmptyProjectMemoryReader` truthfully represents the current non-durable MVP; PostgreSQL memory, approval workflows, worker execution, one-click generation, and graph rewiring are not claimed.
+- Script prompt/execution ownership is in Agent Runtime, while `xmeta_api.prompt` and `xmeta_api.runner` preserve previous imports.
+- FastAPI resolves current settings and injects existing provider operations into typed Runtime handlers; provider payload construction and provider-level retry remain unchanged.
+- Runtime retry is executable and bounded for a custom profile, while all production profiles set `retry_limit=0` to avoid stacking retries over existing providers.
+- Focused tests prove dialogue prompt compilation, Script failed task state, HTTP 502 mapping, audio input preservation, task-id-only video honesty, and rejection of empty typed outputs.
+- No `apps/web` file changed, and the complete frontend suite remains green.
 
 ## Verification Evidence
 
-- Baseline `.\init.ps1` passed before implementation and reran web tests: 9 files / 58 tests.
-- `.\.venv\Scripts\python.exe -m pytest services\api\tests\test_video_node.py` passed: 10 tests.
-- `corepack pnpm --filter @xmeta/web test -- workflow-canvas-workspace.test.tsx graph.test.ts` passed: 2 files / 39 tests.
-- `corepack pnpm --filter @xmeta/web typecheck` passed.
-- `.\.venv\Scripts\python.exe -m pytest services\api\tests` passed: 55 tests.
-- `.\.venv\Scripts\python.exe -m ruff check services\api` passed.
+- `\.venv\Scripts\python.exe -m pytest services\api\tests\test_agent_runtime.py -q` passed: 15 tests, with one existing Starlette/httpx deprecation warning.
+- `\.venv\Scripts\python.exe -m pytest services\api\tests -q` passed: 70 tests, with the same existing deprecation warning.
+- `\.venv\Scripts\python.exe -m ruff check services\api` passed.
 - `corepack pnpm --filter @xmeta/web test` passed: 9 files / 58 tests.
-- `corepack pnpm --filter @xmeta/web build` passed and included `/workspace`.
-- Browser E2E passed on `http://localhost:3000/workspace`: Add Video via the new `Reference video` menu label, open the Video editor, confirm Ark Seedance and `0 reference videos`, generate through intercepted local FastAPI `/generate-video`, request body contained `video_urls: []`, Ark task-only response showed provider task evidence, no playable preview rendered, and console warn/error logs were empty.
-- Final `.\init.ps1` passed after artifact updates and reran web tests: 9 files / 58 tests.
+- PowerShell `ConvertFrom-Json` validation passed for `feature_list.json` and `feature_tasks/16.json`.
+- Full `git diff --check` passed; line-ending conversion notices were informational only.
+- Live local Uvicorn smoke passed with dotenv disabled: `/openapi.json` returned 200 with 8 paths, and Image generation returned the expected truthful 503 naming missing `DOUBAO_API_KEY` without leaking a key.
+- Final `.\init.ps1` passed: dependencies were current and the standard verification reran 9 web test files / 58 tests successfully.
 
 ## Findings
 
-- No open P1/P2 findings. Residual risk: `ARK_API_KEY` is an empty local placeholder, so live provider execution was not attempted; durable polling/storage remains later scope.
+- No open acceptance-blocking findings.
+- Residual: all external model executions in verification used injected fakes/custom HTTP transports, or the live local server's deliberate missing-config path. No production provider credential was used and no live external generation is claimed.
+- Residual: project memory remains empty and non-durable by design. Future persistent memory must enforce approval, tenant/project scope, and exact asset versions before replacing the current reader.
+- Residual: if a future profile enables Runtime retries, exception classification should be considered so permanent configuration/client errors are not retried; current profiles are zero, so current behavior and provider retry semantics are preserved.
+- Residual: handlers currently use provider-specific settings types. A provider-neutral gateway protocol may be useful when multiple model adapters are introduced, but it is not required for this compatibility-focused foundation.
 
 ## Verdict
 
-Accepted at 144 / 150 for Feature 9 `video-node-001-api-switch`.
+Accepted at 147 / 150 for Feature 16 `agent-runtime-001`. The second round resolves the prior mandatory diff failure, makes bounded Runtime retry executable without changing current provider retry behavior, and adds the missing handler, failure, route-mapping, queued-video, and validator coverage.

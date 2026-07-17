@@ -3,9 +3,20 @@
 ## Verified Now
 
 - Repository root: `D:\X-META-Video`
-- Feature 1 Web Design, Feature 2 Workflow Canvas Foundation, Feature 3 Script Node, Feature 5 Image Node, Feature 8 Audio Node, and Feature 9 Video Node are recorded as `passing`.
-- Current active feature: Feature 9 Video Node Ark Seedance API revision is passing after rendered Browser E2E.
+- Feature 1 Web Design, Feature 2 Workflow Canvas Foundation, Feature 3 Script Node, Feature 5 Image Node, Feature 8 Audio Node, Feature 9 Video Node, and Feature 16 Agent Runtime Foundation are recorded as `passing`.
+- Current active feature: Feature 16 Agent Runtime Foundation is accepted at 147/150 after two evaluator rounds.
 - Next broader unfinished feature remains Feature 4 Storyboard Node unless the user selects another media/export task.
+
+## Feature 16 Agent Runtime State
+
+- Current Text, Image, Audio, and Video generation routes delegate node execution to `services/api/xmeta_api/agent_runtime`.
+- Agent Runtime owns task contracts, seven current Task Profiles, registry lookup, scoped memory selection, Prompt compilation, bounded Runtime retry, typed result validation, and node handlers.
+- The canvas graph remains user-authored. Agent Runtime does not add, remove, reconnect, or automatically run canvas nodes.
+- All shipped Task Profiles use `retry_limit=0`, preserving existing provider-level retry behavior. The Runtime consumes nonzero limits and a focused test proves one bounded retry can recover from a transient failure.
+- `EmptyProjectMemoryReader` is intentionally empty and non-durable. Future project memory must add approval, tenant/project scope, and exact asset-version enforcement.
+- Script prompt and runner compatibility imports remain available from their previous module paths.
+- Provider payload construction, credentials, supported models, parsing, and provider retries remain in `xmeta_api/providers.py`.
+- No frontend files or public FastAPI route/request/response contracts changed.
 
 ## Feature 9 Video Node State
 
@@ -68,6 +79,14 @@
 - `ARK_API_KEY` is still empty locally, so live Ark execution was not attempted.
 
 ## Verification Evidence
+
+- Feature 16 Agent Runtime focused pytest passed: 15 tests.
+- Full API pytest passed: 70 tests; Ruff passed.
+- Full web tests passed: 9 files / 58 tests.
+- JSON validation and full `git diff --check` passed.
+- Live local Uvicorn smoke returned OpenAPI 200 with 8 paths and a truthful missing-config 503.
+- Final `./init.ps1` passed and reran 9 web test files / 58 tests.
+- Independent evaluator round 2 accepted Feature 16 at 147/150.
 
 - Baseline `.\init.ps1` passed before implementation and reran web tests: 9 files / 58 tests.
 - `.\.venv\Scripts\python.exe -m pytest services\api\tests\test_video_node.py` passed: 10 tests.
