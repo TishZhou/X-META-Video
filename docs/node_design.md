@@ -1,80 +1,58 @@
 # Node Design（Phase 1）
 
-## Scope
+## 范围
 
-Phase 1 只有四类创建节点：`Text`、`Image`、`Audio`、`Video`。节点定义媒介能力，`taskId` 定义具体业务操作；人物、分镜、场景、镜头和音乐均是任务，不是新节点。
+Phase 1 只有四种创建 Node：`Text`、`Image`、`Audio`、`Video`。Node 表示媒体能力，Task 表示该 Node 当前执行的明确业务动作；人物、分镜、场景、造型和音乐不是新的 Node 类型。
 
-状态定义：**已完成** 表示对应 TaskProfile 已在 Agent Runtime 注册；**计划中** 表示未注册，UI 不得显示为可执行任务。任务运行状态与资产持久化另由 TaskRun 和 Artifact 管理。
-
-## Runtime Contract
-
-```txt
-Canvas Node(kind, taskId, input Artifact IDs)
-  -> Router -> AgentRuntime -> TaskProfile -> NodeExecutor
-  -> Provider -> Validator -> TaskRun + Artifact
-```
-
-| 对象 | 责任 |
-| --- | --- |
-| `node.taskId` | 用户为该画布节点显式选择的任务 |
-| `TaskProfile` | 任务的输入、记忆、提示词、输出、校验与重试约束 |
-| `TaskRun` | 单次执行的状态、成本、错误和输出引用 |
-| `Artifact` | 可复用的版本化文本、图像、音频或视频结果 |
-
-任务默认采用 `direct`；固定多步骤采用 `pipeline`；只有受工具、步数、成本和重试限制的任务可采用 `bounded_agent`。Agent 不得改变 `taskId`、画布连线、模型费用或审批状态。
+下表的“已完成”只表示当前前端可选择并有对应 API 执行路径的用户 Task；Runtime 内部存在 Profile 不等于 UI 功能已经完成。“计划中”Task 在实现并验证前不得显示为可执行。
 
 ## Text Node
 
-| Task | taskId | 输入 | 输出 | 策略 | 状态 |
-| --- | --- | --- | --- | --- | --- |
-| IP 世界观 | `text.ip_worldview.generate` | 创意、题材、受众 | 世界观、角色定位、风格约束 | direct | 已完成 |
-| 角色档案 | `text.character_profiles.generate` | 世界观、角色设定 | 外貌、性格、关系、声音描述 | direct | 已完成 |
-| MV 视觉造型 | `text.mv_look_development.generate` | 角色档案、MV brief | 服装、妆发、形体、身份锚点 | direct | 已完成 |
-| 剧本 | `text.script.generate` | 创意、世界观、角色、时长 | 场景、动作、台词、节奏 | pipeline | 已完成 |
-| 剧本对话 | `text.script.dialogue` | 剧本、历史、用户指令 | 对话文本 | direct | 已完成 |
-| 分镜与镜头表 | `text.storyboard.generate` | 剧本、造型、MV idea | 镜头表与提示词 | pipeline | 计划中 |
-| 音乐 brief / 歌词 | `text.music_brief.generate` | MV idea、情绪、时长 | 音乐概念、歌词、节拍 | direct | 计划中 |
+| Task | 任务标识 | 输入 | 输出 | 状态 |
+| --- | --- | --- | --- | --- |
+| IP 世界观 | `text.ip_worldview.generate` | 创意、题材、受众 | 世界观、角色定位、视觉规则 | 已完成 |
+| 角色档案 | `text.character_profiles.generate` | 世界观与角色要求 | 外貌、性格、关系、声线描述 | 已完成 |
+| MV 视觉造型 | `text.mv_look_development.generate` | 角色档案、MV brief | 服装、妆发、形体与身份锚点 | 已完成 |
+| 分镜与歌词 | `text.storyboard_lyrics.generate` | MV idea、已批准角色资料、已批准视觉资料 | 结构化镜头表、音乐概念与歌词 | 计划中 |
+
+`text.script.generate` 和 `text.script.dialogue` 是当前 Runtime 的内部/历史执行能力，不作为用户可选 Text Task。
 
 ## Image Node
 
-| Task | taskId | 输入 | 输出 | 策略 | 状态 |
-| --- | --- | --- | --- | --- | --- |
-| 人物底图 / 三视图 | `image.character.generate` | 角色档案、风格、比例 | 人物图或候选图 | direct | 已完成 |
-| 道具资产 | `image.prop.generate` | 道具描述、风格 | 道具图 | direct | 已完成 |
-| 场景资产 | `image.scene.generate` | 场景描述、风格 | 场景图 | direct | 已完成 |
-| 人物 MV 造型图 | `image.character.look.generate` | 人物底图、MV 视觉造型 | 造型图 | direct | 计划中 |
-| 分镜关键帧 / 构图 | `image.keyframe.generate` | 镜头表、人物、场景、参考图 | 关键帧 | pipeline | 计划中 |
-| 一致性修复 / 图像编辑 | `image.edit` | 原图、修改指令、身份锚点 | 新版本图像 | direct | 计划中 |
+| Task | 任务标识 | 输入 | 输出 | 状态 |
+| --- | --- | --- | --- | --- |
+| 提示词生成与编辑 | `prompt_generation`（当前兼容任务标识，尚未映射通用稳定 taskId） | 提示词、连接文本、可选当前图 | 单张本地图片预览 | 已完成（兼容） |
+| 角色设定包 | `image.character.generate` | 人物外貌、性格与动作要求 | 角色底图、标准三视图、表情/动作设定集 | 已完成 |
+| MV 人物造型图 | `image.character.look.generate` | 已批准角色设定包、MV 视觉造型 | 角色 MV 造型图 | 计划中 |
+
+`prompt_generation` 在迁移到通用 `node.taskId` 并完成 Runtime 映射后，才能成为稳定 TaskId。
+
+Runtime 中的 `image.prop.generate` 和 `image.scene.generate` Profile 不是当前 UI 已完成 Task，不在用户 Task 表中展示。
 
 ## Audio Node
 
-| Task | taskId | 输入 | 输出 | 策略 | 状态 |
-| --- | --- | --- | --- | --- | --- |
-| 音乐生成 | `audio.music.generate` | 音乐 brief、歌词、时长、情绪 | 音乐 Artifact | direct | 已完成 |
-| 音乐编辑 / 翻唱 | `audio.music.edit` | 原音频、编辑目标、参考文本 | 新版本音频 | direct | 计划中 |
+| Task | 任务标识 | 输入 | 输出 | 状态 |
+| --- | --- | --- | --- | --- |
+| 音乐生成与编辑 | `audio.music.generate` | 音乐描述、歌词；编辑模式可附已有音频与修改要求 | 可播放音乐结果及 Provider/Model 信息 | 已完成 |
+
+生成与已有音频的 cover/edit 是同一用户 Task 的两种输入模式，不拆成第二个 Task ID。
 
 ## Video Node
 
-| Task | taskId | 输入 | 输出 | 策略 | 状态 |
-| --- | --- | --- | --- | --- | --- |
-| 图生视频 / 单镜头 | `video.clip.generate` | 关键帧、提示词、时长 | 视频片段或 Provider task reference | direct | 已完成 |
-| 首尾帧视频 | `video.first_last_frame.generate` | 首帧、尾帧、镜头描述 | 视频片段 | direct | 计划中 |
-| 参考引导视频 | `video.reference_guided.generate` | 参考图/视频、镜头提示词 | 视频片段 | direct | 计划中 |
-| 延长 / 重生成 | `video.clip.extend` / `video.clip.regenerate` | 原视频、修改指令 | 新版本视频 | direct | 计划中 |
-| 批量镜头生成 | `video.batch.generate` | 已批准镜头表、关键帧集合 | 可追踪片段集合 | pipeline | 计划中 |
+| Task | 任务标识 | 输入 | 输出 | 状态 |
+| --- | --- | --- | --- | --- |
+| 镜头生成 | `video.clip.generate` | 镜头 Prompt、时长；可附参考图、参考视频与参考音频 | 可播放视频片段，或明确标注的 Provider task reference | 已完成 |
 
-## Shared Constraints
+## 通用约束
 
-| 项目 | 约束 |
-| --- | --- |
-| Memory | Profile 只读取声明的项目、角色、MV、风格、音乐、镜头和已选资产上下文。 |
-| Validation | 校验输出类型、结构、媒体引用、Provider 错误和任务状态；失败不删除上游 Artifact。 |
-| One-click | 创建可见、可编辑的 `Text -> Image -> Audio -> Video` 确定性预设；每一步仍需显式 Task 与审批。 |
-| Current gap | 通用 `node.taskId` 持久化、TaskRun/Artifact 数据库、对象存储、队列和预设编排尚未实现；`persisted=false` 必须如实显示。 |
+- 用户手动画布时显式选择 Task；Agent 不得自行更换 `taskId`、修改连线、选择付费模型或增加生成数量。
+- 一键生成是可见、可编辑的确定性 Workflow Preset，仍由明确 Node、Task、Edge 和审批点组成。
+- Node 输入和结果以 Data/Artifact 表示；Data 不是第五种创建 Node，下游应引用准确 Artifact 版本。
+- TaskProfile 定义能力，TaskRun 记录单次执行，Artifact 保存版本化结果；三者不得混用。
+- 未实现、缺少 Provider 配置、仅返回 Provider task reference 或 `persisted=false` 的结果必须如实显示。
 
-## Later Phases
+## 当前与目标边界
 
-| Phase | 扩展 | 约束 |
-| --- | --- | --- |
-| Phase 2 | Asset Library、LoRA、3D 人物/世界适配器 | 扩展现有节点和 TaskProfile，不增加第五类创建节点。 |
-| Phase 3 | 音色/风格化音乐、IP 运营助手、社区 | 发布、活动、审批等外部或高成本动作必须人工确认。 |
+当前前端仍在迁移到通用 `node.taskId` 工作流状态，媒体结果尚未形成统一的持久化 TaskRun/Artifact。TaskService、数据库、对象存储、队列 Worker 和一键 Preset 调度仍是目标能力，不得在 UI 中暗示已经上线。
+
+Phase 2 的 Asset Library、LoRA 和 3D 适配器，以及 Phase 3 的音乐/音色模型、IP 运营助手和社区能力，应扩展现有 Node Task 或平台服务，不新增第五种创建 Node；发布、运营和高成本动作保持人工确认。
