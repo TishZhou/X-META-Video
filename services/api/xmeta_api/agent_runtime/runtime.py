@@ -7,6 +7,7 @@ from ..providers import (
     SeedDreamProviderSettings,
 )
 from ..schemas import (
+    CharacterDerivedImageRequest,
     ImageGenerationRequest,
     ImageGenerationResponse,
     MusicGenerationRequest,
@@ -132,6 +133,23 @@ class AgentRuntime:
         execute: ImageExecutor,
     ) -> ImageGenerationResponse:
         return self._image.run_generation(
+            project_id=project_id,
+            node_id=node_id,
+            request=request,
+            settings=settings,
+            execute=execute,
+        )
+
+    def run_character_derived_image_generation(
+        self,
+        *,
+        project_id: str,
+        node_id: str,
+        request: CharacterDerivedImageRequest,
+        settings: SeedDreamProviderSettings,
+        execute: ImageExecutor,
+    ) -> ImageGenerationResponse:
+        return self._image.run_character_derived_generation(
             project_id=project_id,
             node_id=node_id,
             request=request,

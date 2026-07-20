@@ -21,6 +21,7 @@ from .providers import (
 from .schemas import (
     ImageGenerationRequest,
     ImageGenerationResponse,
+    CharacterDerivedImageRequest,
     ImageGenerationSettings,
     MusicGenerationRequest,
     MusicGenerationResponse,
@@ -221,6 +222,36 @@ def generate_image_node(
             detail=str(exc),
         ) from exc
     except ProviderExecutionError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=str(exc),
+        ) from exc
+
+
+@app.post(
+    "/api/v1/projects/{project_id}/nodes/{node_id}/generate-character-derived-images",
+    response_model=ImageGenerationResponse,
+)
+def generate_character_derived_images(
+    project_id: str,
+    node_id: str,
+    request: CharacterDerivedImageRequest,
+) -> ImageGenerationResponse:
+    try:
+        settings = _resolve_seedream_provider_settings(request.settings)
+        return agent_runtime.run_character_derived_image_generation(
+            project_id=project_id,
+            node_id=node_id,
+            request=request,
+            settings=settings,
+            execute=submitSeedreamWithRetry,
+        )
+    except ProviderConfigurationError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=str(exc),
+        ) from exc
+    except (ProviderExecutionError, RuntimeOutputValidationError) as exc:
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail=str(exc),

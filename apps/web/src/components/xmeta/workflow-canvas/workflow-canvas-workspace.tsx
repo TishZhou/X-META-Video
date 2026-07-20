@@ -91,7 +91,10 @@ import type {
   WorkflowPort,
   WorkflowSelection,
 } from "@/lib/workflow-canvas/types";
-import { runImageGeneration } from "@/lib/image-node/api";
+import {
+  runCharacterDerivedImageGeneration,
+  runImageGeneration,
+} from "@/lib/image-node/api";
 import { runMusicGeneration } from "@/lib/music-node/api";
 import { runScriptDialogue } from "@/lib/script-node/api";
 import { runTextGeneration } from "@/lib/text-node/api";
@@ -165,6 +168,8 @@ type ConnectionDragState = {
 type ScriptDialogueRunner = typeof runScriptDialogue;
 type TextGenerationRunner = typeof runTextGeneration;
 type ImageGenerationRunner = typeof runImageGeneration;
+type CharacterDerivedImageGenerationRunner =
+  typeof runCharacterDerivedImageGeneration;
 type MusicGenerationRunner = typeof runMusicGeneration;
 type VideoGenerationRunner = typeof runVideoGeneration;
 type TextOutcomeMap = Record<string, string>;
@@ -712,6 +717,22 @@ export function imageReferenceFromWorkflowOutput(output?: WorkflowNodeOutput) {
     referenceImageB64: b64Json,
     referenceImageMimeType: output.media.mimeType ?? null,
   };
+}
+
+export function generatedImageFromWorkflowOutput(
+  output?: WorkflowNodeOutput,
+): GeneratedImage | null {
+  if (output?.media?.kind !== "image") {
+    return null;
+  }
+
+  const image = {
+    url: output.media.url ?? null,
+    b64_json: output.media.b64Json ?? null,
+    mime_type: output.media.mimeType ?? null,
+  };
+
+  return image.url?.trim() || image.b64_json?.trim() ? image : null;
 }
 
 export function audioSourceFromGeneratedAudio(audio: GeneratedAudio) {
@@ -1323,12 +1344,14 @@ export function calculateInitialCanvasViewport(
 
 export function WorkflowCanvasWorkspace({
   imageGenerationRunner = runImageGeneration,
+  characterDerivedImageGenerationRunner = runCharacterDerivedImageGeneration,
   musicGenerationRunner = runMusicGeneration,
   scriptDialogueRunner = runScriptDialogue,
   textGenerationRunner = runTextGeneration,
   videoGenerationRunner = runVideoGeneration,
 }: {
   imageGenerationRunner?: ImageGenerationRunner;
+  characterDerivedImageGenerationRunner?: CharacterDerivedImageGenerationRunner;
   musicGenerationRunner?: MusicGenerationRunner;
   scriptDialogueRunner?: ScriptDialogueRunner;
   textGenerationRunner?: TextGenerationRunner;
@@ -2036,32 +2059,122 @@ export function WorkflowCanvasWorkspace({
         referenceImageMimeType: null,
       });
       setImageGenerations((current) => ({ ...current, [node.id]: result }));
+      const baseOutput = result.images.find(
+        (output) => output.variant === "character_base",
+      );
+
+      if (!baseOutput) {
+        throw new Error(
+          "Image Task 1 requires the character base image from the server.",
+        );
+      }
+
+      dispatch({ type: "setNodeStatus", nodeId: node.id, status: "ready" });
+      const output = CHARACTER_IMAGE_TASK_OUTPUTS[0];
+      dispatch({
+        type: "upsertOutputNode",
+        sourceNodeId: node.id,
+        nodeType: "data",
+        title: output.title,
+        description: `${output.description} Asset persistence is not implemented.`,
+        position: calculateImageTaskOutcomePosition(node.position, output.variant),
+        output: {
+          sourceNodeId: node.id,
+          dataType: "image",
+          outputVariant: output.variant,
+          label: output.title,
+          provider: result.provider,
+          model: result.model,
+          editable: false,
+          media: {
+            kind: "image",
+            url: baseOutput.image.url,
+            b64Json: baseOutput.image.b64_json,
+            mimeType: baseOutput.image.mime_type,
+            alt: output.alt,
+          },
+        },
+        ports: imageTaskOutcomePorts(),
+        notice:
+          "Task 1 character base is ready. Hover or focus it to explicitly generate the three-view and expression/action sheets. Local previews are not persisted to the asset library yet.",
+      });
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Task 1 character base image generation failed.";
+      setImageErrors((current) => ({ ...current, [node.id]: message }));
+      dispatch({
+        type: "setNodeStatus",
+        nodeId: node.id,
+        status: "blocked",
+        notice: message,
+      });
+    } finally {
+      setImageBusyNodeId(null);
+    }
+  }
+
+  async function generateCharacterDerivedImages(baseNode: WorkflowNode) {
+    const sourceNodeId = baseNode.output?.sourceNodeId;
+    const baseImage = generatedImageFromWorkflowOutput(baseNode.output);
+    const sourceNode = sourceNodeId
+      ? findNode(state.nodes, sourceNodeId)
+      : undefined;
+
+    if (!sourceNodeId || !sourceNode || !baseImage) {
+      const message = "The Task 1 base image is unavailable for derived generation.";
+      setImageErrors((current) => ({ ...current, [sourceNodeId ?? baseNode.id]: message }));
+      dispatch({ type: "setNotice", notice: message });
+      return;
+    }
+
+    setImageBusyNodeId(sourceNodeId);
+    setImageErrors((current) => {
+      const next = { ...current };
+      delete next[sourceNodeId];
+      return next;
+    });
+    dispatch({
+      type: "setNodeStatus",
+      nodeId: sourceNodeId,
+      status: "running",
+      notice:
+        "Generating the Task 1 three-view and expression/action sheets from the approved base image through FastAPI SeedDream.",
+    });
+
+    try {
+      const result = await characterDerivedImageGenerationRunner({
+        projectId: state.projectId,
+        nodeId: sourceNodeId,
+        baseImage,
+      });
       const imagesByVariant = new Map(
         result.images.map((output) => [output.variant, output.image]),
       );
-      const taskOutputs = CHARACTER_IMAGE_TASK_OUTPUTS.map((output) => ({
+      const taskOutputs = CHARACTER_IMAGE_TASK_OUTPUTS.slice(1).map((output) => ({
         ...output,
         image: imagesByVariant.get(output.variant),
       }));
 
       if (taskOutputs.some((output) => !output.image)) {
         throw new Error(
-          "Image Task 1 requires the base image, full-body three-view image, and expression/action sheet from the server.",
+          "The server must return both the full-body three-view image and expression/action sheet.",
         );
       }
 
-      dispatch({ type: "setNodeStatus", nodeId: node.id, status: "ready" });
+      dispatch({ type: "setNodeStatus", nodeId: sourceNodeId, status: "ready" });
       for (const output of taskOutputs) {
         const image = output.image!;
         dispatch({
           type: "upsertOutputNode",
-          sourceNodeId: node.id,
+          sourceNodeId,
           nodeType: "data",
           title: output.title,
           description: `${output.description} Asset persistence is not implemented.`,
-          position: calculateImageTaskOutcomePosition(node.position, output.variant),
+          position: calculateImageTaskOutcomePosition(sourceNode.position, output.variant),
           output: {
-            sourceNodeId: node.id,
+            sourceNodeId,
             dataType: "image",
             outputVariant: output.variant,
             label: output.title,
@@ -2078,21 +2191,16 @@ export function WorkflowCanvasWorkspace({
           },
           ports: imageTaskOutcomePorts(),
           notice:
-            "Task 1 character base, full-body three-view, and expression/action images are ready. Local previews are not persisted to the asset library yet.",
+            "Task 1 three-view and expression/action sheets are ready from the approved base image. Local previews are not persisted to the asset library yet.",
         });
       }
     } catch (error) {
       const message =
         error instanceof Error
           ? error.message
-          : "Task 1 character base image generation failed.";
-      setImageErrors((current) => ({ ...current, [node.id]: message }));
-      dispatch({
-        type: "setNodeStatus",
-        nodeId: node.id,
-        status: "blocked",
-        notice: message,
-      });
+          : "Task 1 derived image generation failed.";
+      setImageErrors((current) => ({ ...current, [sourceNodeId]: message }));
+      dispatch({ type: "setNodeStatus", nodeId: sourceNodeId, status: "blocked", notice: message });
     } finally {
       setImageBusyNodeId(null);
     }
@@ -2926,6 +3034,17 @@ export function WorkflowCanvasWorkspace({
                     state.selection.id === node.id
                   }
                   pendingPort={pendingPort}
+                  characterDerivedAction={
+                    node.output?.outputVariant === "character_base"
+                      ? {
+                          busy: imageBusyNodeId === node.output.sourceNodeId,
+                          error: imageErrors[node.output.sourceNodeId] ?? null,
+                          onGenerate: () => {
+                            void generateCharacterDerivedImages(node);
+                          },
+                        }
+                      : undefined
+                  }
                   onTextOutcomeTextChange={(nodeId, value) => {
                     setTextOutcomes((current) => ({
                       ...current,
@@ -4974,6 +5093,11 @@ type WorkflowNodeCardProps = {
   textOutcomeText: string | null;
   selected: boolean;
   pendingPort: WorkflowPort | null;
+  characterDerivedAction?: {
+    busy: boolean;
+    error: string | null;
+    onGenerate: () => void;
+  };
   onTextOutcomeTextChange: (nodeId: string, value: string) => void;
   onDragStart: (
     event: ReactPointerEvent<HTMLElement>,
@@ -4994,6 +5118,7 @@ export function WorkflowNodeCard({
   textOutcomeText,
   selected,
   pendingPort,
+  characterDerivedAction,
   onTextOutcomeTextChange,
   onDragStart,
   onSelect,
@@ -5028,7 +5153,7 @@ export function WorkflowNodeCard({
     return (
       <figure
         aria-label={`${node.title} data outcome`}
-        className="absolute"
+        className="group absolute"
         data-data-image-outcome="true"
         data-workflow-node={node.type}
         data-workflow-node-role={node.role}
@@ -5047,6 +5172,37 @@ export function WorkflowNodeCard({
           data-data-image-outcome-preview="true"
           src={imageOutputSource!}
         />
+        {characterDerivedAction ? (
+          <div
+            className="absolute inset-x-3 bottom-3 flex flex-col items-stretch gap-1 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
+            data-character-derived-action="true"
+          >
+            <Button
+              aria-label="出三视图 + 表情动作"
+              className="h-9 bg-neutral-950/90 px-3 text-xs text-white shadow-lg hover:bg-neutral-950"
+              data-character-derived-generate="true"
+              disabled={characterDerivedAction.busy}
+              onClick={(event) => {
+                event.stopPropagation();
+                characterDerivedAction.onGenerate();
+              }}
+              onPointerDown={(event) => event.stopPropagation()}
+              type="button"
+            >
+              {characterDerivedAction.busy ? "生成中" : "出三视图 + 表情动作"}
+              {characterDerivedAction.busy ? (
+                <Loader2 aria-hidden="true" className="size-3.5 animate-spin" />
+              ) : (
+                <Sparkles aria-hidden="true" className="size-3.5" />
+              )}
+            </Button>
+            {characterDerivedAction.error ? (
+              <p className="rounded bg-white/95 px-2 py-1 text-[11px] text-red-700 shadow">
+                {characterDerivedAction.error}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
         <figcaption className="sr-only">
           {node.title}. {formatWorkflowOutputExecutionLabel(node.output)}. Local
           preview only; not saved to the asset library yet.

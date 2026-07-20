@@ -203,6 +203,15 @@ class GeneratedImage(BaseModel):
     height: int | None = None
 
 
+class CharacterDerivedImageRequest(BaseModel):
+    """A user-approved follow-up that may use only the Task 1 base image."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    base_image: GeneratedImage
+    settings: ImageGenerationSettings = Field(default_factory=ImageGenerationSettings)
+
+
 class ImageOutputVariant(StrEnum):
     IMAGE = "image"
     CHARACTER_BASE = "character_base"

@@ -4,6 +4,7 @@ from collections.abc import Callable
 
 from ...providers import SeedDreamProviderSettings
 from ...schemas import (
+    CharacterDerivedImageRequest,
     GeneratedImage,
     GeneratedImageOutput,
     ImageGenerationNodeType,
@@ -106,23 +107,10 @@ class ImageNodeExecutor:
 
         if request.node_type == ImageGenerationNodeType.CHARACTER_IMAGE:
             character_base = generate(_CHARACTER_BASE_PROMPT, request.input)
-            character_three_view = generate(_CHARACTER_THREE_VIEW_PROMPT, character_base)
-            character_expression_action_sheet = generate(
-                _CHARACTER_EXPRESSION_ACTION_SHEET_PROMPT,
-                character_base,
-            )
             outputs = [
                 GeneratedImageOutput(
                     variant=ImageOutputVariant.CHARACTER_BASE,
                     image=character_base,
-                ),
-                GeneratedImageOutput(
-                    variant=ImageOutputVariant.CHARACTER_THREE_VIEW,
-                    image=character_three_view,
-                ),
-                GeneratedImageOutput(
-                    variant=ImageOutputVariant.CHARACTER_EXPRESSION_ACTION_SHEET,
-                    image=character_expression_action_sheet,
                 ),
             ]
         else:
@@ -138,5 +126,63 @@ class ImageNodeExecutor:
             prompt=request.input.prompt,
             image=outputs[0].image,
             images=outputs,
+            persisted=False,
+        )
+
+    def run_character_derived_generation(
+        self,
+        *,
+        project_id: str,
+        node_id: str,
+        request: CharacterDerivedImageRequest,
+        settings: SeedDreamProviderSettings,
+        execute: ImageExecutor,
+    ) -> ImageGenerationResponse:
+        """Generate only after the user explicitly approves the base-image follow-up."""
+        profile = self._profile_resolver(TaskId.IMAGE_CHARACTER_GENERATE)
+        compiled_prompt = self._prompt_compiler.compile(
+            profile=profile,
+            project_id=project_id,
+            inputs={"prompt": "Generate approved character derivatives from the supplied base image."},
+        ).text
+
+        def generate(variant_instruction: str) -> GeneratedImage:
+            generated_image = run_with_task_retry(
+                profile=profile,
+                operation=lambda: execute(
+                    settings=settings,
+                    prompt="\n\n".join((compiled_prompt, variant_instruction)),
+                    reference_image_url=request.base_image.url,
+                    reference_image_b64=request.base_image.b64_json,
+                    reference_image_mime_type=request.base_image.mime_type,
+                ),
+            )
+            validate_output(profile.validator_id, generated_image)
+            return generated_image
+
+        validate_output(profile.validator_id, request.base_image)
+        character_three_view = generate(_CHARACTER_THREE_VIEW_PROMPT)
+        character_expression_action_sheet = generate(
+            _CHARACTER_EXPRESSION_ACTION_SHEET_PROMPT,
+        )
+        assert settings.model is not None
+        return ImageGenerationResponse(
+            project_id=project_id,
+            node_id=node_id,
+            node_type=ImageGenerationNodeType.CHARACTER_IMAGE,
+            provider=settings.provider,
+            model=settings.model,
+            prompt="Approved character base image -> three-view + expression/action derivatives.",
+            image=character_three_view,
+            images=[
+                GeneratedImageOutput(
+                    variant=ImageOutputVariant.CHARACTER_THREE_VIEW,
+                    image=character_three_view,
+                ),
+                GeneratedImageOutput(
+                    variant=ImageOutputVariant.CHARACTER_EXPRESSION_ACTION_SHEET,
+                    image=character_expression_action_sheet,
+                ),
+            ],
             persisted=False,
         )

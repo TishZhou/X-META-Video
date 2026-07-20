@@ -14,7 +14,10 @@ import type {
 } from "@xmeta/shared-contracts";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
-import type { RunImageGenerationOptions } from "@/lib/image-node/api";
+import type {
+  RunCharacterDerivedImageGenerationOptions,
+  RunImageGenerationOptions,
+} from "@/lib/image-node/api";
 import type { RunTextGenerationOptions } from "@/lib/text-node/api";
 
 import { WorkflowCanvasWorkspace } from "./workflow-canvas-workspace";
@@ -104,6 +107,29 @@ function imageGenerationResult(
           height: 1536,
         },
       },
+    ],
+    persisted: false,
+  };
+}
+
+function derivedImageGenerationResult(
+  options: RunCharacterDerivedImageGenerationOptions,
+): ImageGenerationResponse {
+  return {
+    project_id: options.projectId,
+    node_id: options.nodeId,
+    node_type: "character_image",
+    provider: "doubao-seedream",
+    model: "doubao-seedream-5-0-260128",
+    prompt: "Approved Task 1 base image derivatives.",
+    image: {
+      url: "https://image.example/character-three-view.png",
+      b64_json: null,
+      mime_type: "image/png",
+      width: 1536,
+      height: 1024,
+    },
+    images: [
       {
         variant: "character_three_view",
         image: {
@@ -217,13 +243,20 @@ describe("WorkflowCanvasWorkspace Text node interactions", () => {
     ).toBe("");
   });
 
-  it("generates Image Task 1 through the injected Image API runner and creates one result edge", async () => {
+  it("requires an explicit base-image action before generating Task 1 derivatives", async () => {
     const user = userEvent.setup();
     const imageGenerationRunner = vi.fn(
       async (options: RunImageGenerationOptions) => imageGenerationResult(options),
     );
+    const characterDerivedImageGenerationRunner = vi.fn(
+      async (options: RunCharacterDerivedImageGenerationOptions) =>
+        derivedImageGenerationResult(options),
+    );
     const { container } = render(
-      <WorkflowCanvasWorkspace imageGenerationRunner={imageGenerationRunner} />,
+      <WorkflowCanvasWorkspace
+        characterDerivedImageGenerationRunner={characterDerivedImageGenerationRunner}
+        imageGenerationRunner={imageGenerationRunner}
+      />,
     );
 
     await user.click(screen.getByRole("button", { name: "Add node" }));
@@ -272,6 +305,37 @@ describe("WorkflowCanvasWorkspace Text node interactions", () => {
     const baseResult = await screen.findByLabelText(
       "Character base image data outcome",
     );
+    expect(
+      baseResult
+        .querySelector('[data-data-image-outcome-preview="true"]')
+        ?.getAttribute("src"),
+    ).toBe("https://image.example/character-base.png");
+    expect(screen.queryByLabelText("Character three-view image data outcome")).toBeNull();
+    expect(screen.queryByLabelText("Character expression and action sheet data outcome")).toBeNull();
+    expect(baseResult.getAttribute("data-workflow-node")).toBe("data");
+    expect(baseResult.getAttribute("data-workflow-node-role")).toBe("outcome");
+    expect(baseResult.querySelector("article")).toBeNull();
+    expect(baseResult.querySelector("img")?.className).toContain("object-contain");
+    expect(baseResult.textContent).toContain(
+      "Backend: doubao-seedream / doubao-seedream-5-0-260128",
+    );
+    expect(baseResult.textContent).toContain("not saved to the asset library yet");
+    expect(container.querySelectorAll('[data-workflow-edge-hit="true"]')).toHaveLength(3);
+    expect(characterDerivedImageGenerationRunner).not.toHaveBeenCalled();
+
+    await user.click(
+      within(baseResult).getByRole("button", { name: "出三视图 + 表情动作" }),
+    );
+    await waitFor(() =>
+      expect(characterDerivedImageGenerationRunner).toHaveBeenCalledTimes(1),
+    );
+    expect(characterDerivedImageGenerationRunner.mock.calls[0]?.[0]).toMatchObject({
+      baseImage: {
+        url: "https://image.example/character-base.png",
+        b64_json: null,
+        mime_type: "image/png",
+      },
+    });
     const threeViewResult = await screen.findByLabelText(
       "Character three-view image data outcome",
     );
@@ -279,30 +343,11 @@ describe("WorkflowCanvasWorkspace Text node interactions", () => {
       "Character expression and action sheet data outcome",
     );
     expect(
-      baseResult
-        .querySelector('[data-data-image-outcome-preview="true"]')
-        ?.getAttribute("src"),
-    ).toBe("https://image.example/character-base.png");
-    expect(
-      threeViewResult
-        .querySelector('[data-data-image-outcome-preview="true"]')
-      ?.getAttribute("src"),
+      threeViewResult.querySelector('[data-data-image-outcome-preview="true"]')?.getAttribute("src"),
     ).toBe("https://image.example/character-three-view.png");
     expect(
-      expressionActionResult
-        .querySelector('[data-data-image-outcome-preview="true"]')
-        ?.getAttribute("src"),
+      expressionActionResult.querySelector('[data-data-image-outcome-preview="true"]')?.getAttribute("src"),
     ).toBe("https://image.example/character-expression-action-sheet.png");
-    for (const result of [baseResult, threeViewResult, expressionActionResult]) {
-      expect(result.getAttribute("data-workflow-node")).toBe("data");
-      expect(result.getAttribute("data-workflow-node-role")).toBe("outcome");
-      expect(result.querySelector("article")).toBeNull();
-      expect(result.querySelector("img")?.className).toContain("object-contain");
-    }
-    expect(baseResult.textContent).toContain(
-      "Backend: doubao-seedream / doubao-seedream-5-0-260128",
-    );
-    expect(baseResult.textContent).toContain("not saved to the asset library yet");
     expect(container.querySelectorAll('[data-workflow-edge-hit="true"]')).toHaveLength(5);
 
     await user.click(screen.getByRole("button", { name: "Add node" }));

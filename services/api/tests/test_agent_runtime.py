@@ -203,42 +203,11 @@ def test_image_handler_preserves_existing_prompt_and_response_contract() -> None
         "Full-body character reference.\n\n输出类型：角色底图。生成一张全身、正面、站姿的角色底图；"
         "轮廓清晰可辨，完整呈现人物面部、发型、体型、服装和配饰。"
     )
-    three_view_prompt = str(seen[1]["prompt"])
-    for constraint in (
-        "仅以随附的角色底图作为唯一视觉参考",
-        "脸型与五官比例、肤色、发质与发型、体型、服装、配饰及美术风格",
-        "输出比例固定为 3:4",
-        "禁止任何文字、标题、标签、编号、说明、Logo 或水印",
-        "正面、左侧面、背面",
-        "完整全身、标准站姿格位",
-        "严禁出现任何面部表情特写、动态动作、坐姿",
-    ):
-        assert constraint in three_view_prompt
-    expression_action_prompt = str(seen[2]["prompt"])
-    for constraint in (
-        "喜悦、悲伤、愤怒、惊讶、恐惧、中性",
-        "走路、奔跑、跳跃、坐姿",
-        "关节解剖结构正确",
-        "重心稳定",
-        "明确接触",
-        "严禁出现标准三视图",
-    ):
-        assert constraint in expression_action_prompt
+    assert len(seen) == 1
     assert seen[0]["reference_image_url"] is None
-    assert seen[1]["reference_image_url"] == "https://image.example/character-base.png"
-    assert seen[1]["reference_image_b64"] == "base-image-bytes"
-    assert seen[1]["reference_image_mime_type"] == "image/png"
-    assert seen[2]["reference_image_url"] == "https://image.example/character-base.png"
-    assert seen[2]["reference_image_b64"] == "base-image-bytes"
-    assert seen[2]["reference_image_mime_type"] == "image/png"
     assert response.image.url == "https://image.example/character-base.png"
     assert [(output.variant, output.image.url) for output in response.images] == [
         ("character_base", "https://image.example/character-base.png"),
-        ("character_three_view", "https://image.example/character-three-view.png"),
-        (
-            "character_expression_action_sheet",
-            "https://image.example/character-expression-action-sheet.png",
-        ),
     ]
 
 
@@ -275,7 +244,7 @@ def test_runtime_consumes_custom_bounded_retry_limit() -> None:
         execute=execute,
     )
 
-    assert attempts == 4
+    assert attempts == 2
     assert response.image.url == "https://image.example/retried.png"
 
 

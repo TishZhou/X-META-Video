@@ -1,4 +1,6 @@
 import type {
+  CharacterDerivedImageRequest,
+  GeneratedImage,
   ImageGenerationNodeType,
   ImageGenerationResponse,
   ImageGenerationSettings,
@@ -68,6 +70,33 @@ export async function runImageGeneration({
         },
         settings,
       }),
+    },
+  );
+}
+
+export type RunCharacterDerivedImageGenerationOptions = {
+  projectId: string;
+  nodeId: string;
+  baseImage: GeneratedImage;
+  settings?: ImageGenerationSettings;
+};
+
+export async function runCharacterDerivedImageGeneration({
+  projectId,
+  nodeId,
+  baseImage,
+  settings,
+}: RunCharacterDerivedImageGenerationOptions): Promise<ImageGenerationResponse> {
+  const request: CharacterDerivedImageRequest = {
+    base_image: baseImage,
+    settings,
+  };
+
+  return requestJson<ImageGenerationResponse>(
+    `/projects/${projectId}/nodes/${nodeId}/generate-character-derived-images`,
+    {
+      method: "POST",
+      body: JSON.stringify(request),
     },
   );
 }

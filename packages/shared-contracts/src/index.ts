@@ -242,6 +242,11 @@ export type ImageGenerationRequest = {
   settings?: ImageGenerationSettings;
 };
 
+export type CharacterDerivedImageRequest = {
+  base_image: GeneratedImage;
+  settings?: ImageGenerationSettings;
+};
+
 export type ImageGenerationResponse = {
   project_id: string;
   node_id: string;

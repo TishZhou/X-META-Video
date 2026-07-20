@@ -171,3 +171,8 @@
 - Image Task 1 now makes three configured server-side model stages: `character_base`, dedicated `character_three_view`, and `character_expression_action_sheet`. Both derivative calls use only the freshly generated base image as their reference.
 - The dedicated three-view prompt requires complete full-body front, left-side, and back stances. The separate sheet requires six expression close-ups and four actions (walk, run, jump, seated), so full-body framing no longer competes with expression/action panels.
 - Latest in-app-browser E2E was live provider-backed (`doubao-seedream / doubao-seedream-5-0-260128`) through local FastAPI: `200 OK`, 7 nodes / 5 edges, three labelled uncropped pure Data outputs, and visible 3/6/4 acceptance. The final evaluator score is 160/160, ACCEPTED.
+
+## Explicit base follow-up action - 2026-07-20
+
+- Task 1 now creates only `character_base` on its initial `generate-image` request. Hovering or focusing the base Data image reveals `出三视图 + 表情动作`; the user must click it to begin the two derived model calls.
+- The dedicated `generate-character-derived-images` FastAPI route accepts only the generated base image and returns the full-body three-view plus expression/action sheet. Browser E2E confirmed 5 nodes / 3 edges after base-only completion, then 7 nodes / 5 edges after the explicit action; both requests returned `200 OK` from the configured provider.

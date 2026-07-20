@@ -56,7 +56,7 @@
                          "status":  "passing",
                          "current_task":  "image-task-1-model-generation-v1",
                          "current_task_status":  "passing",
-                        "user_visible_behavior":  "Users can use one self-contained Image node for generated images: connected text, prompt-only generation, upload, and image-plus-prompt edit all update the selected Image node itself, with the model selector showing SeedDream 5.0. Image Task 1 accepts character appearance plus personality/action text, generates a base image through the server-side model, then uses that generated base as the sole reference for two separate non-persisted outputs: a full-body front/left-side/back three-view image and a 6-expression/4-action sheet. All three borderless pure Data image outputs receive automatic source-to-result edges.",
+                        "user_visible_behavior":  "Users can use one self-contained Image node for generated images: connected text, prompt-only generation, upload, and image-plus-prompt edit all update the selected Image node itself, with the model selector showing SeedDream 5.0. Image Task 1 first generates only a borderless pure Data character base image through the server-side model. Hovering or focusing that base exposes “出三视图 + 表情动作”; clicking it explicitly generates the full-body front/left-side/back sheet and the 6-expression/4-action sheet from the base, with automatic source-to-result edges.",
                          "task_file":  "feature_tasks/5.json"
                      },
                      {

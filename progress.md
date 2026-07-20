@@ -510,3 +510,9 @@ Record major decisions and progress each session. Keep the current verified stat
 
 - Replaced the crowded combined character sheet with three server-generated Data outcomes: `character_base`, a dedicated full-body `character_three_view`, and `character_expression_action_sheet`. The two derived provider calls receive only the generated base image URL/base64/MIME, never the original upload or a browser-side/local model fallback.
 - Real in-app-browser E2E completed with Chinese inputs: local FastAPI returned `200 OK` from the configured `doubao-seedream / doubao-seedream-5-0-260128` provider. The final canvas held 7 nodes and 5 edges. Visual review confirmed the base is uncropped, the independent three-view output contains full-body front/left-side/back stances, and the separate sheet contains six expressions plus four actions (walk, run, jump, seated).
+
+## 2026-07-20 — Task 1 explicit derived-generation action
+
+- Task 1 now stops after one real server-side `character_base` generation. The base pure Data image exposes the explicit hover/focus action `出三视图 + 表情动作`; no hover or initial Task 1 completion triggers downstream generation.
+- Clicking the action calls the local FastAPI `generate-character-derived-images` route with only the generated base image URL/base64/MIME. It produces the full-body three-view and separate six-expression/four-action pure Data outcomes, updates their stable source edges, and keeps all provider/model and non-persistence evidence visible.
+- Live browser verification confirmed the boundary: base completion yielded 5 nodes / 3 edges, while the explicit click yielded 7 nodes / 5 edges through the configured `doubao-seedream / doubao-seedream-5-0-260128` provider.
