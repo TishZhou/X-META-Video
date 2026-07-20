@@ -207,6 +207,7 @@ class ImageOutputVariant(StrEnum):
     IMAGE = "image"
     CHARACTER_BASE = "character_base"
     CHARACTER_THREE_VIEW = "character_three_view"
+    CHARACTER_EXPRESSION_ACTION_SHEET = "character_expression_action_sheet"
 
 
 class GeneratedImageOutput(BaseModel):

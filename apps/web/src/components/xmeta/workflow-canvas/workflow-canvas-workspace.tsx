@@ -335,17 +335,25 @@ const CHARACTER_IMAGE_TASK_OUTPUTS = [
     description: "Character front, side, and back views generated through the configured Image API.",
     alt: "Generated Task 1 character three-view image",
   },
+  {
+    variant: "character_expression_action_sheet",
+    title: "Character expression and action sheet",
+    description:
+      "Character expression and natural-action sheet generated through the configured Image API.",
+    alt: "Generated Task 1 character expression and action sheet",
+  },
 ] as const;
 
 function calculateImageTaskOutcomePosition(
   sourcePosition: WorkflowPoint,
   variant: (typeof CHARACTER_IMAGE_TASK_OUTPUTS)[number]["variant"],
 ) {
+  const outputIndex = CHARACTER_IMAGE_TASK_OUTPUTS.findIndex(
+    (output) => output.variant === variant,
+  );
+
   return {
-    x:
-      sourcePosition.x +
-      NODE_WIDTH +
-      (variant === "character_base" ? 96 : NODE_WIDTH + 192),
+    x: sourcePosition.x + NODE_WIDTH + 96 + outputIndex * (NODE_WIDTH + 96),
     y: sourcePosition.y,
   };
 }
@@ -2038,7 +2046,7 @@ export function WorkflowCanvasWorkspace({
 
       if (taskOutputs.some((output) => !output.image)) {
         throw new Error(
-          "Image Task 1 requires both the base image and the three-view image from the server.",
+          "Image Task 1 requires the base image, full-body three-view image, and expression/action sheet from the server.",
         );
       }
 
@@ -2070,7 +2078,7 @@ export function WorkflowCanvasWorkspace({
           },
           ports: imageTaskOutcomePorts(),
           notice:
-            "Task 1 character base and three-view images are ready. Local previews are not persisted to the asset library yet.",
+            "Task 1 character base, full-body three-view, and expression/action images are ready. Local previews are not persisted to the asset library yet.",
         });
       }
     } catch (error) {

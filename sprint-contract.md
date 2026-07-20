@@ -4,8 +4,8 @@
 
 - Feature: 5 Image Node
 - Task: `image-task-1-character-views-v1`
-- Status: `in_progress`
-- Goal: make Image Task 1 generate its character sheet from the newly returned base image, not independently from the same text prompt.
+- Status: `passing`
+- Goal: make Image Task 1 generate a base image, a dedicated full-body three-view image, and a separate expression/action sheet, each downstream result grounded only in that returned base image.
 
 ## Write Scope
 
@@ -22,14 +22,15 @@ Protected boundaries:
 
 ## Acceptance Criteria
 
-1. Completing Image Task 1 makes the configured Image API generate a base image from the submitted appearance and personality/action text, then passes that returned base image to the character-sheet generation as its reference input.
-2. The character-sheet prompt requests a text-free 3:4 multi-panel reference sheet with the approved front/side/back, expression, and action modules while preserving the base image identity, wardrobe, and art style.
-3. The backend returns both typed image results with provider/model metadata and fails the Task honestly if either required image is unavailable.
-4. The canvas creates two distinct, rerunnable pure Data outcome nodes: “Character base image” and “Character three-view image”.
-5. Each Data outcome has an unframed, uncropped original image preview and its own automatic source-to-result edge; rerunning updates results without duplicate nodes or edges.
-6. The UI keeps provider/model execution evidence and the existing non-persistence disclosure without claiming asset-library storage.
-7. Focused backend, graph, frontend interaction, typecheck/build, and in-app browser click-by-click verification pass with the live configured model path where credentials are available.
-8. Independent evaluator score exceeds 140/150.
+1. Completing Image Task 1 makes the configured Image API generate a base image from the submitted appearance and personality/action text, then passes only that returned base image to each derived generation as its reference input.
+2. The dedicated Chinese three-view prompt requests only three complete full-body standard views: front, left side, and back, with no expression or action panels competing for its image area.
+3. The Chinese expression/action prompt requests six expression close-ups and four natural full-body actions in fixed cells while preserving the base image identity, wardrobe, and art style.
+4. The backend returns all three typed image results with provider/model metadata and fails the Task honestly if any required image is unavailable.
+5. The canvas creates three distinct, rerunnable pure Data outcome nodes: character base image, character three-view image, and character expression/action sheet.
+6. Each Data outcome has an unframed, uncropped original image preview and its own automatic source-to-result edge; rerunning updates results without duplicate nodes or edges.
+7. The UI keeps provider/model execution evidence and the existing non-persistence disclosure without claiming asset-library storage.
+8. Focused backend, graph, frontend interaction, typecheck/build, and in-app browser click-by-click verification pass with the live configured model path where credentials are available.
+9. Independent evaluator score exceeds 140/150.
 
 ## Sprint Log
 
@@ -37,7 +38,9 @@ Protected boundaries:
 | --- | --- |
 | Baseline | Previous Task 1 generated only one `image` output. Output node IDs are derived only from source ID and data type, so a second image would overwrite the base result. |
 | Plan | Add explicit output variants and server-side multi-image response handling while preserving the Image Task and four-Node architecture. |
-| Implementation | The server-side `image.character.generate` path now returns `character_base` and `character_three_view`; the canvas maps them to distinct pure Data outcomes with stable variant IDs and automatic edges. |
+| Implementation | The server-side `image.character.generate` path returns `character_base`, `character_three_view`, and `character_expression_action_sheet`; the canvas maps them to distinct pure Data outcomes with stable variant IDs and automatic edges. |
 | Revision plan | Change the second provider call to use the first `character_base` output as its only reference image and replace its independent-turnaround instruction with the approved 3:4 character-sheet prompt. |
+| Chinese-prompt revision | Replace the second-stage instruction with a Chinese fixed-slot character-sheet prompt that explicitly prohibits omitted expression/action panels and strengthens pose anatomy, center of gravity, ground contact, and garment dynamics. |
+| Split-output revision | Split the overloaded character sheet into a complete-full-body three-view provider call and a separate expression/action provider call. Both receive only the generated base as their reference and appear as their own pure Data outcomes and automatic edges. |
 | Automated verification | Focused Web tests passed (51), current backend tests passed (28), and Ruff plus `git diff --check` passed before the local dependency cache was disrupted. |
-| Live E2E | After a clean dependency reinstall and FastAPI restart, an in-app-browser Task 1 submission reached the local route and the configured provider; the completed POST returned `200 OK`. The tab-control connection reset before the final DOM read, so this log does not overclaim a visual identity judgment beyond the returned live call. |
+| Live E2E | In-app-browser Task 1 click-by-click verification submitted Chinese appearance and personality inputs through local FastAPI to the configured provider. The completed POST returned `200 OK`; the canvas showed 7 nodes and 5 edges, with three labelled Data outcomes. Visual review confirmed an uncropped full-body base, a distinct front/left-side/back full-body sheet, and a separate six-expression/four-action sheet. |

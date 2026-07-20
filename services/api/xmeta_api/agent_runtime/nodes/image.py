@@ -28,13 +28,27 @@ _IMAGE_TASKS = {
 }
 
 _CHARACTER_BASE_PROMPT = (
-    "Output variant: character base image. Produce one full-body, front-facing "
-    "character reference with a clean, readable silhouette."
+    "输出类型：角色底图。生成一张全身、正面、站姿的角色底图；轮廓清晰可辨，"
+    "完整呈现人物面部、发型、体型、服装和配饰。"
 )
 
-_CHARACTER_SHEET_PROMPT = """Output variant: character three-view image. Use the supplied base image as the sole visual reference and faithfully reproduce its character identity, facial features, skin tone, hair texture, body type, wardrobe, accessories, and art style.
+_CHARACTER_THREE_VIEW_PROMPT = """输出类型：角色标准三视图。仅以随附的角色底图作为唯一视觉参考，完整复刻底图人物的脸型与五官比例、肤色、发质与发型、体型、服装、配饰及美术风格；不得混入、借用或改造任何其他人物参考。
 
-Create a clean 3:4 character design sheet with no words, labels, captions, or typography. Use a white background with subtle physically plausible shadows and neutral global lighting. Arrange three horizontal rows: first row has full-body standing front, side, and back views at consistent proportions; second row has six close-up facial expressions (joy, sadness, anger, surprise, fear, neutral) with realistic facial-muscle linkage, skin texture, and pore detail; third row has four full-body poses (walking, running, jumping, seated) that keep the exact wardrobe and accessories while showing garment drape, muscle force, and candid realism. Keep a tidy multi-panel composition."""
+输出比例固定为 3:4。画面只能是图片：禁止任何文字、标题、标签、编号、说明、Logo 或水印。使用纯白背景、细微真实物理阴影与中性全局照明，采用干净整齐的横向单排多面板布局。
+
+画面必须且仅包含 3 个等比例、完整全身、标准站姿格位；从左至右固定为：正面、左侧面、背面。三者身高、头身比、体型、服装褶皱和配饰严格一致，脚部完整可见且与地面有自然接触。
+
+严禁出现任何面部表情特写、动态动作、坐姿、额外人物、额外格位或拼贴内容。每个指定格位必须完整、独立且只出现一次，严禁合并格位、遗漏格位或用重复图替代。"""
+
+_CHARACTER_EXPRESSION_ACTION_SHEET_PROMPT = """输出类型：角色表情与动态设定集。仅以随附的角色底图作为唯一视觉参考，完整复刻底图人物的脸型与五官比例、肤色、发质与发型、体型、服装、配饰及美术风格；不得混入、借用或改造任何其他人物参考。
+
+输出比例固定为 3:4。画面只能是图片：禁止任何文字、标题、标签、编号、说明、Logo 或水印。使用纯白背景、细微真实物理阴影与中性全局照明，采用干净整齐的两行多面板布局。每个指定格位必须完整、独立且只出现一次，严禁合并格位、遗漏格位、增加未指定格位或用重复图替代。
+
+第一横排必须且仅包含 6 个等尺寸面部特写格位，从左至右固定为：喜悦、悲伤、愤怒、惊讶、恐惧、中性。每个表情必须清楚区分，写实呈现面部肌肉联动、皮肤质感与毛孔细节，人物身份与五官比例不得漂移。
+
+第二横排必须且仅包含 4 个等比例完整全身动态格位，从左至右固定为：走路、奔跑、跳跃、坐姿。所有动作必须自然可信：关节解剖结构正确，肩颈、脊柱、骨盆、手脚的受力关系合理，重心稳定，脚部或坐姿与地面/座面有明确接触；避免僵硬、悬浮、扭曲或不可能姿势。服装样式、装饰和角色身份必须与底图完全一致，并通过自然的布料垂坠、褶皱、拉伸和惯性表现动作受力与真实抓拍感。
+
+严禁出现标准三视图、额外人物、额外格位或拼贴内容。"""
 
 
 class ImageNodeExecutor:
@@ -92,7 +106,11 @@ class ImageNodeExecutor:
 
         if request.node_type == ImageGenerationNodeType.CHARACTER_IMAGE:
             character_base = generate(_CHARACTER_BASE_PROMPT, request.input)
-            character_sheet = generate(_CHARACTER_SHEET_PROMPT, character_base)
+            character_three_view = generate(_CHARACTER_THREE_VIEW_PROMPT, character_base)
+            character_expression_action_sheet = generate(
+                _CHARACTER_EXPRESSION_ACTION_SHEET_PROMPT,
+                character_base,
+            )
             outputs = [
                 GeneratedImageOutput(
                     variant=ImageOutputVariant.CHARACTER_BASE,
@@ -100,7 +118,11 @@ class ImageNodeExecutor:
                 ),
                 GeneratedImageOutput(
                     variant=ImageOutputVariant.CHARACTER_THREE_VIEW,
-                    image=character_sheet,
+                    image=character_three_view,
+                ),
+                GeneratedImageOutput(
+                    variant=ImageOutputVariant.CHARACTER_EXPRESSION_ACTION_SHEET,
+                    image=character_expression_action_sheet,
                 ),
             ]
         else:

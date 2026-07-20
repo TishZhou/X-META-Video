@@ -311,6 +311,11 @@ describe("workflow graph state", () => {
       "image",
       "character_three_view",
     );
+    const expressionActionOutputNodeId = createWorkflowOutputNodeId(
+      "image-4",
+      "image",
+      "character_expression_action_sheet",
+    );
     const baseTaskResult = {
       type: "upsertOutputNode" as const,
       sourceNodeId: "image-4",
@@ -346,13 +351,29 @@ describe("workflow graph state", () => {
         label: "Character three-view image",
       },
     };
+    const expressionActionTaskResult = {
+      ...baseTaskResult,
+      title: "Character expression and action sheet",
+      position: { x: 1540, y: 320 },
+      output: {
+        ...baseTaskResult.output,
+        outputVariant: "character_expression_action_sheet",
+        label: "Character expression and action sheet",
+      },
+    };
     const completed = workflowGraphReducer(
-      workflowGraphReducer(withImage, baseTaskResult),
-      threeViewTaskResult,
+      workflowGraphReducer(
+        workflowGraphReducer(withImage, baseTaskResult),
+        threeViewTaskResult,
+      ),
+      expressionActionTaskResult,
     );
     const rerun = workflowGraphReducer(
-      workflowGraphReducer(completed, baseTaskResult),
-      threeViewTaskResult,
+      workflowGraphReducer(
+        workflowGraphReducer(completed, baseTaskResult),
+        threeViewTaskResult,
+      ),
+      expressionActionTaskResult,
     );
 
     expect(completed.nodes.find((node) => node.id === outputNodeId)).toMatchObject({
@@ -372,13 +393,22 @@ describe("workflow graph state", () => {
       output: { outputVariant: "character_three_view" },
     });
     expect(
+      completed.nodes.find((node) => node.id === expressionActionOutputNodeId),
+    ).toMatchObject({
+      type: "data",
+      output: { outputVariant: "character_expression_action_sheet" },
+    });
+    expect(
       completed.edges.filter((edge) => edge.sourceNodeId === "image-4"),
-    ).toHaveLength(2);
+    ).toHaveLength(3);
     expect(rerun.nodes).toHaveLength(completed.nodes.length);
     expect(rerun.edges).toHaveLength(completed.edges.length);
     expect(rerun.edges.filter((edge) => edge.targetNodeId === outputNodeId)).toHaveLength(1);
     expect(
       rerun.edges.filter((edge) => edge.targetNodeId === threeViewOutputNodeId),
+    ).toHaveLength(1);
+    expect(
+      rerun.edges.filter((edge) => edge.targetNodeId === expressionActionOutputNodeId),
     ).toHaveLength(1);
   });
 

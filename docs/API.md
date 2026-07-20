@@ -454,13 +454,23 @@ Response:
         "width": 1536,
         "height": 2048
       }
+    },
+    {
+      "variant": "character_expression_action_sheet",
+      "image": {
+        "url": "https://example.com/character-expression-action-sheet.png",
+        "b64_json": null,
+        "mime_type": "image/png",
+        "width": 1536,
+        "height": 2048
+      }
     }
   ],
   "persisted": false
 }
 ```
 
-`character_image` executes the existing `image.character.generate` task through the configured provider in a fixed two-step sequence. It first creates `character_base` from the submitted prompt (and any submitted reference), then passes that returned base image URL/base64/mime metadata as the reference for `character_three_view`. The second prompt requests a text-free 3:4 character sheet with front/side/back, six expressions, and four action poses while preserving the base image identity, wardrobe, and art style. If either provider result is unavailable, the route fails instead of returning a partial character result. The legacy top-level `image` is the base-image convenience field; new character-task canvas flows should use the typed `images` array. `prop_asset` and `scene_image` return one `images` item with variant `image`.
+`character_image` executes the existing `image.character.generate` task through the configured provider in a fixed three-step sequence. It first creates `character_base` from the submitted prompt (and any submitted reference), then passes only that returned base image URL/base64/mime metadata as the reference for two independent Chinese-prompt outputs: `character_three_view` and `character_expression_action_sheet`. The three-view image contains only complete full-body front, left-side, and back standard standing views; it explicitly excludes expression and action panels. The expression/action sheet contains six face close-ups (joy, sadness, anger, surprise, fear, neutral) and four natural full-body poses (walking, running, jumping, seated); it explicitly excludes the standard three-view. Both outputs are text-free 3:4 sheets on white, retain the base image identity, wardrobe, and art style, and the action sheet requires anatomically credible joints, center of gravity, grounded contact, and clothing drape. If any required provider result is unavailable, the route fails instead of returning a partial character result. The legacy top-level `image` is the base-image convenience field; new character-task canvas flows should use the typed `images` array. `prop_asset` and `scene_image` return one `images` item with variant `image`.
 
 When the selected image node already contains a generated or uploaded image, the web app sends that image as `reference_image_url` or `reference_image_b64` with the prompt. The backend wrapper is `submitSeedreamWithRetry()` -> `submitSeedreamGenerationOnce()` and posts to the configured Doubao Ark `/api/v3/images/generations` endpoint, including the reference as the SeedDream `image` payload field for image editing. The web app never calls Doubao directly and never receives provider credentials.
 

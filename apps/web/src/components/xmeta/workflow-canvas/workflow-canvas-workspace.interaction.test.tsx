@@ -114,6 +114,16 @@ function imageGenerationResult(
           height: 1024,
         },
       },
+      {
+        variant: "character_expression_action_sheet",
+        image: {
+          url: "https://image.example/character-expression-action-sheet.png",
+          b64_json: null,
+          mime_type: "image/png",
+          width: 1536,
+          height: 2048,
+        },
+      },
     ],
     persisted: false,
   };
@@ -265,6 +275,9 @@ describe("WorkflowCanvasWorkspace Text node interactions", () => {
     const threeViewResult = await screen.findByLabelText(
       "Character three-view image data outcome",
     );
+    const expressionActionResult = await screen.findByLabelText(
+      "Character expression and action sheet data outcome",
+    );
     expect(
       baseResult
         .querySelector('[data-data-image-outcome-preview="true"]')
@@ -273,9 +286,14 @@ describe("WorkflowCanvasWorkspace Text node interactions", () => {
     expect(
       threeViewResult
         .querySelector('[data-data-image-outcome-preview="true"]')
-        ?.getAttribute("src"),
+      ?.getAttribute("src"),
     ).toBe("https://image.example/character-three-view.png");
-    for (const result of [baseResult, threeViewResult]) {
+    expect(
+      expressionActionResult
+        .querySelector('[data-data-image-outcome-preview="true"]')
+        ?.getAttribute("src"),
+    ).toBe("https://image.example/character-expression-action-sheet.png");
+    for (const result of [baseResult, threeViewResult, expressionActionResult]) {
       expect(result.getAttribute("data-workflow-node")).toBe("data");
       expect(result.getAttribute("data-workflow-node-role")).toBe("outcome");
       expect(result.querySelector("article")).toBeNull();
@@ -285,7 +303,7 @@ describe("WorkflowCanvasWorkspace Text node interactions", () => {
       "Backend: doubao-seedream / doubao-seedream-5-0-260128",
     );
     expect(baseResult.textContent).toContain("not saved to the asset library yet");
-    expect(container.querySelectorAll('[data-workflow-edge-hit="true"]')).toHaveLength(4);
+    expect(container.querySelectorAll('[data-workflow-edge-hit="true"]')).toHaveLength(5);
 
     await user.click(screen.getByRole("button", { name: "Add node" }));
     await user.click(screen.getByRole("button", { name: /Add Image:/ }));

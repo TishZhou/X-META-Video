@@ -160,3 +160,14 @@
 - Image Task 1 now has a fixed two-call server-side chain: generate `character_base`, then generate `character_three_view` with only the base output as SeedDream reference.
 - The second prompt is a text-free 3:4 character sheet with the requested three-view, six-expression, and four-action layout. It is not an independently prompted image.
 - Latest verification: `init.ps1` 70 Web tests, focused backend pytest 28, Ruff, Web typecheck/build, and diff check passed. Live browser submission reached configured provider and returned local API `200 OK`; retain the live result for human visual approval because the Browser control session reset before final DOM capture.
+
+## Chinese prompt update — 2026-07-20
+
+- The second-stage prompt is now Chinese with fixed, ordered 3/6/4 cells and explicit prohibition of omitted, merged, extra, or repeated panels and all text.
+- Live browser E2E returned a visible provider-backed base image and matching 3:4 sheet: 3 views, 6 expressions, and 4 action panels. Keep the remaining pose-quality note: the jump is slightly tucked/hovering, so prompt-only quality is not perfect.
+
+## Split Task 1 outputs - 2026-07-20
+
+- Image Task 1 now makes three configured server-side model stages: `character_base`, dedicated `character_three_view`, and `character_expression_action_sheet`. Both derivative calls use only the freshly generated base image as their reference.
+- The dedicated three-view prompt requires complete full-body front, left-side, and back stances. The separate sheet requires six expression close-ups and four actions (walk, run, jump, seated), so full-body framing no longer competes with expression/action panels.
+- Latest in-app-browser E2E was live provider-backed (`doubao-seedream / doubao-seedream-5-0-260128`) through local FastAPI: `200 OK`, 7 nodes / 5 edges, three labelled uncropped pure Data outputs, and visible 3/6/4 acceptance. The final evaluator score is 160/160, ACCEPTED.

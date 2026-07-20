@@ -228,7 +228,8 @@ export type GeneratedImage = {
 export type ImageOutputVariant =
   | "image"
   | "character_base"
-  | "character_three_view";
+  | "character_three_view"
+  | "character_expression_action_sheet";
 
 export type GeneratedImageOutput = {
   variant: ImageOutputVariant;

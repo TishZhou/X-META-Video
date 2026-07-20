@@ -152,6 +152,16 @@ def test_generate_image_node_returns_backend_seedream_evidence(
                     "height": 1024,
                 },
             },
+            {
+                "variant": "character_expression_action_sheet",
+                "image": {
+                    "url": "https://image.example/generated.png",
+                    "b64_json": None,
+                    "mime_type": "image/png",
+                    "width": 1024,
+                    "height": 1024,
+                },
+            },
         ],
         "persisted": False,
     }
@@ -197,16 +207,38 @@ def test_character_sheet_uses_the_generated_base_as_seedream_reference(
     )
 
     assert response.status_code == 200
-    assert len(calls) == 2
+    assert len(calls) == 3
     assert calls[0]["reference_image_url"] == "data:image/png;base64,old-image"
     assert calls[1]["reference_image_url"] == "https://image.example/character-base.png"
     assert calls[1]["reference_image_b64"] is None
     assert calls[1]["reference_image_mime_type"] == "image/png"
-    assert "sole visual reference" in str(calls[1]["prompt"])
-    assert "3:4 character design sheet" in str(calls[1]["prompt"])
+    assert calls[2]["reference_image_url"] == "https://image.example/character-base.png"
+    assert calls[2]["reference_image_b64"] is None
+    assert calls[2]["reference_image_mime_type"] == "image/png"
+    three_view_prompt = str(calls[1]["prompt"])
+    for required_phrase in (
+        "仅以随附的角色底图作为唯一视觉参考",
+        "画面必须且仅包含 3 个等比例、完整全身、标准站姿格位",
+        "正面、左侧面、背面",
+        "禁止任何文字",
+        "严禁出现任何面部表情特写、动态动作、坐姿",
+    ):
+        assert required_phrase in three_view_prompt
+    expression_action_prompt = str(calls[2]["prompt"])
+    for required_phrase in (
+        "第一横排必须且仅包含 6 个等尺寸面部特写格位",
+        "喜悦、悲伤、愤怒、惊讶、恐惧、中性",
+        "第二横排必须且仅包含 4 个等比例完整全身动态格位",
+        "走路、奔跑、跳跃、坐姿",
+        "关节解剖结构正确",
+        "重心稳定",
+        "明确接触",
+        "严禁出现标准三视图",
+    ):
+        assert required_phrase in expression_action_prompt
 
 
-def test_character_image_fails_when_three_view_generation_is_unavailable(
+def test_character_image_fails_when_required_generation_is_unavailable(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setenv("DOUBAO_API_KEY", "test-doubao-key")
@@ -217,8 +249,8 @@ def test_character_image_fails_when_three_view_generation_is_unavailable(
     def fake_submit_seedream(**_: object) -> GeneratedImage:
         nonlocal calls
         calls += 1
-        if calls == 2:
-            raise ProviderExecutionError("three-view provider response unavailable")
+        if calls == 3:
+            raise ProviderExecutionError("expression/action provider response unavailable")
         return GeneratedImage(url="https://image.example/base.png")
 
     monkeypatch.setattr(
@@ -232,8 +264,8 @@ def test_character_image_fails_when_three_view_generation_is_unavailable(
     )
 
     assert response.status_code == 502
-    assert calls == 2
-    assert "three-view provider response unavailable" in response.json()["detail"]
+    assert calls == 3
+    assert "expression/action provider response unavailable" in response.json()["detail"]
 
 
 def test_generate_image_node_fails_clearly_when_seedream_key_missing() -> None:

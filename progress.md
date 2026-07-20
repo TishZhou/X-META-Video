@@ -500,3 +500,13 @@ Record major decisions and progress each session. Keep the current verified stat
 - Changed the second Image Task 1 provider call to use only the freshly generated base image URL/base64/MIME as its reference; it no longer independently generates from the original text or reuses an uploaded source reference.
 - The server-side character-sheet prompt requires the approved text-free 3:4 three-row sheet: front/side/back views, six expressions, and four action poses, preserving the base character identity, wardrobe, and art style.
 - Evidence: `init.ps1` (70 Web tests), focused API/Runtime pytest (28), Ruff, typecheck, build, and `git diff --check` passed. A live in-app-browser request reached FastAPI and the configured provider, and the completed POST returned `200 OK`; browser control reset before a final visual read, so visual identity quality remains a user-review point.
+
+## 2026-07-20 — Chinese fixed-slot character sheet prompt
+
+- Replaced the second-stage English prompt with a Chinese fixed-slot prompt: 3 ordered views, 6 ordered expressions, and 4 ordered actions; it forbids text, missing, merged, extra, and repeated cells and adds anatomy, center-of-gravity, contact, and garment-dynamics constraints.
+- A real in-app-browser generation returned `200 OK` through local FastAPI and the configured provider. The visible 3:4 sheet contained 3 views, 6 expressions, and 4 actions and preserved the generated base character identity and outfit. The jump pose remains slightly tucked/hovering and is recorded as a follow-up quality improvement.
+
+## 2026-07-20 — Split Task 1 character outputs
+
+- Replaced the crowded combined character sheet with three server-generated Data outcomes: `character_base`, a dedicated full-body `character_three_view`, and `character_expression_action_sheet`. The two derived provider calls receive only the generated base image URL/base64/MIME, never the original upload or a browser-side/local model fallback.
+- Real in-app-browser E2E completed with Chinese inputs: local FastAPI returned `200 OK` from the configured `doubao-seedream / doubao-seedream-5-0-260128` provider. The final canvas held 7 nodes and 5 edges. Visual review confirmed the base is uncropped, the independent three-view output contains full-body front/left-side/back stances, and the separate sheet contains six expressions plus four actions (walk, run, jump, seated).
