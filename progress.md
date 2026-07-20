@@ -4,6 +4,8 @@ Record major decisions and progress each session. Keep the current verified stat
 
 ## Current Verified State
 
+- 2026-07-20 Node design specification: `docs/node_design.md` now translates the four-Node Phase 1 contract into concise node-level implementation guidance: task/input/output tables, the ten current profiles versus planned tasks, target TaskProfile pseudocode, memory and validation boundaries, a deterministic IPMV preset, and short Phase 2/3 extensions. It distinguishes TaskRun execution records from Artifact results, confines voice/style generation to Phase 3, and labels unimplemented strategy/persistence features honestly. `init.ps1` passed with 10 Web files / 70 tests; independent documentation evaluation accepted at 149/150.
+
 - 2026-07-20 Four-Node product/runtime contract: `docs/PRODUCT.md` now defines exactly Text, Image, Audio, and Video creation Nodes with explicit Tasks, deterministic visible Workflow Presets, and exceptional bounded Agentic execution. `docs/ARCHITECTURE.md` defines Router -> Runtime -> TaskProfile -> NodeExecutor -> Provider -> Validator -> Artifact, separates Task definitions from Node selection, TaskRun, and Artifact storage, and labels current persistence/orchestration gaps honestly. Documentation checks and `init.ps1` passed with 10 Web files / 70 tests; independent evaluation accepted at 146/150.
 
 - 2026-07-17 Image Task 1 model output: Replaced the supplied local fixture with a real FastAPI `character_image` request. The configured Doubao Seedream model returned the result in the in-app Browser; the Image source now connects to a pure Data outcome that renders the original image at natural aspect ratio with no card or image border/crop. Final Browser view was 5 nodes / 3 edges. Web 70/70, API/Runtime 27/27, Ruff, typecheck, production build, `init.ps1`, and diff check passed; independent evaluation accepted 157/160.
@@ -51,6 +53,15 @@ Record major decisions and progress each session. Keep the current verified stat
 - Current blocker: none for Feature 9. Browser E2E passed with an intercepted local FastAPI Ark task-only response; live Ark execution was not attempted because `ARK_API_KEY` is empty.
 
 ## Session Log
+
+### Session 059
+
+- Date: 2026-07-20
+- Goal: Convert the early, encoding-damaged Text/Graph Node sketch into a concise Phase 1 Node design specification consistent with the accepted product and runtime documents.
+- Completed: Rewrote `docs/node_design.md` for the four creation Nodes. It covers common Node/Task/TaskRun/Artifact concepts; Text, Image, Audio, and Video task matrices; the ten actual Runtime Profile IDs; planned but unregistered task boundaries; MemoryScope, validation, retry and provider-state rules; the visible deterministic IPMV preset; and restrained Phase 2/3 extensions.
+- Verification: `init.ps1` passed with 10 Web files / 70 tests. Strict UTF-8/semantic checks, Profile-ID source comparison, and diff whitespace checks passed.
+- Evaluation: Independent evaluator first identified three documentation boundaries; revision moved voice/style generation to Phase 3, labeled `strategy` as target contract work, and separated TaskRun from Artifact. Final score 149/150, accepted.
+- Boundary: Documentation-only. Other current implementation and planning changes in the worktree were preserved and are not included in this documentation commit.
 
 ### Session 058
 

@@ -2,6 +2,8 @@
 
 ## Verified Now
 
+- `docs/node_design.md` is the concise implementation-facing companion to Product and Architecture. It maps the IPMV workflow onto the same four creation Node kinds, records current versus planned Task IDs, and establishes Node Task selection, TaskRun, Artifact, MemoryScope, Validator, preset, and human-control boundaries. It is accepted at 149/150; voice/style generation stays Phase 3 and target-only Runtime fields are identified as such.
+
 - The Phase 1 product/runtime documentation is accepted at 146/150. Product defines exactly four creation Node kinds and Architecture records the Router, Runtime, Task Profile, executor, provider, validator, TaskRun, Memory, Artifact, and persistence boundaries while distinguishing current implementation from target behavior.
 
 - Image Task 1 model output is passing: the task combines appearance and personality/action into a server-side `character_image` request and renders the live returned media in a downstream pure Data node. The image itself has no visible card/image border and is shown uncropped at its original aspect ratio; source/result ports and their one automatic edge remain visible. Browser E2E produced a real `doubao-seedream / doubao-seedream-5-0-260128` result at 5 nodes / 3 edges. Full Web 70 tests, API/Runtime 27 tests, Ruff, typecheck, production build, `init.ps1`, and diff check passed; independent evaluation accepted 157/160.

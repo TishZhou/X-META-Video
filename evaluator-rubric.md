@@ -1,42 +1,44 @@
-# Evaluator Rubric - Four-Node Product and Runtime Documentation
+# Evaluator Rubric - Image Task 1 Character Views V1
 
-Updated: 2026-07-20 agent-runtime-004 independent evaluation
+Updated: 2026-07-20 independent evaluation
 
 ## Evaluation Scope
 
-- Reviewed `docs/PRODUCT.md` and `docs/ARCHITECTURE.md` against `sprint-contract.md`, `feature_tasks/16.json`, the current Agent Runtime, FastAPI routes, process-local store, schemas, and canvas Node contracts.
-- Protected boundaries held: no implementation, target-document, `AGENTS.md`, or user-owned `docs/node_design.md` edits were made by the evaluator.
-- This documentation-only change does not claim a live model E2E. Repository startup and existing Web behavior were verified through the standard project command.
+- Reviewed the working-tree diff for the Image Task 1 character base/three-view implementation, including `docs/API.md`, shared TypeScript contracts, FastAPI schemas/runtime, canvas graph/outcome UI, and focused tests.
+- Did not modify product code, `docs/PRODUCT.md`, `docs/ARCHITECTURE.md`, or the user-owned `docs/node_design.md`.
+- Verification used the repository startup path, focused frontend/backend suites, typecheck, production build, lint, and diff whitespace validation.
+- The required in-app-browser click-by-click E2E could not run: the current session reports `Browser is not available: iab`. No other browser was substituted.
 
 ## Scorecard
 
 | Criterion | Maximum | Score | Evidence |
 | --- | ---: | ---: | --- |
-| Four-Node Phase 1 product contract and IPMV Task coverage | 30 | 29 | Product defines exactly Text, Image, Audio, and Video creation Nodes; character, scene, storyboard, clip, input, export, and assets are correctly represented as Tasks, data, workflow, or platform capabilities rather than extra Agent Node kinds. It also distinguishes the ten registered backend profiles from the broader Phase 1 target. |
-| Manual Task, Workflow Preset, and Agentic boundaries | 25 | 25 | Manual selection is the default; one-click is a visible deterministic preset; `direct`, `pipeline`, and exceptional `bounded_agent` behavior are explicit; Agents cannot silently change Task, topology, model spend, generation count, or approval state. |
-| Router, Runtime, Task Profile, executor, provider, validator flow | 35 | 34 | The ownership table, module map, Runtime facade, four executor boundary, registry lookup, prompt compilation, provider normalization, validation, and target durable worker path are concise and consistent with source. Target-only strategy dispatch is explicitly labeled as not yet implemented. |
-| Task definition, Node selection, TaskRun, Artifact, Memory, and persistence separation | 30 | 28 | The four record types and storage boundaries are separated accurately. Current process-local Script state, empty Memory reader, synchronous request-path media calls, `persisted=false`, and missing Task/Artifact services are stated honestly. Minor omission: the current Web canvas still retains legacy internal `data/script/storyboard/composition/export` types and component-local task drafts; the documents define the target four-creation-Node contract but do not call out that migration gap explicitly. |
-| Concision, terminology, Phase 2/3 restraint, and encoding | 20 | 20 | Product is 61 lines and Architecture 126 lines, with centralized sections and one terminology set. Phase 2/3 are each one short roadmap item. Searches found no replacement characters or corrupted text; old Node names appear only in an explicit negation of Phase 1 Agent Node taxonomy. |
-| Verification and repository health | 10 | 10 | JSON parsing, terminology/encoding searches, `git diff --check`, and final `init.ps1` passed. Standard startup ran 10 Web test files / 70 tests successfully. |
+| Scope and protected boundaries | 20 | 20 | The implementation keeps the four node kinds, preserves `image.character.generate`, uses the browser-to-FastAPI-to-provider boundary, and does not change Product, Architecture, or `node_design.md`. |
+| Typed API, schema, and runtime behavior | 35 | 35 | `ImageGenerationResponse.images` carries typed `character_base` and `character_three_view` variants. The runtime makes two configured-provider executions for the character task and fails the request if either result fails; the legacy top-level `image` remains the base-image convenience field. |
+| Graph outputs, automatic edges, and reruns | 30 | 30 | Variant-aware output IDs create two distinct pure Data outcomes. Graph tests prove one automatic source-result image edge for each outcome and no duplicate edges after rerun. |
+| Outcome presentation and truthful UI | 20 | 20 | Each result is an unframed Data outcome with its own accessible label, source/result ports, provider/model execution text, and `object-contain` natural-aspect preview. The UI rejects a partial character response rather than implying completion. |
+| Automated and startup verification | 30 | 30 | `init.ps1`, web tests (10 files/70 tests), web typecheck, web production build, focused backend pytest (28 passed), Ruff, and `git diff --check` all passed. The backend tests include the second-call failure path; frontend tests assert both labelled outputs, URLs, uncropped class, and graph edges. |
+| In-app-browser click-by-click E2E and live configured-provider evidence | 25 | 0 | Not independently reproduced. The required in-app browser is unavailable in this session, and no live configured-provider generation evidence was supplied. Mocked/injected tests are useful regression evidence but are not a substitute for this acceptance item. |
 
-**Current score: 146 / 150**
+**Current score: 135 / 160**
 
 ## Verification Evidence
 
-- Source cross-check: `NodeKind` has exactly four values and `DEFAULT_TASK_PROFILES` contains five Text, three Image, one Audio, and one Video profile.
-- Runtime cross-check: `runtime.py` is one facade delegating to `nodes/text.py`, `image.py`, `audio.py`, and `video.py`; providers remain outside Agent Runtime.
-- Route/state cross-check: generation routes remain in `main.py`; only the legacy Script path uses `InMemoryScriptStore`; media responses return `persisted=False`; `EmptyProjectMemoryReader` returns no entries.
-- Canvas cross-check: current `WorkflowNode` has no general persisted `taskId`; Text/Image choices are presently UI draft state. Architecture correctly labels general `node.taskId` persistence and dispatch as target work.
-- Documentation search: no Unicode replacement-character markers, common mojibake tokens, or competing positive multi-Node taxonomy found.
-- `feature_list.json` and `feature_tasks/16.json`: parsed successfully.
-- `git diff --check`: passed; only line-ending warnings were emitted.
-- `.\init.ps1`: passed; 10 Web files / 70 tests passed.
+- `corepack pnpm --filter @xmeta/web test` - passed: 10 files, 70 tests.
+- `corepack pnpm --filter @xmeta/web typecheck` - passed.
+- `corepack pnpm --filter @xmeta/web build` - passed.
+- `.venv\\Scripts\\python.exe -m pytest tests/test_image_node.py tests/test_agent_runtime.py` - passed: 28 tests (one existing Starlette `TestClient` deprecation warning).
+- `.venv\\Scripts\\python.exe -m ruff check xmeta_api tests/test_image_node.py tests/test_agent_runtime.py` - passed.
+- `git diff --check` - passed (only non-failing line-ending notices).
+- `.\\init.ps1` - passed, including the web test suite.
+- Browser attempt: the supplied in-app Browser binding returned `Browser is not available: iab`; therefore no click-by-click claim is made.
 
-## Findings
+## Required Closure
 
-- No blocking defect.
-- Non-blocking follow-up: when canvas persistence work begins, explicitly track removal or migration of the current legacy internal Node taxonomy and move task choice from component-local draft state into persisted `node.taskId` state. The documents already avoid claiming that this exists today.
+1. Re-run the character task in an available in-app Browser against a configured provider, selecting Task 1, entering appearance and personality text, clicking generate, and capturing evidence of both distinct Data outcomes and their automatic edges.
+2. Confirm the actual provider/model shown for both results and that a rerun updates the same two outcomes without duplicate edges.
+3. After that real E2E evidence is available, re-score the final 25-point criterion.
 
 ## Verdict
 
-**ACCEPTED.** Score 146/150 exceeds the required strict threshold of 140. The documents are concise, technically grounded, and suitable as the shared Phase 1 contract for humans and Agents.
+**NOT ACCEPTED YET.** The implementation and automated coverage are strong, but the independently required in-app-browser click-by-click/live-provider acceptance is missing. **135/160 does not exceed 140.**
