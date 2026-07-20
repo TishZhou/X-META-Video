@@ -1,241 +1,126 @@
-# Architecture -- X-META AI Comic / MV Creation Platform
+# X-META Video Architecture
 
-## System Overview
-X-META Video is an enterprise AI creation platform for comic-style video and MV production. A user enters a creative request, then the system generates script planning, structured storyboards, characters, props, scenes, audio, video segments, reusable assets, history records, and final exports.
+## Architecture Contract
 
-This document is the architecture contract for the repository. Agents should use it to understand data flow, layer ownership, account isolation, task boundaries, and verification scope before implementing features.
+X-META separates user-authored workflow state from model execution. The web app owns canvas interaction; FastAPI owns trusted request boundaries; Agent Runtime executes one explicit Node Task; providers own model-specific I/O; persistence services own durable state.
 
-Backend route contracts live in `docs/API.md`. Keep route names, request/response shapes, permissions, and task response details there instead of duplicating them in this file.
-
-Core rules:
-- The Next.js web app owns user experience, page routing, rendering, local interaction state, and status display.
-- Next.js route handlers may act as a thin BFF/proxy layer for the web app, but they must not become the source of truth for domain state.
-- The web app never calls model providers directly.
-- FastAPI owns authentication, authorization, validation, project state, task creation, and task queries.
-- FastAPI remains the final authority for membership, RBAC, project/task/asset/history mutations, and generation orchestration.
-- AI generation, media processing, and export rendering always run asynchronously.
-- PostgreSQL is the source of truth for accounts, projects, tasks, assets, lineage, and history.
-- Object storage stores binary artifacts; PostgreSQL stores metadata and references.
-- Every project, asset, task, and history query must respect `user_id`, `org_id`, and usually `project_id`.
-
-## Layer Diagram
-```txt
-+------------------------------------------------------------------+
-|                  Web App (Next.js App Router + React)            |
-|  Layouts, Server Components, Route Handlers/BFF, Auth UI,        |
-|  AccountSwitcher, ProjectBrowser, WorkflowCanvas, AssetLibrary   |
-+------------------------------------------------------------------+
-        | HTTPS JSON API + SSE/WebSocket task status updates
-        v
-+------------------------------------------------------------------+
-|                         API Layer (FastAPI)                      |
-|  auth, accounts, projects, workflows, assets, tasks, history     |
-+------------------------------------------------------------------+
-        | service calls with actor context:
-        | user_id, org_id, role, request_id, project_id
-        v
-+------------------------------------------------------------------+
-|                         Domain Services                          |
-|  Account | Project | Storyboard | Asset | Workflow | Task        |
-+--------------------------+---------------------------------------+
-        | DB/object refs   | enqueue jobs
-        v                  v
-+----------------------+   +---------------------------------------+
-| PostgreSQL + Storage |   | Redis Queue -> Workers -> Providers   |
-| metadata + artifacts |   | ModelGateway: text, image, audio, vid |
-+----------------------+   +---------------------------------------+
-```
-
-## Application Layers
-### Web App (`apps/web`)
-Next.js App Router + React frontend with Tailwind CSS. The detailed component approach is selected by Feature 1 Web Design before page implementation proceeds.
-
-Owns:
-- Page routing, layouts, metadata, loading states, and SSR/static rendering where useful.
-- Thin BFF/proxy route handlers for browser-safe API access to FastAPI.
-- Login UX, active organization selection UX, and project navigation UX.
-- Workflow canvas for script, storyboard, character, scene, audio, video, and export nodes. Canvas-heavy surfaces should be client components and may use dynamic imports.
-- Asset library, task status, version history, preview, export, autosave indicators, and confirmation UI.
-- App experience state display: route state, shell state, canvas interactions, node/card states, task progress, generation loading states, and reduced-motion fallbacks where motion is used.
-- Design-system composition from the component approach selected in Feature 1. Components may be in-house source, approved copied source, or wrapped dependencies only after the task records that decision.
-
-Must not:
-- Store provider keys, storage credentials, or final authorization logic.
-- Call Seedream, Seedance, TTS, or any model provider directly.
-- Write project, task, asset, history, or membership state directly to PostgreSQL.
-- Create generation tasks outside the FastAPI task APIs.
-- Treat local state as source of truth after refresh or re-login.
-- Restore deleted prototype components or copied-component experiments as the new baseline without an explicit Feature 1 component-selection decision.
-
-### API Layer (`services/api`)
-Python FastAPI application exposing versioned routes under `/api/v1`.
-
-Route groups and request/response contracts are defined in `docs/API.md`.
-
-Owns:
-- Authentication, membership checks, RBAC, Pydantic validation, transactions, task creation, and task queries.
-- Actor context resolution: `user_id`, `org_id`, role, request ID, and optional `project_id`.
-- Fast responses for generation operations by returning task IDs.
-
-Must not:
-- Run long model generation inside request handlers.
-- Store raw binary media in database rows.
-- Trust frontend-supplied ownership, role, or account fields.
-- Mix admin operations with normal project operations.
-
-### Domain Services
-Domain services own product rules and state transitions.
-
-| Service | Responsibility |
-|---|---|
-| `AccountService` | users, organizations, memberships, account routing |
-| `ProjectService` | projects, access, autosave checkpoints |
-| `StoryboardService` | script, outline, shot list, input versions |
-| `AssetService` | asset metadata, asset versions, reuse rules |
-| `WorkflowService` | node graph, dependencies, runnable node calculation |
-| `TaskService` | task state, retry, cancellation, failure rules |
-| `HistoryService` | audit trail, generation attempts, selected outputs |
-| `ModelGateway` | provider-neutral model interface |
-
-Rules:
-- Services receive actor context and enforce account/project boundaries before writes.
-- Services write history when user-visible creative state changes.
-- Services use repositories for persistence and do not import React or route objects.
-
-### Agent Runtime (`services/api/xmeta_api/agent_runtime`)
-Agent Runtime is the backend execution boundary for a user-selected canvas-node task. The
-canvas graph and its connections remain user-authored; Agent Runtime does not add, remove,
-rewire, or auto-run nodes.
-
-Each registered task profile declares a stable task identity, node kind, required inputs,
-allowed project-memory scopes, prompt-template identity, output identity, validator, and a
-bounded task retry policy. The runtime selects only the declared memory scopes, compiles the
-provider prompt, invokes the injected Model Gateway operation, validates the typed result, and
-returns the existing API response model.
+Backend route shapes belong in `docs/API.md`. This document defines ownership and data flow.
 
 ```txt
-FastAPI route -> Agent Runtime task profile -> memory selection -> prompt compilation
-              -> Model Gateway/provider -> typed validation -> existing API response
+Canvas Node (`node.kind`, `node.taskId`, input Artifact IDs)
+  -> FastAPI Router
+  -> AgentRuntime
+  -> TaskProfile registry
+  -> Text | Image | Audio | Video NodeExecutor
+  -> Model Provider
+  -> typed Validator
+  -> Artifact / Task result
 ```
 
-The package keeps one public `runtime.py` facade and delegates node-specific execution to
-`nodes/text.py`, `nodes/image.py`, `nodes/audio.py`, and `nodes/video.py`. FastAPI imports the
-package-owned Runtime instance directly, while each canvas node kind evolves independently
-behind the same Runtime boundary.
+## Layer Boundaries
 
-Current project memory is intentionally an empty, process-local MVP boundary. The runtime
-defines a replaceable `ProjectMemoryReader`, but it does not claim that approved project memory,
-PostgreSQL persistence, worker execution, or one-click workflow orchestration already exists.
-Provider HTTP payload construction, credentials, provider retries, and model-specific response
-parsing remain in `xmeta_api/providers.py`.
+| Layer | Owns | Must not own |
+| --- | --- | --- |
+| Web (`apps/web`) | Canvas state, explicit Task selection, connections, previews, status and approval UI | Provider credentials, final authorization, model calls, durable truth |
+| Router (`services/api/xmeta_api/main.py`) | HTTP parsing, authentication/authorization boundary, request validation, dependency construction, status/error mapping | Prompt composition, creative rules, retries, provider payloads |
+| Agent Runtime | Task lookup, allowed memory selection, prompt compilation, strategy dispatch, Node execution and output validation | Canvas mutation, hidden Task/model selection, HTTP concerns, durable binary storage |
+| Provider / Model Gateway | Credentials, provider payloads, timeouts, provider retries and response normalization | Workflow topology, product Task meaning, project authorization |
+| Domain services | Workflow, Task, Artifact, project and history state transitions | Route objects, frontend state, provider-specific payloads |
+| Persistence / workers | PostgreSQL metadata, object storage binaries, queued execution and progress | Product decisions or unapproved downstream execution |
 
-### Persistence, Queue, Worker, and Storage
-PostgreSQL stores durable business state. Redis stores queue and short-lived state. Object storage stores binary artifacts. Workers execute long-running jobs.
+Routes currently live together in `xmeta_api/main.py`. They may later be split into focused `routers/` modules, but routers stay thin and always delegate Task behavior to Runtime/domain services.
 
-Worker responsibilities:
-- Claim jobs from Redis.
-- Load task, project, node input, and exact asset version references.
-- Check that the task is still runnable and not cancelled.
-- Call ModelGateway, upload artifacts, and write results.
-- Mark tasks succeeded or failed through controlled state transitions.
+## Four-Node Agent Runtime
 
-Worker rules:
-- Retried jobs must not corrupt existing project state.
-- Downstream failures must not delete successful upstream outputs.
-- Workers must not expose provider secrets in logs or task payloads.
+`services/api/xmeta_api/agent_runtime/runtime.py` is the single facade used by FastAPI. It resolves a registered profile and delegates to exactly one executor:
 
-## Account and Multi-user Boundaries
 ```txt
-User -> Membership -> Organization -> Projects -> Assets / Tasks / History
+agent_runtime/
+  runtime.py                 # facade and dispatch boundary
+  contracts.py               # NodeKind, TaskId, TaskProfile, memory/prompt/validator IDs
+  profiles.py                # registered Task definitions
+  registry.py                # registration and lookup
+  compiler.py / prompts.py   # typed prompt construction
+  memory.py                  # allowed project-memory read boundary
+  validators.py / retry.py   # output checks and bounded task retry
+  nodes/
+    text.py
+    image.py
+    audio.py
+    video.py
 ```
 
-Rules:
-- User logs in, then selects active organization/workspace.
-- All project, asset, task, and history APIs infer or receive `org_id`.
-- Backend validates membership and role on every request.
-- Queries must filter by `org_id` and relevant `project_id`.
-- Users cannot access assets by guessing IDs.
-- Concurrent editors use optimistic concurrency with `version` or `updated_at`.
-- Autosave must patch/checkpoint current node state, not overwrite unrelated node outputs.
-- Task retry must reference exact `node_id` and input version.
+The four `NodeKind` values are `text`, `image`, `audio`, and `video`. Product steps such as storyboard, character, scene, composition, or clip generation are Task identities within those kinds, not new Runtime Node types.
 
-Roles: Owner manages organization/users/billing/all projects; Admin manages users and projects; Editor creates and edits projects and generation tasks; Viewer can view only.
+## Task Model
 
-## Full Data Flow
-### Account Routing Flow
+The architecture distinguishes four records:
+
+| Concept | Meaning | Source of truth |
+| --- | --- | --- |
+| `TaskId` | Stable business operation, for example `image.character.generate` | `agent_runtime/contracts.py` |
+| `TaskProfile` | Node kind, required inputs, allowed memory, prompt, output type, validator, retry/strategy contract | `agent_runtime/profiles.py`, resolved by `registry.py` |
+| Node Task selection | The Task chosen for one canvas Node | `node.taskId` in persisted workflow-node state |
+| `TaskRun` | One execution attempt with project/node/input versions, status, provider/model, cost/error and output references | Target: `TaskService` and PostgreSQL `tasks` / `task_events` |
+
+Profiles define capability; they never contain user run history or generated media. Unknown or disabled `taskId` values fail closed. Runtime verifies that the selected profile matches the Node kind and connected input types before execution.
+
+## Execution Strategies
+
+The target `TaskProfile` contract supports:
+
 ```txt
-1. User logs in through the Next.js web app.
-2. API validates identity and creates a session/JWT.
-3. Next.js web app requests available organizations/workspaces through FastAPI.
-4. User selects the active organization.
-5. Project, asset, task, and history requests carry or infer org context.
-6. API validates membership and role before returning data.
+direct         input -> prompt -> provider -> validator -> Artifact
+pipeline       fixed engineering steps -> provider call(s) -> validator -> Artifact
+bounded_agent  approved tools + max steps/cost/retries -> validator -> Artifact
 ```
 
-### Universal Generation Flow
+Most media Tasks are `direct`. Storyboard structure, deterministic repair, and batch fan-out are `pipeline`. `bounded_agent` is reserved for Tasks whose steps cannot be fixed safely in advance; it cannot change `taskId`, graph edges, provider spend, or approval state. These strategies are the target contract and are not yet fully implemented in the current profile schema.
+
+One-click generation is a versioned Workflow Preset: a deterministic DAG of visible Nodes, Tasks, edges, approval gates, and fan-out rules. Runtime still executes one explicit Task at a time; it is not a free-form workflow planner in Phase 1.
+
+## Runtime Data Flow
+
 ```txt
-1. User edits a workflow node input.
-2. Next.js web app saves the input version through the FastAPI API.
-3. User starts generation.
-4. API creates a task and enqueues a Redis job.
-5. Worker loads the exact input version and asset version references.
-6. Worker calls ModelGateway.
-7. Worker uploads artifacts to object storage.
-8. Worker writes generation attempts, asset versions, task events, and history.
-9. Next.js web app receives status updates and reloads normalized outputs.
+1. Router receives project ID, node ID, selected Task and input references.
+2. Runtime loads the TaskProfile from the registry.
+3. Runtime resolves connected inputs and only the memory scopes allowed by that profile.
+4. PromptCompiler produces a versioned provider-neutral prompt.
+5. The matching NodeExecutor invokes the injected provider operation.
+6. Validator checks the declared output contract; bounded repair/retry runs only if configured.
+7. TaskService records the attempt and ArtifactService stores output metadata and lineage.
+8. Binary media is uploaded to object storage; the API returns normalized references and status.
 ```
 
-### Product Chain Flow
+Artifacts use immutable versions. PostgreSQL stores identity, lineage, source input versions, provider/model/prompt parameters, timestamps, and object references; object storage holds image, audio, and video binaries. Downstream Nodes reference exact Artifact version IDs rather than copy media or search by display name.
+
+## Current Implementation vs Target
+
+The current repository has the Runtime facade, four executors, ten Task Profiles, prompt compilation, typed validation, provider adapters, and an empty replaceable `ProjectMemoryReader`.
+
+Important Phase 1 gaps remain:
+
+- Routes are still defined directly in `main.py`; authentication, RBAC, focused routers, and durable domain services are not implemented.
+- Current endpoints derive a Task from a request enum or a fixed media profile; general `node.taskId` persistence and dispatch are not implemented yet.
+- Only the legacy Script path creates Task state, stored process-locally in `xmeta_api/store.py`; restart loses it.
+- Text, image, audio, and video generation currently execute in the request path. Media responses are synchronous/provider-task responses and explicitly return `persisted=false`.
+- The current process-local Memory boundary uses `EmptyProjectMemoryReader` and returns no entries. Approved durable memory and exact asset-version retrieval do not exist yet.
+- `TaskService`, Redis workers, PostgreSQL Task/Artifact tables, object storage, durable Workflow state, and the one-click preset orchestrator are target architecture, not current capability.
+
+No UI or API should imply these missing layers are production-ready.
+
+## Durable Platform Boundary
+
+The production path is:
+
 ```txt
-Text planning -> character/scene/prop assets -> nine-grid composition
--> audio generation -> video generation -> export rendering.
+Router -> TaskService -> PostgreSQL TaskRun -> Redis queue -> Worker
+       -> AgentRuntime -> Provider -> Validator
+       -> object storage + PostgreSQL Artifact metadata -> status event
 ```
 
-### Asset, History, and Retry Flow
-```txt
-1. Asset library returns assets visible to the active organization/project.
-2. User attaches an exact asset_version_id to a workflow node.
-3. User-visible changes write history events.
-4. Generations write immutable generation attempts.
-5. Refresh or re-login reloads project state, selected versions, active tasks, and history.
-6. Retry creates a new task for the target node and input version.
-7. Upstream successful outputs remain available; new outputs create new versions.
-```
+Workers load exact workflow, input, memory, and Artifact versions; retry creates a new attempt without deleting successful upstream output. Every project-owned row and object reference carries `user_id`, `org_id`, and `project_id` scope. API and worker logs include request/task/project identifiers but never provider secrets or raw private media.
 
-## API Contract Reference
-Task types and API response shapes are defined in `docs/API.md`.
+## Phase Boundaries
 
-Architecture-level rule: generation APIs return task IDs, not final media. Task result APIs return normalized asset and storage references, not provider raw responses.
-
-## Data Storage
-```txt
-PostgreSQL
-  users, organizations, memberships
-  projects, project_members
-  storyboards, storyboard_versions, workflow_nodes
-  assets, asset_versions, storage_objects
-  tasks, task_events
-  generation_attempts, history_events, model_invocations
-
-Object Storage
-  orgs/{org_id}/projects/{project_id}/assets|tasks|exports/...
-
-Redis
-  task queue, task progress cache, SSE/WebSocket fanout state, rate limits
-```
-
-Persistence rules:
-- Every project-owned row includes `org_id` and usually `project_id`.
-- Every generated asset records source input, model, provider, parameters, time, and parent task.
-- User-facing creative objects use soft delete by default.
-- Backend issues short-lived signed URLs for object access.
-
-## Logging
-All backend and worker logs should be structured JSON.
-
-Required fields: `timestamp`, `level`, `service`, `message`, `request_id`, `user_id`, `org_id`, `project_id`, `task_id`, and relevant `data`.
-
-Log levels:
-- `INFO`: task creation, task completion, user-visible successful actions.
-- `WARN`: retryable provider errors, missing optional data, slow calls.
-- `ERROR`: failed transactions, permission failures, non-retryable provider errors.
+Phase 2 adds durable Assets, LoRA provider/model variants, and a 3D character/world adapter behind existing Runtime and storage boundaries. Phase 3 adds music/voice providers plus an IP operations assistant and community workflows; publishing, campaigns, approvals, and other consequential actions remain human-in-the-loop.

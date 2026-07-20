@@ -1,45 +1,42 @@
-# Evaluator Rubric — Image Task 1 Model Generation V1
+# Evaluator Rubric - Four-Node Product and Runtime Documentation
 
-Updated: 2026-07-17
+Updated: 2026-07-20 agent-runtime-004 independent evaluation
 
 ## Evaluation Scope
 
-- Role: independent evaluator for `image-task-1-model-generation-v1`, including Revision 1 Data-output presentation.
-- Reviewed: Task 1 prompt compilation; browser-to-FastAPI contract; `character_image` Agent Runtime route; real provider/model response handling; pure Data image outcome rendering; provider accessibility; automatic ports/edge; and fixture removal from runtime code.
-- Protected boundaries: provider credentials remain server-only. No persistence, polling, browser-to-provider call, or graph auto-execution claim is permitted.
+- Reviewed `docs/PRODUCT.md` and `docs/ARCHITECTURE.md` against `sprint-contract.md`, `feature_tasks/16.json`, the current Agent Runtime, FastAPI routes, process-local store, schemas, and canvas Node contracts.
+- Protected boundaries held: no implementation, target-document, `AGENTS.md`, or user-owned `docs/node_design.md` edits were made by the evaluator.
+- This documentation-only change does not claim a live model E2E. Repository startup and existing Web behavior were verified through the standard project command.
 
 ## Scorecard
 
-| Criterion | Points | Score | Evidence |
+| Criterion | Maximum | Score | Evidence |
 | --- | ---: | ---: | --- |
-| Scope and boundary isolation | 20 | 20 | Task 1 delegates to the already-established Image API and Runtime contract. No client credential, provider configuration, persistence, or queue path was added. |
-| Server-side model integration | 35 | 35 | Both task fields compile into one prompt; the client calls `/generate-image` with `node_type: character_image` and null reference-image fields. The FastAPI/Runtime focused suite verifies the typed provider/model/media response and clear missing-key behavior. |
-| Pure Data outcome presentation | 35 | 35 | Completion upserts a `data` outcome containing image media. Its dedicated `figure` has no card/image border or decorative wrapper; the image uses exactly `block h-auto w-full object-contain`, preserving natural aspect ratio without cropping. |
-| Accessibility, ports, and edge semantics | 25 | 25 | The result has an accessible figure label and screen-reader caption containing provider/model plus no-persistence evidence. The reducer creates `source-in` and output ports for the Data outcome, and the source-to-result image edge remains deterministic and deduplicated. |
-| Automated verification and restartability | 25 | 25 | Web 10 files / 70 tests, focused API/Runtime 27 tests, Ruff, Web typecheck, production build, `init.ps1`, and `git diff --check` passed. |
-| Real provider Browser E2E | 15 | 14 | Audited main-agent Codex in-app Browser evidence: configured FastAPI returned a real `doubao-seedream / doubao-seedream-5-0-260128` remote image; the uncropped borderless Data outcome and one visible source-to-result edge appeared at 5 nodes / 3 edges. One point reserved because my Browser binding was unavailable to replay it. |
-| Repository hygiene | 5 | 3 | Runtime source contains no fixture/provided-local reference. A legacy `provided-character-base-task-1.png` remains untracked under `apps/web/public` and is still exempted in `.gitignore`; it is not loaded by the product but should be removed, together with the exception, before commit. |
+| Four-Node Phase 1 product contract and IPMV Task coverage | 30 | 29 | Product defines exactly Text, Image, Audio, and Video creation Nodes; character, scene, storyboard, clip, input, export, and assets are correctly represented as Tasks, data, workflow, or platform capabilities rather than extra Agent Node kinds. It also distinguishes the ten registered backend profiles from the broader Phase 1 target. |
+| Manual Task, Workflow Preset, and Agentic boundaries | 25 | 25 | Manual selection is the default; one-click is a visible deterministic preset; `direct`, `pipeline`, and exceptional `bounded_agent` behavior are explicit; Agents cannot silently change Task, topology, model spend, generation count, or approval state. |
+| Router, Runtime, Task Profile, executor, provider, validator flow | 35 | 34 | The ownership table, module map, Runtime facade, four executor boundary, registry lookup, prompt compilation, provider normalization, validation, and target durable worker path are concise and consistent with source. Target-only strategy dispatch is explicitly labeled as not yet implemented. |
+| Task definition, Node selection, TaskRun, Artifact, Memory, and persistence separation | 30 | 28 | The four record types and storage boundaries are separated accurately. Current process-local Script state, empty Memory reader, synchronous request-path media calls, `persisted=false`, and missing Task/Artifact services are stated honestly. Minor omission: the current Web canvas still retains legacy internal `data/script/storyboard/composition/export` types and component-local task drafts; the documents define the target four-creation-Node contract but do not call out that migration gap explicitly. |
+| Concision, terminology, Phase 2/3 restraint, and encoding | 20 | 20 | Product is 61 lines and Architecture 126 lines, with centralized sections and one terminology set. Phase 2/3 are each one short roadmap item. Searches found no replacement characters or corrupted text; old Node names appear only in an explicit negation of Phase 1 Agent Node taxonomy. |
+| Verification and repository health | 10 | 10 | JSON parsing, terminology/encoding searches, `git diff --check`, and final `init.ps1` passed. Standard startup ran 10 Web test files / 70 tests successfully. |
 
-Current score: 157 / 160
+**Current score: 146 / 150**
 
 ## Verification Evidence
 
-- Applied `C:/Users/AI/.codex/skills/verify/SKILL.md`; reviewed the current sprint contract, Task 1 frontend execution path, FastAPI image route, Image Runtime contract, reducer behavior, focused tests, and pure Data rendering branch.
-- `corepack pnpm --filter @xmeta/web test`: passed, 10 files / 70 tests. The injected Task 1 API test confirms `character_image`, both prompt inputs, remote provider/model output, pure `data` outcome, no nested card, `object-contain`, and 3 total edges.
-- `D:/X-META-Video/.venv/Scripts/python.exe -m pytest tests/test_image_node.py tests/test_agent_runtime.py`: passed, 27 tests. The only output was the existing Starlette TestClient deprecation warning.
-- Focused API Ruff check: passed.
-- Web typecheck and production build: passed; `/workspace` is statically generated.
-- `./init.ps1`: passed with the complete Web suite (70 tests).
-- `git diff --check`: passed; only non-failing line-ending notices were emitted.
-- Fixture search: no runtime product-source reference to `provided-character-base-task-1.png`, `provided-local-preview`, or `character-base-task-1-fixture` remains. The only references are the legacy gitignore exception and historical task records.
-- Audited main-agent Browser E2E evidence supplied for this evaluation: configured FastAPI returned a real Doubao Seedream image, displayed uncropped and borderless in the Data outcome with provider/model evidence, a visible source edge, and final canvas state of 5 nodes / 3 edges.
+- Source cross-check: `NodeKind` has exactly four values and `DEFAULT_TASK_PROFILES` contains five Text, three Image, one Audio, and one Video profile.
+- Runtime cross-check: `runtime.py` is one facade delegating to `nodes/text.py`, `image.py`, `audio.py`, and `video.py`; providers remain outside Agent Runtime.
+- Route/state cross-check: generation routes remain in `main.py`; only the legacy Script path uses `InMemoryScriptStore`; media responses return `persisted=False`; `EmptyProjectMemoryReader` returns no entries.
+- Canvas cross-check: current `WorkflowNode` has no general persisted `taskId`; Text/Image choices are presently UI draft state. Architecture correctly labels general `node.taskId` persistence and dispatch as target work.
+- Documentation search: no Unicode replacement-character markers, common mojibake tokens, or competing positive multi-Node taxonomy found.
+- `feature_list.json` and `feature_tasks/16.json`: parsed successfully.
+- `git diff --check`: passed; only line-ending warnings were emitted.
+- `.\init.ps1`: passed; 10 Web files / 70 tests passed.
 
 ## Findings
 
-- No blocking implementation defect found. Task 1 has no local fallback image path: a failed API call follows the explicit error state and does not upsert an output result.
-- The result is intentionally a pure Data image outcome rather than another Image/model card; this preserves output reuse while making the generated asset visually primary.
-- Before commit, remove the stale untracked local fixture and its `.gitignore` exception. This is non-blocking because no runtime code references it.
+- No blocking defect.
+- Non-blocking follow-up: when canvas persistence work begins, explicitly track removal or migration of the current legacy internal Node taxonomy and move task choice from component-local draft state into persisted `node.taskId` state. The documents already avoid claiming that this exists today.
 
 ## Verdict
 
-**ACCEPTED — 157/160.** The score exceeds the required 140/160 threshold. Task 1 uses the real server-side model path, presents its result as an uncropped borderless Data image outcome with accessible execution metadata, and preserves the one-edge graph contract.
+**ACCEPTED.** Score 146/150 exceeds the required strict threshold of 140. The documents are concise, technically grounded, and suitable as the shared Phase 1 contract for humans and Agents.

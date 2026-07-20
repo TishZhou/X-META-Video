@@ -4,6 +4,8 @@ Record major decisions and progress each session. Keep the current verified stat
 
 ## Current Verified State
 
+- 2026-07-20 Four-Node product/runtime contract: `docs/PRODUCT.md` now defines exactly Text, Image, Audio, and Video creation Nodes with explicit Tasks, deterministic visible Workflow Presets, and exceptional bounded Agentic execution. `docs/ARCHITECTURE.md` defines Router -> Runtime -> TaskProfile -> NodeExecutor -> Provider -> Validator -> Artifact, separates Task definitions from Node selection, TaskRun, and Artifact storage, and labels current persistence/orchestration gaps honestly. Documentation checks and `init.ps1` passed with 10 Web files / 70 tests; independent evaluation accepted at 146/150.
+
 - 2026-07-17 Image Task 1 model output: Replaced the supplied local fixture with a real FastAPI `character_image` request. The configured Doubao Seedream model returned the result in the in-app Browser; the Image source now connects to a pure Data outcome that renders the original image at natural aspect ratio with no card or image border/crop. Final Browser view was 5 nodes / 3 edges. Web 70/70, API/Runtime 27/27, Ruff, typecheck, production build, `init.ps1`, and diff check passed; independent evaluation accepted 157/160.
 
 - 2026-07-17 Canvas viewport stability: The workspace now fits the initial graph only once at mount. Browser and visual-viewport resize events still update responsive inline-editor width, but preserve the creator's current canvas pan and zoom. In-app Browser Task 1 verification retained the visible Image source, provided local result, and single automatic edge after the viewport changed; final view showed 5 nodes / 3 edges with no console warnings or errors. `init.ps1` passed with Web 10 files / 70 tests; typecheck, production build, and diff check passed. Independent evaluation accepted the change at 158/160.
@@ -21,7 +23,7 @@ Record major decisions and progress each session. Keep the current verified stat
 - Standard web verification path: `corepack pnpm --filter @xmeta/web test`
 - Current highest-priority task just completed: Feature 3 `text-node-task-3-mv-look-development-v1`, accepted at 147/160 after automated, live-provider, and Codex in-app Browser E2E verification.
 - Current active task: none. Three production Text tasks are passing; Task 3 consumes a character profile plus MV brief and returns an editable `mv_look` result without claiming image generation or persistence.
-- Current Agent Runtime foundation: existing Text, Image, Audio, and Video generation routes enter through `agent_runtime/runtime.py`; node-specific execution lives in `nodes/text.py`, `nodes/image.py`, `nodes/audio.py`, and `nodes/video.py`; obsolete `handlers.py`, `xmeta_api/prompt.py`, and `xmeta_api/runner.py` compatibility modules are deleted; seven current task profiles declare typed inputs, scoped memory reads, prompt templates, outputs, validators, and bounded Runtime retry metadata.
+- Current Agent Runtime foundation: existing Text, Image, Audio, and Video generation routes enter through `agent_runtime/runtime.py`; node-specific execution lives in `nodes/text.py`, `nodes/image.py`, `nodes/audio.py`, and `nodes/video.py`; obsolete `handlers.py`, `xmeta_api/prompt.py`, and `xmeta_api/runner.py` compatibility modules are deleted; ten current Task Profiles declare typed inputs, scoped memory reads, prompt templates, outputs, validators, and bounded Runtime retry metadata.
 - Current Agent Runtime memory boundary: `EmptyProjectMemoryReader` is intentionally empty and non-durable. PostgreSQL-backed approved memory, worker execution, one-click orchestration, and canvas graph rewiring are not claimed.
 - Current reset status: Feature 2 and Feature 3 have been removed from the active plan, their task files have been deleted, old web implementation files have been cleared while preserving minimal app structure, and the remaining feature plan has now been renumbered so old Features 4-17 are new Features 2-15.
 - Current feature numbering: Feature 1 remains Web Design and is now recorded as `passing`; Feature 2 is Workflow Canvas Foundation and is now `passing`; old Features 5-17 shifted to new Features 3-15.
@@ -49,6 +51,16 @@ Record major decisions and progress each session. Keep the current verified stat
 - Current blocker: none for Feature 9. Browser E2E passed with an intercepted local FastAPI Ark task-only response; live Ark execution was not attempted because `ARK_API_KEY` is empty.
 
 ## Session Log
+
+### Session 058
+
+- Date: 2026-07-20
+- Goal: Make Product and Architecture the concise source of truth for the accepted Phase 1 four-Node design and its Router, Runtime, Task, and persistence boundaries.
+- Completed: Rewrote `docs/PRODUCT.md` around Text, Image, Audio, and Video Node kinds, explicit Task selection, deterministic one-click Workflow Presets, `direct`/`pipeline`/exceptional `bounded_agent` target strategies, Data/Artifact boundaries, and brief Phase 2/3 roadmaps. Rewrote `docs/ARCHITECTURE.md` around the Router-to-Artifact execution path, four executor ownership, Task definition versus selection/run/storage, current implementation gaps, and the durable target path.
+- Verification: Cross-checked four `NodeKind` values and ten registered profiles against source; legacy taxonomy and mojibake searches returned zero positive matches; JSON and `git diff --check` passed; final `./init.ps1` passed with 10 Web files / 70 tests.
+- Evaluation: Independent evaluator accepted at 146/150. The only non-blocking follow-up is to migrate the current frontend's legacy internal node taxonomy and component-local Task choice when durable `node.taskId` work begins.
+- Boundary: Documentation-only; no application code, API contract, provider behavior, or user-owned untracked `docs/node_design.md` changed.
+- Next step: Implement persisted `node.taskId` and the Workflow/Task persistence boundary without retaining the legacy internal taxonomy.
 
 ### Session 057
 

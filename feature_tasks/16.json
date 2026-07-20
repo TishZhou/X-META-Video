@@ -90,6 +90,32 @@
         "JSON validation, git diff --check, local Uvicorn/OpenAPI and Script route smoke, and final init.ps1 passed without external model calls.",
         "Independent evaluator accepted round 1 at 149/150."
       ]
+    },
+    {
+      "id": "agent-runtime-004",
+      "title": "Document the four-node Phase 1 product and execution architecture",
+      "status": "passing",
+      "scope": [
+        "Rewrite docs/PRODUCT.md around exactly four creation Node kinds: Text, Image, Audio, and Video, with multiple explicit Tasks per Node.",
+        "Record manual Task selection, deterministic one-click Workflow Presets, and the rule that Agentic behavior is optional and bounded inside approved Tasks.",
+        "Update docs/ARCHITECTURE.md with concise Router, Runtime, Task Profile, Task Run, Memory, Provider, and Artifact ownership boundaries.",
+        "Document current MVP limitations truthfully: routes remain in main.py, media generation is not yet a unified durable Task system, and Memory is process-local and empty.",
+        "Mention Phase 2 Asset Library, LoRA, and 3D world-model adapters and Phase 3 music/voice models, IP operations assistant, and community only as short roadmap items.",
+        "Do not change application code, frontend behavior, API contracts, or the user-owned untracked docs/node_design.md."
+      ],
+      "verification": [
+        "Review both documents for one terminology set and no stale multi-node taxonomy.",
+        "Cross-check Runtime, route, Task Profile, and persistence statements against current source files.",
+        "Run repository Markdown/encoding searches, JSON validation, git diff --check, and final .\\init.ps1."
+      ],
+      "evidence": [
+        "Rewrote PRODUCT.md around exactly four Phase 1 creation Node kinds, explicit Tasks, deterministic visible Workflow Presets, and bounded optional Agentic execution.",
+        "Rewrote ARCHITECTURE.md around Router -> Runtime -> TaskProfile -> NodeExecutor -> Provider -> Validator -> Artifact and separated Task definition, node.taskId, TaskRun, and Artifact storage.",
+        "Cross-checked the documentation against four NodeKind values, ten registered Task Profiles, runtime.py, four node executors, main.py routes, store.py, schemas, and current persisted=false media responses.",
+        "Current implementation gaps are labeled honestly; Phase 2 and Phase 3 remain concise roadmap boundaries.",
+        "Legacy positive multi-Node taxonomy and mojibake searches returned zero matches; JSON validation, git diff --check, and final init.ps1 passed with 10 Web files / 70 tests.",
+        "Independent evaluator accepted the documentation at 146/150."
+      ]
     }
   ]
 }

@@ -2,6 +2,8 @@
 
 ## Verified Now
 
+- The Phase 1 product/runtime documentation is accepted at 146/150. Product defines exactly four creation Node kinds and Architecture records the Router, Runtime, Task Profile, executor, provider, validator, TaskRun, Memory, Artifact, and persistence boundaries while distinguishing current implementation from target behavior.
+
 - Image Task 1 model output is passing: the task combines appearance and personality/action into a server-side `character_image` request and renders the live returned media in a downstream pure Data node. The image itself has no visible card/image border and is shown uncropped at its original aspect ratio; source/result ports and their one automatic edge remain visible. Browser E2E produced a real `doubao-seedream / doubao-seedream-5-0-260128` result at 5 nodes / 3 edges. Full Web 70 tests, API/Runtime 27 tests, Ruff, typecheck, production build, `init.ps1`, and diff check passed; independent evaluation accepted 157/160.
 
 - Canvas viewport stability is passing: `/workspace` initializes its fitted graph viewport only on mount. Later window or visual-viewport resizes update responsive editor layout without resetting canvas pan/zoom. In-app Browser Task 1 E2E ended at 5 nodes / 3 edges with the Image source-to-result line and supplied local preview visible; console logs were empty. Web 70 tests, typecheck, production build, `init.ps1`, and diff check passed; independent evaluation accepted at 158/160.
@@ -32,11 +34,11 @@
 - Current Text, Image, Audio, and Video generation routes delegate through `services/api/xmeta_api/agent_runtime/runtime.py`.
 - `runtime.py` is the unified facade; Text, Image, Audio, and Video execution lives separately in `nodes/text.py`, `nodes/image.py`, `nodes/audio.py`, and `nodes/video.py`.
 - Old `agent_runtime/handlers.py`, `xmeta_api/prompt.py`, and `xmeta_api/runner.py` compatibility modules are deleted. Future code must import the final module paths directly.
-- Agent Runtime owns task contracts, seven current Task Profiles, registry lookup, scoped memory selection, Prompt compilation, bounded Runtime retry, typed result validation, and node executors.
+- Agent Runtime owns task contracts, ten current Task Profiles, registry lookup, scoped memory selection, Prompt compilation, bounded Runtime retry, typed result validation, and node executors.
 - The canvas graph remains user-authored. Agent Runtime does not add, remove, reconnect, or automatically run canvas nodes.
 - All shipped Task Profiles use `retry_limit=0`, preserving existing provider-level retry behavior. The Runtime consumes nonzero limits and a focused test proves one bounded retry can recover from a transient failure.
 - `EmptyProjectMemoryReader` is intentionally empty and non-durable. Future project memory must add approval, tenant/project scope, and exact asset-version enforcement.
-- Script prompt and runner compatibility imports remain available from their previous module paths.
+- Deleted Script prompt, runner, and handler compatibility paths remain absent; future code imports only the final Agent Runtime modules.
 - Provider payload construction, credentials, supported models, parsing, and provider retries remain in `xmeta_api/providers.py`.
 - No frontend files or public FastAPI route/request/response contracts changed.
 
@@ -101,6 +103,9 @@
 - `ARK_API_KEY` is still empty locally, so live Ark execution was not attempted.
 
 ## Verification Evidence
+
+- Four-Node documentation source cross-check, legacy taxonomy and encoding searches, JSON validation, and `git diff --check` passed.
+- Final documentation startup verification passed with 10 Web files / 70 tests; independent evaluator accepted at 146/150.
 
 - Final migration exact import search returned zero active references to the deleted compatibility modules; fresh-process module discovery returned `None` for all three paths.
 - Final migration Agent Runtime focused pytest passed 17 tests; full API pytest passed 72 tests; Ruff passed; Web passed 9 files / 58 tests.
