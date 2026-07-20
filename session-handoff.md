@@ -154,3 +154,9 @@
 - Web test: `corepack pnpm --filter @xmeta/web test`
 - Web typecheck: `corepack pnpm --filter @xmeta/web typecheck`
 - Web build: `corepack pnpm --filter @xmeta/web build`
+
+## Current handoff — 2026-07-20
+
+- Image Task 1 now has a fixed two-call server-side chain: generate `character_base`, then generate `character_three_view` with only the base output as SeedDream reference.
+- The second prompt is a text-free 3:4 character sheet with the requested three-view, six-expression, and four-action layout. It is not an independently prompted image.
+- Latest verification: `init.ps1` 70 Web tests, focused backend pytest 28, Ruff, Web typecheck/build, and diff check passed. Live browser submission reached configured provider and returned local API `200 OK`; retain the live result for human visual approval because the Browser control session reset before final DOM capture.

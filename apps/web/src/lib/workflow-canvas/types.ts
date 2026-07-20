@@ -77,6 +77,7 @@ export type WorkflowNodeOutput = {
   promptTemplateId?: string;
   provider?: string | null;
   model?: string | null;
+  outputVariant?: string;
   editable: boolean;
   media?: WorkflowMediaOutput;
 };

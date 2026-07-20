@@ -131,23 +131,49 @@ def test_generate_image_node_returns_backend_seedream_evidence(
             "width": 1024,
             "height": 1024,
         },
+        "images": [
+            {
+                "variant": "character_base",
+                "image": {
+                    "url": "https://image.example/generated.png",
+                    "b64_json": None,
+                    "mime_type": "image/png",
+                    "width": 1024,
+                    "height": 1024,
+                },
+            },
+            {
+                "variant": "character_three_view",
+                "image": {
+                    "url": "https://image.example/generated.png",
+                    "b64_json": None,
+                    "mime_type": "image/png",
+                    "width": 1024,
+                    "height": 1024,
+                },
+            },
+        ],
         "persisted": False,
     }
 
 
-def test_generate_image_node_forwards_reference_image_to_seedream(
+def test_character_sheet_uses_the_generated_base_as_seedream_reference(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    seen: dict[str, object] = {}
+    calls: list[dict[str, object]] = []
 
     monkeypatch.setenv("DOUBAO_API_KEY", "test-doubao-key")
     monkeypatch.setenv("DOUBAO_BASE_URL", "https://ark.cn-beijing.volces.com")
     monkeypatch.setenv("SEEDREAM_MODEL", "doubao-seedream-5-0-260128")
 
     def fake_submit_seedream(**kwargs: object) -> GeneratedImage:
-        seen.update(kwargs)
+        calls.append(kwargs)
         return GeneratedImage(
-            url="https://image.example/edited.png",
+            url=(
+                "https://image.example/character-base.png"
+                if len(calls) == 1
+                else "https://image.example/character-sheet.png"
+            ),
             mime_type="image/png",
             width=1024,
             height=1024,
@@ -171,10 +197,43 @@ def test_generate_image_node_forwards_reference_image_to_seedream(
     )
 
     assert response.status_code == 200
-    assert seen["prompt"] == "Make the uploaded prop snowy."
-    assert seen["reference_image_url"] == "data:image/png;base64,old-image"
-    assert seen["reference_image_b64"] is None
-    assert seen["reference_image_mime_type"] == "image/png"
+    assert len(calls) == 2
+    assert calls[0]["reference_image_url"] == "data:image/png;base64,old-image"
+    assert calls[1]["reference_image_url"] == "https://image.example/character-base.png"
+    assert calls[1]["reference_image_b64"] is None
+    assert calls[1]["reference_image_mime_type"] == "image/png"
+    assert "sole visual reference" in str(calls[1]["prompt"])
+    assert "3:4 character design sheet" in str(calls[1]["prompt"])
+
+
+def test_character_image_fails_when_three_view_generation_is_unavailable(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("DOUBAO_API_KEY", "test-doubao-key")
+    monkeypatch.setenv("DOUBAO_BASE_URL", "https://ark.cn-beijing.volces.com")
+    monkeypatch.setenv("SEEDREAM_MODEL", "doubao-seedream-5-0-260128")
+    calls = 0
+
+    def fake_submit_seedream(**_: object) -> GeneratedImage:
+        nonlocal calls
+        calls += 1
+        if calls == 2:
+            raise ProviderExecutionError("three-view provider response unavailable")
+        return GeneratedImage(url="https://image.example/base.png")
+
+    monkeypatch.setattr(
+        "xmeta_api.main.submitSeedreamWithRetry",
+        fake_submit_seedream,
+    )
+
+    response = client.post(
+        "/api/v1/projects/project-1/nodes/character-1/generate-image",
+        json=image_generation_payload(),
+    )
+
+    assert response.status_code == 502
+    assert calls == 2
+    assert "three-view provider response unavailable" in response.json()["detail"]
 
 
 def test_generate_image_node_fails_clearly_when_seedream_key_missing() -> None:

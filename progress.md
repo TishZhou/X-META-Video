@@ -494,3 +494,9 @@ Record major decisions and progress each session. Keep the current verified stat
 - Verification run: initial `.\init.ps1` passed; TriplD install completed through shadcn CLI; `corepack pnpm --filter @xmeta/web test` passed; `corepack pnpm --filter @xmeta/web typecheck` passed; final verification evidence is recorded in `sprint-contract.md` and `evaluator-rubric.md`.
 - Known risk or unresolved issue: Installed TriplD components still contain generic demo content and need X-META-specific composition when used in page tasks. Rendered desktop/mobile QA remains future page implementation scope.
 - Next best step: begin `web-design-002`.
+
+## 2026-07-20 — Image Task 1 reference-grounded character sheet
+
+- Changed the second Image Task 1 provider call to use only the freshly generated base image URL/base64/MIME as its reference; it no longer independently generates from the original text or reuses an uploaded source reference.
+- The server-side character-sheet prompt requires the approved text-free 3:4 three-row sheet: front/side/back views, six expressions, and four action poses, preserving the base character identity, wardrobe, and art style.
+- Evidence: `init.ps1` (70 Web tests), focused API/Runtime pytest (28), Ruff, typecheck, build, and `git diff --check` passed. A live in-app-browser request reached FastAPI and the configured provider, and the completed POST returned `200 OK`; browser control reset before a final visual read, so visual identity quality remains a user-review point.

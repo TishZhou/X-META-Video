@@ -483,6 +483,18 @@ describe("WorkflowCanvasWorkspace", () => {
         width: 1024,
         height: 1024,
       },
+      images: [
+        {
+          variant: "image",
+          image: {
+            url: "https://image.example/scene.png",
+            b64_json: null,
+            mime_type: "image/png",
+            width: 1024,
+            height: 1024,
+          },
+        },
+      ],
       persisted: false,
     } satisfies ImageGenerationResponse;
 

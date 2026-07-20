@@ -322,8 +322,32 @@ function imageTaskOutcomePorts() {
   ];
 }
 
-function calculateImageTaskOutcomePosition(sourcePosition: WorkflowPoint) {
-  return { x: sourcePosition.x + NODE_WIDTH + 96, y: sourcePosition.y };
+const CHARACTER_IMAGE_TASK_OUTPUTS = [
+  {
+    variant: "character_base",
+    title: "Character base image",
+    description: "Full-body character base image generated through the configured Image API.",
+    alt: "Generated Task 1 character base image",
+  },
+  {
+    variant: "character_three_view",
+    title: "Character three-view image",
+    description: "Character front, side, and back views generated through the configured Image API.",
+    alt: "Generated Task 1 character three-view image",
+  },
+] as const;
+
+function calculateImageTaskOutcomePosition(
+  sourcePosition: WorkflowPoint,
+  variant: (typeof CHARACTER_IMAGE_TASK_OUTPUTS)[number]["variant"],
+) {
+  return {
+    x:
+      sourcePosition.x +
+      NODE_WIDTH +
+      (variant === "character_base" ? 96 : NODE_WIDTH + 192),
+    y: sourcePosition.y,
+  };
 }
 
 export function buildCharacterBaseImageTaskPrompt({
@@ -2004,34 +2028,51 @@ export function WorkflowCanvasWorkspace({
         referenceImageMimeType: null,
       });
       setImageGenerations((current) => ({ ...current, [node.id]: result }));
+      const imagesByVariant = new Map(
+        result.images.map((output) => [output.variant, output.image]),
+      );
+      const taskOutputs = CHARACTER_IMAGE_TASK_OUTPUTS.map((output) => ({
+        ...output,
+        image: imagesByVariant.get(output.variant),
+      }));
+
+      if (taskOutputs.some((output) => !output.image)) {
+        throw new Error(
+          "Image Task 1 requires both the base image and the three-view image from the server.",
+        );
+      }
+
       dispatch({ type: "setNodeStatus", nodeId: node.id, status: "ready" });
-      dispatch({
-        type: "upsertOutputNode",
-        sourceNodeId: node.id,
-        nodeType: "data",
-        title: "Character base image result",
-        description:
-          "Character base image generated through the configured Image API; asset persistence is not implemented.",
-        position: calculateImageTaskOutcomePosition(node.position),
-        output: {
+      for (const output of taskOutputs) {
+        const image = output.image!;
+        dispatch({
+          type: "upsertOutputNode",
           sourceNodeId: node.id,
-          dataType: "image",
-          label: "Task 1 character base image",
-          provider: result.provider,
-          model: result.model,
-          editable: false,
-          media: {
-            kind: "image",
-            url: result.image.url,
-            b64Json: result.image.b64_json,
-            mimeType: result.image.mime_type,
-            alt: "Generated Task 1 character base image",
+          nodeType: "data",
+          title: output.title,
+          description: `${output.description} Asset persistence is not implemented.`,
+          position: calculateImageTaskOutcomePosition(node.position, output.variant),
+          output: {
+            sourceNodeId: node.id,
+            dataType: "image",
+            outputVariant: output.variant,
+            label: output.title,
+            provider: result.provider,
+            model: result.model,
+            editable: false,
+            media: {
+              kind: "image",
+              url: image.url,
+              b64Json: image.b64_json,
+              mimeType: image.mime_type,
+              alt: output.alt,
+            },
           },
-        },
-        ports: imageTaskOutcomePorts(),
-        notice:
-          "Task 1 character base image is ready. Local preview is not persisted to the asset library yet.",
-      });
+          ports: imageTaskOutcomePorts(),
+          notice:
+            "Task 1 character base and three-view images are ready. Local previews are not persisted to the asset library yet.",
+        });
+      }
     } catch (error) {
       const message =
         error instanceof Error

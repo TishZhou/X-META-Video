@@ -434,9 +434,33 @@ Response:
     "width": 1024,
     "height": 1024
   },
+  "images": [
+    {
+      "variant": "character_base",
+      "image": {
+        "url": "https://example.com/character-base.png",
+        "b64_json": null,
+        "mime_type": "image/png",
+        "width": 1024,
+        "height": 1536
+      }
+    },
+    {
+      "variant": "character_three_view",
+      "image": {
+        "url": "https://example.com/character-three-view.png",
+        "b64_json": null,
+        "mime_type": "image/png",
+        "width": 1536,
+        "height": 2048
+      }
+    }
+  ],
   "persisted": false
 }
 ```
+
+`character_image` executes the existing `image.character.generate` task through the configured provider in a fixed two-step sequence. It first creates `character_base` from the submitted prompt (and any submitted reference), then passes that returned base image URL/base64/mime metadata as the reference for `character_three_view`. The second prompt requests a text-free 3:4 character sheet with front/side/back, six expressions, and four action poses while preserving the base image identity, wardrobe, and art style. If either provider result is unavailable, the route fails instead of returning a partial character result. The legacy top-level `image` is the base-image convenience field; new character-task canvas flows should use the typed `images` array. `prop_asset` and `scene_image` return one `images` item with variant `image`.
 
 When the selected image node already contains a generated or uploaded image, the web app sends that image as `reference_image_url` or `reference_image_b64` with the prompt. The backend wrapper is `submitSeedreamWithRetry()` -> `submitSeedreamGenerationOnce()` and posts to the configured Doubao Ark `/api/v3/images/generations` endpoint, including the reference as the SeedDream `image` payload field for image editing. The web app never calls Doubao directly and never receives provider credentials.
 

@@ -301,8 +301,17 @@ describe("workflow graph state", () => {
       nodeType: "image",
       position: { x: 520, y: 320 },
     });
-    const outputNodeId = createWorkflowOutputNodeId("image-4", "image");
-    const taskResult = {
+    const outputNodeId = createWorkflowOutputNodeId(
+      "image-4",
+      "image",
+      "character_base",
+    );
+    const threeViewOutputNodeId = createWorkflowOutputNodeId(
+      "image-4",
+      "image",
+      "character_three_view",
+    );
+    const baseTaskResult = {
       type: "upsertOutputNode" as const,
       sourceNodeId: "image-4",
       nodeType: "data" as const,
@@ -312,6 +321,7 @@ describe("workflow graph state", () => {
       output: {
         sourceNodeId: "image-4",
         dataType: "image" as const,
+        outputVariant: "character_base",
         label: "Task 1 character base image",
         provider: "doubao-seedream",
         model: "doubao-seedream-5-0-260128",
@@ -326,24 +336,50 @@ describe("workflow graph state", () => {
         },
       ],
     };
-    const completed = workflowGraphReducer(withImage, taskResult);
-    const rerun = workflowGraphReducer(completed, taskResult);
+    const threeViewTaskResult = {
+      ...baseTaskResult,
+      title: "Character three-view image",
+      position: { x: 1220, y: 320 },
+      output: {
+        ...baseTaskResult.output,
+        outputVariant: "character_three_view",
+        label: "Character three-view image",
+      },
+    };
+    const completed = workflowGraphReducer(
+      workflowGraphReducer(withImage, baseTaskResult),
+      threeViewTaskResult,
+    );
+    const rerun = workflowGraphReducer(
+      workflowGraphReducer(completed, baseTaskResult),
+      threeViewTaskResult,
+    );
 
     expect(completed.nodes.find((node) => node.id === outputNodeId)).toMatchObject({
       type: "data",
       role: "outcome",
       output: { provider: "doubao-seedream", dataType: "image" },
     });
-    expect(completed.edges.at(-1)).toMatchObject({
+    expect(completed.edges.find((edge) => edge.targetNodeId === outputNodeId)).toMatchObject({
       sourceNodeId: "image-4",
       sourcePortId: "image-4:image-out",
       targetNodeId: outputNodeId,
       targetPortId: `${outputNodeId}:source-in`,
       dataType: "image",
     });
+    expect(completed.nodes.find((node) => node.id === threeViewOutputNodeId)).toMatchObject({
+      type: "data",
+      output: { outputVariant: "character_three_view" },
+    });
+    expect(
+      completed.edges.filter((edge) => edge.sourceNodeId === "image-4"),
+    ).toHaveLength(2);
     expect(rerun.nodes).toHaveLength(completed.nodes.length);
     expect(rerun.edges).toHaveLength(completed.edges.length);
     expect(rerun.edges.filter((edge) => edge.targetNodeId === outputNodeId)).toHaveLength(1);
+    expect(
+      rerun.edges.filter((edge) => edge.targetNodeId === threeViewOutputNodeId),
+    ).toHaveLength(1);
   });
 
   it("rejects stale connection requests that reference missing ports", () => {

@@ -225,6 +225,16 @@ export type GeneratedImage = {
   height?: number | null;
 };
 
+export type ImageOutputVariant =
+  | "image"
+  | "character_base"
+  | "character_three_view";
+
+export type GeneratedImageOutput = {
+  variant: ImageOutputVariant;
+  image: GeneratedImage;
+};
+
 export type ImageGenerationRequest = {
   node_type: ImageGenerationNodeType;
   input: ImageGenerationInput;
@@ -239,6 +249,7 @@ export type ImageGenerationResponse = {
   model: string;
   prompt: string;
   image: GeneratedImage;
+  images: GeneratedImageOutput[];
   persisted: boolean;
 };
 

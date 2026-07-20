@@ -417,6 +417,7 @@ export function workflowGraphReducer(
       const outputNodeId = createWorkflowOutputNodeId(
         action.sourceNodeId,
         action.output.dataType,
+        action.output.outputVariant,
       );
       const existing = state.nodes.find((node) => node.id === outputNodeId);
       const sourceNode = findNode(state.nodes, action.sourceNodeId);
@@ -783,8 +784,11 @@ export function connectionDataTypeLabel(dataType: WorkflowDataType) {
 export function createWorkflowOutputNodeId(
   sourceNodeId: string,
   dataType: WorkflowDataType,
+  outputVariant?: string,
 ) {
-  return `${sourceNodeId}:${dataType}-outcome`;
+  return outputVariant
+    ? `${sourceNodeId}:${dataType}-${outputVariant}-outcome`
+    : `${sourceNodeId}:${dataType}-outcome`;
 }
 
 function makeEdge(

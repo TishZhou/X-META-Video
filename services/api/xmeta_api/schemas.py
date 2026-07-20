@@ -203,6 +203,17 @@ class GeneratedImage(BaseModel):
     height: int | None = None
 
 
+class ImageOutputVariant(StrEnum):
+    IMAGE = "image"
+    CHARACTER_BASE = "character_base"
+    CHARACTER_THREE_VIEW = "character_three_view"
+
+
+class GeneratedImageOutput(BaseModel):
+    variant: ImageOutputVariant
+    image: GeneratedImage
+
+
 class ImageGenerationResponse(BaseModel):
     project_id: str
     node_id: str
@@ -211,6 +222,7 @@ class ImageGenerationResponse(BaseModel):
     model: str
     prompt: str
     image: GeneratedImage
+    images: list[GeneratedImageOutput] = Field(min_length=1)
     persisted: bool = False
 
 

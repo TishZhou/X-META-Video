@@ -93,6 +93,28 @@ function imageGenerationResult(
       width: 1024,
       height: 1536,
     },
+    images: [
+      {
+        variant: "character_base",
+        image: {
+          url: "https://image.example/character-base.png",
+          b64_json: null,
+          mime_type: "image/png",
+          width: 1024,
+          height: 1536,
+        },
+      },
+      {
+        variant: "character_three_view",
+        image: {
+          url: "https://image.example/character-three-view.png",
+          b64_json: null,
+          mime_type: "image/png",
+          width: 1536,
+          height: 1024,
+        },
+      },
+    ],
     persisted: false,
   };
 }
@@ -237,23 +259,33 @@ describe("WorkflowCanvasWorkspace Text node interactions", () => {
       "Personality and action language: Composed, protective, elegant movement with fierce stage presence.",
     );
 
-    const result = await screen.findByLabelText(
-      "Character base image result data outcome",
+    const baseResult = await screen.findByLabelText(
+      "Character base image data outcome",
+    );
+    const threeViewResult = await screen.findByLabelText(
+      "Character three-view image data outcome",
     );
     expect(
-      result
+      baseResult
         .querySelector('[data-data-image-outcome-preview="true"]')
         ?.getAttribute("src"),
     ).toBe("https://image.example/character-base.png");
-    expect(result.getAttribute("data-workflow-node")).toBe("data");
-    expect(result.getAttribute("data-workflow-node-role")).toBe("outcome");
-    expect(result.querySelector("article")).toBeNull();
-    expect(result.querySelector("img")?.className).toContain("object-contain");
-    expect(result.textContent).toContain(
+    expect(
+      threeViewResult
+        .querySelector('[data-data-image-outcome-preview="true"]')
+        ?.getAttribute("src"),
+    ).toBe("https://image.example/character-three-view.png");
+    for (const result of [baseResult, threeViewResult]) {
+      expect(result.getAttribute("data-workflow-node")).toBe("data");
+      expect(result.getAttribute("data-workflow-node-role")).toBe("outcome");
+      expect(result.querySelector("article")).toBeNull();
+      expect(result.querySelector("img")?.className).toContain("object-contain");
+    }
+    expect(baseResult.textContent).toContain(
       "Backend: doubao-seedream / doubao-seedream-5-0-260128",
     );
-    expect(result.textContent).toContain("not saved to the asset library yet");
-    expect(container.querySelectorAll('[data-workflow-edge-hit="true"]')).toHaveLength(3);
+    expect(baseResult.textContent).toContain("not saved to the asset library yet");
+    expect(container.querySelectorAll('[data-workflow-edge-hit="true"]')).toHaveLength(4);
 
     await user.click(screen.getByRole("button", { name: "Add node" }));
     await user.click(screen.getByRole("button", { name: /Add Image:/ }));

@@ -172,11 +172,17 @@ def test_image_handler_preserves_existing_prompt_and_response_contract() -> None
             "input": {"prompt": "Full-body character reference."},
         }
     )
-    seen: dict[str, object] = {}
+    seen: list[dict[str, object]] = []
 
     def execute(**kwargs: object) -> GeneratedImage:
-        seen.update(kwargs)
-        return GeneratedImage(url="https://image.example/character.png")
+        seen.append(kwargs)
+        if len(seen) == 1:
+            return GeneratedImage(
+                url="https://image.example/character-base.png",
+                b64_json="base-image-bytes",
+                mime_type="image/png",
+            )
+        return GeneratedImage(url="https://image.example/character-sheet.png")
 
     response = runtime.run_image_generation(
         project_id="project-1",
@@ -189,23 +195,31 @@ def test_image_handler_preserves_existing_prompt_and_response_contract() -> None
         execute=execute,
     )
 
-    assert seen["prompt"] == "Full-body character reference."
-    assert response.model_dump(mode="json") == {
-        "project_id": "project-1",
-        "node_id": "character-1",
-        "node_type": "character_image",
-        "provider": "doubao-seedream",
-        "model": "doubao-seedream-5-0-260128",
-        "prompt": "Full-body character reference.",
-        "image": {
-            "url": "https://image.example/character.png",
-            "b64_json": None,
-            "mime_type": None,
-            "width": None,
-            "height": None,
-        },
-        "persisted": False,
-    }
+    assert seen[0]["prompt"] == (
+        "Full-body character reference.\n\nOutput variant: character base image. "
+        "Produce one full-body, front-facing character reference with a clean, "
+        "readable silhouette."
+    )
+    character_sheet_prompt = str(seen[1]["prompt"])
+    for constraint in (
+        "sole visual reference",
+        "facial features, skin tone, hair texture, body type, wardrobe, accessories",
+        "3:4 character design sheet",
+        "no words, labels, captions, or typography",
+        "front, side, and back views",
+        "joy, sadness, anger, surprise, fear, neutral",
+        "walking, running, jumping, seated",
+    ):
+        assert constraint in character_sheet_prompt
+    assert seen[0]["reference_image_url"] is None
+    assert seen[1]["reference_image_url"] == "https://image.example/character-base.png"
+    assert seen[1]["reference_image_b64"] == "base-image-bytes"
+    assert seen[1]["reference_image_mime_type"] == "image/png"
+    assert response.image.url == "https://image.example/character-base.png"
+    assert [(output.variant, output.image.url) for output in response.images] == [
+        ("character_base", "https://image.example/character-base.png"),
+        ("character_three_view", "https://image.example/character-sheet.png"),
+    ]
 
 
 def test_runtime_consumes_custom_bounded_retry_limit() -> None:
@@ -241,7 +255,7 @@ def test_runtime_consumes_custom_bounded_retry_limit() -> None:
         execute=execute,
     )
 
-    assert attempts == 2
+    assert attempts == 3
     assert response.image.url == "https://image.example/retried.png"
 
 
